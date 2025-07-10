@@ -7,6 +7,7 @@ export class Player {
     this.vx = 0;
     this.vy = 0;
     this.jumpCount = 0;
+    this.jumpPressed = false;  // Tracks whether the jump key is currently down
     this.direction = 'right';
     this.state = 'idle';
     this.assets = assets;
@@ -58,22 +59,24 @@ export class Player {
       }
     }
 
-    // Jumping (allow double jump)
-    if ((keys['w'] || keys['arrowup']) && this.jumpCount === 0) {
-      this.vy = -this.jumpForce;
-      this.jumpCount++;
-      this.state = 'jump';
-    } else if ((keys['w'] || keys['arrowup']) && this.jumpCount === 1) {
-      // Allow double jump only if already jumped once
-      this.vy = -this.jumpForce;
-      this.jumpCount++;
-      this.state = 'double_jump';
+    // Detect new jump press (not just holding)
+    const jumpKeyDown = keys['w'] || keys['arrowup'];
+
+    if (jumpKeyDown && !this.jumpPressed) {
+      if (this.jumpCount === 0) {
+        this.vy = -this.jumpForce;
+        this.jumpCount++;
+        if (this.state !== 'jump') this.state = 'jump';
+      } else if (this.jumpCount === 1) {
+        this.vy = -this.jumpForce;
+        this.jumpCount++;
+        if (this.state !== 'double_jump') this.state = 'double_jump';
+      }
+      this.jumpPressed = true;
     }
-    
-    // Reset animation if state changed
-    if (prevState !== this.state) {
-      this.animationFrame = 0;
-      this.animationTimer = 0;
+
+    if (!jumpKeyDown) {
+      this.jumpPressed = false; // Reset when key is released
     }
   }
 
@@ -105,14 +108,15 @@ export class Player {
         }
       }
 
-      // Update state based on vertical movement
-      if (this.vy > 0 && this.jumpCount > 0) {
-        this.state = 'fall';
-      } else if (this.vy < 0 && this.jumpCount === 1) {
-        this.state = 'jump';
-      } else if (this.jumpCount === 2) {
-        this.state = 'double_jump';
+      // Update state based on vertical movement, don’t override double_jump state once it's set
+      if (this.state !== 'double_jump') {
+        if (this.vy > 0 && this.jumpCount > 0) {
+          this.state = 'fall';
+        } else if (this.vy < 0 && this.jumpCount === 1) {
+          this.state = 'jump';
+        }
       }
+
       // Wall boundaries with proper collision
       if (this.x < 0) {
         this.x = 0;

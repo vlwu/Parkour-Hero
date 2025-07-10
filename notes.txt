@@ -1,3 +1,22 @@
 fix double jump
 space key reserved for dash (not for jumping)
 add settings 
+
+// Jumping (allow double jump)
+    if ((keys['w'] || keys['arrowup']) && this.jumpCount === 0) {
+      this.vy = -this.jumpForce;
+      this.jumpCount++;
+      this.state = 'jump';
+    } else if ((keys['w'] || keys['arrowup']) && this.jumpCount === 1) {
+      // Allow double jump only if already jumped once
+      this.vy = -this.jumpForce;
+      this.jumpCount++;
+      this.state = 'double_jump';
+    }
+    
+    // Reset animation if state changed
+    if (prevState !== this.state) {
+      this.animationFrame = 0;
+      this.animationTimer = 0;
+    }
+  }
