@@ -83,7 +83,7 @@ export class Engine {
         this.fruits.push({
           x: Math.random() * (this.canvas.width - 40) + 20,
           y: Math.random() * (this.canvas.height - 100) + 20, // Avoid spawning too close to ground
-          size: 24,          // FRUIT SIZE - Edit this value to change fruit size
+          size: 28, // FRUIT SIZE - Edit this value to change fruit size
           spriteKey: fruitKey,
           frame: 0,          // current animation frame
           frameCount: 17,    // 17 frames in fruit animation
@@ -112,6 +112,7 @@ export class Engine {
           this.fruitCount++;
           this.fruitHighScore = Math.max(this.fruitCount, this.fruitHighScore);
           // TODO: Trigger collected animation if desired
+          console.log(`Collected ${fruit.spriteKey}! Total: ${this.fruitCount}`);
           return false; // remove fruit from array
         }
 

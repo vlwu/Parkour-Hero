@@ -1,7 +1,7 @@
 export async function loadAssets() {
   const images = {};
   const paths = {
-    backgroundTile: 'assets/Background/Blue.png',
+    backgroundTile: 'assets/Background/Blue.png', // change to desired background tile
     block: 'assets/Terrain/Terrain.png',
     playerJump: 'assets/MainCharacters/PinkMan/jump.png',
     playerDoubleJump: 'assets/MainCharacters/PinkMan/double_jump.png',
@@ -16,11 +16,11 @@ export async function loadAssets() {
     fruit_kiwi: 'assets/Items/Fruits/Kiwi.png',
     fruit_melon: 'assets/Items/Fruits/Melon.png',
     fruit_orange: 'assets/Items/Fruits/Orange.png',
-    fruit_pineapple: 'assets/Fruits/Pineapple.png',
-    fruit_strawberry: 'assets/Fruits/Strawberry.png',
+    fruit_pineapple: 'assets/Items/Fruits/Pineapple.png',
+    fruit_strawberry: 'assets/Items/Fruits/Strawberry.png',
 
     // Collected animation (applies to all fruits)
-    fruit_collected: 'assets/Fruits/Collected.png'
+    fruit_collected: 'assets/Items/Fruits/Collected.png'
   };
 
   console.log('Starting asset loading...');
@@ -48,15 +48,15 @@ export async function loadAssets() {
         
         // Create a fallback colored rectangle instead of failing completely
         const fallbackCanvas = document.createElement('canvas');
-        fallbackCanvas.width = 64;
-        fallbackCanvas.height = 64;
+        fallbackCanvas.width = 24;
+        fallbackCanvas.height = 24;
         const fallbackCtx = fallbackCanvas.getContext('2d');
         
         // Different colors for different asset types
         if (key.includes('background')) {
           fallbackCtx.fillStyle = '#87CEEB'; // Sky blue
         } else if (key.includes('player')) {
-          fallbackCtx.fillStyle = '#FF6B35'; // Orange
+          fallbackCtx.fillStyle = '#ff8c21ff'; // Orange
         } else if (key.includes('fruit')) {
           fallbackCtx.fillStyle = '#FF6B6B'; // Red
         } else {

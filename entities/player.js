@@ -59,10 +59,15 @@ export class Player {
     }
 
     // Jumping (allow double jump)
-    if ((keys['w'] || keys['arrowup']) && this.jumpCount < 2) {
+    if ((keys['w'] || keys['arrowup']) && this.jumpCount === 0) {
       this.vy = -this.jumpForce;
       this.jumpCount++;
       this.state = 'jump';
+    } else if ((keys['w'] || keys['arrowup']) && this.jumpCount === 1) {
+      // Allow double jump only if already jumped once
+      this.vy = -this.jumpForce;
+      this.jumpCount++;
+      this.state = 'double_jump';
     }
     
     // Reset animation if state changed
@@ -103,10 +108,11 @@ export class Player {
       // Update state based on vertical movement
       if (this.vy > 0 && this.jumpCount > 0) {
         this.state = 'fall';
-      } else if (this.vy < 0) {
+      } else if (this.vy < 0 && this.jumpCount === 1) {
         this.state = 'jump';
+      } else if (this.jumpCount === 2) {
+        this.state = 'double_jump';
       }
-
       // Wall boundaries with proper collision
       if (this.x < 0) {
         this.x = 0;
@@ -201,6 +207,8 @@ export class Player {
     switch (this.state) {
       case 'jump':
         return 'playerJump';
+      case 'double_jump':
+        return 'playerDoubleJump';
       case 'fall':
         return 'playerFall';
       case 'run':
