@@ -3,7 +3,9 @@ export async function loadAssets() {
   const paths = {
     backgroundTile: 'assets/Background/Blue.png',
     block: 'assets/Terrain/Terrain.png',
-    playerJump: 'assets/MainCharacters/PinkMan/jump.png',
+    playerJump: 'assets/MainCharacters/PinkMan/double_jump.png',
+    playerIdle: 'assets/MainCharacters/PinkMan/idle.png',
+    playerRun: 'assets/MainCharacters/PinkMan/run.png',
     playerFall: 'assets/MainCharacters/PinkMan/fall.png',
 
     // Fruit spritesheets (animated)

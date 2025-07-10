@@ -2,7 +2,7 @@ export class Player {
   constructor(x, y, assets) {
     this.x = x;
     this.y = y;
-    this.width = 32;  // Increased size to match sprite dimensions
+    this.width = 32;  // 32x32 sprite size
     this.height = 32;
     this.vx = 0;
     this.vy = 0;
@@ -15,7 +15,15 @@ export class Player {
     // Animation properties
     this.animationFrame = 0;
     this.animationTimer = 0;
-    this.animationSpeed = 0.15; // Time between frames
+    this.animationSpeed = 0.1; // Time between frames (100ms)
+    
+    // Animation frame counts for each state
+    this.animationFrames = {
+      idle: 11,        // 11 frames for idle
+      run: 12,         // 12 frames for running
+      jump: 6,         // 6 frames for double jump
+      fall: 1          // 1 frame for falling (static)
+    };
     
     // Physics constants
     this.moveSpeed = 200;     // pixels per second
@@ -27,6 +35,9 @@ export class Player {
   }
 
   handleInput(keys) {
+    // Store previous state to reset animation on state change
+    const prevState = this.state;
+    
     // Horizontal movement
     if (keys['a'] || keys['arrowleft']) {
       this.vx = -this.moveSpeed;
@@ -53,6 +64,12 @@ export class Player {
       this.jumpCount++;
       this.isJumping = true;
       this.state = 'jump';
+    }
+    
+    // Reset animation if state changed
+    if (prevState !== this.state) {
+      this.animationFrame = 0;
+      this.animationTimer = 0;
     }
   }
 
@@ -102,11 +119,14 @@ export class Player {
         this.vx = 0;
       }
 
-      // Update animation timer
+      // Update animation timer and frame
       this.animationTimer += dt;
       if (this.animationTimer >= this.animationSpeed) {
         this.animationTimer = 0;
-        this.animationFrame = (this.animationFrame + 1) % 4; // 4 frame cycle
+        
+        // Get the frame count for current state
+        const frameCount = this.animationFrames[this.state] || 1;
+        this.animationFrame = (this.animationFrame + 1) % frameCount;
       }
 
     } catch (error) {
@@ -127,6 +147,15 @@ export class Player {
         return;
       }
 
+      // Calculate sprite sheet frame dimensions
+      const frameCount = this.animationFrames[this.state] || 1;
+      const frameWidth = sprite.width / frameCount;
+      const frameHeight = sprite.height;
+      
+      // Calculate source position (which frame to draw)
+      const srcX = frameWidth * this.animationFrame;
+      const srcY = 0;
+
       // Save context for transformations
       ctx.save();
 
@@ -138,8 +167,14 @@ export class Player {
         ctx.translate(this.x, this.y);
       }
 
-      // Draw the sprite
-      ctx.drawImage(sprite, 0, 0, this.width, this.height);
+      // Draw the specific frame from the sprite sheet
+      ctx.drawImage(
+        sprite,                    // source image
+        srcX, srcY,               // source x, y (frame position)
+        frameWidth, frameHeight,   // source width, height
+        0, 0,                     // destination x, y (relative to translation)
+        this.width, this.height   // destination width, height
+      );
 
       // Restore context
       ctx.restore();
@@ -153,7 +188,8 @@ export class Player {
         ctx.fillStyle = 'white';
         ctx.font = '12px sans-serif';
         ctx.fillText(`State: ${this.state}`, this.x, this.y - 5);
-        ctx.fillText(`Vel: ${Math.round(this.vx)},${Math.round(this.vy)}`, this.x, this.y - 20);
+        ctx.fillText(`Frame: ${this.animationFrame}/${this.animationFrames[this.state]}`, this.x, this.y - 20);
+        ctx.fillText(`Vel: ${Math.round(this.vx)},${Math.round(this.vy)}`, this.x, this.y - 35);
       }
 
     } catch (error) {
@@ -170,11 +206,10 @@ export class Player {
       case 'fall':
         return 'playerFall';
       case 'run':
-        // For now, use jump sprite for running (you can add run sprites later)
-        return 'playerJump';
+        return 'playerRun';
       case 'idle':
       default:
-        return 'playerJump'; // Default sprite
+        return 'playerIdle';
     }
   }
 

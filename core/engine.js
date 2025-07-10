@@ -167,14 +167,26 @@ export class Engine {
       return;
     }
 
-    // Calculate tile size - your background is 64x64 based on common pixel art standards
-    const tileSize = 64;
+    // Background sprite sheet info - Blue.png is typically 64x64 with blue tile at position 0,0
+    const spriteSize = 64;    // Each tile in the sprite sheet is 64x64
+    const tileSize = 64;      // Size to draw each tile on screen
+    
+    // Source coordinates for the blue tile (usually top-left of sprite sheet)
+    const srcX = 0;
+    const srcY = 0;
     
     // Draw tiled background covering the entire canvas
     for (let x = 0; x < canvas.width; x += tileSize) {
       for (let y = 0; y < canvas.height; y += tileSize) {
         try {
-          ctx.drawImage(bg, x, y, tileSize, tileSize);
+          // Draw specific tile from sprite sheet
+          ctx.drawImage(
+            bg,                    // source image
+            srcX, srcY,           // source x, y (position in sprite sheet)
+            spriteSize, spriteSize, // source width, height
+            x, y,                 // destination x, y
+            tileSize, tileSize    // destination width, height
+          );
         } catch (error) {
           console.warn('Failed to draw background tile:', error);
           // Fallback for individual tile
