@@ -9,7 +9,6 @@ const FRUIT_NAMES = [
   'fruit_orange',
   'fruit_pineapple',
   'fruit_strawberry',
-  'fruit_collected' // Animation for collected fruits
 ];
 
 export class Engine {
