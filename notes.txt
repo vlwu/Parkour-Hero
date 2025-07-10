@@ -1,0 +1,4 @@
+fix double jump
+removed isJumping Boolean
+space key reserved for dash (not for jumping)
+add keybind instructions

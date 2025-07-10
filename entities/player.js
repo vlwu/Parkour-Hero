@@ -9,19 +9,19 @@ export class Player {
     this.jumpCount = 0;
     this.direction = 'right';
     this.state = 'idle';
-    this.isJumping = false;
     this.assets = assets;
     
     // Animation properties
     this.animationFrame = 0;
     this.animationTimer = 0;
-    this.animationSpeed = 0.1; // Time between frames (100ms)
-    
+    this.animationSpeed = 0.05; // Time between frames (0.05 = 50ms)
+
     // Animation frame counts for each state
     this.animationFrames = {
       idle: 11,        // 11 frames for idle
       run: 12,         // 12 frames for running
-      jump: 6,         // 6 frames for double jump
+      double_jump: 6,         // 6 frames for double jump
+      jump: 1,
       fall: 1          // 1 frame for falling (static)
     };
     
@@ -42,27 +42,26 @@ export class Player {
     if (keys['a'] || keys['arrowleft']) {
       this.vx = -this.moveSpeed;
       this.direction = 'left';
-      if (!this.isJumping) {
+      if (this.jumpCount === 0) {
         this.state = 'run';
       }
     } else if (keys['d'] || keys['arrowright']) {
       this.vx = this.moveSpeed;
       this.direction = 'right';
-      if (!this.isJumping) {
+      if (this.jumpCount === 0) {
         this.state = 'run';
       }
     } else {
       this.vx = 0;
-      if (!this.isJumping) {
+      if (this.jumpCount === 0) {
         this.state = 'idle';
       }
     }
 
     // Jumping (allow double jump)
-    if ((keys['w'] || keys['arrowup'] || keys[' ']) && this.jumpCount < 2) {
+    if ((keys['w'] || keys['arrowup']) && this.jumpCount < 2) {
       this.vy = -this.jumpForce;
       this.jumpCount++;
-      this.isJumping = true;
       this.state = 'jump';
     }
     
@@ -92,7 +91,6 @@ export class Player {
         this.y = canvasHeight - this.height;
         this.vy = 0;
         this.jumpCount = 0;
-        this.isJumping = false;
         
         // Update state based on horizontal movement
         if (this.vx !== 0) {
@@ -103,7 +101,7 @@ export class Player {
       }
 
       // Update state based on vertical movement
-      if (this.vy > 0 && this.isJumping) {
+      if (this.vy > 0 && this.jumpCount > 0) {
         this.state = 'fall';
       } else if (this.vy < 0) {
         this.state = 'jump';

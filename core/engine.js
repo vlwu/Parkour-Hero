@@ -1,4 +1,3 @@
-// Import Player class - this was missing!
 import { Player } from '../entities/player.js';
 
 const FRUIT_NAMES = [
@@ -84,11 +83,11 @@ export class Engine {
         this.fruits.push({
           x: Math.random() * (this.canvas.width - 40) + 20,
           y: Math.random() * (this.canvas.height - 100) + 20, // Avoid spawning too close to ground
-          size: 30,
+          size: 24,          // FRUIT SIZE - Edit this value to change fruit size
           spriteKey: fruitKey,
           frame: 0,          // current animation frame
-          frameCount: 17,    // total frames in fruit animation
-          frameSpeed: 0.1,   // frames per update
+          frameCount: 17,    // 17 frames in fruit animation
+          frameSpeed: 0.05,   // time between frames (200ms)
           frameTimer: 0      // timer to switch frames
         });
       }
@@ -214,21 +213,26 @@ export class Engine {
           continue;
         }
 
-        // Calculate sprite frame dimensions
+        // Calculate sprite frame dimensions for fruit animation (17 frames)
         const frameWidth = img.width / fruit.frameCount;
-        const sx = frameWidth * fruit.frame;
-        const sy = 0;
-        const sWidth = frameWidth;
-        const sHeight = img.height;
+        const frameHeight = img.height;
+        
+        // Calculate source position (which frame to draw)
+        const srcX = frameWidth * fruit.frame;
+        const srcY = 0;
         
         // Calculate destination position (centered on fruit position)
         const dx = fruit.x - fruit.size / 2;
         const dy = fruit.y - fruit.size / 2;
-        const dWidth = fruit.size;
-        const dHeight = fruit.size;
 
         // Draw the animated fruit sprite
-        ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+        ctx.drawImage(
+          img,                     // source image
+          srcX, srcY,             // source x, y (frame position)
+          frameWidth, frameHeight, // source width, height
+          dx, dy,                 // destination x, y
+          fruit.size, fruit.size  // destination width, height
+        );
         
       } catch (error) {
         console.warn('Error drawing fruit:', error);

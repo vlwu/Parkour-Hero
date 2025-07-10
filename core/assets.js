@@ -3,18 +3,19 @@ export async function loadAssets() {
   const paths = {
     backgroundTile: 'assets/Background/Blue.png',
     block: 'assets/Terrain/Terrain.png',
-    playerJump: 'assets/MainCharacters/PinkMan/double_jump.png',
+    playerJump: 'assets/MainCharacters/PinkMan/jump.png',
+    playerDoubleJump: 'assets/MainCharacters/PinkMan/double_jump.png',
     playerIdle: 'assets/MainCharacters/PinkMan/idle.png',
     playerRun: 'assets/MainCharacters/PinkMan/run.png',
     playerFall: 'assets/MainCharacters/PinkMan/fall.png',
 
     // Fruit spritesheets (animated)
-    fruit_apple: 'assets/Fruits/Apple.png',
-    fruit_bananas: 'assets/Fruits/Bananas.png',
-    fruit_cherries: 'assets/Fruits/Cherries.png',
-    fruit_kiwi: 'assets/Fruits/Kiwi.png',
-    fruit_melon: 'assets/Fruits/Melon.png',
-    fruit_orange: 'assets/Fruits/Orange.png',
+    fruit_apple: 'assets/Items/Fruits/Apple.png',
+    fruit_bananas: 'assets/Items/Fruits/Bananas.png',
+    fruit_cherries: 'assets/Items/Fruits/Cherries.png',
+    fruit_kiwi: 'assets/Items/Fruits/Kiwi.png',
+    fruit_melon: 'assets/Items/Fruits/Melon.png',
+    fruit_orange: 'assets/Items/Fruits/Orange.png',
     fruit_pineapple: 'assets/Fruits/Pineapple.png',
     fruit_strawberry: 'assets/Fruits/Strawberry.png',
 
