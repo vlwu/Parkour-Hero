@@ -48,8 +48,8 @@ export async function loadAssets() {
         
         // Create a fallback colored rectangle instead of failing completely
         const fallbackCanvas = document.createElement('canvas');
-        fallbackCanvas.width = 24;
-        fallbackCanvas.height = 24;
+        fallbackCanvas.width = 32;
+        fallbackCanvas.height = 32;
         const fallbackCtx = fallbackCanvas.getContext('2d');
         
         // Different colors for different asset types

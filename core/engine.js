@@ -8,7 +8,8 @@ const FRUIT_NAMES = [
   'fruit_melon',
   'fruit_orange',
   'fruit_pineapple',
-  'fruit_strawberry'
+  'fruit_strawberry',
+  'fruit_collected' // Animation for collected fruits
 ];
 
 export class Engine {
@@ -74,21 +75,19 @@ export class Engine {
 
       // Spawn fruits randomly every 4 seconds (approx) with better timing
       const currentTime = performance.now() / 1000;
-      if (Math.floor(currentTime) % 4 === 0 && 
-          Math.floor(currentTime) !== Math.floor(currentTime - dt) && 
-          this.fruits.length < 10) {
+      if (Math.floor(currentTime) % 4 === 0 && Math.floor(currentTime) !== Math.floor(currentTime - dt) && this.fruits.length < 10) {
         
         const fruitKey = FRUIT_NAMES[Math.floor(Math.random() * FRUIT_NAMES.length)];
-
+  
         this.fruits.push({
           x: Math.random() * (this.canvas.width - 40) + 20,
           y: Math.random() * (this.canvas.height - 100) + 20, // Avoid spawning too close to ground
-          size: 28, // FRUIT SIZE - Edit this value to change fruit size
+          size: 28, // Edit this value to change fruit size
           spriteKey: fruitKey,
           frame: 0,          // current animation frame
           frameCount: 17,    // 17 frames in fruit animation
-          frameSpeed: 0.05,   // time between frames (200ms)
-          frameTimer: 0      // timer to switch frames
+          frameSpeed: 0.05,   // time between frames (50ms)
+          frameTimer: 0,      // timer to switch frames
         });
       }
 
@@ -101,6 +100,23 @@ export class Engine {
         }
       }
 
+      // Update collected fruit animations
+      this.collectedFruits = this.collectedFruits || [];
+
+      for (const collected of this.collectedFruits) {
+        collected.frameTimer += dt;
+        if (collected.frameTimer >= collected.frameSpeed) {
+          collected.frameTimer = 0;
+          collected.frame++;
+
+          // Remove when animation finishes
+          if (collected.frame >= collected.collectedFrameCount) {
+            collected.done = true;
+          }
+        }
+      }
+      this.collectedFruits = this.collectedFruits.filter(f => !f.done);
+
       // Collision detection with fruits
       this.fruits = this.fruits.filter((fruit) => {
         const dx = fruit.x - (this.player.x + this.player.width / 2);
@@ -111,8 +127,18 @@ export class Engine {
         if (collided) {
           this.fruitCount++;
           this.fruitHighScore = Math.max(this.fruitCount, this.fruitHighScore);
-          // TODO: Trigger collected animation if desired
+          
+          this.collectedFruits.push({ // Trigger collected animation
+            x: fruit.x,
+            y: fruit.y,
+            size: fruit.size,
+            frame: 0,
+            frameSpeed: 0.1,
+            frameTimer: 0,
+            collectedFrameCount: 6
+          });
           console.log(`Collected ${fruit.spriteKey}! Total: ${this.fruitCount}`);
+          
           return false; // remove fruit from array
         }
 
@@ -138,6 +164,24 @@ export class Engine {
 
       // Draw animated fruits
       this.drawFruits();
+
+      // Draw collected fruit animations
+      for (const collected of this.collectedFruits) {
+        const sprite = this.assets['fruit_collected'];
+        if (!sprite) continue;
+
+        const frameWidth = sprite.width / collected.collectedFrameCount;
+        const frameHeight = sprite.height;
+        const srcX = collected.frame * frameWidth;
+
+        this.ctx.drawImage(
+          sprite,
+          srcX, 0,
+          frameWidth, frameHeight,
+          collected.x - collected.size / 2, collected.y - collected.size / 2,
+          collected.size, collected.size
+        );
+      }
 
       // Draw HUD
       this.drawHUD();
