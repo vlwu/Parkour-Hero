@@ -85,7 +85,7 @@ export class Engine {
           spriteKey: fruitKey,
           frame: 0,          // current animation frame
           frameCount: 17,    // 17 frames in fruit animation
-          frameSpeed: 0.05,   // time between frames (50ms)
+          frameSpeed: 0.07,   // time between frames (in ms)
           frameTimer: 0,      // timer to switch frames
         });
       }
@@ -291,26 +291,45 @@ export class Engine {
 
   drawHUD() {
     const { ctx } = this;
-    
+
     try {
-      // Draw semi-transparent background for HUD
+      // HUD box settings
+      const hudX = 10;
+      const hudY = 10;
+      const hudWidth = 200;
+      const hudHeight = 60;
+
+      // Draw semi-transparent HUD background
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(10, 10, 200, 60);
-      
-      // Draw text with outline for better visibility
+      ctx.fillRect(hudX, hudY, hudWidth, hudHeight);
+
+      // Text style
+      ctx.font = '20px sans-serif';
       ctx.strokeStyle = 'black';
       ctx.lineWidth = 2;
       ctx.fillStyle = 'white';
-      ctx.font = '20px sans-serif';
-      
-      // Fruit count
-      ctx.strokeText(`Fruits: ${this.fruitCount}`, 20, 30);
-      ctx.fillText(`Fruits: ${this.fruitCount}`, 20, 30);
-      
-      // High score
-      ctx.strokeText(`High Score: ${this.fruitHighScore}`, 20, 55);
-      ctx.fillText(`High Score: ${this.fruitHighScore}`, 20, 55);
-      
+
+      // Text lines
+      const lines = [
+        `Fruits: ${this.fruitCount}`,
+        `High Score: ${this.fruitHighScore}`
+      ];
+
+      // Line height and top offset to vertically center within the box
+      const lineHeight = 24;
+      const totalTextHeight = lines.length * lineHeight;
+      const startY = hudY + (hudHeight - totalTextHeight) / 2 + lineHeight - 6;
+
+      // X-position to left-align nicely with some margin
+      const textX = hudX + hudWidth / 2;
+
+      // Draw each line
+      lines.forEach((text, index) => {
+        const y = startY + index * lineHeight;
+        ctx.strokeText(text, textX, y);
+        ctx.fillText(text, textX, y);
+      });
+
     } catch (error) {
       console.warn('Error drawing HUD:', error);
     }
