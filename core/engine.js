@@ -327,7 +327,7 @@ export class Engine {
       const totalFruits = this.currentLevel.fruits.length;
       const collectedFruits = this.currentLevel.getFruitCount();
       const lines = [
-        `Level: ${this.currentLevel.name}`,
+        `${this.currentLevel.name}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
         `High Score: ${this.fruitHighScore}`
       ];

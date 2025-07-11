@@ -48,27 +48,17 @@ export class Platform {
       }
       
       const config = this.spriteConfig[this.terrainType];
-      const tilesNeeded = Math.ceil(this.width / this.tileSize);
-      
-      // Draw repeated tiles across the platform width
-      for (let i = 0; i < tilesNeeded; i++) {
-        const tileX = this.x + (i * this.tileSize);
-        const tileWidth = Math.min(this.tileSize, this.width - (i * this.tileSize));
-        
+      const fullTiles = Math.floor(this.width / this.tileSize);
+
+      for (let i = 0; i < fullTiles; i++) {
+        const tileX = this.x + i * this.tileSize;
         ctx.drawImage(
           terrainSprite,
-          config.srcX, config.srcY,           // Source position in spritesheet
-          tileWidth, this.tileSize,           // Source dimensions
-          tileX, this.y,                      // Destination position
-          tileWidth, this.height              // Destination dimensions
+          config.srcX, config.srcY,
+          this.tileSize, this.tileSize, // Source tile is always full
+          tileX, this.y,
+          this.tileSize, this.tileSize  // Draw full tile
         );
-      }
-      
-      // Debug outline (remove in production)
-      if (false) {
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
       }
       
     } catch (error) {
@@ -144,22 +134,22 @@ export class Level {
     });
   }
   
-  // NEW: Get only active (uncollected) fruits
+  // Get only active (uncollected) fruits
   getActiveFruits() {
     return this.fruits.filter(fruit => !fruit.collected);
   }
   
-  // NEW: Get count of collected fruits
+  // Get count of collected fruits
   getFruitCount() {
     return this.fruits.filter(fruit => fruit.collected).length;
   }
   
-  // NEW: Get total fruit count
+  // Get total fruit count
   getTotalFruitCount() {
     return this.fruits.length;
   }
   
-  // NEW: Check if all fruits are collected
+  // Check if all fruits are collected
   allFruitsCollected() {
     return this.fruits.every(fruit => fruit.collected);
   }
@@ -197,7 +187,7 @@ export class Level {
   }
   
   renderTrophy(ctx, assets) {
-    // Simple trophy rendering - you can replace with sprite when available
+    // TODO: replace with sprite when available
     ctx.fillStyle = 'gold';
     ctx.beginPath();
     ctx.arc(this.trophy.x, this.trophy.y, this.trophy.size / 2, 0, Math.PI * 2);
@@ -227,7 +217,7 @@ export class Level {
   }
 }
 
-// UPDATED: Enhanced level creation with more fruits
+// Enhanced level creation with more fruits
 export function createLevel1() {
   const level = new Level("Level 1");
   
@@ -259,7 +249,7 @@ export function createLevel1() {
   return level;
 }
 
-// NEW: Function to create additional levels
+// Function to create additional levels
 export function createLevel2() {
   const level = new Level("Level 2");
   
