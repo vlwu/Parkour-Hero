@@ -1,6 +1,8 @@
 import { Player } from '../entities/player.js';
-import { createLevel1 } from '../entities/platform.js'; // Add this import
+import { createLevel, levelData } from '../entities/platform.js'; // Updated import
 
+// FRUIT_NAMES is no longer strictly necessary here as fruit types come from levelData,
+// but keeping it for reference or if it's used elsewhere.
 const FRUIT_NAMES = [
   'fruit_apple',
   'fruit_bananas',
@@ -20,21 +22,24 @@ export class Engine {
     this.lastFrameTime = 0;
     this.keys = {};
 
-    // NEW: Initialize level system
-    this.currentLevel = createLevel1();
-    this.fruits = [...this.currentLevel.fruits]; // Copy fruits from level
-    this.fruitCount = 0;
+    // Initialize level system using the first level from levelData
+    // You can change `levelData[0]` to load a different level by default
+    this.currentLevel = createLevel(levelData[0]);
+    // The fruits array in Engine should now directly reference the level's fruits
+    this.fruits = this.currentLevel.fruits;
+    this.fruitCount = 0; // This will now track collected fruits for the current level
     this.collectedFruits = []; // For collected fruit animations
+    this.fruitHighScore = 0; // Initialize high score for fruits
 
     // Initialize player with assets and level starting position
     this.player = new Player(
-      this.currentLevel.startPosition.x, 
-      this.currentLevel.startPosition.y, 
+      this.currentLevel.startPosition.x,
+      this.currentLevel.startPosition.y,
       this.assets
     );
 
     this.initInput();
-    
+
     // Log successful initialization for debugging
     console.log('Engine initialized successfully');
     console.log('Available assets:', Object.keys(this.assets));
@@ -82,21 +87,13 @@ export class Engine {
       this.player.handleInput(this.keys);
       this.player.update(dt, this.canvas.height, this.currentLevel);
 
-      // NEW: Update level fruits animation
+      // Update level fruits animation (managed by Level class)
       this.currentLevel.updateFruits(dt);
+      // Update trophy animation (managed by Level class)
+      this.currentLevel.updateTrophyAnimation(dt);
 
-      // Update fruits animation frames - NOW ONLY for active fruits
-      for (const fruit of this.fruits) {
-        if (!fruit.collected) {
-          fruit.frameTimer += dt;
-          if (fruit.frameTimer >= fruit.frameSpeed) {
-            fruit.frameTimer = 0;
-            fruit.frame = (fruit.frame + 1) % fruit.frameCount;
-          }
-        }
-      }
 
-      // Update collected fruit animations
+      // Update collected fruit animations (these are separate visual effects)
       this.collectedFruits = this.collectedFruits || [];
 
       for (const collected of this.collectedFruits) {
@@ -114,8 +111,9 @@ export class Engine {
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
 
       // Update collision detection to mark fruits as collected in level
-      this.fruits = this.fruits.filter((fruit) => {
-        if (fruit.collected) return false; // Skip already collected fruits
+      // Iterate over a copy to safely modify the original array during filtering
+      this.currentLevel.fruits = this.currentLevel.fruits.filter((fruit) => {
+        if (fruit.collected) return true; // Keep already collected fruits in the level's array
 
         const dx = fruit.x - (this.player.x + this.player.width / 2);
         const dy = fruit.y - (this.player.y + this.player.height / 2);
@@ -124,9 +122,10 @@ export class Engine {
 
         if (collided) {
           fruit.collected = true; // Mark as collected in level
-          this.fruitCount++;
-          this.fruitHighScore = Math.max(this.fruitCount, this.fruitHighScore);
-          
+          // The fruitCount is now derived from the level itself
+          // this.fruitCount++; // No longer needed here, Level.getFruitCount() handles it
+          // this.fruitHighScore = Math.max(this.currentLevel.getFruitCount(), this.fruitHighScore); // Update high score based on level's count
+
           this.collectedFruits.push({ // Trigger collected animation
             x: fruit.x,
             y: fruit.y,
@@ -136,18 +135,36 @@ export class Engine {
             frameTimer: 0,
             collectedFrameCount: 6
           });
-          console.log(`Collected ${fruit.spriteKey}! Total: ${this.fruitCount}`);
-          
-          return false; // remove fruit from active array
+          console.log(`Collected ${fruit.spriteKey}! Total: ${this.currentLevel.getFruitCount()}`);
+
+          return true; // Keep the fruit in the level's array, just mark it collected
         }
 
-        return true;
+        return true; // Keep uncollected fruits
       });
 
-      // NEW: Check if level is completed
+      // Check for trophy collision
+      const trophy = this.currentLevel.trophy;
+      if (trophy && !trophy.acquired) {
+        const dx = trophy.x - (this.player.x + this.player.width / 2);
+        const dy = trophy.y - (this.player.y + this.player.height / 2);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const collided = distance < (trophy.size / 2 + this.player.width / 2);
+
+        if (collided) {
+          trophy.acquired = true;
+          console.log('Trophy acquired!');
+        }
+      }
+
+      // Check if level is completed
       if (this.currentLevel.isCompleted()) {
         console.log('Level completed!');
-        // TODO: Handle level completion (load next level, show completion screen, etc.)
+        // TODO: Handle level completion (e.g., load next level, show completion screen)
+        // For now, let's just reset the level for demonstration
+        // this.currentLevel.reset();
+        // this.player.x = this.currentLevel.startPosition.x;
+        // this.player.y = this.currentLevel.startPosition.y;
       }
 
     } catch (error) {
@@ -158,22 +175,20 @@ export class Engine {
   render() {
     try {
       const { ctx, canvas, assets } = this;
-      
+
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw tiled background with proper error handling
+      // Draw tiled background
       this.drawBackground();
 
-      this.currentLevel.render(this.ctx, this.assets);
-
-      // NEW: Render level platforms
+      // Render level platforms and trophy (handled by Level.render)
       this.currentLevel.render(ctx, assets);
 
       // Draw player
       this.player.render(ctx);
 
-      // Draw animated fruits (only active ones)
+      // Draw animated fruits (only active ones from the level)
       this.drawFruits();
 
       // Draw collected fruit animations
@@ -194,8 +209,6 @@ export class Engine {
         );
       }
 
-      // Draw collected trophy animation
-
       // Draw HUD
       this.drawHUD();
 
@@ -211,7 +224,7 @@ export class Engine {
   drawBackground() {
     const { ctx, canvas, assets } = this;
     const bg = assets.backgroundTile;
-    
+
     // Check if background asset loaded successfully
     if (!bg) {
       console.warn('Background tile not loaded, using fallback');
@@ -227,11 +240,11 @@ export class Engine {
     // Background sprite sheet info - Blue.png is typically 64x64 with blue tile at position 0,0
     const spriteSize = 64;    // Each tile in the sprite sheet is 64x64
     const tileSize = 64;      // Size to draw each tile on screen
-    
+
     // Source coordinates for the blue tile (usually top-left of sprite sheet)
     const srcX = 0;
     const srcY = 0;
-    
+
     // Draw tiled background covering the entire canvas
     for (let x = 0; x < canvas.width; x += tileSize) {
       for (let y = 0; y < canvas.height; y += tileSize) {
@@ -241,7 +254,7 @@ export class Engine {
             bg,                    // source image
             srcX, srcY,           // source x, y (position in sprite sheet)
             spriteSize, spriteSize, // source width, height
-            x, y,                 // destination x, y
+            x, y,                 // destination x, height
             tileSize, tileSize    // destination width, height
           );
         } catch (error) {
@@ -256,14 +269,14 @@ export class Engine {
 
   drawFruits() {
     const { ctx, assets } = this;
-    
-    // CHANGE: Only draw fruits that haven't been collected
-    for (const fruit of this.fruits) {
+
+    // Iterate over the level's fruits, drawing only uncollected ones
+    for (const fruit of this.currentLevel.fruits) {
       if (fruit.collected) continue; // Skip collected fruits
 
       try {
         const img = assets[fruit.spriteKey];
-        
+
         if (!img) {
           console.warn(`Fruit sprite ${fruit.spriteKey} not loaded`);
           // Fallback: draw a colored circle
@@ -277,11 +290,11 @@ export class Engine {
         // Calculate sprite frame dimensions for fruit animation (17 frames)
         const frameWidth = img.width / fruit.frameCount;
         const frameHeight = img.height;
-        
+
         // Calculate source position (which frame to draw)
         const srcX = frameWidth * fruit.frame;
         const srcY = 0;
-        
+
         // Calculate destination position (centered on fruit position)
         const dx = fruit.x - fruit.size / 2;
         const dy = fruit.y - fruit.size / 2;
@@ -294,7 +307,7 @@ export class Engine {
           dx, dy,                 // destination x, y
           fruit.size, fruit.size  // destination width, height
         );
-        
+
       } catch (error) {
         console.warn('Error drawing fruit:', error);
         // Fallback: draw a simple circle
@@ -326,9 +339,9 @@ export class Engine {
       ctx.lineWidth = 2;
       ctx.fillStyle = 'white';
 
-      // NEW: Text lines with level info
-      const totalFruits = this.currentLevel.fruits.length;
-      const collectedFruits = this.currentLevel.getFruitCount();
+      // Text lines with level info
+      const totalFruits = this.currentLevel.getTotalFruitCount(); // Use Level method
+      const collectedFruits = this.currentLevel.getFruitCount();   // Use Level method
       const lines = [
         `${this.currentLevel.name}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,

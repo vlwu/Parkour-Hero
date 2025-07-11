@@ -5,17 +5,17 @@ export class Platform {
     this.width = width;
     this.height = height;
     this.terrainType = terrainType; // 'dirt', 'stone', 'wood'
-    
+
     // Sprite sheet configuration for terrain tiles
     this.spriteConfig = {
       dirt: { srcX: 96, srcY: 0 },      // Dirt tile at top-left
       stone: { srcX: 0, srcY: 0 },    // Stone tile next to dirt
       wood: { srcX: 0, srcY: 64 }     // Wood tile next to stone
     };
-    
+
     this.tileSize = 48; // Size of each tile in the spritesheet
   }
-  
+
   // Check if a point or rectangle collides with this platform
   collidesWith(x, y, width = 0, height = 0) {
     return x < this.x + this.width &&
@@ -23,29 +23,29 @@ export class Platform {
            y < this.y + this.height &&
            y + height > this.y;
   }
-  
+
   // Check if the player is standing on top of this platform
   isPlayerOnTop(player) {
     const playerBottom = player.y + player.height;
     const platformTop = this.y;
-    
+
     // Player must be above the platform and within horizontal bounds
     return playerBottom >= platformTop &&
            playerBottom <= platformTop + 10 && // Allow some tolerance
            player.x + player.width > this.x &&
            player.x < this.x + this.width;
   }
-  
+
   render(ctx, assets) {
     try {
       const terrainSprite = assets.block;
-      
+
       if (!terrainSprite) {
         // Fallback rendering if sprite not available
         this.renderFallback(ctx);
         return;
       }
-      
+
       const config = this.spriteConfig[this.terrainType];
       const fullTiles = Math.floor(this.width / this.tileSize);
 
@@ -59,13 +59,13 @@ export class Platform {
           this.tileSize, this.tileSize  // Draw full tile
         );
       }
-      
+
     } catch (error) {
       console.warn('Error rendering platform:', error);
       this.renderFallback(ctx);
     }
   }
-  
+
   renderFallback(ctx) {
     // Simple colored rectangle fallback
     const colors = {
@@ -73,7 +73,7 @@ export class Platform {
       stone: '#696969',   // Gray
       wood: '#D2691E'     // Orange-brown
     };
-    
+
     ctx.fillStyle = colors[this.terrainType] || '#808080';
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
@@ -90,13 +90,13 @@ export class Level {
     this.completed = false;
     this.startPosition = { x: 100, y: 300 }; // Default player starting position
   }
-  
+
   addPlatform(x, y, width, height, terrainType = 'dirt') {
     const platform = new Platform(x, y, width, height, terrainType);
     this.platforms.push(platform);
     return platform;
   }
-  
+
   addFruit(x, y, fruitType) {
     this.fruits.push({
       x: x,
@@ -110,7 +110,7 @@ export class Level {
       collected: false
     });
   }
-  
+
   setTrophy(x, y) {
     this.trophy = {
       x: x,
@@ -123,7 +123,7 @@ export class Level {
       acquired: false,
     };
   }
-  
+
   // Method to update fruit animations
   updateFruits(dt) {
     this.fruits.forEach(fruit => {
@@ -136,27 +136,27 @@ export class Level {
       }
     });
   }
-  
+
   // Get only active (uncollected) fruits
   getActiveFruits() {
     return this.fruits.filter(fruit => !fruit.collected);
   }
-  
+
   // Get count of collected fruits
   getFruitCount() {
     return this.fruits.filter(fruit => fruit.collected).length;
   }
-  
+
   // Get total fruit count
   getTotalFruitCount() {
     return this.fruits.length;
   }
-  
+
   // Check if all fruits are collected
   allFruitsCollected() {
     return this.fruits.every(fruit => fruit.collected);
   }
-  
+
   checkCollisionWithPlatforms(player) {
     for (const platform of this.platforms) {
       if (platform.collidesWith(player.x, player.y, player.width, player.height)) {
@@ -165,10 +165,10 @@ export class Level {
     }
     return null;
   }
-  
+
   checkGroundCollision(player) {
     const playerBottom = player.y + player.height;
-    
+
     for (const platform of this.platforms) {
       if (platform.isPlayerOnTop(player)) {
         return platform;
@@ -189,7 +189,7 @@ export class Level {
       this.renderTrophy(ctx, assets);
     }
   }
-  
+
   renderTrophy(ctx, assets) {
     const trophy = this.trophy;
     const spriteKey = 'trophy';
@@ -230,17 +230,17 @@ export class Level {
     if (trophy.animationTimer >= trophy.animationSpeed && !trophy.acquired) {
       trophy.animationTimer = 0;
       trophy.animationFrame = (trophy.animationFrame + 1) % trophy.frameCount; // 8 frames in the sprite sheet
-    } 
+    }
   }
-  
+
   isCompleted() {
     // Level is completed when all fruits are collected and trophy is obtained
     const allFruitsCollected = this.fruits.every(fruit => fruit.collected);
     const trophyCollected = this.trophy ? this.trophy.acquired : true;
-    
+
     return allFruitsCollected && trophyCollected;
   }
-  
+
   // Reset level (useful for restarting)
   reset() {
     this.fruits.forEach(fruit => fruit.collected = false);
@@ -251,56 +251,77 @@ export class Level {
   }
 }
 
-// TODO: make a createLevel function to generate levels dynamically
-export function createLevel1() { // Level 1
-  const level = new Level("Level 1");
-  
-  // Set player starting position
-  level.startPosition = { x: 50, y: 300 };
-  
-  level.addPlatform(0, 400, 192, 48, 'dirt');        // Starting platform
-  level.addPlatform(300, 350, 144, 48, 'wood');      // First jump
-  level.addPlatform(550, 300, 96, 48, 'stone');     // Higher platform
-  level.addPlatform(750, 250, 192, 48, 'dirt');      // Even higher
-  level.addPlatform(1050, 200, 144, 48, 'wood');     // Final platform
-  
-  level.addFruit(100, 350, 'fruit_apple');     // On starting platform
-  level.addFruit(375, 300, 'fruit_bananas');   // On first jump platform
-  level.addFruit(600, 250, 'fruit_cherries');  // On higher platform
-  level.addFruit(850, 200, 'fruit_kiwi');      // On even higher platform
-  level.addFruit(1000, 150, 'fruit_melon');    // On final platform
-  
-  level.addFruit(225, 320, 'fruit_orange');    // Between platforms
-  level.addFruit(475, 270, 'fruit_pineapple'); // Between platforms
-  level.addFruit(675, 220, 'fruit_strawberry'); // Between platforms
-  
-  level.setTrophy(1125, 184); // Add trophy at the end
-  
-  return level;
-}
+// Define level data as an array of objects
+export const levelData = [
+  {
+    name: "Level 1: The Basics",
+    startPosition: { x: 50, y: 300 },
+    platforms: [
+      { x: 0, y: 400, width: 192, height: 48, terrainType: 'dirt' },
+      { x: 300, y: 350, width: 144, height: 48, terrainType: 'wood' },
+      { x: 550, y: 300, width: 96, height: 48, terrainType: 'stone' },
+      { x: 750, y: 250, width: 192, height: 48, terrainType: 'dirt' },
+      { x: 1050, y: 200, width: 144, height: 48, terrainType: 'wood' }
+    ],
+    fruits: [
+      { x: 100, y: 350, fruitType: 'fruit_apple' },
+      { x: 375, y: 300, fruitType: 'fruit_bananas' },
+      { x: 600, y: 250, fruitType: 'fruit_cherries' },
+      { x: 850, y: 200, fruitType: 'fruit_kiwi' },
+      { x: 1000, y: 150, fruitType: 'fruit_melon' },
+      { x: 225, y: 320, fruitType: 'fruit_orange' },
+      { x: 475, y: 270, fruitType: 'fruit_pineapple' },
+      { x: 675, y: 220, fruitType: 'fruit_strawberry' }
+    ],
+    trophy: { x: 1125, y: 184 }
+  },
+  {
+    name: "Level 2: Rocky Ascent",
+    startPosition: { x: 50, y: 350 },
+    platforms: [
+      { x: 0, y: 450, width: 150, height: 48, terrainType: 'stone' },
+      { x: 200, y: 400, width: 100, height: 48, terrainType: 'wood' },
+      { x: 400, y: 350, width: 80, height: 48, terrainType: 'dirt' },
+      { x: 600, y: 300, width: 120, height: 48, terrainType: 'stone' },
+      { x: 800, y: 250, width: 100, height: 48, terrainType: 'wood' },
+      { x: 1000, y: 200, width: 200, height: 48, terrainType: 'dirt' }
+    ],
+    fruits: [
+      { x: 75, y: 400, fruitType: 'fruit_apple' },
+      { x: 250, y: 350, fruitType: 'fruit_bananas' },
+      { x: 440, y: 300, fruitType: 'fruit_cherries' },
+      { x: 660, y: 250, fruitType: 'fruit_kiwi' },
+      { x: 850, y: 200, fruitType: 'fruit_melon' },
+      { x: 1100, y: 150, fruitType: 'fruit_orange' }
+    ],
+    trophy: { x: 1100, y: 150 }
+  }
+  // Add more level data objects here for new levels
+];
 
-export function createLevel2() { // Level 2
-  const level = new Level("Level 2");
-  
-  level.startPosition = { x: 50, y: 350 };
-  
-  // More challenging platform layout
-  level.addPlatform(0, 450, 150, 48, 'stone');
-  level.addPlatform(200, 400, 100, 48, 'wood');
-  level.addPlatform(400, 350, 80, 48, 'dirt');
-  level.addPlatform(600, 300, 120, 48, 'stone');
-  level.addPlatform(800, 250, 100, 48, 'wood');
-  level.addPlatform(1000, 200, 200, 48, 'dirt');
-  
-  // Strategic fruit placement
-  level.addFruit(75, 400, 'fruit_apple');
-  level.addFruit(250, 350, 'fruit_bananas');
-  level.addFruit(440, 300, 'fruit_cherries');
-  level.addFruit(660, 250, 'fruit_kiwi');
-  level.addFruit(850, 200, 'fruit_melon');
-  level.addFruit(1100, 150, 'fruit_orange');
-  
-  level.setTrophy(1100, 150);
-  
+/**
+ * Creates a Level object from a level configuration object.
+ * @param {object} levelConfig - The configuration object for the level.
+ * @returns {Level} The constructed Level object.
+ */
+export function createLevel(levelConfig) {
+  const level = new Level(levelConfig.name, levelConfig.backgrounds);
+  level.startPosition = { ...levelConfig.startPosition }; // Deep copy start position
+
+  // Add platforms based on configuration
+  levelConfig.platforms.forEach(p => {
+    level.addPlatform(p.x, p.y, p.width, p.height, p.terrainType);
+  });
+
+  // Add fruits based on configuration
+  levelConfig.fruits.forEach(f => {
+    level.addFruit(f.x, f.y, f.fruitType);
+  });
+
+  // Set trophy based on configuration
+  if (levelConfig.trophy) {
+    level.setTrophy(levelConfig.trophy.x, levelConfig.trophy.y);
+  }
+
   return level;
 }
