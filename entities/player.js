@@ -310,7 +310,6 @@ export class Player {
   }
 
   isCollidingWith(platform) {
-    if (platform.width < 48 || platform.height < 48) return false; // Ignore trimmed tiles
     return this.x < platform.x + platform.width &&
            this.x + this.width > platform.x &&
            this.y < platform.y + platform.height &&
@@ -351,30 +350,22 @@ export class Player {
       }
 
       // Draw the specific frame from the sprite sheet
+      let drawOffsetX = 0;
+      const clingOffset = 2.5; // adjust as needed
+      if (this.state === 'cling') {
+        drawOffsetX = this.direction === 'right' ? clingOffset : -clingOffset;
+      }
+
       ctx.drawImage(
         sprite,                    // source image
         srcX, srcY,               // source x, y (frame position)
         frameWidth, frameHeight,   // source width, height
-        0, 0,                     // destination x, y (relative to translation)
+        drawOffsetX, 0,                     // destination x, y (relative to translation)
         this.width, this.height   // destination width, height
       );
 
       // Restore context
       ctx.restore();
-
-      // Debug info (optional - remove in production)
-      if (false) { // Set to true for debugging
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
-        
-        ctx.fillStyle = 'white';
-        ctx.font = '12px sans-serif';
-        ctx.fillText(`State: ${this.state}`, this.x, this.y - 5);
-        ctx.fillText(`Frame: ${this.animationFrame}/${this.animationFrames[this.state]}`, this.x, this.y - 20);
-        ctx.fillText(`Vel: ${Math.round(this.vx)},${Math.round(this.vy)}`, this.x, this.y - 35);
-        ctx.fillText(`OnGround: ${this.onGround}`, this.x, this.y - 50);
-      }
 
     } catch (error) {
       console.error('Error rendering player:', error);
@@ -430,15 +421,5 @@ export class Player {
 
   getCenterY() {
     return this.y + this.height / 2;
-  }
-
-  // Helper method to get player bounds for collision detection
-  getBounds() {
-    return {
-      left: this.x,
-      right: this.x + this.width,
-      top: this.y,
-      bottom: this.y + this.height
-    };
   }
 }
