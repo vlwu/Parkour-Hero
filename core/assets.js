@@ -9,6 +9,7 @@ export async function loadAssets() {
     playerRun: 'assets/MainCharacters/PinkMan/run.png',
     playerFall: 'assets/MainCharacters/PinkMan/fall.png',
     playerDash: 'assets/MainCharacters/PinkMan/dash.png',
+    playerCling: 'assets/MainCharacters/PinkMan/wall_jump.png',
 
     // Fruit spritesheets (animated)
     fruit_apple: 'assets/Items/Fruits/Apple.png',

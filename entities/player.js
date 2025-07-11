@@ -35,7 +35,8 @@ export class Player {
       double_jump: 6,
       jump: 1,
       fall: 1,
-      dash: 1
+      dash: 1,
+      cling: 5,
     };
     
     // Physics constants
@@ -365,6 +366,8 @@ export class Player {
         return 'playerRun';
       case 'dash':
         return 'playerDash';
+      case 'cling':
+        return 'playerCling';
       case 'idle':
       default:
         return 'playerIdle';
