@@ -1,4 +1,5 @@
 import { Player } from '../entities/player.js';
+import { createLevel1 } from '../entities/platform.js'; // Add this import
 
 const FRUIT_NAMES = [
   'fruit_apple',
@@ -18,18 +19,28 @@ export class Engine {
     this.assets = assets;
     this.lastFrameTime = 0;
     this.keys = {};
-    this.fruits = [];
+
+    // NEW: Initialize level system
+    this.currentLevel = createLevel1();
+    this.fruits = [...this.currentLevel.fruits]; // Copy fruits from level
     this.fruitCount = 0;
     this.fruitHighScore = 0;
+    this.collectedFruits = []; // For collected fruit animations
 
-    // Initialize player with assets
-    this.player = new Player(250, 350, this.assets);
+    // Initialize player with assets and level starting position
+    this.player = new Player(
+      this.currentLevel.startPosition.x, 
+      this.currentLevel.startPosition.y, 
+      this.assets
+    );
 
     this.initInput();
     
     // Log successful initialization for debugging
     console.log('Engine initialized successfully');
     console.log('Available assets:', Object.keys(this.assets));
+    console.log('Level loaded:', this.currentLevel.name);
+    console.log('Fruits in level:', this.fruits.length);
   }
 
   initInput() {
@@ -72,30 +83,17 @@ export class Engine {
       this.player.handleInput(this.keys);
       this.player.update(dt, this.canvas.height);
 
-      // Spawn fruits randomly every 4 seconds (approx) with better timing
-      const currentTime = performance.now() / 1000;
-      if (Math.floor(currentTime) % 4 === 0 && Math.floor(currentTime) !== Math.floor(currentTime - dt) && this.fruits.length < 10) {
-        
-        const fruitKey = FRUIT_NAMES[Math.floor(Math.random() * FRUIT_NAMES.length)];
-  
-        this.fruits.push({
-          x: Math.random() * (this.canvas.width - 40) + 20,
-          y: Math.random() * (this.canvas.height - 100) + 20, // Avoid spawning too close to ground
-          size: 28, // Edit this value to change fruit size
-          spriteKey: fruitKey,
-          frame: 0,          // current animation frame
-          frameCount: 17,    // 17 frames in fruit animation
-          frameSpeed: 0.07,   // time between frames (in ms)
-          frameTimer: 0,      // timer to switch frames
-        });
-      }
+      // NEW: Update level fruits animation
+      this.currentLevel.updateFruits(dt);
 
-      // Update fruits animation frames
+      // Update fruits animation frames - NOW ONLY for active fruits
       for (const fruit of this.fruits) {
-        fruit.frameTimer += dt;
-        if (fruit.frameTimer >= fruit.frameSpeed) {
-          fruit.frameTimer = 0;
-          fruit.frame = (fruit.frame + 1) % fruit.frameCount;
+        if (!fruit.collected) {
+          fruit.frameTimer += dt;
+          if (fruit.frameTimer >= fruit.frameSpeed) {
+            fruit.frameTimer = 0;
+            fruit.frame = (fruit.frame + 1) % fruit.frameCount;
+          }
         }
       }
 
@@ -116,14 +114,17 @@ export class Engine {
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
 
-      // Collision detection with fruits
+      // CHANGE: Update collision detection to mark fruits as collected in level
       this.fruits = this.fruits.filter((fruit) => {
+        if (fruit.collected) return false; // Skip already collected fruits
+
         const dx = fruit.x - (this.player.x + this.player.width / 2);
         const dy = fruit.y - (this.player.y + this.player.height / 2);
         const distance = Math.sqrt(dx * dx + dy * dy);
         const collided = distance < (fruit.size / 2 + this.player.width / 2);
 
         if (collided) {
+          fruit.collected = true; // Mark as collected in level
           this.fruitCount++;
           this.fruitHighScore = Math.max(this.fruitCount, this.fruitHighScore);
           
@@ -138,11 +139,18 @@ export class Engine {
           });
           console.log(`Collected ${fruit.spriteKey}! Total: ${this.fruitCount}`);
           
-          return false; // remove fruit from array
+          return false; // remove fruit from active array
         }
 
         return true;
       });
+
+      // NEW: Check if level is completed
+      if (this.currentLevel.isCompleted()) {
+        console.log('Level completed!');
+        // TODO: Handle level completion (load next level, show completion screen, etc.)
+      }
+
     } catch (error) {
       console.error('Error in update loop:', error);
     }
@@ -158,10 +166,13 @@ export class Engine {
       // Draw tiled background with proper error handling
       this.drawBackground();
 
+      // NEW: Render level platforms
+      this.currentLevel.render(ctx, assets);
+
       // Draw player
       this.player.render(ctx);
 
-      // Draw animated fruits
+      // Draw animated fruits (only active ones)
       this.drawFruits();
 
       // Draw collected fruit animations
@@ -243,7 +254,10 @@ export class Engine {
   drawFruits() {
     const { ctx, assets } = this;
     
+    // CHANGE: Only draw fruits that haven't been collected
     for (const fruit of this.fruits) {
+      if (fruit.collected) continue; // Skip collected fruits
+
       try {
         const img = assets[fruit.spriteKey];
         
@@ -296,27 +310,30 @@ export class Engine {
       // HUD box settings
       const hudX = 10;
       const hudY = 10;
-      const hudWidth = 200;
-      const hudHeight = 60;
+      const hudWidth = 280; // Made wider for more info
+      const hudHeight = 80;  // Made taller for level info
 
       // Draw semi-transparent HUD background
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.fillRect(hudX, hudY, hudWidth, hudHeight);
 
       // Text style
-      ctx.font = '20px sans-serif';
+      ctx.font = '18px sans-serif';
       ctx.strokeStyle = 'black';
       ctx.lineWidth = 2;
       ctx.fillStyle = 'white';
 
-      // Text lines
+      // NEW: Text lines with level info
+      const totalFruits = this.currentLevel.fruits.length;
+      const collectedFruits = this.currentLevel.getFruitCount();
       const lines = [
-        `Fruits: ${this.fruitCount}`,
+        `Level: ${this.currentLevel.name}`,
+        `Fruits: ${collectedFruits}/${totalFruits}`,
         `High Score: ${this.fruitHighScore}`
       ];
 
       // Line height and top offset to vertically center within the box
-      const lineHeight = 24;
+      const lineHeight = 22;
       const totalTextHeight = lines.length * lineHeight;
       const startY = hudY + (hudHeight - totalTextHeight) / 2 + lineHeight - 6;
 

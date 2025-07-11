@@ -19,9 +19,11 @@ export async function loadAssets() {
     fruit_orange: 'assets/Items/Fruits/Orange.png',
     fruit_pineapple: 'assets/Items/Fruits/Pineapple.png',
     fruit_strawberry: 'assets/Items/Fruits/Strawberry.png',
+    fruit_collected: 'assets/Items/Fruits/Collected.png',  // Collected animation (applies to all fruits)
 
-    // Collected animation (applies to all fruits)
-    fruit_collected: 'assets/Items/Fruits/Collected.png'
+    // Menu items
+    settings_button: 'assets/Menu/Buttons/Settings.png',
+    close_button: 'assets/Menu/Buttons/Close.png',
   };
 
   console.log('Starting asset loading...');

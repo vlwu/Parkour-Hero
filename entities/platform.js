@@ -131,6 +131,39 @@ export class Level {
     };
   }
   
+  // NEW: Method to update fruit animations
+  updateFruits(dt) {
+    this.fruits.forEach(fruit => {
+      if (!fruit.collected) {
+        fruit.frameTimer += dt;
+        if (fruit.frameTimer >= fruit.frameSpeed) {
+          fruit.frameTimer = 0;
+          fruit.frame = (fruit.frame + 1) % fruit.frameCount;
+        }
+      }
+    });
+  }
+  
+  // NEW: Get only active (uncollected) fruits
+  getActiveFruits() {
+    return this.fruits.filter(fruit => !fruit.collected);
+  }
+  
+  // NEW: Get count of collected fruits
+  getFruitCount() {
+    return this.fruits.filter(fruit => fruit.collected).length;
+  }
+  
+  // NEW: Get total fruit count
+  getTotalFruitCount() {
+    return this.fruits.length;
+  }
+  
+  // NEW: Check if all fruits are collected
+  allFruitsCollected() {
+    return this.fruits.every(fruit => fruit.collected);
+  }
+  
   checkCollisionWithPlatforms(player) {
     for (const platform of this.platforms) {
       if (platform.collidesWith(player.x, player.y, player.width, player.height)) {
@@ -183,9 +216,18 @@ export class Level {
     
     return allFruitsCollected && trophyCollected;
   }
+  
+  // NEW: Reset level (useful for restarting)
+  reset() {
+    this.fruits.forEach(fruit => fruit.collected = false);
+    if (this.trophy) {
+      this.trophy.collected = false;
+    }
+    this.completed = false;
+  }
 }
 
-// Example level creation
+// UPDATED: Enhanced level creation with more fruits
 export function createLevel1() {
   const level = new Level("Level 1");
   
@@ -199,13 +241,47 @@ export function createLevel1() {
   level.addPlatform(750, 250, 200, 64, 'dirt');      // Even higher
   level.addPlatform(1050, 200, 150, 64, 'wood');     // Final platform
   
-  // Add some fruits to collect
-  level.addFruit(350, 300, 'fruit_apple');
-  level.addFruit(600, 250, 'fruit_bananas');
-  level.addFruit(800, 200, 'fruit_cherries');
+  // Add more fruits strategically placed throughout the level
+  level.addFruit(100, 350, 'fruit_apple');     // On starting platform
+  level.addFruit(375, 300, 'fruit_bananas');   // On first jump platform
+  level.addFruit(600, 250, 'fruit_cherries');  // On higher platform
+  level.addFruit(850, 200, 'fruit_kiwi');      // On even higher platform
+  level.addFruit(1125, 150, 'fruit_melon');    // On final platform
+  
+  // Optional: Add some floating fruits for extra challenge
+  level.addFruit(225, 320, 'fruit_orange');    // Between platforms
+  level.addFruit(475, 270, 'fruit_pineapple'); // Between platforms
+  level.addFruit(675, 220, 'fruit_strawberry'); // Between platforms
   
   // Add trophy at the end
   level.setTrophy(1125, 150);
+  
+  return level;
+}
+
+// NEW: Function to create additional levels
+export function createLevel2() {
+  const level = new Level("Level 2");
+  
+  level.startPosition = { x: 50, y: 350 };
+  
+  // More challenging platform layout
+  level.addPlatform(0, 450, 150, 64, 'stone');
+  level.addPlatform(200, 400, 100, 64, 'wood');
+  level.addPlatform(400, 350, 80, 64, 'dirt');
+  level.addPlatform(600, 300, 120, 64, 'stone');
+  level.addPlatform(800, 250, 100, 64, 'wood');
+  level.addPlatform(1000, 200, 200, 64, 'dirt');
+  
+  // Strategic fruit placement
+  level.addFruit(75, 400, 'fruit_apple');
+  level.addFruit(250, 350, 'fruit_bananas');
+  level.addFruit(440, 300, 'fruit_cherries');
+  level.addFruit(660, 250, 'fruit_kiwi');
+  level.addFruit(850, 200, 'fruit_melon');
+  level.addFruit(1100, 150, 'fruit_orange');
+  
+  level.setTrophy(1100, 150);
   
   return level;
 }
