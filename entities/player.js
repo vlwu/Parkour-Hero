@@ -169,6 +169,23 @@ export class Player {
       let groundCollision = false;
       if (level) groundCollision = this.handleVerticalCollision(level, prevY);
 
+      // If clinging but no longer touching a wall, exit cling
+      if (this.state === 'cling') {
+        let stillTouchingWall = false;
+        for (const platform of level.platforms) {
+          const nearLeft = Math.abs((this.x + this.width) - platform.x) < 2;
+          const nearRight = Math.abs(this.x - (platform.x + platform.width)) < 2;
+          const verticallyAligned = this.y + this.height > platform.y && this.y < platform.y + platform.height;
+          if (verticallyAligned && (nearLeft || nearRight)) {
+            stillTouchingWall = true;
+            break;
+          }
+        }
+
+        if (!stillTouchingWall) {
+          this.state = 'fall';
+        }
+      }
 
       // Fallback ground collision with canvas bottom
       if (this.y > canvasHeight + 100) {
@@ -190,13 +207,15 @@ export class Player {
             this.state = 'idle';
           }
         } else {
-          // In air - update state based on vertical movement
-          if (this.vy > 0) {
-            this.state = 'fall';
-          } else if (this.jumpCount === 2) {
-            this.state = 'double_jump';
-          } else if (this.jumpCount === 1) {
-            this.state = 'jump';
+          // Avoid overriding cling state
+          if (this.state !== 'cling') {
+            if (this.vy > 0) {
+              this.state = 'fall';
+            } else if (this.jumpCount === 2) {
+              this.state = 'double_jump';
+            } else if (this.jumpCount === 1) {
+              this.state = 'jump';
+            }
           }
         }
       }
@@ -242,16 +261,26 @@ export class Player {
   }
 
   handleHorizontalCollision(level, prevX) {
-    for (const platform of level.platforms) { // Check collision with each platform
+    for (const platform of level.platforms) {
       if (this.isCollidingWith(platform)) {
+        const fromLeft = prevX + this.width <= platform.x;
+        const fromRight = prevX >= platform.x + platform.width;
 
-        if (prevX + this.width <= platform.x) {
+        if (fromLeft) {
           this.x = platform.x - this.width;
-
-        } else if (prevX >= platform.x + platform.width) {
+          this.vx = 0;
+        } else if (fromRight) {
           this.x = platform.x + platform.width;
+          this.vx = 0;
         }
-        this.vx = 0;
+
+        // Wall cling check — only if airborne and falling
+        if (!this.onGround && this.vy > 0) {
+          this.state = 'cling';
+          this.vy = 30; // Slow fall while clinging, change if wanted
+          this.jumpCount = 1; // Allow a double jump off the wall
+        }
+
         break;
       }
     }
