@@ -7,7 +7,7 @@ export class Player {
     this.vx = 0; // x and y velocity
     this.vy = 0; 
 
-    this.jumpCount = 0;
+    this.jumpCount = 2; // 2 at the start to disable jumping immediately after spawning
     this.jumpPressed = false;  // Tracks whether the jump key is currently down
     this.direction = 'right';
     this.state = 'idle';
@@ -150,45 +150,35 @@ export class Player {
       }
 
       // Apply gravity only when not dashing (dash is perfectly horizontal)
-      if (!this.isDashing) {
-        this.vy += this.gravity * dt;
-      }
+      if (!this.isDashing) this.vy += this.gravity * dt;
       
       // Cap falling speed to prevent going too fast
-      if (this.vy > this.maxFallSpeed) {
-        this.vy = this.maxFallSpeed;
-      }
+      if (this.vy > this.maxFallSpeed) this.vy = this.maxFallSpeed;
 
       // Update horizontal position
       this.x += this.vx * dt;
       
       // Handle horizontal collision with platforms
-      if (level) {
-        this.handleHorizontalCollision(level, prevX);
-      }
+      if (level) this.handleHorizontalCollision(level, prevX);
 
       // Update vertical position
       this.y += this.vy * dt;
       
       // Handle vertical collision with platforms
       let groundCollision = false;
-      if (level) {
-        groundCollision = this.handleVerticalCollision(level, prevY);
-      }
+      if (level) groundCollision = this.handleVerticalCollision(level, prevY);
+
 
       // Fallback ground collision with canvas bottom
-      if (!groundCollision && this.y + this.height > canvasHeight) {
-        this.y = canvasHeight - this.height;
-        this.vy = 0;
-        this.jumpCount = 0;
-        this.onGround = true;
-        groundCollision = true;
+      if (this.y > canvasHeight + 100) {
+        if (level?.startPosition) {
+          this.respawn(level.startPosition);
+          return;
+        }
       }
 
       // Update onGround status
-      if (!groundCollision) {
-        this.onGround = false;
-      }
+      if (!groundCollision) this.onGround = false;
 
       // Update state based on movement and ground status
       if (!this.isDashing) {
@@ -235,20 +225,31 @@ export class Player {
     }
   }
 
+  respawn(startPosition) { // Resets the player to the spawn point
+    this.x = startPosition.x;
+    this.y = startPosition.y;
+    this.vx = 0;
+    this.vy = 0;
+    this.jumpCount = 2;
+    this.dashTimer = 0;
+    this.dashCooldownTimer = 0;
+    this.isDashing = false;
+    this.state = 'idle';
+    this.onGround = false;
+    this.animationFrame = 0;
+    this.animationTimer = 0;
+  }
+
   handleHorizontalCollision(level, prevX) {
-    // Check collision with each platform
-    for (const platform of level.platforms) {
+    for (const platform of level.platforms) { // Check collision with each platform
       if (this.isCollidingWith(platform)) {
-        // Determine which side we hit
+
         if (prevX + this.width <= platform.x) {
-          // Hit left side of platform
           this.x = platform.x - this.width;
+
         } else if (prevX >= platform.x + platform.width) {
-          // Hit right side of platform
           this.x = platform.x + platform.width;
         }
-        
-        // Stop horizontal movement
         this.vx = 0;
         break;
       }
@@ -257,32 +258,29 @@ export class Player {
 
   handleVerticalCollision(level, prevY) {
     let groundCollision = false;
-    
-    // Check collision with each platform
     for (const platform of level.platforms) {
       if (this.isCollidingWith(platform)) {
         // Determine if we hit from top or bottom
         if (prevY <= platform.y + platform.height && this.vy > 0) {
-          // Landing on top of platform
           this.y = platform.y - this.height;
           this.vy = 0;
           this.jumpCount = 0;
           this.onGround = true;
           groundCollision = true;
           break;
+
         } else if (prevY >= platform.y + platform.height && this.vy < 0) {
-          // Hit platform from below
           this.y = platform.y + platform.height;
           this.vy = 0;
           break;
         }
       }
     }
-    
     return groundCollision;
   }
 
   isCollidingWith(platform) {
+    if (platform.width < 48 || platform.height < 48) return false; // Ignore trimmed tiles
     return this.x < platform.x + platform.width &&
            this.x + this.width > platform.x &&
            this.y < platform.y + platform.height &&

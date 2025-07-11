@@ -222,17 +222,17 @@ export function createLevel1() { // Level 1
   // Set player starting position
   level.startPosition = { x: 50, y: 300 };
   
-  level.addPlatform(0, 400, 200, 48, 'dirt');        // Starting platform
-  level.addPlatform(300, 350, 150, 48, 'wood');      // First jump
-  level.addPlatform(550, 300, 100, 48, 'stone');     // Higher platform
-  level.addPlatform(750, 250, 200, 48, 'dirt');      // Even higher
-  level.addPlatform(1050, 200, 150, 48, 'wood');     // Final platform
+  level.addPlatform(0, 400, 192, 48, 'dirt');        // Starting platform
+  level.addPlatform(300, 350, 144, 48, 'wood');      // First jump
+  level.addPlatform(550, 300, 96, 48, 'stone');     // Higher platform
+  level.addPlatform(750, 250, 192, 48, 'dirt');      // Even higher
+  level.addPlatform(1050, 200, 144, 48, 'wood');     // Final platform
   
   level.addFruit(100, 350, 'fruit_apple');     // On starting platform
   level.addFruit(375, 300, 'fruit_bananas');   // On first jump platform
   level.addFruit(600, 250, 'fruit_cherries');  // On higher platform
   level.addFruit(850, 200, 'fruit_kiwi');      // On even higher platform
-  level.addFruit(1125, 150, 'fruit_melon');    // On final platform
+  level.addFruit(1000, 150, 'fruit_melon');    // On final platform
   
   level.addFruit(225, 320, 'fruit_orange');    // Between platforms
   level.addFruit(475, 270, 'fruit_pineapple'); // Between platforms
