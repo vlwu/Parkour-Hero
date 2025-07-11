@@ -116,11 +116,14 @@ export class Level {
       x: x,
       y: y,
       size: 32,
-      collected: false
+      acquired: false,
+      animationFrame: 0,
+      animationTimer: 0,
+      animationSpeed: 0.08, // seconds between frames
     };
   }
   
-  // NEW: Method to update fruit animations
+  // Method to update fruit animations
   updateFruits(dt) {
     this.fruits.forEach(fruit => {
       if (!fruit.collected) {
@@ -172,45 +175,76 @@ export class Level {
     }
     return null;
   }
-  
+
   render(ctx, assets, camera) {
     // Render all platforms
     for (const platform of this.platforms) {
       platform.render(ctx, assets);
     }
-    
-    // Render trophy if it exists and hasn't been collected
-    if (this.trophy && !this.trophy.collected) {
+
+    // Update and render trophy regardless of acquisition status
+    if (this.trophy) {
+      this.updateTrophyAnimation(1 / 60); // Ideally pass `dt`, but fallback here
       this.renderTrophy(ctx, assets);
     }
   }
   
   renderTrophy(ctx, assets) {
-    // TODO: replace with sprite when available
-    ctx.fillStyle = 'gold';
-    ctx.beginPath();
-    ctx.arc(this.trophy.x, this.trophy.y, this.trophy.size / 2, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.fillStyle = 'black';
-    ctx.font = '16px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('🏆', this.trophy.x, this.trophy.y + 5);
+    const trophy = this.trophy;
+    const spriteKey = trophy.acquired ? 'trophy_acquired' : 'trophy';
+    const sprite = assets[spriteKey];
+
+    if (!sprite) {
+      // Fallback rendering
+      ctx.fillStyle = trophy.acquired ? 'silver' : 'gold';
+      ctx.beginPath();
+      ctx.arc(trophy.x, trophy.y, trophy.size / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = 'black';
+      ctx.font = '16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🏆', trophy.x, trophy.y + 5);
+      return;
+    }
+
+    const frameWidth = sprite.width / 8; // Assuming 8 frames in the sprite sheet
+    const frameHeight = sprite.height;
+    const srcX = frameWidth * trophy.animationFrame;
+
+    ctx.drawImage(
+      sprite,
+      srcX, 0,
+      frameWidth, frameHeight,
+      trophy.x - trophy.size / 2, trophy.y - trophy.size / 2,
+      trophy.size, trophy.size
+    );
+  }
+
+  updateTrophyAnimation(dt) {
+    const trophy = this.trophy;
+    if (!trophy) return;
+
+    trophy.animationTimer += dt;
+    if (trophy.animationTimer >= trophy.animationSpeed) {
+      trophy.animationTimer = 0;
+      trophy.animationFrame = (trophy.animationFrame + 1) % 17;
+    }
   }
   
   isCompleted() {
     // Level is completed when all fruits are collected and trophy is obtained
     const allFruitsCollected = this.fruits.every(fruit => fruit.collected);
-    const trophyCollected = this.trophy ? this.trophy.collected : true;
+    const trophyCollected = this.trophy ? this.trophy.acquired : true;
     
     return allFruitsCollected && trophyCollected;
   }
   
-  // NEW: Reset level (useful for restarting)
+  // Reset level (useful for restarting)
   reset() {
     this.fruits.forEach(fruit => fruit.collected = false);
     if (this.trophy) {
-      this.trophy.collected = false;
+      this.trophy.acquired = false;
     }
     this.completed = false;
   }
@@ -238,7 +272,7 @@ export function createLevel1() { // Level 1
   level.addFruit(475, 270, 'fruit_pineapple'); // Between platforms
   level.addFruit(675, 220, 'fruit_strawberry'); // Between platforms
   
-  level.setTrophy(1125, 150); // Add trophy at the end
+  level.setTrophy(1125, 184); // Add trophy at the end
   
   return level;
 }

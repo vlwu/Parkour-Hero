@@ -27,9 +27,10 @@ export async function loadAssets() {
     close_button: 'assets/Menu/Buttons/Close.png',
     restart_button: 'assets/Menu/Buttons/Restart.png',
 
-    // Other level assets (other than fruits)
+    // Other level assets (other than fruits), all 64x64
     trophy: 'assets/Items/Checkpoints/End/End (Idle).png',
-    start: 'assets/Items/Checkpoints/Start/Start (Idle).png',
+    trophy_acquired: 'assets/Items/Checkpoints/End/End (Pressed).png',
+    start: 'assets/Items/Checkpoints/Start/Start (Moving).png',
   };
 
   console.log('Starting asset loading...');
