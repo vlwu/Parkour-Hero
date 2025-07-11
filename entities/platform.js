@@ -9,12 +9,12 @@ export class Platform {
     
     // Sprite sheet configuration for terrain tiles
     this.spriteConfig = {
-      dirt: { srcX: 0, srcY: 0 },     // Top-left of spritesheet
-      stone: { srcX: 64, srcY: 0 },   // Adjust based on your spritesheet layout
-      wood: { srcX: 128, srcY: 0 }    // Adjust based on your spritesheet layout
+      dirt: { srcX: 96, srcY: 0 },      // Dirt tile at top-left
+      stone: { srcX: 0, srcY: 0 },    // Stone tile next to dirt
+      wood: { srcX: 0, srcY: 64 }     // Wood tile next to stone
     };
     
-    this.tileSize = 64; // Size of each tile in the spritesheet
+    this.tileSize = 48; // Size of each tile in the spritesheet
   }
   
   // Check if a point or rectangle collides with this platform
