@@ -194,6 +194,8 @@ export class Engine {
         );
       }
 
+      // Draw collected trophy animation
+
       // Draw HUD
       this.drawHUD();
 

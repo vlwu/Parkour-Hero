@@ -116,10 +116,11 @@ export class Level {
       x: x,
       y: y,
       size: 32,
-      acquired: false,
+      frameCount: 8,
       animationFrame: 0,
       animationTimer: 0,
       animationSpeed: 0.4, // seconds between frames
+      acquired: false,
     };
   }
   
@@ -191,7 +192,7 @@ export class Level {
   
   renderTrophy(ctx, assets) {
     const trophy = this.trophy;
-    const spriteKey = trophy.acquired ? 'fruit_collected' : 'trophy';
+    const spriteKey = 'trophy';
     const sprite = assets[spriteKey];
 
     if (!sprite) {
@@ -208,7 +209,7 @@ export class Level {
       return;
     }
 
-    const frameWidth = sprite.width / 8; // 8 frames in the sprite sheet
+    const frameWidth = sprite.width / trophy.frameCount;
     const frameHeight = sprite.height;
     const srcX = frameWidth * trophy.animationFrame;
 
@@ -226,10 +227,10 @@ export class Level {
     if (!trophy) return;
 
     trophy.animationTimer += dt;
-    if (trophy.animationTimer >= trophy.animationSpeed) {
+    if (trophy.animationTimer >= trophy.animationSpeed && !trophy.acquired) {
       trophy.animationTimer = 0;
-      trophy.animationFrame = (trophy.animationFrame + 1) % 8;
-    }
+      trophy.animationFrame = (trophy.animationFrame + 1) % trophy.frameCount; // 8 frames in the sprite sheet
+    } 
   }
   
   isCompleted() {
