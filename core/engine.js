@@ -24,7 +24,6 @@ export class Engine {
     this.currentLevel = createLevel1();
     this.fruits = [...this.currentLevel.fruits]; // Copy fruits from level
     this.fruitCount = 0;
-    this.fruitHighScore = 0;
     this.collectedFruits = []; // For collected fruit animations
 
     // Initialize player with assets and level starting position
@@ -81,7 +80,7 @@ export class Engine {
     try {
       // Update player input and physics
       this.player.handleInput(this.keys);
-      this.player.update(dt, this.canvas.height);
+      this.player.update(dt, this.canvas.height, this.currentLevel);
 
       // NEW: Update level fruits animation
       this.currentLevel.updateFruits(dt);
@@ -114,7 +113,7 @@ export class Engine {
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
 
-      // CHANGE: Update collision detection to mark fruits as collected in level
+      // Update collision detection to mark fruits as collected in level
       this.fruits = this.fruits.filter((fruit) => {
         if (fruit.collected) return false; // Skip already collected fruits
 
@@ -165,6 +164,8 @@ export class Engine {
 
       // Draw tiled background with proper error handling
       this.drawBackground();
+
+      this.currentLevel.render(this.ctx, this.assets);
 
       // NEW: Render level platforms
       this.currentLevel.render(ctx, assets);
@@ -329,7 +330,6 @@ export class Engine {
       const lines = [
         `${this.currentLevel.name}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
-        `High Score: ${this.fruitHighScore}`
       ];
 
       // Line height and top offset to vertically center within the box
