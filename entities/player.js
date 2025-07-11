@@ -4,13 +4,23 @@ export class Player {
     this.y = y;
     this.width = 32;  // 32x32 sprite size
     this.height = 32;
-    this.vx = 0;
-    this.vy = 0;
+    this.vx = 0; // x and y velocity
+    this.vy = 0; 
+
     this.jumpCount = 0;
     this.jumpPressed = false;  // Tracks whether the jump key is currently down
     this.direction = 'right';
     this.state = 'idle';
     this.assets = assets;
+
+    // Dash properties
+    this.isDashing = false;    // Currently in dash state
+    this.dashDuration = 0.2;   // Seconds the dash lasts
+    this.dashTimer = 0;        // Timer for how long dash has been going
+    this.dashSpeed = 500;      // Dash velocity in px/s
+    this.dashCooldown = 0.5;     // 0.5 seconds cooldown between dashes
+    this.dashCooldownTimer = 0;  // Timer tracking cooldown
+    this.dashPressed = false;    // Prevent holding down dash key
     
     // Animation properties
     this.animationFrame = 0;
@@ -19,11 +29,12 @@ export class Player {
 
     // Animation frame counts for each state
     this.animationFrames = {
-      idle: 11,        // 11 frames for idle
-      run: 12,         // 12 frames for running
-      double_jump: 6,         // 6 frames for double jump
-      jump: 1,
-      fall: 1          // 1 frame for falling (static)
+      idle: 11,     // 11 frames for idle
+      run: 12,      // 12 frames for running
+      double_jump: 6,    // 6 frames for double jump
+      jump: 1,     // 1 frame for jumping, falling, and dashing (static)
+      fall: 1,
+      dash: 1
     };
     
     // Physics constants
@@ -38,6 +49,8 @@ export class Player {
   handleInput(keys) {
     // Store previous state to reset animation on state change
     const prevState = this.state;
+
+    if (this.isDashing) return; // ← Skip inputs during dash
     
     // Horizontal movement
     if (keys['a'] || keys['arrowleft']) {
@@ -46,12 +59,14 @@ export class Player {
       if (this.jumpCount === 0) {
         this.state = 'run';
       }
+
     } else if (keys['d'] || keys['arrowright']) {
       this.vx = this.moveSpeed;
       this.direction = 'right';
       if (this.jumpCount === 0) {
         this.state = 'run';
       }
+
     } else {
       this.vx = 0;
       if (this.jumpCount === 0) {
@@ -59,14 +74,14 @@ export class Player {
       }
     }
 
-    // Detect new jump press (not just holding)
+    // Detect new jump press (used to trigger twice if held down, double jump wouldn't "actually" happen)
     const jumpKeyDown = keys['w'] || keys['arrowup'];
 
     if (jumpKeyDown && !this.jumpPressed) {
       if (this.jumpCount === 0) {
         this.vy = -this.jumpForce;
         this.jumpCount++;
-        if (this.state !== 'jump') this.state = 'jump';
+        this.state = 'jump';
       } else if (this.jumpCount === 1) {
         this.vy = -this.jumpForce;
         this.jumpCount++;
@@ -78,7 +93,29 @@ export class Player {
     if (!jumpKeyDown) {
       this.jumpPressed = false; // Reset when key is released
     }
+
+    // Dash input handling
+    const dashKeyDown = keys[' '];
+
+    // Detect "just pressed" dash input
+    if (dashKeyDown && !this.dashPressed && !this.isDashing && this.dashCooldownTimer <= 0) {
+      this.isDashing = true;
+      this.dashTimer = this.dashDuration;
+      this.vx = this.direction === 'right' ? this.dashSpeed : -this.dashSpeed;
+      this.vy = 0;
+      this.state = 'dash';
+      this.animationFrame = 0; // Reset to first frame
+    }
+
+    this.dashPressed = dashKeyDown; // Update flag for edge detection
+
+    if (this.state !== prevState) {
+      this.animationFrame = 0;
+      this.animationTimer = 0;
+    }
   }
+
+  
 
   update(dt, canvasHeight) {
     try {
@@ -86,8 +123,10 @@ export class Player {
       this.x += this.vx * dt;
       this.y += this.vy * dt;
       
-      // Apply gravity
-      this.vy += this.gravity * dt;
+      // Apply gravity only when not dashing
+      if (!this.isDashing) {
+        this.vy += this.gravity * dt;
+      }
       
       // Cap falling speed to prevent going too fast
       if (this.vy > this.maxFallSpeed) {
@@ -114,6 +153,34 @@ export class Player {
           this.state = 'fall';
         } else if (this.vy < 0 && this.jumpCount === 1) {
           this.state = 'jump';
+        }
+      }
+      
+      // Dash logic
+      // Update dash cooldown timer
+      if (this.dashCooldownTimer > 0) {
+        this.dashCooldownTimer -= dt;
+        if (this.dashCooldownTimer < 0) this.dashCooldownTimer = 0;
+      }
+
+      if (this.isDashing) {
+        this.state = 'dash';
+        this.dashTimer -= dt;
+        if (this.dashTimer <= 0) {
+          this.isDashing = false;
+          this.vx = 0;
+
+          // Start cooldown
+          this.dashCooldownTimer = this.dashCooldown;
+
+          // Restore appropriate state
+          if (this.jumpCount === 0) {
+            this.state = 'idle';
+          } else if (this.vy > 0) {
+            this.state = 'fall';
+          } else {
+            this.state = 'jump';
+          }
         }
       }
 
@@ -145,8 +212,8 @@ export class Player {
   render(ctx) {
     try {
       // Get the appropriate sprite based on current state
-      let spriteKey = this.getSpriteKey();
-      let sprite = this.assets[spriteKey];
+      const spriteKey = this.getSpriteKey();
+      const sprite = this.assets[spriteKey];
       
       // Fallback rendering if sprite not available
       if (!sprite) {
@@ -217,6 +284,8 @@ export class Player {
         return 'playerFall';
       case 'run':
         return 'playerRun';
+      case 'dash':
+        return 'playerDash';
       case 'idle':
       default:
         return 'playerIdle';
