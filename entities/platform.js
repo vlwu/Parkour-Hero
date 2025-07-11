@@ -119,7 +119,7 @@ export class Level {
       acquired: false,
       animationFrame: 0,
       animationTimer: 0,
-      animationSpeed: 0.08, // seconds between frames
+      animationSpeed: 0.4, // seconds between frames
     };
   }
   
@@ -191,7 +191,7 @@ export class Level {
   
   renderTrophy(ctx, assets) {
     const trophy = this.trophy;
-    const spriteKey = trophy.acquired ? 'trophy_acquired' : 'trophy';
+    const spriteKey = trophy.acquired ? 'fruit_collected' : 'trophy';
     const sprite = assets[spriteKey];
 
     if (!sprite) {
@@ -208,7 +208,7 @@ export class Level {
       return;
     }
 
-    const frameWidth = sprite.width / 8; // Assuming 8 frames in the sprite sheet
+    const frameWidth = sprite.width / 8; // 8 frames in the sprite sheet
     const frameHeight = sprite.height;
     const srcX = frameWidth * trophy.animationFrame;
 
@@ -228,7 +228,7 @@ export class Level {
     trophy.animationTimer += dt;
     if (trophy.animationTimer >= trophy.animationSpeed) {
       trophy.animationTimer = 0;
-      trophy.animationFrame = (trophy.animationFrame + 1) % 17;
+      trophy.animationFrame = (trophy.animationFrame + 1) % 8;
     }
   }
   
@@ -250,6 +250,7 @@ export class Level {
   }
 }
 
+// TODO: make a createLevel function to generate levels dynamically
 export function createLevel1() { // Level 1
   const level = new Level("Level 1");
   
@@ -277,8 +278,7 @@ export function createLevel1() { // Level 1
   return level;
 }
 
-// Function to create additional levels
-export function createLevel2() {
+export function createLevel2() { // Level 2
   const level = new Level("Level 2");
   
   level.startPosition = { x: 50, y: 350 };
