@@ -351,9 +351,9 @@ export class Player {
 
       // Draw the specific frame from the sprite sheet
       let drawOffsetX = 0;
-      const clingOffset = 2.5; // adjust as needed
+      const clingOffset = 7; // adjust as needed
       if (this.state === 'cling') {
-        drawOffsetX = this.direction === 'right' ? clingOffset : -clingOffset;
+        drawOffsetX = this.direction === 'right' ? clingOffset : clingOffset;
       }
 
       ctx.drawImage(
