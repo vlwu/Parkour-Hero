@@ -215,7 +215,7 @@ export class Player {
         this.x = 0;
         this.vx = 0;
       }
-      if (this.x + this.width > 1280) { // Canvas width
+      if (this.x + this.width > 1280) {
         this.x = 1280 - this.width;
         this.vx = 0;
       }
@@ -262,7 +262,7 @@ export class Player {
     for (const platform of level.platforms) {
       if (this.isCollidingWith(platform)) {
         // Determine if we hit from top or bottom
-        if (prevY + this.height <= platform.y && this.vy > 0) {
+        if (prevY <= platform.y + platform.height && this.vy > 0) {
           // Landing on top of platform
           this.y = platform.y - this.height;
           this.vy = 0;

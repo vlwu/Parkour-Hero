@@ -216,34 +216,29 @@ export class Level {
   }
 }
 
-// Enhanced level creation with more fruits
-export function createLevel1() {
+export function createLevel1() { // Level 1
   const level = new Level("Level 1");
   
   // Set player starting position
   level.startPosition = { x: 50, y: 300 };
   
-  // Add platforms - creating a simple parkour course
-  level.addPlatform(0, 400, 200, 64, 'dirt');        // Starting platform
-  level.addPlatform(300, 350, 150, 64, 'wood');      // First jump
-  level.addPlatform(550, 300, 100, 64, 'stone');     // Higher platform
-  level.addPlatform(750, 250, 200, 64, 'dirt');      // Even higher
-  level.addPlatform(1050, 200, 150, 64, 'wood');     // Final platform
+  level.addPlatform(0, 400, 200, 48, 'dirt');        // Starting platform
+  level.addPlatform(300, 350, 150, 48, 'wood');      // First jump
+  level.addPlatform(550, 300, 100, 48, 'stone');     // Higher platform
+  level.addPlatform(750, 250, 200, 48, 'dirt');      // Even higher
+  level.addPlatform(1050, 200, 150, 48, 'wood');     // Final platform
   
-  // Add more fruits strategically placed throughout the level
   level.addFruit(100, 350, 'fruit_apple');     // On starting platform
   level.addFruit(375, 300, 'fruit_bananas');   // On first jump platform
   level.addFruit(600, 250, 'fruit_cherries');  // On higher platform
   level.addFruit(850, 200, 'fruit_kiwi');      // On even higher platform
   level.addFruit(1125, 150, 'fruit_melon');    // On final platform
   
-  // Optional: Add some floating fruits for extra challenge
   level.addFruit(225, 320, 'fruit_orange');    // Between platforms
   level.addFruit(475, 270, 'fruit_pineapple'); // Between platforms
   level.addFruit(675, 220, 'fruit_strawberry'); // Between platforms
   
-  // Add trophy at the end
-  level.setTrophy(1125, 150);
+  level.setTrophy(1125, 150); // Add trophy at the end
   
   return level;
 }
@@ -255,12 +250,12 @@ export function createLevel2() {
   level.startPosition = { x: 50, y: 350 };
   
   // More challenging platform layout
-  level.addPlatform(0, 450, 150, 64, 'stone');
-  level.addPlatform(200, 400, 100, 64, 'wood');
-  level.addPlatform(400, 350, 80, 64, 'dirt');
-  level.addPlatform(600, 300, 120, 64, 'stone');
-  level.addPlatform(800, 250, 100, 64, 'wood');
-  level.addPlatform(1000, 200, 200, 64, 'dirt');
+  level.addPlatform(0, 450, 150, 48, 'stone');
+  level.addPlatform(200, 400, 100, 48, 'wood');
+  level.addPlatform(400, 350, 80, 48, 'dirt');
+  level.addPlatform(600, 300, 120, 48, 'stone');
+  level.addPlatform(800, 250, 100, 48, 'wood');
+  level.addPlatform(1000, 200, 200, 48, 'dirt');
   
   // Strategic fruit placement
   level.addFruit(75, 400, 'fruit_apple');
