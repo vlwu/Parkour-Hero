@@ -1,4 +1,3 @@
-// entities/platform.js
 export class Platform {
   constructor(x, y, width, height, terrainType = 'dirt') {
     this.x = x;

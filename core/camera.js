@@ -1,4 +1,3 @@
-// core/camera.js
 export class Camera {
   constructor(canvasWidth, canvasHeight) {
     this.x = 0;

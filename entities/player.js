@@ -15,11 +15,11 @@ export class Player {
     this.onGround = false;  // Track if player is on ground/platform
 
     // Dash properties
-    this.isDashing = false;    // Currently in dash state
-    this.dashDuration = 0.2;   // Seconds the dash lasts
+    this.isDashing = false;   
+    this.dashDuration = 0.2;   
     this.dashTimer = 0;        // Timer for how long dash has been going
     this.dashSpeed = 500;      // Dash velocity in px/s
-    this.dashCooldown = 0.5;     // 0.5 seconds cooldown between dashes
+    this.dashCooldown = 0.5;     
     this.dashCooldownTimer = 0;  // Timer tracking cooldown
     this.dashPressed = false;    // Prevent holding down dash key
     
@@ -28,18 +28,18 @@ export class Player {
     this.animationTimer = 0;
     this.animationSpeed = 0.05; // Time between frames (0.05 = 50ms)
 
-    // Animation frame counts for each state
+    // Animation frame counts for each state (1 for static images)
     this.animationFrames = {
-      idle: 11,     // 11 frames for idle
-      run: 12,      // 12 frames for running
-      double_jump: 6,    // 6 frames for double jump
-      jump: 1,     // 1 frame for jumping, falling, and dashing (static)
+      idle: 11,
+      run: 12,
+      double_jump: 6,
+      jump: 1,
       fall: 1,
       dash: 1
     };
     
     // Physics constants
-    this.moveSpeed = 200;     // pixels per second
+    this.moveSpeed = 200;     // px/s
     this.jumpForce = 400;     // upward velocity when jumping
     this.gravity = 1200;      // downward acceleration
     this.maxFallSpeed = 500;  // terminal velocity
@@ -48,10 +48,9 @@ export class Player {
   }
 
   handleInput(keys) {
-    // Store previous state to reset animation on state change
-    const prevState = this.state;
+    const prevState = this.state;  // Store previous state to reset animation on state change
 
-    if (this.isDashing) return; // ← Skip inputs during dash
+    if (this.isDashing) return; // Skip inputs during dash
     
     // Horizontal movement
     if (keys['a'] || keys['arrowleft']) {
@@ -96,8 +95,7 @@ export class Player {
       this.jumpPressed = false; // Reset when key is released
     }
 
-    // Dash input handling
-    const dashKeyDown = keys[' '];
+    const dashKeyDown = keys[' '];  // Dash input handling
 
     // Detect "just pressed" dash input
     if (dashKeyDown && !this.dashPressed && !this.isDashing && this.dashCooldownTimer <= 0) {
@@ -151,7 +149,7 @@ export class Player {
         }
       }
 
-      // Apply gravity only when not dashing
+      // Apply gravity only when not dashing (dash is perfectly horizontal)
       if (!this.isDashing) {
         this.vy += this.gravity * dt;
       }
