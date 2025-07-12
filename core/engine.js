@@ -1,4 +1,4 @@
-// Fixed engine.js with improved sound integration
+// Fixed engine.js with simplified jump detection
 
 import { Player } from '../entities/player.js';
 import { createLevel } from '../entities/platform.js'; 
@@ -19,7 +19,7 @@ export class Engine {
     // Initialize camera
     this.camera = new Camera(canvas.width, canvas.height);
     
-    // Initialize sound manager with better error handling
+    // Initialize sound manager
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
     
@@ -41,27 +41,21 @@ export class Engine {
     // Input handling
     this.initInput();
     
-    // Jump sound tracking
+    // Simplified jump tracking
+    this.wasJumpPressed = false;
     this.lastJumpTime = 0;
-    this.jumpSoundCooldown = 100; // milliseconds
+    this.jumpCooldown = 150; // ms
 
     console.log('Engine initialized successfully');
   }
 
-  // Improved audio unlock system
+  // Audio unlock system
   setupAudioUnlock() {
     const unlockAudio = () => {
       if (this.audioUnlocked) return;
       
-      console.log('Unlocking audio context...');
       this.soundManager.enableAudioContext();
       this.audioUnlocked = true;
-      
-      // Test sound immediately after unlock
-      setTimeout(() => {
-        console.log('Testing jump sound after unlock...');
-        this.soundManager.testSound('jump');
-      }, 100);
       
       // Remove event listeners after first unlock
       document.removeEventListener('keydown', unlockAudio);
@@ -69,41 +63,24 @@ export class Engine {
       document.removeEventListener('touchstart', unlockAudio);
     };
 
-    // Add event listeners for user interaction
     document.addEventListener('keydown', unlockAudio);
     document.addEventListener('click', unlockAudio);
     document.addEventListener('touchstart', unlockAudio);
   }
 
-  // Improved jump detection system
-  detectJumpSound(prevState, currentState) {
+  // Simplified jump detection - just check for jump key press transitions
+  detectJumpSound(inputActions) {
     const now = Date.now();
+    const jumpPressed = inputActions.jump;
     
-    // Cooldown check to prevent multiple rapid jump sounds
-    if (now - this.lastJumpTime < this.jumpSoundCooldown) {
-      return false;
-    }
+    // Check if jump was just pressed (transition from false to true)
+    const jumpJustPressed = jumpPressed && !this.wasJumpPressed;
     
-    // Check for jump initiation
-    const wasOnGround = prevState.isOnGround;
-    const isNowJumping = currentState.isJumping;
-    const wasNotJumping = !prevState.isJumping;
-    const velocityChanged = Math.abs(currentState.velocityY - prevState.velocityY) > 5;
+    // Update state for next frame
+    this.wasJumpPressed = jumpPressed;
     
-    // Jump from ground
-    if (wasOnGround && isNowJumping && wasNotJumping && velocityChanged) {
-      this.lastJumpTime = now;
-      return true;
-    }
-    
-    // Double jump detection
-    if (!wasOnGround && isNowJumping && wasNotJumping && velocityChanged) {
-      this.lastJumpTime = now;
-      return true;
-    }
-    
-    // Wall jump detection
-    if (currentState.isWallJumping && !prevState.isWallJumping) {
+    // If jump was just pressed and enough time has passed since last jump sound
+    if (jumpJustPressed && (now - this.lastJumpTime) > this.jumpCooldown) {
       this.lastJumpTime = now;
       return true;
     }
@@ -113,12 +90,10 @@ export class Engine {
 
   // Load game progress (using in-memory storage)
   loadProgress() {
-    // Using in-memory storage instead of localStorage
     if (this.gameProgress) {
       return this.gameProgress;
     }
     
-    // Default progress
     this.gameProgress = {
       unlockedSections: 1,
       unlockedLevels: [1],
@@ -130,39 +105,31 @@ export class Engine {
 
   // Save game progress (using in-memory storage)
   saveProgress() {
-    // Store in memory instead of localStorage
     this.gameProgress = {
       unlockedSections: this.levelProgress.unlockedSections,
       unlockedLevels: this.levelProgress.unlockedLevels,
       completedLevels: this.levelProgress.completedLevels
     };
-    console.log('Progress saved to memory:', this.gameProgress);
   }
 
   // Advance to next level
   advanceLevel() {
-    // Mark current level as completed
     const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
     if (!this.levelProgress.completedLevels.includes(levelId)) {
       this.levelProgress.completedLevels.push(levelId);
     }
 
-    // Play level complete sound
-    console.log('Playing level complete sound...');
     this.soundManager.play('level_complete', 1.0);
 
-    // Try to advance to next level in current section
     if (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) {
       this.currentLevelIndex++;
       this.loadLevel(this.currentSection, this.currentLevelIndex);
     } else {
-      // Try to advance to next section
       if (this.currentSection + 1 < levelSections.length) {
         this.currentSection++;
         this.currentLevelIndex = 0;
         this.loadLevel(this.currentSection, this.currentLevelIndex);
         
-        // Update unlocked sections/levels
         if (this.currentSection >= this.levelProgress.unlockedSections) {
           this.levelProgress.unlockedSections = this.currentSection + 1;
         }
@@ -175,7 +142,6 @@ export class Engine {
   // Update keybinds
   updateKeybinds(newKeybinds) {
     this.keybinds = { ...newKeybinds };
-    console.log('Keybinds updated:', this.keybinds);
   }
 
   // Get sound manager
@@ -213,38 +179,26 @@ export class Engine {
   gameLoop(currentTime = 0) {
     if (!this.isRunning) return;
 
-    // Calculate delta time
     const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.016);
     this.lastFrameTime = currentTime;
 
-    // Update and render
     this.update(deltaTime);
     this.render();
 
-    // Continue the loop
     requestAnimationFrame((time) => this.gameLoop(time));
   }
 
   // Initialize input handling
   initInput() {
-    // Keydown handler
     window.addEventListener('keydown', (e) => {
       this.keys[e.key] = true;
       this.keys[e.key.toLowerCase()] = true;
       
-      // Unlock audio on first keypress
       if (!this.audioUnlocked) {
         this.setupAudioUnlock();
       }
-      
-      // Debug key for testing sounds
-      if (e.key.toLowerCase() === 't') {
-        console.log('Testing jump sound (T key)...');
-        this.soundManager.forcePlay('jump', 0.8);
-      }
     });
 
-    // Keyup handler
     window.addEventListener('keyup', (e) => {
       this.keys[e.key] = false;
       this.keys[e.key.toLowerCase()] = false;
@@ -252,7 +206,6 @@ export class Engine {
   }
 
   loadLevel(sectionIndex, levelIndex) {
-    // Validate indices
     if (sectionIndex >= levelSections.length || 
         levelIndex >= levelSections[sectionIndex].length) {
       console.error(`Invalid level: Section ${sectionIndex}, Level ${levelIndex}`);
@@ -266,14 +219,12 @@ export class Engine {
     this.fruitCount = 0;
     this.collectedFruits = [];
     
-    // Initialize player
     this.player = new Player(
       this.currentLevel.startPosition.x,
       this.currentLevel.startPosition.y,
       this.assets
     );
     
-    // Update camera bounds for new level and snap to player
     this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
     this.camera.snapToPlayer(this.player);
     
@@ -290,45 +241,21 @@ export class Engine {
         dash: this.keys[this.keybinds.dash] || false,
       };
 
-      // Store previous player state BEFORE update
-      const prevState = {
-        isJumping: this.player.isJumping,
-        isOnGround: this.player.isOnGround,
-        canJump: this.player.canJump,
-        canDoubleJump: this.player.canDoubleJump,
-        velocityY: this.player.velocityY,
-        jumpKeyPressed: this.player.jumpKeyPressed,
-        isWallJumping: this.player.isWallJumping || false
-      };
+      // Check for jump sound BEFORE updating player
+      const shouldPlayJumpSound = this.detectJumpSound(inputActions);
+      if (shouldPlayJumpSound) {
+        this.soundManager.play('jump', 0.8);
+      }
 
       // Update player
       this.player.handleInput(inputActions);
       this.player.update(dt, this.canvas.height, this.currentLevel);
-
-      // Get current player state AFTER update
-      const currentState = {
-        isJumping: this.player.isJumping,
-        isOnGround: this.player.isOnGround,
-        canJump: this.player.canJump,
-        canDoubleJump: this.player.canDoubleJump,
-        velocityY: this.player.velocityY,
-        jumpKeyPressed: this.player.jumpKeyPressed,
-        isWallJumping: this.player.isWallJumping || false
-      };
-
-      // Enhanced jump sound detection
-      const jumpTriggered = this.detectJumpSound(prevState, currentState);
-      if (jumpTriggered) {
-        console.log('Jump detected! Playing sound...');
-        this.soundManager.play('jump', 0.8);
-      }
 
       // Update camera to follow player
       this.camera.update(this.player, dt);
 
       // Check if player needs to respawn
       if (this.player.needsRespawn) { 
-        console.log('Player fell off, resetting level...');
         this.currentLevel.reset();
         this.player.respawn(this.currentLevel.startPosition);
         this.camera.shake(15, 0.5);
@@ -364,8 +291,6 @@ export class Engine {
 
         if (collided) {
           fruit.collected = true;
-          
-          console.log('Fruit collected! Playing sound...');
           this.soundManager.play('collect', 0.8);
 
           this.collectedFruits.push({
@@ -378,7 +303,6 @@ export class Engine {
             collectedFrameCount: 6
           });
           
-          console.log(`Collected ${fruit.spriteKey}! Total: ${this.currentLevel.getFruitCount()}`);
           return true;
         }
 
@@ -394,13 +318,11 @@ export class Engine {
         if (px + pw > tx && px < tx + ts && py + ph > ty && py < ty + ts) {
           trophy.acquired = true;
           this.camera.shake(8, 0.3);
-          console.log('Trophy acquired!');
         }
       }
 
       // Check level completion
       if (this.currentLevel.isCompleted()) {
-        console.log('Level completed!');
         this.saveProgress();
         this.advanceLevel();
       }
@@ -414,31 +336,17 @@ export class Engine {
     try {
       const { ctx, canvas, assets } = this;
 
-      // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Apply camera transformation
       this.camera.apply(ctx);
 
-      // Draw tiled background
       this.drawBackground();
-
-      // Render level platforms and trophy
       this.currentLevel.render(ctx, assets);
-
-      // Draw player
       this.player.render(ctx);
-
-      // Draw fruits
       this.drawFruits();
-
-      // Draw collected fruit animations
       this.drawCollectedFruits();
 
-      // Restore camera transformation
       this.camera.restore(ctx);
-
-      // Draw HUD
       this.drawHUD();
 
     } catch (error) {
@@ -454,7 +362,6 @@ export class Engine {
     const bg = assets.backgroundTile;
 
     if (!bg) {
-      console.warn('Background tile not loaded, using fallback');
       const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
       gradient.addColorStop(0, '#87CEEB');
       gradient.addColorStop(1, '#98FB98');
@@ -468,13 +375,11 @@ export class Engine {
     const srcX = 0;
     const srcY = 0;
 
-    // Calculate visible tiles
     const startX = Math.floor(this.camera.x / tileSize);
     const startY = Math.floor(this.camera.y / tileSize);
     const endX = Math.ceil((this.camera.x + canvas.width) / tileSize);
     const endY = Math.ceil((this.camera.y + canvas.height) / tileSize);
 
-    // Draw visible tiles
     for (let i = startX; i <= endX; i++) {
       const x = i * tileSize;
       for (let j = startY; j <= endY; j++) {
@@ -506,7 +411,6 @@ export class Engine {
       const fruit = fruits[i];
       if (fruit.collected) continue;
 
-      // Only draw visible fruits
       if (!this.camera.isVisible(fruit.x - fruit.size/2, fruit.y - fruit.size/2, fruit.size, fruit.size)) {
         continue;
       }
@@ -536,7 +440,6 @@ export class Engine {
         ctx.beginPath();
         ctx.arc(fruit.x, fruit.y, fruit.size / 2, 0, Math.PI * 2);
         ctx.fill();
-        if (i === 0) console.warn('Error drawing fruit:', error);
       }
     }
   }
@@ -554,7 +457,6 @@ export class Engine {
     for (let i = 0, len = collectedArr.length; i < len; i++) {
       const collected = collectedArr[i];
       
-      // Only draw if visible
       if (!this.camera.isVisible(collected.x - collected.size/2, collected.y - collected.size/2, collected.size, collected.size)) {
         continue;
       }
@@ -574,16 +476,14 @@ export class Engine {
     const { ctx } = this;
 
     try {
-      // Save context
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
       const hudX = 10;
       const hudY = 10;
       const hudWidth = 280;
-      const hudHeight = 120;
+      const hudHeight = 100;
 
-      // Draw HUD background
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.fillRect(hudX, hudY, hudWidth, hudHeight);
 
@@ -595,8 +495,7 @@ export class Engine {
         `${this.currentLevel.name}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
         `Deaths: ${this.player.deathCount || 0}`,
-        `Sound: ${soundSettings.enabled ? 'ON' : 'OFF'} (${Math.round(soundSettings.volume * 100)}%)`,
-        `Audio: ${this.audioUnlocked ? 'Unlocked' : 'Locked'} - Press T to test`
+        `Sound: ${soundSettings.enabled ? 'ON' : 'OFF'} (${Math.round(soundSettings.volume * 100)}%)`
       ];
 
       ctx.font = '14px sans-serif';
@@ -607,7 +506,7 @@ export class Engine {
       const lineHeight = 18;
       const totalTextHeight = lines.length * lineHeight;
       const startY = hudY + (hudHeight - totalTextHeight) / 2 + lineHeight - 6;
-      const textX = hudX + 10;
+      const textX = hudX + hudWidth / 2;
 
       lines.forEach((text, index) => {
         const y = startY + index * lineHeight;
