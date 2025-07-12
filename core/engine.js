@@ -1,10 +1,10 @@
-// Modified engine.js - Complete version with sound integration
+// Fixed engine.js with improved sound integration
 
 import { Player } from '../entities/player.js';
 import { createLevel } from '../entities/platform.js'; 
 import { levelSections } from '../entities/levels.js';
 import { Camera } from './camera.js';
-import { SoundManager } from './sound.js'; // Import the sound manager
+import { SoundManager } from './sound.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) {
@@ -19,12 +19,13 @@ export class Engine {
     // Initialize camera
     this.camera = new Camera(canvas.width, canvas.height);
     
-    // Initialize sound manager
+    // Initialize sound manager with better error handling
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
     
-    // Initialize audio context activation
-    this.initAudioContext();
+    // Audio context setup
+    this.audioUnlocked = false;
+    this.setupAudioUnlock();
     
     // Level progression system
     this.currentSection = 0;
@@ -37,81 +38,105 @@ export class Engine {
     // Snap camera to player initial position
     this.camera.snapToPlayer(this.player);
 
+    // Input handling
     this.initInput();
+    
+    // Jump sound tracking
+    this.lastJumpTime = 0;
+    this.jumpSoundCooldown = 100; // milliseconds
 
     console.log('Engine initialized successfully');
   }
 
-  initAudioContext() {
-    console.log('Initializing audio context...');
-    
-    // Enable audio context on first user interaction
-    const enableAudio = (event) => {
-      console.log('User interaction detected, enabling audio...');
-      this.soundManager.enableAudioContext();
+  // Improved audio unlock system
+  setupAudioUnlock() {
+    const unlockAudio = () => {
+      if (this.audioUnlocked) return;
       
-      // Test jump sound immediately after enabling
+      console.log('Unlocking audio context...');
+      this.soundManager.enableAudioContext();
+      this.audioUnlocked = true;
+      
+      // Test sound immediately after unlock
       setTimeout(() => {
-        console.log('Testing jump sound after audio enable...');
+        console.log('Testing jump sound after unlock...');
         this.soundManager.testSound('jump');
       }, 100);
       
-      // Remove listeners after first activation
-      window.removeEventListener('keydown', enableAudio);
-      window.removeEventListener('click', enableAudio);
-      window.removeEventListener('touchstart', enableAudio);
-      
-      console.log('Audio enabled, listeners removed');
+      // Remove event listeners after first unlock
+      document.removeEventListener('keydown', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
     };
 
-    // Add listeners for user interaction
-    window.addEventListener('keydown', enableAudio);
-    window.addEventListener('click', enableAudio);
-    window.addEventListener('touchstart', enableAudio);
-    
-    // Also add a specific test for jump key
-    window.addEventListener('keydown', (e) => {
-      if (e.key.toLowerCase() === this.keybinds.jump || e.key === ' ') {
-        console.log('Jump key pressed, testing sound...');
-        this.soundManager.testSound('jump');
-      }
-    });
+    // Add event listeners for user interaction
+    document.addEventListener('keydown', unlockAudio);
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
   }
 
-  // Load game progress from localStorage
+  // Improved jump detection system
+  detectJumpSound(prevState, currentState) {
+    const now = Date.now();
+    
+    // Cooldown check to prevent multiple rapid jump sounds
+    if (now - this.lastJumpTime < this.jumpSoundCooldown) {
+      return false;
+    }
+    
+    // Check for jump initiation
+    const wasOnGround = prevState.isOnGround;
+    const isNowJumping = currentState.isJumping;
+    const wasNotJumping = !prevState.isJumping;
+    const velocityChanged = Math.abs(currentState.velocityY - prevState.velocityY) > 5;
+    
+    // Jump from ground
+    if (wasOnGround && isNowJumping && wasNotJumping && velocityChanged) {
+      this.lastJumpTime = now;
+      return true;
+    }
+    
+    // Double jump detection
+    if (!wasOnGround && isNowJumping && wasNotJumping && velocityChanged) {
+      this.lastJumpTime = now;
+      return true;
+    }
+    
+    // Wall jump detection
+    if (currentState.isWallJumping && !prevState.isWallJumping) {
+      this.lastJumpTime = now;
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Load game progress (using in-memory storage)
   loadProgress() {
-    try {
-      const saved = localStorage.getItem('game_progress');
-      if (saved) {
-        const progress = JSON.parse(saved);
-        console.log('Progress loaded:', progress);
-        return progress;
-      }
-    } catch (error) {
-      console.warn('Failed to load progress:', error);
+    // Using in-memory storage instead of localStorage
+    if (this.gameProgress) {
+      return this.gameProgress;
     }
     
     // Default progress
-    return {
+    this.gameProgress = {
       unlockedSections: 1,
-      unlockedLevels: [1], // First level of first section unlocked
+      unlockedLevels: [1],
       completedLevels: []
     };
+    
+    return this.gameProgress;
   }
 
-  // Save game progress to localStorage
+  // Save game progress (using in-memory storage)
   saveProgress() {
-    try {
-      const progress = {
-        unlockedSections: this.levelProgress.unlockedSections,
-        unlockedLevels: this.levelProgress.unlockedLevels,
-        completedLevels: this.levelProgress.completedLevels
-      };
-      localStorage.setItem('game_progress', JSON.stringify(progress));
-      console.log('Progress saved:', progress);
-    } catch (error) {
-      console.warn('Failed to save progress:', error);
-    }
+    // Store in memory instead of localStorage
+    this.gameProgress = {
+      unlockedSections: this.levelProgress.unlockedSections,
+      unlockedLevels: this.levelProgress.unlockedLevels,
+      completedLevels: this.levelProgress.completedLevels
+    };
+    console.log('Progress saved to memory:', this.gameProgress);
   }
 
   // Advance to next level
@@ -123,7 +148,8 @@ export class Engine {
     }
 
     // Play level complete sound
-    this.soundManager.play('level_complete');
+    console.log('Playing level complete sound...');
+    this.soundManager.play('level_complete', 1.0);
 
     // Try to advance to next level in current section
     if (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) {
@@ -142,18 +168,17 @@ export class Engine {
         }
       } else {
         console.log('Game completed!');
-        // Handle game completion
       }
     }
   }
 
-  // Update keybinds (called from main.js when settings change)
+  // Update keybinds
   updateKeybinds(newKeybinds) {
     this.keybinds = { ...newKeybinds };
     console.log('Keybinds updated:', this.keybinds);
   }
 
-  // Get sound manager for external access
+  // Get sound manager
   getSoundManager() {
     return this.soundManager;
   }
@@ -189,7 +214,7 @@ export class Engine {
     if (!this.isRunning) return;
 
     // Calculate delta time
-    const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.016); // Cap at 60 FPS
+    const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.016);
     this.lastFrameTime = currentTime;
 
     // Update and render
@@ -198,6 +223,32 @@ export class Engine {
 
     // Continue the loop
     requestAnimationFrame((time) => this.gameLoop(time));
+  }
+
+  // Initialize input handling
+  initInput() {
+    // Keydown handler
+    window.addEventListener('keydown', (e) => {
+      this.keys[e.key] = true;
+      this.keys[e.key.toLowerCase()] = true;
+      
+      // Unlock audio on first keypress
+      if (!this.audioUnlocked) {
+        this.setupAudioUnlock();
+      }
+      
+      // Debug key for testing sounds
+      if (e.key.toLowerCase() === 't') {
+        console.log('Testing jump sound (T key)...');
+        this.soundManager.forcePlay('jump', 0.8);
+      }
+    });
+
+    // Keyup handler
+    window.addEventListener('keyup', (e) => {
+      this.keys[e.key] = false;
+      this.keys[e.key.toLowerCase()] = false;
+    });
   }
 
   loadLevel(sectionIndex, levelIndex) {
@@ -246,24 +297,30 @@ export class Engine {
         canJump: this.player.canJump,
         canDoubleJump: this.player.canDoubleJump,
         velocityY: this.player.velocityY,
-        jumpKeyPressed: this.player.jumpKeyPressed
+        jumpKeyPressed: this.player.jumpKeyPressed,
+        isWallJumping: this.player.isWallJumping || false
       };
 
       // Update player
       this.player.handleInput(inputActions);
       this.player.update(dt, this.canvas.height, this.currentLevel);
 
+      // Get current player state AFTER update
+      const currentState = {
+        isJumping: this.player.isJumping,
+        isOnGround: this.player.isOnGround,
+        canJump: this.player.canJump,
+        canDoubleJump: this.player.canDoubleJump,
+        velocityY: this.player.velocityY,
+        jumpKeyPressed: this.player.jumpKeyPressed,
+        isWallJumping: this.player.isWallJumping || false
+      };
+
       // Enhanced jump sound detection
-      const jumpTriggered = this.detectJumpSound(prevState);
+      const jumpTriggered = this.detectJumpSound(prevState, currentState);
       if (jumpTriggered) {
         console.log('Jump detected! Playing sound...');
-        this.soundManager.play('jump', 0.9);
-        
-        // Add a backup test
-        setTimeout(() => {
-          console.log('Backup jump sound test...');
-          this.soundManager.testSound('jump');
-        }, 50);
+        this.soundManager.play('jump', 0.8);
       }
 
       // Update camera to follow player
@@ -328,7 +385,7 @@ export class Engine {
         return true;
       });
 
-      // Trophy collision with sound
+      // Trophy collision
       const trophy = this.currentLevel.trophy;
       if (trophy && !trophy.acquired && !trophy.inactive) {
         const px = this.player.x, py = this.player.y, pw = this.player.width, ph = this.player.height;
@@ -343,8 +400,7 @@ export class Engine {
 
       // Check level completion
       if (this.currentLevel.isCompleted()) {
-        console.log('Level completed! Playing sound...');
-        this.soundManager.play('level_complete', 1.0);
+        console.log('Level completed!');
         this.saveProgress();
         this.advanceLevel();
       }
@@ -352,115 +408,6 @@ export class Engine {
     } catch (error) {
       console.error('Error in update loop:', error);
     }
-  }
-
-  // Add debug method to Engine class
-  debugSounds() {
-    console.log('=== ENGINE SOUND DEBUG ===');
-    
-    // Check if sound manager exists
-    console.log('Sound Manager exists:', !!this.soundManager);
-    
-    if (this.soundManager) {
-      console.log('Sound Manager Debug Info:', this.soundManager.getDebugInfo());
-      
-      // Test all sounds
-      console.log('\n=== TESTING ALL SOUNDS ===');
-      ['jump', 'collect', 'level_complete'].forEach(soundKey => {
-        setTimeout(() => {
-          console.log(`Testing ${soundKey}...`);
-          this.soundManager.testSound(soundKey);
-        }, 1000);
-      });
-    }
-    
-    // Check assets
-    console.log('\n=== ASSET DEBUG ===');
-    console.log('Assets loaded:', !!this.assets);
-    if (this.assets) {
-      const soundAssets = ['jump', 'collect', 'level_complete'];
-      soundAssets.forEach(key => {
-        const asset = this.assets[key];
-        console.log(`Asset ${key}:`, {
-          exists: !!asset,
-          type: asset?.constructor.name,
-          readyState: asset?.readyState,
-          duration: asset?.duration,
-          volume: asset?.volume,
-          src: asset?.src?.substring(0, 50) + '...'
-        });
-      });
-    }
-    
-    // Manual sound tests
-    console.log('\n=== MANUAL TESTS ===');
-    
-    // Test 1: Direct asset playback
-    if (this.assets.jump) {
-      console.log('Test 1: Playing jump asset directly...');
-      try {
-        this.assets.jump.volume = 1.0;
-        this.assets.jump.currentTime = 0;
-        this.assets.jump.play().then(() => {
-          console.log('✓ Direct asset playback successful');
-        }).catch(error => {
-          console.log('✗ Direct asset playback failed:', error);
-        });
-      } catch (error) {
-        console.log('✗ Direct asset playback exception:', error);
-      }
-    }
-    
-    // Test 2: Sound manager playback
-    setTimeout(() => {
-      console.log('Test 2: Playing via sound manager...');
-      this.soundManager.play('jump', 1.0);
-    }, 2000);
-    
-    // Test 3: Create new audio element
-    setTimeout(() => {
-      console.log('Test 3: Creating new Audio element...');
-      if (this.assets.jump) {
-        try {
-          const testAudio = new Audio(this.assets.jump.src);
-          testAudio.volume = 1.0;
-          testAudio.play().then(() => {
-            console.log('✓ New audio element successful');
-          }).catch(error => {
-            console.log('✗ New audio element failed:', error);
-          });
-        } catch (error) {
-          console.log('✗ New audio element exception:', error);
-        }
-      }
-    }, 3000);
-  }
-
-  // Add method to test sound on key press
-  testSoundOnKeyPress() {
-    console.log('Setting up sound test key listener...');
-    
-    window.addEventListener('keydown', (e) => {
-      if (e.key.toLowerCase() === 't') {
-        console.log('T key pressed - testing jump sound...');
-        this.soundManager.testSound('jump');
-      }
-      
-      if (e.key.toLowerCase() === 'y') {
-        console.log('Y key pressed - testing collect sound...');
-        this.soundManager.testSound('collect');
-      }
-      
-      if (e.key.toLowerCase() === 'u') {
-        console.log('U key pressed - testing level complete sound...');
-        this.soundManager.testSound('level_complete');
-      }
-    });
-    
-    console.log('Sound test keys enabled:');
-    console.log('  T - Test jump sound');
-    console.log('  Y - Test collect sound');
-    console.log('  U - Test level complete sound');
   }
 
   render() {
@@ -473,7 +420,7 @@ export class Engine {
       // Apply camera transformation
       this.camera.apply(ctx);
 
-      // Draw tiled background (now affected by camera)
+      // Draw tiled background
       this.drawBackground();
 
       // Render level platforms and trophy
@@ -491,11 +438,8 @@ export class Engine {
       // Restore camera transformation
       this.camera.restore(ctx);
 
-      // Draw HUD (not affected by camera)
+      // Draw HUD
       this.drawHUD();
-
-      // Draw camera debug info (uncomment for debugging)
-      // this.camera.drawDebug(ctx);
 
     } catch (error) {
       console.error('Error in render loop:', error);
@@ -524,13 +468,13 @@ export class Engine {
     const srcX = 0;
     const srcY = 0;
 
-    // Calculate which tiles are visible based on camera position
+    // Calculate visible tiles
     const startX = Math.floor(this.camera.x / tileSize);
     const startY = Math.floor(this.camera.y / tileSize);
     const endX = Math.ceil((this.camera.x + canvas.width) / tileSize);
     const endY = Math.ceil((this.camera.y + canvas.height) / tileSize);
 
-    // Only draw visible tiles for better performance
+    // Draw visible tiles
     for (let i = startX; i <= endX; i++) {
       const x = i * tileSize;
       for (let j = startY; j <= endY; j++) {
@@ -562,7 +506,7 @@ export class Engine {
       const fruit = fruits[i];
       if (fruit.collected) continue;
 
-      // Only draw fruits that are visible to the camera
+      // Only draw visible fruits
       if (!this.camera.isVisible(fruit.x - fruit.size/2, fruit.y - fruit.size/2, fruit.size, fruit.size)) {
         continue;
       }
@@ -610,7 +554,7 @@ export class Engine {
     for (let i = 0, len = collectedArr.length; i < len; i++) {
       const collected = collectedArr[i];
       
-      // Only draw if visible to camera
+      // Only draw if visible
       if (!this.camera.isVisible(collected.x - collected.size/2, collected.y - collected.size/2, collected.size, collected.size)) {
         continue;
       }
@@ -630,14 +574,14 @@ export class Engine {
     const { ctx } = this;
 
     try {
-      // Save context to avoid camera transform affecting HUD
+      // Save context
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
       const hudX = 10;
       const hudY = 10;
       const hudWidth = 280;
-      const hudHeight = 100;
+      const hudHeight = 120;
 
       // Draw HUD background
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -651,22 +595,19 @@ export class Engine {
         `${this.currentLevel.name}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
         `Deaths: ${this.player.deathCount || 0}`,
-        `Sound: ${soundSettings.enabled ? 'ON' : 'OFF'} (${Math.round(soundSettings.volume * 100)}%)`
+        `Sound: ${soundSettings.enabled ? 'ON' : 'OFF'} (${Math.round(soundSettings.volume * 100)}%)`,
+        `Audio: ${this.audioUnlocked ? 'Unlocked' : 'Locked'} - Press T to test`
       ];
 
-      let fontSize = 16;
-      if (lines.length >= 4) fontSize = 15;
-      else if (lines.length === 3) fontSize = 17;
-      
-      ctx.font = `${fontSize}px sans-serif`;
+      ctx.font = '14px sans-serif';
       ctx.strokeStyle = 'black';
       ctx.lineWidth = 2;
       ctx.fillStyle = 'white';
 
-      const lineHeight = 20;
+      const lineHeight = 18;
       const totalTextHeight = lines.length * lineHeight;
       const startY = hudY + (hudHeight - totalTextHeight) / 2 + lineHeight - 6;
-      const textX = hudX + hudWidth / 2;
+      const textX = hudX + 10;
 
       lines.forEach((text, index) => {
         const y = startY + index * lineHeight;
@@ -681,17 +622,17 @@ export class Engine {
     }
   }
 
-  // Add method to get camera for external access
+  // Get camera for external access
   getCamera() {
     return this.camera;
   }
 
-  // Add method to manually trigger screen shake
+  // Manual screen shake
   shakeScreen(intensity = 10, duration = 0.2) {
     this.camera.shake(intensity, duration);
   }
 
-  // Method to restart current level
+  // Restart current level
   restartLevel() {
     this.loadLevel(this.currentSection, this.currentLevelIndex);
   }

@@ -272,7 +272,7 @@ export class SoundManager {
     };
   }
 
-  // NEW: Force play method for testing (bypasses enabled check)
+  // Force play method for testing (bypasses enabled check)
   forcePlay(soundKey, volumeMultiplier = 1.0) {
     if (!this.sounds[soundKey]) {
       console.warn(`Sound not found for force play: ${soundKey}`);
