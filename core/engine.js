@@ -151,8 +151,6 @@ export class Engine {
         if (collided) {
           fruit.collected = true; // Mark as collected in level
           // The fruitCount is now derived from the level itself
-          // this.fruitCount++; // No longer needed here, Level.getFruitCount() handles it
-          // this.fruitHighScore = Math.max(this.currentLevel.getFruitCount(), this.fruitHighScore); // Update high score based on level's count
 
           this.collectedFruits.push({ // Trigger collected animation
             x: fruit.x,
@@ -189,10 +187,10 @@ export class Engine {
       if (this.currentLevel.isCompleted()) {
         console.log('Level completed!');
         // TODO: Handle level completion (e.g., load next level, show completion screen)
-        // For now, let's just reset the level for demonstration
-        // this.currentLevel.reset();
-        // this.player.x = this.currentLevel.startPosition.x;
-        // this.player.y = this.currentLevel.startPosition.y;
+        // For now, reset the level
+        this.currentLevel.reset();
+        this.player.x = this.currentLevel.startPosition.x;
+        this.player.y = this.currentLevel.startPosition.y;
       }
 
     } catch (error) {
