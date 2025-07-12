@@ -1,45 +1,37 @@
-// Enhanced Sound Manager with better debugging and fixes
+// Enhanced Sound Manager with fixes and improvements
 export class SoundManager {
   constructor() {
     this.sounds = {};
     this.enabled = true;
-    this.volume = 0.8; // Increased default volume
+    this.volume = 0.8;
     this.audioContext = null;
     this.audioEnabled = false;
-    this.loadSettings();
+    
+    // In-memory settings storage (localStorage not supported in artifacts)
+    this.settings = {
+      enabled: true,
+      volume: 0.8
+    };
+    
     console.log('SoundManager initialized with volume:', this.volume);
   }
 
-  // Load sound settings from localStorage
+  // Use in-memory storage instead of localStorage
   loadSettings() {
-    try {
-      const settings = localStorage.getItem('game_sound_settings');
-      if (settings) {
-        const parsed = JSON.parse(settings);
-        this.enabled = parsed.enabled !== undefined ? parsed.enabled : true;
-        this.volume = parsed.volume !== undefined ? parsed.volume : 0.8;
-        console.log('Sound settings loaded:', { enabled: this.enabled, volume: this.volume });
-      }
-    } catch (error) {
-      console.warn('Failed to load sound settings:', error);
-    }
+    // Settings are now stored in memory only
+    this.enabled = this.settings.enabled;
+    this.volume = this.settings.volume;
+    console.log('Sound settings loaded from memory:', { enabled: this.enabled, volume: this.volume });
   }
 
-  // Save sound settings to localStorage
+  // Save to memory instead of localStorage
   saveSettings() {
-    try {
-      const settings = {
-        enabled: this.enabled,
-        volume: this.volume
-      };
-      localStorage.setItem('game_sound_settings', JSON.stringify(settings));
-      console.log('Sound settings saved:', settings);
-    } catch (error) {
-      console.warn('Failed to save sound settings:', error);
-    }
+    this.settings.enabled = this.enabled;
+    this.settings.volume = this.volume;
+    console.log('Sound settings saved to memory:', this.settings);
   }
 
-  // Load sound files from assets with better error handling
+  // Simplified sound loading using existing assets directly
   loadSounds(assets) {
     console.log('Loading sounds...');
     console.log('Available assets:', Object.keys(assets));
@@ -49,42 +41,33 @@ export class SoundManager {
     soundKeys.forEach(key => {
       if (assets[key]) {
         try {
-          const originalAudio = assets[key];
+          // Use the assets directly instead of creating new Audio objects
+          const sound = assets[key];
           
-          // Create a new Audio object to avoid conflicts
-          const sound = new Audio();
-          sound.src = originalAudio.src;
+          // Set initial volume
           sound.volume = this.volume;
-          sound.preload = 'auto';
           
-          // Add event listeners for debugging
-          sound.addEventListener('loadeddata', () => {
-            console.log(`Sound ${key} loaded successfully`);
-          });
-          
+          // Add error handling for the existing audio element
           sound.addEventListener('error', (error) => {
-            console.error(`Sound ${key} loading error:`, error);
+            console.error(`Sound ${key} error:`, error);
           });
           
+          // Store reference to the asset
           this.sounds[key] = sound;
-          console.log(`Registered sound: ${key}`);
+          console.log(`Registered sound: ${key} (duration: ${sound.duration})`);
         } catch (error) {
-          console.warn(`Failed to load sound ${key}:`, error);
+          console.warn(`Failed to register sound ${key}:`, error);
         }
       } else {
         console.warn(`Sound asset ${key} not found in assets`);
       }
     });
     
-    console.log('Sounds loaded:', Object.keys(this.sounds));
+    console.log('Sounds registered:', Object.keys(this.sounds));
   }
 
-  // Enhanced play method with better debugging
+  // Simplified and more reliable play method
   play(soundKey, volumeMultiplier = 1.0) {
-    console.log(`Attempting to play sound: ${soundKey}`);
-    console.log(`Sound enabled: ${this.enabled}`);
-    console.log(`Volume: ${this.volume * volumeMultiplier}`);
-    
     if (!this.enabled) {
       console.log(`Sound disabled, not playing: ${soundKey}`);
       return;
@@ -92,25 +75,20 @@ export class SoundManager {
 
     if (!this.sounds[soundKey]) {
       console.warn(`Sound not found: ${soundKey}`);
-      console.log('Available sounds:', Object.keys(this.sounds));
       return;
     }
 
     try {
       const sound = this.sounds[soundKey];
-      console.log(`Sound object exists: ${!!sound}`);
-      console.log(`Sound ready state: ${sound.readyState}`);
-      console.log(`Sound duration: ${sound.duration}`);
-      console.log(`Sound paused: ${sound.paused}`);
       
-      // Reset the sound to the beginning
-      sound.currentTime = 0;
-      sound.volume = Math.min(this.volume * volumeMultiplier, 1.0);
+      // Clone the audio for overlapping sounds
+      const audioClone = sound.cloneNode();
+      audioClone.volume = Math.min(this.volume * volumeMultiplier, 1.0);
       
-      console.log(`Setting volume to: ${sound.volume}`);
+      // Reset and play
+      audioClone.currentTime = 0;
       
-      // Play the sound
-      const playPromise = sound.play();
+      const playPromise = audioClone.play();
       
       if (playPromise !== undefined) {
         playPromise.then(() => {
@@ -118,13 +96,13 @@ export class SoundManager {
         }).catch(error => {
           console.error(`✗ Failed to play sound ${soundKey}:`, error);
           
-          // Try to provide more specific error info
-          if (error.name === 'NotAllowedError') {
-            console.log('Auto-play was prevented - user interaction required');
-          } else if (error.name === 'NotSupportedError') {
-            console.log('Audio format not supported');
-          } else if (error.name === 'AbortError') {
-            console.log('Audio playback aborted');
+          // Fallback to original audio element
+          try {
+            sound.currentTime = 0;
+            sound.volume = Math.min(this.volume * volumeMultiplier, 1.0);
+            sound.play();
+          } catch (fallbackError) {
+            console.error(`Fallback play failed for ${soundKey}:`, fallbackError);
           }
         });
       }
@@ -133,58 +111,56 @@ export class SoundManager {
     }
   }
 
-  // Test a sound with comprehensive debugging
+  // Better test method with multiple fallbacks
   testSound(soundKey) {
     console.log(`\n=== TESTING SOUND: ${soundKey} ===`);
-    console.log(`Sound enabled: ${this.enabled}`);
-    console.log(`Master volume: ${this.volume}`);
-    console.log(`Sound exists: ${!!this.sounds[soundKey]}`);
     
-    if (this.sounds[soundKey]) {
-      const sound = this.sounds[soundKey];
-      console.log(`Sound properties:`, {
-        readyState: sound.readyState,
-        duration: sound.duration,
-        volume: sound.volume,
-        paused: sound.paused,
-        ended: sound.ended,
-        currentTime: sound.currentTime,
-        src: sound.src
-      });
-      
-      // Test different volumes
-      console.log('Testing with maximum volume...');
-      this.play(soundKey, 1.0);
-      
-      // Also try playing the raw audio element
-      setTimeout(() => {
-        console.log('Testing raw audio playback...');
-        try {
-          sound.volume = 1.0;
-          sound.currentTime = 0;
-          sound.play().then(() => {
-            console.log('Raw audio played successfully');
-          }).catch(error => {
-            console.log('Raw audio failed:', error);
-          });
-        } catch (error) {
-          console.log('Raw audio exception:', error);
-        }
-      }, 1000);
+    if (!this.sounds[soundKey]) {
+      console.log(`Sound ${soundKey} not found`);
+      return;
     }
+    
+    const sound = this.sounds[soundKey];
+    console.log(`Sound properties:`, {
+      readyState: sound.readyState,
+      duration: sound.duration,
+      volume: sound.volume,
+      paused: sound.paused,
+      src: sound.src?.substring(0, 50) + '...'
+    });
+    
+    // Test 1: Normal play method
+    console.log('Test 1: Using play() method...');
+    this.play(soundKey, 1.0);
+    
+    // Test 2: Direct audio play
+    setTimeout(() => {
+      console.log('Test 2: Direct audio element play...');
+      try {
+        const testAudio = sound.cloneNode();
+        testAudio.volume = 0.8;
+        testAudio.currentTime = 0;
+        testAudio.play().then(() => {
+          console.log('✓ Direct play successful');
+        }).catch(error => {
+          console.log('✗ Direct play failed:', error);
+        });
+      } catch (error) {
+        console.log('✗ Direct play exception:', error);
+      }
+    }, 500);
   }
 
-  // Enable audio context (call this on first user interaction)
+  // Streamlined audio context initialization
   enableAudioContext() {
     console.log('Enabling audio context...');
     
-    // Try to create audio context
     try {
+      // Try to create and resume audio context
       if (!this.audioContext) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) {
           this.audioContext = new AudioContext();
-          console.log('Audio context created:', this.audioContext.state);
         }
       }
       
@@ -196,33 +172,45 @@ export class SoundManager {
       } else {
         this.audioEnabled = true;
       }
+      
+      // Simple audio unlock - play all sounds at zero volume
+      this.unlockAudio();
+      
     } catch (error) {
-      console.warn('Audio context error:', error);
+      console.warn('Audio context setup error:', error);
     }
+  }
+
+  // Simple audio unlock method
+  unlockAudio() {
+    console.log('Unlocking audio...');
     
-    // Try to play a silent sound to unlock audio
     Object.values(this.sounds).forEach(sound => {
       if (sound) {
-        const originalVolume = sound.volume;
-        sound.volume = 0;
-        sound.play().then(() => {
-          sound.pause();
-          sound.currentTime = 0;
-          sound.volume = originalVolume;
-          console.log('Audio unlocked for sound');
-        }).catch(() => {
-          // Ignore errors
-        });
+        try {
+          const originalVolume = sound.volume;
+          sound.volume = 0;
+          sound.play().then(() => {
+            sound.pause();
+            sound.currentTime = 0;
+            sound.volume = originalVolume;
+          }).catch(() => {
+            // Ignore unlock errors
+          });
+        } catch (error) {
+          // Ignore unlock errors
+        }
       }
     });
   }
 
-  // Stop a sound
+  // Better stop method
   stop(soundKey) {
     if (this.sounds[soundKey]) {
       try {
-        this.sounds[soundKey].pause();
-        this.sounds[soundKey].currentTime = 0;
+        const sound = this.sounds[soundKey];
+        sound.pause();
+        sound.currentTime = 0;
         console.log(`Stopped sound: ${soundKey}`);
       } catch (error) {
         console.warn(`Error stopping sound ${soundKey}:`, error);
@@ -237,12 +225,12 @@ export class SoundManager {
     });
   }
 
-  // Set master volume (0.0 to 1.0)
+  // Better volume control with immediate effect
   setVolume(volume) {
     this.volume = Math.max(0, Math.min(1, volume));
     console.log(`Master volume set to: ${this.volume}`);
     
-    // Update all loaded sounds
+    // Update all loaded sounds immediately
     Object.values(this.sounds).forEach(sound => {
       if (sound) {
         sound.volume = this.volume;
@@ -284,20 +272,33 @@ export class SoundManager {
     };
   }
 
-  // Preload sounds for better performance
-  preloadSounds() {
-    Object.values(this.sounds).forEach(sound => {
-      if (sound) {
-        try {
-          sound.load();
-        } catch (error) {
-          // Ignore preload errors
-        }
+  // NEW: Force play method for testing (bypasses enabled check)
+  forcePlay(soundKey, volumeMultiplier = 1.0) {
+    if (!this.sounds[soundKey]) {
+      console.warn(`Sound not found for force play: ${soundKey}`);
+      return;
+    }
+
+    try {
+      const sound = this.sounds[soundKey];
+      sound.volume = Math.min(this.volume * volumeMultiplier, 1.0);
+      sound.currentTime = 0;
+      
+      const playPromise = sound.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          console.log(`✓ Force played sound: ${soundKey}`);
+        }).catch(error => {
+          console.error(`✗ Force play failed for ${soundKey}:`, error);
+        });
       }
-    });
+    } catch (error) {
+      console.error(`Exception in force play ${soundKey}:`, error);
+    }
   }
 
-  // Add method to check if sound is ready
+  // Check if sound is ready
   isSoundReady(soundKey) {
     const sound = this.sounds[soundKey];
     return sound && sound.readyState >= 2; // HAVE_CURRENT_DATA
@@ -315,8 +316,22 @@ export class SoundManager {
         key,
         ready: this.isSoundReady(key),
         duration: this.sounds[key]?.duration,
-        volume: this.sounds[key]?.volume
+        volume: this.sounds[key]?.volume,
+        readyState: this.sounds[key]?.readyState
       }))
     };
+  }
+
+  // Quick sound test method
+  quickTest() {
+    console.log('=== QUICK SOUND TEST ===');
+    const testOrder = ['jump', 'collect', 'level_complete'];
+    
+    testOrder.forEach((soundKey, index) => {
+      setTimeout(() => {
+        console.log(`Testing ${soundKey}...`);
+        this.forcePlay(soundKey, 0.5);
+      }, index * 1000);
+    });
   }
 }
