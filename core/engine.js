@@ -72,12 +72,12 @@ export class Engine {
       return;
     }
     
-    // Check if there's another section
+    // Check if there's another section to advance to
     if (this.currentSection + 1 < levelSections.length) {
       this.currentSection++;
       this.currentLevelIndex = 0;
       this.loadLevel(this.currentSection, this.currentLevelIndex);
-      return;
+      return; // Early exit for performance
     }
     
     // Game completed! For now, loop back to first level
@@ -87,13 +87,12 @@ export class Engine {
     this.loadLevel(this.currentSection, this.currentLevelIndex);
   }
 
-  // Save progress to localStorage
+  // Save progress to localStorage (optimized: minimal object, single call)
   saveProgress() {
-    const progress = {
+    localStorage.setItem('gameProgress', JSON.stringify({
       section: this.currentSection,
       level: this.currentLevelIndex,
-    };
-    localStorage.setItem('gameProgress', JSON.stringify(progress));
+    }));
   }
 
   // Load progress from localStorage

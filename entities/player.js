@@ -60,39 +60,28 @@ export class Player {
     if (inputActions.moveLeft) {
       this.vx = -this.moveSpeed;
       this.direction = 'left';
-      if (this.onGround) {
-        this.state = 'run';
-      }
-
+      if (this.onGround) this.state = 'run'; // Only set state if grounded
     } else if (inputActions.moveRight) {
       this.vx = this.moveSpeed;
       this.direction = 'right';
-      if (this.onGround) {
-        this.state = 'run';
-      }
-
+      if (this.onGround) this.state = 'run';
     } else {
       this.vx = 0;
-      if (this.onGround) {
-        this.state = 'idle';
-      }
+      if (this.onGround) this.state = 'idle';
     }
 
     // Detect new jump press
     const jumpKeyDown = inputActions.jump; // Use the action directly
 
+    // Fast jump edge detection
     if (jumpKeyDown && !this.jumpPressed) {
-      if (this.jumpCount === 0) {
-        this.vy = -this.jumpForce;
-        this.jumpCount++;
-        this.state = 'jump';
-        this.onGround = false;
-      } else if (this.jumpCount === 1) {
-        this.vy = -this.jumpForce;
-        this.jumpCount++;
-        if (this.state !== 'double_jump') this.state = 'double_jump';
+      if (this.jumpCount < 2) { // Allow up to 2 jumps
+      this.vy = -this.jumpForce; // Apply jump velocity
+      this.jumpCount++;
+      this.state = this.jumpCount === 2 ? 'double_jump' : 'jump'; // Set state
+      this.onGround = false;
       }
-      this.jumpPressed = true;
+      this.jumpPressed = true; // Mark jump as handled
     }
 
     if (!jumpKeyDown) {
@@ -101,21 +90,22 @@ export class Player {
 
     const dashKeyDown = inputActions.dash;  // Dash input handling
 
-    // Detect "just pressed" dash input
+    // Dash: fast edge detection, cooldown, minimal branching
     if (dashKeyDown && !this.dashPressed && !this.isDashing && this.dashCooldownTimer <= 0) {
-      this.isDashing = true;
-      this.dashTimer = this.dashDuration;
-      this.vx = this.direction === 'right' ? this.dashSpeed : -this.dashSpeed;
-      this.vy = 0;
-      this.state = 'dash';
-      this.animationFrame = 0; // Reset to first frame
+      this.isDashing = true;                  // Start dash
+      this.dashTimer = this.dashDuration;     // Set dash timer
+      this.vx = this.direction === 'right' ? this.dashSpeed : -this.dashSpeed; // Set dash velocity
+      this.vy = 0;                            // No vertical movement during dash
+      this.state = 'dash';                    // Set state for animation
+      this.animationFrame = 0;                // Reset animation frame
     }
 
     this.dashPressed = dashKeyDown; // Update flag for edge detection
 
+    // Fast animation reset on state change (minimize property writes)
     if (this.state !== prevState) {
-      this.animationFrame = 0;
-      this.animationTimer = 0;
+      this.animationFrame = 0;   // Reset frame
+      this.animationTimer = 0;   // Reset timer
     }
   }
 
@@ -125,31 +115,23 @@ export class Player {
       const prevX = this.x;
       const prevY = this.y;
       
-      // Update dash cooldown timer
+      // Dash cooldown timer (fast, single branch)
       if (this.dashCooldownTimer > 0) {
         this.dashCooldownTimer -= dt;
-        if (this.dashCooldownTimer < 0) this.dashCooldownTimer = 0;
+        if (this.dashCooldownTimer <= 0) this.dashCooldownTimer = 0; // Clamp to zero
       }
 
-      // Handle dash logic
+      // Dash logic
       if (this.isDashing) {
         this.state = 'dash';
         this.dashTimer -= dt;
         if (this.dashTimer <= 0) {
           this.isDashing = false;
           this.vx = 0;
+          this.dashCooldownTimer = this.dashCooldown; // Start cooldown
 
-          // Start cooldown
-          this.dashCooldownTimer = this.dashCooldown;
-
-          // Restore appropriate state
-          if (this.onGround) {
-            this.state = 'idle';
-          } else if (this.vy > 0) {
-            this.state = 'fall';
-          } else {
-            this.state = 'jump';
-          }
+          // Restore state fast (no branching)
+          this.state = this.onGround ? 'idle' : (this.vy > 0 ? 'fall' : 'jump');
         }
       }
 
@@ -173,21 +155,24 @@ export class Player {
       if (level) groundCollision = this.handleVerticalCollision(level, prevY);
 
       // If clinging but no longer touching a wall, exit cling
+      // Fast wall cling exit: check if still touching wall
       if (this.state === 'cling') {
-        let stillTouchingWall = false;
-        for (const platform of level.platforms) {
-          const nearLeft = Math.abs((this.x + this.width) - platform.x) < 2;
-          const nearRight = Math.abs(this.x - (platform.x + platform.width)) < 2;
-          const verticallyAligned = this.y + this.height > platform.y && this.y < platform.y + platform.height;
-          if (verticallyAligned && (nearLeft || nearRight)) {
-            stillTouchingWall = true;
-            break;
+        let touchingWall = false;
+        for (let i = 0, len = level.platforms.length; i < len; i++) {
+          const p = level.platforms[i];
+          // Check vertical overlap
+          if (this.y + this.height > p.y && this.y < p.y + p.height) {
+        // Check near left/right edge (within 2px)
+        if (
+          Math.abs((this.x + this.width) - p.x) < 2 ||
+          Math.abs(this.x - (p.x + p.width)) < 2
+        ) {
+          touchingWall = true;
+          break;
+        }
           }
         }
-
-        if (!stillTouchingWall) {
-          this.state = 'fall';
-        }
+        if (!touchingWall) this.state = 'fall'; // Exit cling if not touching wall
       }
 
       // Fallback ground collision with canvas bottom
