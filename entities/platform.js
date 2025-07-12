@@ -125,7 +125,8 @@ export class Level {
       animationTimer: 0,
       animationSpeed: 0.35, // seconds between frames
       acquired: false,
-      inactive: false, // Added inactive state
+      inactive: true, 
+      contactMade: false, // Add contact tracking
     };
   }
 
@@ -239,12 +240,15 @@ export class Level {
 
   }
 
+  // Update the trophy inactive state more accurately:
   updateTrophyAnimation(dt) {
     const trophy = this.trophy;
     if (!trophy) return;
     
-    trophy.inactive = !this.allFruitsCollected(); // Only animate if trophy is active and not acquired
+    // Update inactive state - only active when all fruits are collected
+    trophy.inactive = !this.allFruitsCollected();
     
+    // Only animate if trophy is active and not acquired
     if (!trophy.inactive && !trophy.acquired) {
       trophy.animationTimer += dt;
       if (trophy.animationTimer >= trophy.animationSpeed) {
@@ -255,19 +259,28 @@ export class Level {
   }
 
   isCompleted() {
-    const allFruitsCollected = this.fruits.every(fruit => fruit.collected);
+    const allFruitsCollected = this.allFruitsCollected();
     const trophyCollected = this.trophy ? this.trophy.acquired : true;
-
+    
+    // Only complete if trophy was properly acquired
     return allFruitsCollected && trophyCollected;
   }
 
   // Reset level
   reset() {
-    this.fruits.forEach(fruit => fruit.collected = false);
+    this.fruits.forEach(fruit => {
+      fruit.collected = false;
+      fruit.frame = 0;
+      fruit.frameTimer = 0;
+    });
+    
     if (this.trophy) {
       this.trophy.acquired = false;
-      this.trophy.inactive = false;
+      this.trophy.inactive = true;
+      this.trophy.animationFrame = 0;
+      this.trophy.animationTimer = 0;
     }
+    
     this.completed = false;
   }
 }

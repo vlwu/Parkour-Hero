@@ -232,16 +232,8 @@ export class Player {
         this.vx = 0;
       }
 
-      // Trophy collision detection
-      if (level?.trophy && !level.trophy.acquired) {
-        const dx = this.getCenterX() - level.trophy.x;
-        const dy = this.getCenterY() - level.trophy.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < level.trophy.size / 2 + Math.min(this.width, this.height) / 2) {
-          level.trophy.acquired = true;
-        }
-      }
+      // REMOVED: Duplicate trophy collision detection
+      // Trophy collision is now handled exclusively in engine.js
 
       // Update animation timer and frame
       this.animationTimer += dt;

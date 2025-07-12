@@ -236,32 +236,38 @@ export class Engine {
         return true; // Keep uncollected fruits
       });
 
-      // Check for trophy collision
-      const trophy = this.currentLevel.trophy;
-      if (trophy && !trophy.acquired) {
-        // Only allow trophy collection if all fruits are collected
-        if (this.currentLevel.allFruitsCollected()) {
-          const dx = trophy.x - (this.player.x + this.player.width / 2);
-          const dy = trophy.y - (this.player.y + this.player.height / 2);
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          const collided = distance < (trophy.size / 2 + this.player.width / 2);
-
-          if (collided) {
-            trophy.acquired = true;
-            console.log('Trophy acquired!');
-          }
-        } else {
-          // Trophy is inactive - show visual feedback
-          trophy.inactive = true;
-        }
+    // Trophy collision handling - SIMPLIFIED VERSION
+    const trophy = this.currentLevel.trophy;
+    if (trophy && !trophy.acquired) {
+      // Calculate collision
+      const playerLeft = this.player.x;
+      const playerRight = this.player.x + this.player.width;
+      const playerTop = this.player.y;
+      const playerBottom = this.player.y + this.player.height;
+      
+      const trophyLeft = trophy.x - trophy.size / 2;
+      const trophyRight = trophy.x + trophy.size / 2;
+      const trophyTop = trophy.y - trophy.size / 2;
+      const trophyBottom = trophy.y + trophy.size / 2;
+      
+      const collided = playerRight > trophyLeft &&
+                      playerLeft < trophyRight &&
+                      playerBottom > trophyTop &&
+                      playerTop < trophyBottom;
+      
+      // Only acquire trophy if it's active AND there's current collision
+      if (collided && !trophy.inactive) {
+        trophy.acquired = true;
+        console.log('Trophy acquired!');
       }
+    }
 
-      // Check if level is completed
-      if (this.currentLevel.isCompleted()) {
-        console.log('Level completed!');
-        this.saveProgress(); // Save progress when level is completed
-        this.advanceLevel(); // Load next level
-      }
+    // Check if level is completed
+    if (this.currentLevel.isCompleted()) {
+      console.log('Level completed!');
+      this.saveProgress();
+      this.advanceLevel();
+    }
 
     } catch (error) {
       console.error('Error in update loop:', error);
