@@ -1,9 +1,10 @@
-// Modified engine.js - Complete version with missing methods
+// Modified engine.js - Complete version with sound integration
 
 import { Player } from '../entities/player.js';
 import { createLevel } from '../entities/platform.js'; 
 import { levelSections } from '../entities/levels.js';
-import { Camera } from './camera.js'; // Import the camera
+import { Camera } from './camera.js';
+import { SoundManager } from './sound.js'; // Import the sound manager
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) {
@@ -17,6 +18,10 @@ export class Engine {
     
     // Initialize camera
     this.camera = new Camera(canvas.width, canvas.height);
+    
+    // Initialize sound manager
+    this.soundManager = new SoundManager();
+    this.soundManager.loadSounds(assets);
     
     // Level progression system
     this.currentSection = 0;
@@ -100,6 +105,9 @@ export class Engine {
       this.levelProgress.completedLevels.push(levelId);
     }
 
+    // Play level complete sound
+    this.soundManager.play('level_complete');
+
     // Try to advance to next level in current section
     if (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) {
       this.currentLevelIndex++;
@@ -128,6 +136,11 @@ export class Engine {
     console.log('Keybinds updated:', this.keybinds);
   }
 
+  // Get sound manager for external access
+  getSoundManager() {
+    return this.soundManager;
+  }
+
   // Start the game loop
   start() {
     this.isRunning = true;
@@ -137,11 +150,13 @@ export class Engine {
   // Stop the game loop
   stop() {
     this.isRunning = false;
+    this.soundManager.stopAll();
   }
 
   // Pause the game
   pause() {
     this.isRunning = false;
+    this.soundManager.stopAll();
   }
 
   // Resume the game
@@ -207,9 +222,23 @@ export class Engine {
         dash: this.keys[this.keybinds.dash] || false,
       };
 
+      // Store previous player state to detect sound triggers
+      const prevPlayerState = {
+        isJumping: this.player.isJumping,
+        isOnGround: this.player.isOnGround,
+        justJumped: this.player.justJumped || false,
+        justDoubleJumped: this.player.justDoubleJumped || false,
+        justDashed: this.player.justDashed || false
+      };
+
       // Update player
       this.player.handleInput(inputActions);
       this.player.update(dt, this.canvas.height, this.currentLevel);
+
+      // Play jump sound when player jumps
+      if (this.player.justJumped || this.player.justDoubleJumped) {
+        this.soundManager.play('jump', 0.8);
+      }
 
       // Update camera to follow player
       this.camera.update(this.player, dt);
@@ -222,6 +251,9 @@ export class Engine {
         
         // Add screen shake for death
         this.camera.shake(15, 0.5);
+        
+        // Increment death count
+        this.player.deathCount = (this.player.deathCount || 0) + 1;
       }
 
       // Update level animations
@@ -253,6 +285,9 @@ export class Engine {
 
         if (collided) {
           fruit.collected = true;
+
+          // Play fruit collection sound
+          this.soundManager.play('collect', 0.6);
 
           this.collectedFruits.push({
             x: fruit.x,
@@ -473,7 +508,7 @@ export class Engine {
       const hudX = 10;
       const hudY = 10;
       const hudWidth = 280;
-      const hudHeight = 80;
+      const hudHeight = 100;
 
       // Draw HUD background
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -481,13 +516,16 @@ export class Engine {
 
       const totalFruits = this.currentLevel.getTotalFruitCount();
       const collectedFruits = this.currentLevel.getFruitCount();
+      const soundSettings = this.soundManager.getSettings();
+      
       const lines = [
         `${this.currentLevel.name}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
         `Deaths: ${this.player.deathCount || 0}`,
+        `Sound: ${soundSettings.enabled ? 'ON' : 'OFF'} (${Math.round(soundSettings.volume * 100)}%)`
       ];
 
-      let fontSize = 18;
+      let fontSize = 16;
       if (lines.length >= 4) fontSize = 15;
       else if (lines.length === 3) fontSize = 17;
       
@@ -496,7 +534,7 @@ export class Engine {
       ctx.lineWidth = 2;
       ctx.fillStyle = 'white';
 
-      const lineHeight = 22;
+      const lineHeight = 20;
       const totalTextHeight = lines.length * lineHeight;
       const startY = hudY + (hudHeight - totalTextHeight) / 2 + lineHeight - 6;
       const textX = hudX + hudWidth / 2;
@@ -522,5 +560,10 @@ export class Engine {
   // Add method to manually trigger screen shake
   shakeScreen(intensity = 10, duration = 0.2) {
     this.camera.shake(intensity, duration);
+  }
+
+  // Method to restart current level
+  restartLevel() {
+    this.loadLevel(this.currentSection, this.currentLevelIndex);
   }
 }
