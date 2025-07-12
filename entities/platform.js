@@ -10,7 +10,11 @@ export class Platform {
     this.spriteConfig = {
       dirt: { srcX: 96, srcY: 0 },      // Dirt tile at top-left
       stone: { srcX: 0, srcY: 0 },    // Stone tile next to dirt
-      wood: { srcX: 0, srcY: 64 }     // Wood tile next to stone
+      wood: { srcX: 0, srcY: 64 },     // Wood tile next to stone
+      green_block: { srcX: 0, srcY: 128 }, // Green block tile
+      orange_dirt: { srcX: 96, srcY: 64 }, // Oranges dirt tile
+      pink_dirt: { srcX: 96, srcY: 128 }, // Pink dirt tile
+      red_brick: { srcX: 272, srcY: 64 }, // Red brick tile
     };
 
     this.tileSize = 48; // Size of each tile in the spritesheet

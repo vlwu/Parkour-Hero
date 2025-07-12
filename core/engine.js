@@ -1,19 +1,6 @@
 import { Player } from '../entities/player.js';
 import { createLevel, levelData } from '../entities/platform.js'; // Updated import
 
-// FRUIT_NAMES is no longer strictly necessary here as fruit types come from levelData,
-// but keeping it for reference or if it's used elsewhere.
-const FRUIT_NAMES = [
-  'fruit_apple',
-  'fruit_bananas',
-  'fruit_cherries',
-  'fruit_kiwi',
-  'fruit_melon',
-  'fruit_orange',
-  'fruit_pineapple',
-  'fruit_strawberry',
-];
-
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) { // Added initialKeybinds parameter
     this.ctx = ctx;
