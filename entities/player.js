@@ -240,7 +240,6 @@ export class Player {
 
         if (distance < level.trophy.size / 2 + Math.min(this.width, this.height) / 2) {
           level.trophy.acquired = true;
-          level.completed = level.isCompleted(); // optional: update level status
         }
       }
 

@@ -123,7 +123,7 @@ export class Level {
       frameCount: 8,
       animationFrame: 0,
       animationTimer: 0,
-      animationSpeed: 0.4, // seconds between frames
+      animationSpeed: 0.35, // seconds between frames
       acquired: false,
     };
   }
@@ -238,10 +238,11 @@ export class Level {
   }
 
   isCompleted() {
-    // Level is completed when all fruits are collected and trophy is obtained
+    // TODO: Level is completed when all fruits are collected and trophy is obtained, but trophy can only be acquired after all fruits are collected
     const allFruitsCollected = this.fruits.every(fruit => fruit.collected);
     const trophyCollected = this.trophy ? this.trophy.acquired : true;
 
+    // Only allow completion if all fruits are collected and trophy is acquired
     return allFruitsCollected && trophyCollected;
   }
 

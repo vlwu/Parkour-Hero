@@ -378,6 +378,7 @@ export class Engine {
       const lines = [
         `${this.currentLevel.name}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
+        `Trophy: ${this.currentLevel.trophy.acquired ? 'Acquired' : 'Not Acquired'}`,
       ];
 
       // Line height and top offset to vertically center within the box
