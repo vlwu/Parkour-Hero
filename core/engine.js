@@ -1,4 +1,4 @@
-// Modified engine.js - showing the key changes needed
+// Modified engine.js - Complete version with missing methods
 
 import { Player } from '../entities/player.js';
 import { createLevel } from '../entities/platform.js'; 
@@ -32,6 +32,140 @@ export class Engine {
     this.initInput();
 
     console.log('Engine initialized successfully');
+  }
+
+  // Initialize input handling
+  initInput() {
+    // Keyboard event listeners
+    window.addEventListener('keydown', (e) => {
+      this.keys[e.key.toLowerCase()] = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+      this.keys[e.key.toLowerCase()] = false;
+    });
+
+    // Prevent default behavior for game keys
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+      if (Object.values(this.keybinds).includes(key) || key === ' ') {
+        e.preventDefault();
+      }
+    });
+
+    console.log('Input system initialized');
+  }
+
+  // Load game progress from localStorage
+  loadProgress() {
+    try {
+      const saved = localStorage.getItem('game_progress');
+      if (saved) {
+        const progress = JSON.parse(saved);
+        console.log('Progress loaded:', progress);
+        return progress;
+      }
+    } catch (error) {
+      console.warn('Failed to load progress:', error);
+    }
+    
+    // Default progress
+    return {
+      unlockedSections: 1,
+      unlockedLevels: [1], // First level of first section unlocked
+      completedLevels: []
+    };
+  }
+
+  // Save game progress to localStorage
+  saveProgress() {
+    try {
+      const progress = {
+        unlockedSections: this.levelProgress.unlockedSections,
+        unlockedLevels: this.levelProgress.unlockedLevels,
+        completedLevels: this.levelProgress.completedLevels
+      };
+      localStorage.setItem('game_progress', JSON.stringify(progress));
+      console.log('Progress saved:', progress);
+    } catch (error) {
+      console.warn('Failed to save progress:', error);
+    }
+  }
+
+  // Advance to next level
+  advanceLevel() {
+    // Mark current level as completed
+    const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
+    if (!this.levelProgress.completedLevels.includes(levelId)) {
+      this.levelProgress.completedLevels.push(levelId);
+    }
+
+    // Try to advance to next level in current section
+    if (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) {
+      this.currentLevelIndex++;
+      this.loadLevel(this.currentSection, this.currentLevelIndex);
+    } else {
+      // Try to advance to next section
+      if (this.currentSection + 1 < levelSections.length) {
+        this.currentSection++;
+        this.currentLevelIndex = 0;
+        this.loadLevel(this.currentSection, this.currentLevelIndex);
+        
+        // Update unlocked sections/levels
+        if (this.currentSection >= this.levelProgress.unlockedSections) {
+          this.levelProgress.unlockedSections = this.currentSection + 1;
+        }
+      } else {
+        console.log('Game completed!');
+        // Handle game completion
+      }
+    }
+  }
+
+  // Update keybinds (called from main.js when settings change)
+  updateKeybinds(newKeybinds) {
+    this.keybinds = { ...newKeybinds };
+    console.log('Keybinds updated:', this.keybinds);
+  }
+
+  // Start the game loop
+  start() {
+    this.isRunning = true;
+    this.gameLoop();
+  }
+
+  // Stop the game loop
+  stop() {
+    this.isRunning = false;
+  }
+
+  // Pause the game
+  pause() {
+    this.isRunning = false;
+  }
+
+  // Resume the game
+  resume() {
+    if (!this.isRunning) {
+      this.isRunning = true;
+      this.gameLoop();
+    }
+  }
+
+  // Main game loop
+  gameLoop(currentTime = 0) {
+    if (!this.isRunning) return;
+
+    // Calculate delta time
+    const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.016); // Cap at 60 FPS
+    this.lastFrameTime = currentTime;
+
+    // Update and render
+    this.update(deltaTime);
+    this.render();
+
+    // Continue the loop
+    requestAnimationFrame((time) => this.gameLoop(time));
   }
 
   loadLevel(sectionIndex, levelIndex) {
