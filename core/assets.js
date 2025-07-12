@@ -26,6 +26,8 @@ export async function loadAssets() {
     settings_button: 'assets/Menu/Buttons/Settings.png',
     close_button: 'assets/Menu/Buttons/Close.png',
     restart_button: 'assets/Menu/Buttons/Restart.png',
+    levels_button: 'assets/Menu/Buttons/Levels.png',
+    sound_button: 'assets/Menu/Buttons/Volume.png',
 
     // Level assets (other than fruits), all 64x64
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
