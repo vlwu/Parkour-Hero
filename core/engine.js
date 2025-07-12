@@ -1,5 +1,5 @@
 import { Player } from '../entities/player.js';
-import { createLevel, levelData } from '../entities/platform.js'; // Updated import
+import { createLevel, levelSections } from '../entities/platform.js'; // Updated import
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) { // Added initialKeybinds parameter
@@ -11,21 +11,13 @@ export class Engine {
     this.keybinds = initialKeybinds; // Store keybinds
     this.isRunning = false; // Track if the game loop is active
 
-    // Initialize level system using the first level from levelData
-    // You can change `levelData[0]` to load a different level by default
-    this.currentLevel = createLevel(levelData[0]);
-    // The fruits array in Engine should now directly reference the level's fruits
-    this.fruits = this.currentLevel.fruits;
-    this.fruitCount = 0; // This will now track collected fruits for the current level
-    this.collectedFruits = []; // For collected fruit animations
-    this.fruitHighScore = 0; // Initialize high score for fruits
-
-    // Initialize player with assets and level starting position
-    this.player = new Player(
-      this.currentLevel.startPosition.x,
-      this.currentLevel.startPosition.y,
-      this.assets
-    );
+        // Level progression system
+    this.currentSection = 0;  // First section (0-based index)
+    this.currentLevelIndex = 0;    // First level in section (0-based index)
+    this.levelProgress = this.loadProgress(); // Load saved progress
+    
+    // Initialize the current level
+    this.loadLevel(this.currentSection, this.currentLevelIndex);
 
     this.initInput();
 
@@ -40,6 +32,73 @@ export class Engine {
   updateKeybinds(newKeybinds) {
     this.keybinds = { ...newKeybinds }; // Create a new object to ensure reactivity
     console.log('Keybinds updated:', this.keybinds);
+  }
+
+    // Load level based on section and level indices
+  loadLevel(sectionIndex, levelIndex) {
+    // Validate indices
+    if (sectionIndex >= levelSections.length || 
+        levelIndex >= levelSections[sectionIndex].length) {
+      console.error(`Invalid level: Section ${sectionIndex}, Level ${levelIndex}`);
+      return;
+    }
+
+    this.currentSection = sectionIndex;
+    this.currentLevelIndex = levelIndex;
+    this.currentLevel = createLevel(levelSections[sectionIndex][levelIndex]);
+    this.fruits = this.currentLevel.fruits;
+    this.fruitCount = 0;
+    this.collectedFruits = [];
+    
+    // Initialize player with assets and level starting position
+    this.player = new Player(
+      this.currentLevel.startPosition.x,
+      this.currentLevel.startPosition.y,
+      this.assets
+    );
+    
+    console.log(`Loaded: ${this.currentLevel.name}`);
+  }
+
+  // Advance to next level
+  advanceLevel() {
+    const currentSection = levelSections[this.currentSection];
+    
+    // Check if there's another level in this section
+    if (this.currentLevelIndex + 1 < currentSection.length) {
+      this.currentLevelIndex++;
+      this.loadLevel(this.currentSection, this.currentLevelIndex);
+      return;
+    }
+    
+    // Check if there's another section
+    if (this.currentSection + 1 < levelSections.length) {
+      this.currentSection++;
+      this.currentLevelIndex = 0;
+      this.loadLevel(this.currentSection, this.currentLevelIndex);
+      return;
+    }
+    
+    // Game completed! For now, loop back to first level
+    console.log("Congratulations! You've completed all levels!");
+    this.currentSection = 0;
+    this.currentLevelIndex = 0;
+    this.loadLevel(this.currentSection, this.currentLevelIndex);
+  }
+
+  // Save progress to localStorage
+  saveProgress() {
+    const progress = {
+      section: this.currentSection,
+      level: this.currentLevelIndex,
+    };
+    localStorage.setItem('gameProgress', JSON.stringify(progress));
+  }
+
+  // Load progress from localStorage
+  loadProgress() {
+    const saved = localStorage.getItem('gameProgress');
+    return saved ? JSON.parse(saved) : { section: 0, level: 0 };
   }
 
   initInput() {
@@ -193,11 +252,8 @@ export class Engine {
       // Check if level is completed
       if (this.currentLevel.isCompleted()) {
         console.log('Level completed!');
-        // TODO: Handle level completion (e.g., load next level, show completion screen)
-        // For now, reset the level
-        this.currentLevel.reset();
-        this.player.x = this.currentLevel.startPosition.x;
-        this.player.y = this.currentLevel.startPosition.y;
+        this.saveProgress(); // Save progress when level is completed
+        this.advanceLevel(); // Load next level
       }
 
     } catch (error) {

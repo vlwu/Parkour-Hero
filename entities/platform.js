@@ -256,9 +256,11 @@ export class Level {
   }
 }
 
-// Define level data as an array of objects
-export const levelData = [
-  {
+// Define level data as sections (each section is an array of levels)
+export const levelSections = [
+  // Section 1 (Tutorial and Basic Mechanics)
+  [
+    {
     name: "Level 1: It's too Easy",
     startPosition: { x: 50, y: 300 },
     platforms: [
@@ -266,10 +268,10 @@ export const levelData = [
       { x: 300, y: 350, width: 144, height: 48, terrainType: 'wood' },
       { x: 550, y: 300, width: 96, height: 48, terrainType: 'stone' },
       { x: 750, y: 250, width: 192, height: 48, terrainType: 'dirt' },
-      { x: 1050, y: 200, width: 144, height: 48, terrainType: 'wood' }
+      { x: 1050, y: 350, width: 144, height: 48, terrainType: 'wood' }
     ],
     fruits: [
-      { x: 100, y: 350, fruitType: 'fruit_apple' },
+      { x: 100, y: 275, fruitType: 'fruit_apple' },
       { x: 375, y: 300, fruitType: 'fruit_bananas' },
       { x: 600, y: 250, fruitType: 'fruit_cherries' },
       { x: 850, y: 200, fruitType: 'fruit_kiwi' },
@@ -278,229 +280,227 @@ export const levelData = [
       { x: 475, y: 270, fruitType: 'fruit_pineapple' },
       { x: 675, y: 220, fruitType: 'fruit_strawberry' }
     ],
-    trophy: { x: 1125, y: 184 }
-  },
-
-  {
-    name: "Level 2: Bounce Heights",
-    startPosition: { x: 50, y: 350 },
-    platforms: [
-      { x: 0, y: 400, width: 192, height: 48, terrainType: 'dirt' },
-      { x: 250, y: 320, width: 144, height: 48, terrainType: 'stone' },
-      { x: 450, y: 240, width: 144, height: 48, terrainType: 'wood' },
-      { x: 700, y: 160, width: 192, height: 48, terrainType: 'dirt' },
-      { x: 1000, y: 240, width: 144, height: 48, terrainType: 'stone' }
-    ],
-    fruits: [
-      { x: 100, y: 350, fruitType: 'fruit_apple' },
-      { x: 300, y: 270, fruitType: 'fruit_bananas' },
-      { x: 525, y: 190, fruitType: 'fruit_cherries' },
-      { x: 800, y: 110, fruitType: 'fruit_kiwi' },
-      { x: 1100, y: 190, fruitType: 'fruit_melon' },
-      { x: 150, y: 320, fruitType: 'fruit_orange' },
-      { x: 650, y: 110, fruitType: 'fruit_pineapple' },
-      { x: 950, y: 190, fruitType: 'fruit_strawberry' }
-    ],
-    trophy: { x: 1120, y: 224 }
-  },
-
-  {
-    name: "Level 3: Canyon Dash",
-    startPosition: { x: 50, y: 350 },
-    platforms: [
-      { x: 0, y: 400, width: 144, height: 48, terrainType: 'dirt' },
-      { x: 200, y: 350, width: 96, height: 48, terrainType: 'wood' },
-      { x: 350, y: 500, width: 192, height: 48, terrainType: 'stone' }, // Lower path
-      { x: 600, y: 350, width: 96, height: 48, terrainType: 'dirt' },   // Requires dash
-      { x: 800, y: 250, width: 144, height: 48, terrainType: 'wood' },
-      { x: 1050, y: 300, width: 192, height: 48, terrainType: 'stone' }
-    ],
-    fruits: [
-      { x: 80, y: 350, fruitType: 'fruit_apple' },
-      { x: 240, y: 300, fruitType: 'fruit_bananas' },
-      { x: 430, y: 450, fruitType: 'fruit_cherries' },
-      { x: 650, y: 300, fruitType: 'fruit_kiwi' },
-      { x: 850, y: 200, fruitType: 'fruit_melon' },
-      { x: 1150, y: 250, fruitType: 'fruit_orange' },
-      { x: 500, y: 450, fruitType: 'fruit_pineapple' },
-      { x: 950, y: 250, fruitType: 'fruit_strawberry' }
-    ],
-    trophy: { x: 1200, y: 284 }
-  },
-
-  {
-    name: "Level 4: Sky Climb",
-    startPosition: { x: 50, y: 600 },
-    platforms: [
-      { x: 0, y: 650, width: 192, height: 48, terrainType: 'dirt' },
-      { x: 200, y: 550, width: 96, height: 48, terrainType: 'stone' },
-      { x: 350, y: 450, width: 144, height: 48, terrainType: 'wood' },
-      { x: 550, y: 350, width: 96, height: 48, terrainType: 'dirt' },
-      { x: 700, y: 250, width: 192, height: 48, terrainType: 'stone' },
-      { x: 950, y: 150, width: 144, height: 48, terrainType: 'wood' }
-    ],
-    fruits: [
-      { x: 100, y: 600, fruitType: 'fruit_apple' },
-      { x: 240, y: 500, fruitType: 'fruit_bananas' },
-      { x: 400, y: 400, fruitType: 'fruit_cherries' },
-      { x: 600, y: 300, fruitType: 'fruit_kiwi' },
-      { x: 800, y: 200, fruitType: 'fruit_melon' },
-      { x: 1020, y: 100, fruitType: 'fruit_orange' },
-      { x: 500, y: 400, fruitType: 'fruit_pineapple' },
-      { x: 900, y: 100, fruitType: 'fruit_strawberry' }
-    ],
-    trophy: { x: 1020, y: 134 }
-  },
-
-  {
-    name: "Level 5: Colorful Blocks",
-    startPosition: { x: 50, y: 350 },
-    platforms: [
-      { x: 0, y: 400, width: 144, height: 48, terrainType: 'green_block' },
-      { x: 200, y: 350, width: 96, height: 48, terrainType: 'orange_dirt' },
-      { x: 350, y: 300, width: 144, height: 48, terrainType: 'pink_dirt' },
-      { x: 550, y: 400, width: 192, height: 48, terrainType: 'red_brick' }, // Drop-down
-      { x: 800, y: 250, width: 144, height: 48, terrainType: 'green_block' },
-      { x: 1050, y: 300, width: 96, height: 48, terrainType: 'red_brick' }
-    ],
-    fruits: [
-      { x: 80, y: 300, fruitType: 'fruit_apple' },
-      { x: 240, y: 300, fruitType: 'fruit_bananas' },
-      { x: 420, y: 250, fruitType: 'fruit_cherries' },
-      { x: 630, y: 350, fruitType: 'fruit_kiwi' },
-      { x: 870, y: 200, fruitType: 'fruit_melon' },
-      { x: 1100, y: 250, fruitType: 'fruit_orange' },
-      { x: 800, y: 320, fruitType: 'fruit_pineapple' },
-      { x: 950, y: 250, fruitType: 'fruit_strawberry' }
-    ],
-    trophy: { x: 1080, y: 284 }
-  },
-
-  {
-    name: "Level 6: Narrow Paths",
-    startPosition: { x: 50, y: 350 },
-    platforms: [
-      { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
-      { x: 150, y: 350, width: 48, height: 48, terrainType: 'stone' },
-      { x: 250, y: 300, width: 48, height: 48, terrainType: 'wood' },
-      { x: 350, y: 500, width: 48, height: 48, terrainType: 'red_brick' },
-      { x: 450, y: 250, width: 48, height: 48, terrainType: 'green_block' },
-      { x: 600, y: 400, width: 48, height: 48, terrainType: 'pink_dirt' },
-      { x: 750, y: 300, width: 96, height: 48, terrainType: 'orange_dirt' },
-      { x: 950, y: 200, width: 144, height: 48, terrainType: 'stone' }
-    ],
-    fruits: [
-      { x: 180, y: 300, fruitType: 'fruit_apple' },
-      { x: 280, y: 250, fruitType: 'fruit_bananas' },
-      { x: 380, y: 450, fruitType: 'fruit_cherries' },
-      { x: 480, y: 200, fruitType: 'fruit_kiwi' },
-      { x: 630, y: 350, fruitType: 'fruit_melon' },
-      { x: 800, y: 250, fruitType: 'fruit_orange' },
-      { x: 950, y: 300, fruitType: 'fruit_pineapple' },
-      { x: 550, y: 350, fruitType: 'fruit_strawberry' }
-    ],
-    trophy: { x: 1020, y: 184 }
-  },
-
-  {
-    name: "Level 7: Stairway",
-    startPosition: { x: 50, y: 600 },
-    platforms: [
-      { x: 0, y: 650, width: 144, height: 48, terrainType: 'dirt' },
-      { x: 200, y: 550, width: 144, height: 48, terrainType: 'wood' },
-      { x: 400, y: 450, width: 144, height: 48, terrainType: 'stone' },
-      { x: 600, y: 350, width: 144, height: 48, terrainType: 'green_block' },
-      { x: 800, y: 250, width: 144, height: 48, terrainType: 'orange_dirt' },
-      { x: 1000, y: 150, width: 144, height: 48, terrainType: 'red_brick' }
-    ],
-    fruits: [
-      { x: 80, y: 500, fruitType: 'fruit_apple' },
-      { x: 270, y: 650, fruitType: 'fruit_bananas' },
-      { x: 470, y: 600, fruitType: 'fruit_cherries' },
-      { x: 300, y: 250, fruitType: 'fruit_kiwi' },
-      { x: 870, y: 220, fruitType: 'fruit_melon' },
-      { x: 1070, y: 250, fruitType: 'fruit_orange' },
-      { x: 350, y: 400, fruitType: 'fruit_pineapple' },
-      { x: 750, y: 200, fruitType: 'fruit_strawberry' }
-    ],
-    trophy: { x: 1070, y: 134 }
-  },
-
-  {
-    name: "Level 8: Bottomless",
-    startPosition: { x: 50, y: 300 },
-    platforms: [
-      { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
-      { x: 200, y: 500, width: 96, height: 48, terrainType: 'stone' },   // Lower
-      { x: 350, y: 350, width: 96, height: 48, terrainType: 'wood' },    // Requires dash
-      { x: 500, y: 500, width: 96, height: 48, terrainType: 'red_brick' },
-      { x: 700, y: 300, width: 144, height: 48, terrainType: 'green_block' },
-      { x: 900, y: 450, width: 96, height: 48, terrainType: 'pink_dirt' },
-      { x: 1100, y: 350, width: 144, height: 48, terrainType: 'orange_dirt' }
-    ],
-    fruits: [
-      { x: 40, y: 350, fruitType: 'fruit_apple' },
-      { x: 240, y: 450, fruitType: 'fruit_bananas' },
-      { x: 390, y: 300, fruitType: 'fruit_cherries' },
-      { x: 540, y: 450, fruitType: 'fruit_kiwi' },
-      { x: 770, y: 250, fruitType: 'fruit_melon' },
-      { x: 950, y: 400, fruitType: 'fruit_orange' },
-      { x: 1170, y: 300, fruitType: 'fruit_pineapple' },
-      { x: 650, y: 450, fruitType: 'fruit_strawberry' }
-    ],
-    trophy: { x: 1170, y: 334 }
-  },
-
-  {
-    name: "Level 9: Aerial Mastery",
-    startPosition: { x: 50, y: 250 },
-    platforms: [
-      { x: 0, y: 300, width: 96, height: 48, terrainType: 'dirt' },
-      { x: 150, y: 200, width: 48, height: 48, terrainType: 'stone' },   // High jump
-      { x: 250, y: 350, width: 48, height: 48, terrainType: 'wood' },    // Drop-down
-      { x: 400, y: 150, width: 96, height: 48, terrainType: 'green_block' }, // Double jump
-      { x: 600, y: 250, width: 48, height: 48, terrainType: 'red_brick' },   // Dash required
-      { x: 750, y: 180, width: 96, height: 48, terrainType: 'orange_dirt' },
-      { x: 950, y: 300, width: 48, height: 48, terrainType: 'pink_dirt' },
-      { x: 1100, y: 220, width: 144, height: 48, terrainType: 'stone' }
-    ],
-    fruits: [
-      { x: 180, y: 150, fruitType: 'fruit_apple' },
-      { x: 280, y: 300, fruitType: 'fruit_bananas' },
-      { x: 440, y: 100, fruitType: 'fruit_cherries' },
-      { x: 630, y: 200, fruitType: 'fruit_kiwi' },
-      { x: 790, y: 130, fruitType: 'fruit_melon' },
-      { x: 980, y: 250, fruitType: 'fruit_orange' },
-      { x: 1150, y: 170, fruitType: 'fruit_pineapple' },
-      { x: 500, y: 300, fruitType: 'fruit_strawberry' }
-    ],
-    trophy: { x: 1170, y: 204 }
-  },
-
-  {
-    name: "Level 10: Section 1 Finale",
-    startPosition: { x: 50, y: 350 },
-    platforms: [
-      { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
-      { x: 200, y: 500, width: 96, height: 48, terrainType: 'stone' },
-      { x: 350, y: 350, width: 48, height: 48, terrainType: 'wood' },      // Precision
-      { x: 500, y: 250, width: 144, height: 48, terrainType: 'red_brick' }, // High dash
-      { x: 700, y: 400, width: 96, height: 48, terrainType: 'green_block' },// Drop-down
-      { x: 900, y: 300, width: 144, height: 48, terrainType: 'orange_dirt' },
-      { x: 1100, y: 200, width: 96, height: 48, terrainType: 'pink_dirt' }  // Final stretch
-    ],
-    fruits: [
-      { x: 40, y: 350, fruitType: 'fruit_apple' },
-      { x: 240, y: 450, fruitType: 'fruit_bananas' },
-      { x: 380, y: 300, fruitType: 'fruit_cherries' },
-      { x: 570, y: 200, fruitType: 'fruit_kiwi' },
-      { x: 740, y: 350, fruitType: 'fruit_melon' },
-      { x: 970, y: 250, fruitType: 'fruit_orange' },
-      { x: 1150, y: 150, fruitType: 'fruit_pineapple' },
-      { x: 650, y: 350, fruitType: 'fruit_strawberry' }
-    ],
-    trophy: { x: 1140, y: 184 }
-  },
+    trophy: { x: 1125, y: 350 - 16 }
+    },
+    {
+      name: "Level 2: Bounce Heights",
+      startPosition: { x: 50, y: 350 },
+      platforms: [
+        { x: 0, y: 400, width: 192, height: 48, terrainType: 'dirt' },
+        { x: 250, y: 320, width: 144, height: 48, terrainType: 'stone' },
+        { x: 450, y: 240, width: 144, height: 48, terrainType: 'wood' },
+        { x: 700, y: 160, width: 192, height: 48, terrainType: 'dirt' },
+        { x: 1000, y: 240, width: 144, height: 48, terrainType: 'stone' }
+      ],
+      fruits: [
+        { x: 75, y: 250, fruitType: 'fruit_apple' },
+        { x: 300, y: 270, fruitType: 'fruit_bananas' },
+        { x: 525, y: 190, fruitType: 'fruit_cherries' },
+        { x: 800, y: 110, fruitType: 'fruit_kiwi' },
+        { x: 1000, y: 100, fruitType: 'fruit_melon' },
+        { x: 150, y: 320, fruitType: 'fruit_orange' },
+        { x: 650, y: 110, fruitType: 'fruit_pineapple' },
+        { x: 950, y: 190, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1120, y: 224 }
+    },
+    {
+      name: "Level 3: Canyon Dash",
+      startPosition: { x: 50, y: 350 },
+      platforms: [
+        { x: 0, y: 400, width: 144, height: 48, terrainType: 'dirt' },
+        { x: 200, y: 350, width: 96, height: 48, terrainType: 'wood' },
+        { x: 350, y: 500, width: 192, height: 48, terrainType: 'stone' }, // Lower path
+        { x: 600, y: 350, width: 96, height: 48, terrainType: 'dirt' },   // Requires dash
+        { x: 800, y: 250, width: 144, height: 48, terrainType: 'wood' },
+        { x: 1050, y: 300, width: 192, height: 48, terrainType: 'stone' }
+      ],
+      fruits: [
+        { x: 50, y: 250, fruitType: 'fruit_apple' },
+        { x: 240, y: 300, fruitType: 'fruit_bananas' },
+        { x: 230, y: 450, fruitType: 'fruit_cherries' },
+        { x: 650, y: 300, fruitType: 'fruit_kiwi' },
+        { x: 850, y: 200, fruitType: 'fruit_melon' },
+        { x: 1150, y: 250, fruitType: 'fruit_orange' },
+        { x: 500, y: 450, fruitType: 'fruit_pineapple' },
+        { x: 1000, y: 300, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1200, y: 284 }
+    },
+    {
+      name: "Level 4: Sky Climb",
+      startPosition: { x: 50, y: 600 },
+      platforms: [
+        { x: 0, y: 650, width: 192, height: 48, terrainType: 'dirt' },
+        { x: 200, y: 550, width: 96, height: 48, terrainType: 'stone' },
+        { x: 350, y: 450, width: 144, height: 48, terrainType: 'wood' },
+        { x: 550, y: 350, width: 96, height: 48, terrainType: 'dirt' },
+        { x: 700, y: 250, width: 192, height: 48, terrainType: 'stone' },
+        { x: 950, y: 150, width: 144, height: 48, terrainType: 'wood' }
+      ],
+      fruits: [
+        { x: 100, y: 600, fruitType: 'fruit_apple' },
+        { x: 240, y: 500, fruitType: 'fruit_bananas' },
+        { x: 400, y: 400, fruitType: 'fruit_cherries' },
+        { x: 600, y: 300, fruitType: 'fruit_kiwi' },
+        { x: 800, y: 200, fruitType: 'fruit_melon' },
+        { x: 1020, y: 50, fruitType: 'fruit_orange' },
+        { x: 500, y: 400, fruitType: 'fruit_pineapple' },
+        { x: 900, y: 100, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1020, y: 134 }
+    },
+    {
+      name: "Level 5: Colorful Blocks",
+      startPosition: { x: 50, y: 350 },
+      platforms: [
+        { x: 0, y: 400, width: 144, height: 48, terrainType: 'green_block' },
+        { x: 200, y: 350, width: 96, height: 48, terrainType: 'orange_dirt' },
+        { x: 350, y: 300, width: 144, height: 48, terrainType: 'pink_dirt' },
+        { x: 550, y: 400, width: 192, height: 48, terrainType: 'red_brick' }, // Drop-down
+        { x: 800, y: 250, width: 144, height: 48, terrainType: 'green_block' },
+        { x: 1050, y: 300, width: 96, height: 48, terrainType: 'red_brick' }
+      ],
+      fruits: [
+        { x: 80, y: 300, fruitType: 'fruit_apple' },
+        { x: 240, y: 300, fruitType: 'fruit_bananas' },
+        { x: 420, y: 250, fruitType: 'fruit_cherries' },
+        { x: 630, y: 350, fruitType: 'fruit_kiwi' },
+        { x: 870, y: 200, fruitType: 'fruit_melon' },
+        { x: 1100, y: 250, fruitType: 'fruit_orange' },
+        { x: 800, y: 320, fruitType: 'fruit_pineapple' },
+        { x: 950, y: 250, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1080, y: 284 }
+    },
+    {
+      name: "Level 6: Narrow Paths",
+      startPosition: { x: 50, y: 350 },
+      platforms: [
+        { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
+        { x: 150, y: 350, width: 48, height: 48, terrainType: 'stone' },
+        { x: 250, y: 300, width: 48, height: 48, terrainType: 'wood' },
+        { x: 350, y: 500, width: 48, height: 48, terrainType: 'red_brick' },
+        { x: 450, y: 250, width: 48, height: 48, terrainType: 'green_block' },
+        { x: 600, y: 400, width: 48, height: 48, terrainType: 'pink_dirt' },
+        { x: 750, y: 300, width: 96, height: 48, terrainType: 'orange_dirt' },
+        { x: 950, y: 200, width: 144, height: 48, terrainType: 'stone' }
+      ],
+      fruits: [
+        { x: 180, y: 300, fruitType: 'fruit_apple' },
+        { x: 280, y: 250, fruitType: 'fruit_bananas' },
+        { x: 380, y: 450, fruitType: 'fruit_cherries' },
+        { x: 480, y: 200, fruitType: 'fruit_kiwi' },
+        { x: 630, y: 350, fruitType: 'fruit_melon' },
+        { x: 800, y: 250, fruitType: 'fruit_orange' },
+        { x: 950, y: 300, fruitType: 'fruit_pineapple' },
+        { x: 550, y: 350, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1020, y: 184 }
+    },
+    {
+      name: "Level 7: Stairway",
+      startPosition: { x: 50, y: 600 },
+      platforms: [
+        { x: 0, y: 650, width: 144, height: 48, terrainType: 'dirt' },
+        { x: 200, y: 550, width: 144, height: 48, terrainType: 'wood' },
+        { x: 400, y: 450, width: 144, height: 48, terrainType: 'stone' },
+        { x: 600, y: 350, width: 144, height: 48, terrainType: 'green_block' },
+        { x: 800, y: 250, width: 144, height: 48, terrainType: 'orange_dirt' },
+        { x: 1000, y: 150, width: 144, height: 48, terrainType: 'red_brick' }
+      ],
+      fruits: [
+        { x: 80, y: 500, fruitType: 'fruit_apple' },
+        { x: 270, y: 650, fruitType: 'fruit_bananas' },
+        { x: 470, y: 600, fruitType: 'fruit_cherries' },
+        { x: 300, y: 250, fruitType: 'fruit_kiwi' },
+        { x: 870, y: 220, fruitType: 'fruit_melon' },
+        { x: 1070, y: 250, fruitType: 'fruit_orange' },
+        { x: 350, y: 400, fruitType: 'fruit_pineapple' },
+        { x: 750, y: 200, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1070, y: 134 }
+    },
+    {
+      name: "Level 8: Bottomless",
+      startPosition: { x: 50, y: 300 },
+      platforms: [
+        { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
+        { x: 200, y: 500, width: 96, height: 48, terrainType: 'stone' },   // Lower
+        { x: 350, y: 350, width: 96, height: 48, terrainType: 'wood' },    // Requires dash
+        { x: 500, y: 500, width: 96, height: 48, terrainType: 'red_brick' },
+        { x: 700, y: 300, width: 144, height: 48, terrainType: 'green_block' },
+        { x: 900, y: 450, width: 96, height: 48, terrainType: 'pink_dirt' },
+        { x: 1100, y: 350, width: 144, height: 48, terrainType: 'orange_dirt' }
+      ],
+      fruits: [
+        { x: 40, y: 350, fruitType: 'fruit_apple' },
+        { x: 240, y: 450, fruitType: 'fruit_bananas' },
+        { x: 390, y: 300, fruitType: 'fruit_cherries' },
+        { x: 540, y: 450, fruitType: 'fruit_kiwi' },
+        { x: 770, y: 250, fruitType: 'fruit_melon' },
+        { x: 950, y: 400, fruitType: 'fruit_orange' },
+        { x: 1170, y: 300, fruitType: 'fruit_pineapple' },
+        { x: 650, y: 450, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1170, y: 334 }
+    },
+    {
+      name: "Level 9: Aerial Mastery",
+      startPosition: { x: 50, y: 250 },
+      platforms: [
+        { x: 0, y: 300, width: 96, height: 48, terrainType: 'dirt' },
+        { x: 150, y: 200, width: 48, height: 48, terrainType: 'stone' },   // High jump
+        { x: 250, y: 350, width: 48, height: 48, terrainType: 'wood' },    // Drop-down
+        { x: 400, y: 150, width: 96, height: 48, terrainType: 'green_block' }, // Double jump
+        { x: 600, y: 250, width: 48, height: 48, terrainType: 'red_brick' },   // Dash required
+        { x: 750, y: 180, width: 96, height: 48, terrainType: 'orange_dirt' },
+        { x: 950, y: 300, width: 48, height: 48, terrainType: 'pink_dirt' },
+        { x: 1100, y: 220, width: 144, height: 48, terrainType: 'stone' }
+      ],
+      fruits: [
+        { x: 180, y: 150, fruitType: 'fruit_apple' },
+        { x: 280, y: 300, fruitType: 'fruit_bananas' },
+        { x: 440, y: 100, fruitType: 'fruit_cherries' },
+        { x: 630, y: 200, fruitType: 'fruit_kiwi' },
+        { x: 790, y: 130, fruitType: 'fruit_melon' },
+        { x: 980, y: 250, fruitType: 'fruit_orange' },
+        { x: 1150, y: 170, fruitType: 'fruit_pineapple' },
+        { x: 500, y: 300, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1170, y: 204 }
+    },
+    {
+      name: "Level 10: Introduction Finale",
+      startPosition: { x: 50, y: 350 },
+      platforms: [
+        { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
+        { x: 200, y: 500, width: 96, height: 48, terrainType: 'stone' },
+        { x: 350, y: 350, width: 48, height: 48, terrainType: 'wood' },      // Precision
+        { x: 500, y: 250, width: 144, height: 48, terrainType: 'red_brick' }, // High dash
+        { x: 700, y: 400, width: 96, height: 48, terrainType: 'green_block' },// Drop-down
+        { x: 900, y: 300, width: 144, height: 48, terrainType: 'orange_dirt' },
+        { x: 1100, y: 200, width: 96, height: 48, terrainType: 'pink_dirt' }  // Final stretch
+      ],
+      fruits: [
+        { x: 40, y: 350, fruitType: 'fruit_apple' },
+        { x: 240, y: 450, fruitType: 'fruit_bananas' },
+        { x: 380, y: 300, fruitType: 'fruit_cherries' },
+        { x: 570, y: 200, fruitType: 'fruit_kiwi' },
+        { x: 740, y: 350, fruitType: 'fruit_melon' },
+        { x: 970, y: 250, fruitType: 'fruit_orange' },
+        { x: 1150, y: 150, fruitType: 'fruit_pineapple' },
+        { x: 650, y: 350, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1140, y: 184 }
+    },
+  ],
+  // Section 2 (placeholder)
+  [
+    {
+      name: 'Level 11: New Beginnings',
+    },
+  ],
 ];
 
 /**
