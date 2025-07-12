@@ -242,7 +242,7 @@ export class Engine {
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
 
-      // Fruit collection with screen shake
+      // Fruit collection
       this.currentLevel.fruits = this.currentLevel.fruits.filter((fruit) => {
         if (fruit.collected) return true;
 
@@ -253,9 +253,6 @@ export class Engine {
 
         if (collided) {
           fruit.collected = true;
-          
-          // Add small screen shake for fruit collection
-          this.camera.shake(3, 0.2);
 
           this.collectedFruits.push({
             x: fruit.x,
@@ -284,7 +281,7 @@ export class Engine {
           trophy.acquired = true;
           
           // Add screen shake for trophy collection
-          this.camera.shake(8, 0.4);
+          this.camera.shake(8, 0.3);
           
           console.log('Trophy acquired!');
         }
@@ -523,7 +520,7 @@ export class Engine {
   }
 
   // Add method to manually trigger screen shake
-  shakeScreen(intensity = 10, duration = 0.3) {
+  shakeScreen(intensity = 10, duration = 0.2) {
     this.camera.shake(intensity, duration);
   }
 }

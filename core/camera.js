@@ -101,7 +101,7 @@ export class Camera {
       this.shakeY = (Math.random() - 0.5) * this.shakeIntensity;
       
       // Gradually reduce shake intensity
-      this.shakeIntensity *= 0.9;
+      this.shakeIntensity *= 0.8;
       
       if (this.shakeTimer <= 0) {
         this.shakeX = 0;
