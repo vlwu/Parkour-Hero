@@ -1,7 +1,9 @@
 export async function loadAssets() {
   const images = {};
-  const paths = {
-    backgroundTile: 'assets/Background/Brown.png', // change to desired background tile
+  const sounds = {};
+  
+  const imagePaths = {
+    backgroundTile: 'assets/Background/Brown.png',
     block: 'assets/Terrain/Terrain.png',
     playerJump: 'assets/MainCharacters/PinkMan/jump.png',
     playerDoubleJump: 'assets/MainCharacters/PinkMan/double_jump.png',
@@ -20,7 +22,7 @@ export async function loadAssets() {
     fruit_orange: 'assets/Items/Fruits/Orange.png',
     fruit_pineapple: 'assets/Items/Fruits/Pineapple.png',
     fruit_strawberry: 'assets/Items/Fruits/Strawberry.png',
-    fruit_collected: 'assets/Items/Fruits/Collected.png',  // Collected animation (applies to all fruits)
+    fruit_collected: 'assets/Items/Fruits/Collected.png',
 
     // Menu items
     settings_button: 'assets/Menu/Buttons/Settings.png',
@@ -29,11 +31,12 @@ export async function loadAssets() {
     levels_button: 'assets/Menu/Buttons/Levels.png',
     sound_button: 'assets/Menu/Buttons/Volume.png',
 
-    // Level assets (other than fruits), all 64x64
+    // Level assets
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
     start: 'assets/Items/Checkpoints/Start/Start (Moving).png',
+  };
 
-    // Sounds
+  const soundPaths = {
     jump: 'assets/Sounds/Player Jump.wav',
     collect: 'assets/Sounds/Fruit Collect.mp3',
     level_complete: 'assets/Sounds/Level Complete.mp3',
@@ -43,18 +46,17 @@ export async function loadAssets() {
   
   // Track loading progress
   let loadedCount = 0;
-  const totalCount = Object.keys(paths).length;
+  const totalCount = Object.keys(imagePaths).length + Object.keys(soundPaths).length;
   
-  const promises = Object.entries(paths).map(([key, src]) => {
+  // Load images
+  const imagePromises = Object.entries(imagePaths).map(([key, src]) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       
       img.onload = () => {
         images[key] = img;
         loadedCount++;
-        console.log(`Loaded ${key} (${loadedCount}/${totalCount})`);
-        
-        // Log image dimensions for debugging
+        console.log(`Loaded image ${key} (${loadedCount}/${totalCount})`);
         console.log(`  ${key}: ${img.width}x${img.height}`);
         resolve();
       };
@@ -62,7 +64,7 @@ export async function loadAssets() {
       img.onerror = (error) => {
         console.error(`Failed to load image: ${src}`, error);
         
-        // Create a fallback colored rectangle instead of failing completely
+        // Create a fallback colored rectangle
         const fallbackCanvas = document.createElement('canvas');
         fallbackCanvas.width = 32;
         fallbackCanvas.height = 32;
@@ -70,13 +72,13 @@ export async function loadAssets() {
         
         // Different colors for different asset types
         if (key.includes('background')) {
-          fallbackCtx.fillStyle = '#87CEEB'; // Sky blue
+          fallbackCtx.fillStyle = '#87CEEB';
         } else if (key.includes('player')) {
-          fallbackCtx.fillStyle = '#ff8c21ff'; // Orange
+          fallbackCtx.fillStyle = '#ff8c21ff';
         } else if (key.includes('fruit')) {
-          fallbackCtx.fillStyle = '#FF6B6B'; // Red
+          fallbackCtx.fillStyle = '#FF6B6B';
         } else {
-          fallbackCtx.fillStyle = '#808080'; // Gray
+          fallbackCtx.fillStyle = '#808080';
         }
         
         fallbackCtx.fillRect(0, 0, 64, 64);
@@ -92,27 +94,67 @@ export async function loadAssets() {
         images[key] = fallbackImg;
         
         console.warn(`Using fallback for ${key}`);
-        resolve(); // Don't reject, use fallback instead
+        resolve();
       };
       
-      // Set crossOrigin before setting src to handle CORS if needed
       img.crossOrigin = 'anonymous';
       img.src = src;
       
-      // Add timeout to prevent hanging on broken images
+      // Add timeout to prevent hanging
       setTimeout(() => {
         if (!images[key]) {
           img.onerror(new Error('Image loading timeout'));
         }
-      }, 10000); // 10 second timeout
+      }, 10000);
+    });
+  });
+
+  // Load sounds
+  const soundPromises = Object.entries(soundPaths).map(([key, src]) => {
+    return new Promise((resolve, reject) => {
+      const audio = new Audio();
+      
+      audio.addEventListener('canplaythrough', () => {
+        sounds[key] = audio;
+        loadedCount++;
+        console.log(`Loaded sound ${key} (${loadedCount}/${totalCount})`);
+        resolve();
+      });
+      
+      audio.addEventListener('error', (error) => {
+        console.warn(`Failed to load sound: ${src}`, error);
+        // Create a silent audio fallback
+        const silentAudio = new Audio();
+        silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+        sounds[key] = silentAudio;
+        loadedCount++;
+        console.warn(`Using silent fallback for ${key}`);
+        resolve();
+      });
+      
+      audio.crossOrigin = 'anonymous';
+      audio.preload = 'auto';
+      audio.src = src;
+      
+      // Add timeout to prevent hanging
+      setTimeout(() => {
+        if (!sounds[key]) {
+          audio.dispatchEvent(new Event('error'));
+        }
+      }, 10000);
     });
   });
 
   try {
-    await Promise.all(promises);
+    // Wait for all assets to load
+    await Promise.all([...imagePromises, ...soundPromises]);
+    
+    // Combine images and sounds into a single assets object
+    const assets = { ...images, ...sounds };
+    
     console.log('All assets loaded successfully!');
-    console.log('Available assets:', Object.keys(images));
-    return images;
+    console.log('Available assets:', Object.keys(assets));
+    return assets;
   } catch (error) {
     console.error('Asset loading failed:', error);
     throw error;
@@ -121,7 +163,7 @@ export async function loadAssets() {
 
 // Utility function to check if an asset exists and is loaded
 export function isAssetLoaded(assets, key) {
-  return assets && assets[key] && assets[key].complete;
+  return assets && assets[key] && (assets[key].complete || assets[key].readyState >= 2);
 }
 
 // Utility function to get asset dimensions
@@ -132,8 +174,8 @@ export function getAssetDimensions(assets, key) {
   
   const asset = assets[key];
   return {
-    width: asset.width,
-    height: asset.height
+    width: asset.width || 0,
+    height: asset.height || 0
   };
 }
 
