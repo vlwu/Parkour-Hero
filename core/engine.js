@@ -15,12 +15,14 @@ const FRUIT_NAMES = [
 ];
 
 export class Engine {
-  constructor(ctx, canvas, assets) {
+  constructor(ctx, canvas, assets, initialKeybinds) { // Added initialKeybinds parameter
     this.ctx = ctx;
     this.canvas = canvas;
     this.assets = assets;
     this.lastFrameTime = 0;
     this.keys = {};
+    this.keybinds = initialKeybinds; // Store keybinds
+    this.isRunning = false; // Track if the game loop is active
 
     // Initialize level system using the first level from levelData
     // You can change `levelData[0]` to load a different level by default
@@ -47,27 +49,57 @@ export class Engine {
     console.log('Fruits in level:', this.fruits.length);
   }
 
+  // Method to update keybinds from outside (e.g., from UI)
+  updateKeybinds(newKeybinds) {
+    this.keybinds = { ...newKeybinds }; // Create a new object to ensure reactivity
+    console.log('Keybinds updated:', this.keybinds);
+  }
+
   initInput() {
     window.addEventListener('keydown', (e) => {
-      this.keys[e.key.toLowerCase()] = true;
+      // Only process input if game is running (not paused by modal)
+      if (this.isRunning) {
+        this.keys[e.key.toLowerCase()] = true;
+      }
     });
 
     window.addEventListener('keyup', (e) => {
-      this.keys[e.key.toLowerCase()] = false;
+      // Only process input if game is running (not paused by modal)
+      if (this.isRunning) {
+        this.keys[e.key.toLowerCase()] = false;
 
-      // Reset horizontal velocity when movement keys are released
-      if (['a', 'd'].includes(e.key.toLowerCase())) {
-        this.player.vx = 0;
+        // Reset horizontal velocity when movement keys are released
+        // Check if the released key is one of the currently bound movement keys
+        if (e.key.toLowerCase() === this.keybinds.moveLeft || e.key.toLowerCase() === this.keybinds.moveRight) {
+          this.player.vx = 0;
+        }
       }
     });
   }
 
   start() {
     console.log('Starting game loop...');
+    this.isRunning = true;
+    requestAnimationFrame(this.loop.bind(this));
+  }
+
+  pause() {
+    console.log('Game paused.');
+    this.isRunning = false;
+  }
+
+  resume() {
+    console.log('Game resumed.');
+    this.isRunning = true;
+    this.lastFrameTime = performance.now(); // Reset lastFrameTime to prevent large deltaTime after pause
     requestAnimationFrame(this.loop.bind(this));
   }
 
   loop(timestamp) {
+    if (!this.isRunning) {
+      return; // Stop the loop if game is paused
+    }
+
     // Calculate delta time for smooth frame-rate independent movement
     const deltaTime = (timestamp - this.lastFrameTime) / 1000;
     this.lastFrameTime = timestamp;
@@ -83,8 +115,17 @@ export class Engine {
 
   update(dt) {
     try {
+      // Create a temporary object to pass to player.handleInput
+      // This maps the abstract actions to the currently bound keys
+      const inputActions = {
+        moveLeft: this.keys[this.keybinds.moveLeft] || false,
+        moveRight: this.keys[this.keybinds.moveRight] || false,
+        jump: this.keys[this.keybinds.jump] || false,
+        dash: this.keys[this.keybinds.dash] || false,
+      };
+
       // Update player input and physics
-      this.player.handleInput(this.keys);
+      this.player.handleInput(inputActions); // Pass the mapped input state
       this.player.update(dt, this.canvas.height, this.currentLevel);
 
       // Update level fruits animation (managed by Level class)

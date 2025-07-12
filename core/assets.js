@@ -1,7 +1,7 @@
 export async function loadAssets() {
   const images = {};
   const paths = {
-    backgroundTile: 'assets/Background/Blue.png', // change to desired background tile
+    backgroundTile: 'assets/Background/Brown.png', // change to desired background tile
     block: 'assets/Terrain/Terrain.png',
     playerJump: 'assets/MainCharacters/PinkMan/jump.png',
     playerDoubleJump: 'assets/MainCharacters/PinkMan/double_jump.png',
@@ -27,7 +27,7 @@ export async function loadAssets() {
     close_button: 'assets/Menu/Buttons/Close.png',
     restart_button: 'assets/Menu/Buttons/Restart.png',
 
-    // Other level assets (other than fruits), all 64x64
+    // Level assets (other than fruits), all 64x64
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
     start: 'assets/Items/Checkpoints/Start/Start (Moving).png',
   };

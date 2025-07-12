@@ -88,13 +88,102 @@ function showLoadingIndicator() {
 // Show initial loading screen
 showLoadingIndicator();
 
+// --- Settings and Keybinds Logic ---
+const settingsButton = document.getElementById('settingsButton');
+const settingsModal = document.getElementById('settingsModal');
+const closeModalButton = document.getElementById('closeModalButton');
+const keybindInputs = document.querySelectorAll('.keybind-item input');
+
+// Default keybinds
+let keybinds = {
+  moveLeft: 'a',
+  moveRight: 'd',
+  jump: 'w',
+  dash: ' ', // Spacebar
+};
+
+let activeKeybindInput = null; // To track which input is currently being rebound
+
+// Function to update the displayed keybinds in the modal
+function updateKeybindDisplay() {
+  keybindInputs.forEach(input => {
+    const action = input.dataset.action;
+    input.value = keybinds[action] === ' ' ? 'Space' : keybinds[action].toUpperCase();
+  });
+}
+
+// Function to toggle the settings modal visibility
+function toggleSettingsModal() {
+  settingsModal.classList.toggle('hidden');
+  if (!settingsModal.classList.contains('hidden')) {
+    // When modal opens, update display and disable game input
+    updateKeybindDisplay();
+    // Potentially pause the game engine here if it's running
+    if (typeof engine !== 'undefined' && engine.isRunning) {
+      engine.pause();
+    }
+  } else {
+    // When modal closes, re-enable game input
+    if (typeof engine !== 'undefined' && !engine.isRunning) {
+      engine.resume();
+    }
+  }
+}
+
+// Event listener for settings button
+settingsButton.addEventListener('click', toggleSettingsModal);
+
+// Event listener for close modal button
+closeModalButton.addEventListener('click', toggleSettingsModal);
+
+// Event listeners for keybind inputs
+keybindInputs.forEach(input => {
+  input.addEventListener('click', () => {
+    if (activeKeybindInput) {
+      // If another input was active, reset its styling
+      activeKeybindInput.classList.remove('active-rebind');
+    }
+    activeKeybindInput = input;
+    input.value = 'Press a key...';
+    input.classList.add('active-rebind');
+  });
+});
+
+// Global keydown listener for remapping keybinds
+window.addEventListener('keydown', (e) => {
+  if (activeKeybindInput && !settingsModal.classList.contains('hidden')) {
+    e.preventDefault(); // Prevent default browser action for the key
+    const action = activeKeybindInput.dataset.action;
+    const newKey = e.key.toLowerCase();
+
+    // Basic validation: prevent empty or modifier keys alone
+    if (newKey && newKey.length <= 1 && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
+      keybinds[action] = newKey;
+      updateKeybindDisplay();
+      activeKeybindInput.classList.remove('active-rebind');
+      activeKeybindInput = null;
+
+      // Update the engine's keybinds immediately
+      if (typeof engine !== 'undefined') {
+        engine.updateKeybinds(keybinds);
+      }
+    } else {
+      // If an invalid key was pressed, revert the input field
+      activeKeybindInput.value = keybinds[action] === ' ' ? 'Space' : keybinds[action].toUpperCase();
+      activeKeybindInput.classList.remove('active-rebind');
+      activeKeybindInput = null;
+    }
+  }
+});
+
 // Load assets and start the game
+let engine; // Declare engine in a scope accessible to modal functions
 loadAssets().then((assets) => {
   console.log('Assets loaded successfully, starting game...');
   
   try {
-    // Initialize and start the game engine
-    const engine = new Engine(ctx, canvas, assets);
+    // Initialize and start the game engine, passing keybinds
+    engine = new Engine(ctx, canvas, assets, keybinds);
     engine.start();
     
     console.log('Game started successfully!');

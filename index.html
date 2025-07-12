@@ -10,6 +10,40 @@
 
 <body>
   <canvas id="gameCanvas"></canvas>
+
+  <!-- Settings Button -->
+  <button id="settingsButton" class="settings-button" aria-label="Settings">
+    <!-- The background image for this button will be set via CSS -->
+  </button>
+
+  <!-- Keybinds Settings Modal -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <button id="closeModalButton" class="close-button" aria-label="Close Settings">
+        <!-- Close button image will be set via CSS -->
+      </button>
+      <h2>Keybind Settings</h2>
+      <div class="keybind-list">
+        <div class="keybind-item">
+          <label for="keybind-move-left">Move Left:</label>
+          <input type="text" id="keybind-move-left" data-action="moveLeft" readonly />
+        </div>
+        <div class="keybind-item">
+          <label for="keybind-move-right">Move Right:</label>
+          <input type="text" id="keybind-move-right" data-action="moveRight" readonly />
+        </div>
+        <div class="keybind-item">
+          <label for="keybind-jump">Jump:</label>
+          <input type="text" id="keybind-jump" data-action="jump" readonly />
+        </div>
+        <div class="keybind-item">
+          <label for="keybind-dash">Dash:</label>
+          <input type="text" id="keybind-dash" data-action="dash" readonly />
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="main.js"></script>
 </body>
 

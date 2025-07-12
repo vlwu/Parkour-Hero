@@ -48,20 +48,21 @@ export class Player {
     console.log('Player initialized at:', x, y);
   }
 
-  handleInput(keys) {
+  // Modified to accept an object of active actions
+  handleInput(inputActions) {
     const prevState = this.state;  // Store previous state to reset animation on state change
 
     if (this.isDashing) return; // Skip inputs during dash
     
     // Horizontal movement
-    if (keys['a'] || keys['arrowleft']) {
+    if (inputActions.moveLeft) {
       this.vx = -this.moveSpeed;
       this.direction = 'left';
       if (this.onGround) {
         this.state = 'run';
       }
 
-    } else if (keys['d'] || keys['arrowright']) {
+    } else if (inputActions.moveRight) {
       this.vx = this.moveSpeed;
       this.direction = 'right';
       if (this.onGround) {
@@ -76,7 +77,7 @@ export class Player {
     }
 
     // Detect new jump press
-    const jumpKeyDown = keys['w'] || keys['arrowup'];
+    const jumpKeyDown = inputActions.jump; // Use the action directly
 
     if (jumpKeyDown && !this.jumpPressed) {
       if (this.jumpCount === 0) {
@@ -96,7 +97,7 @@ export class Player {
       this.jumpPressed = false; // Reset when key is released
     }
 
-    const dashKeyDown = keys[' '];  // Dash input handling
+    const dashKeyDown = inputActions.dash;  // Dash input handling
 
     // Detect "just pressed" dash input
     if (dashKeyDown && !this.dashPressed && !this.isDashing && this.dashCooldownTimer <= 0) {
