@@ -6,6 +6,7 @@ export class Player {
     this.height = 32;
     this.vx = 0; // x and y velocity
     this.vy = 0; 
+    this.needsRespawn = false;
 
     this.jumpCount = 2; // 2 at the start to disable jumping immediately after spawning
     this.jumpPressed = false;  // Tracks whether the jump key is currently down
@@ -191,7 +192,7 @@ export class Player {
       // Fallback ground collision with canvas bottom
       if (this.y > canvasHeight + 100) {
         if (level?.startPosition) {
-          this.respawn(level.startPosition);
+          this.needsRespawn = true;
           return;
         }
       }
@@ -258,19 +259,21 @@ export class Player {
     }
   }
 
-  respawn(startPosition) { // Resets the player to the spawn point
+  respawn(startPosition) {
     this.x = startPosition.x;
     this.y = startPosition.y;
     this.vx = 0;
     this.vy = 0;
     this.jumpCount = 2;
+    this.jumpPressed = false;
+    this.onGround = false;
+    this.isDashing = false;
     this.dashTimer = 0;
     this.dashCooldownTimer = 0;
-    this.isDashing = false;
     this.state = 'idle';
-    this.onGround = false;
     this.animationFrame = 0;
     this.animationTimer = 0;
+    this.needsRespawn = false;
   }
 
   handleHorizontalCollision(level, prevX) {

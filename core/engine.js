@@ -115,6 +115,13 @@ export class Engine {
       this.player.handleInput(inputActions); // Pass the mapped input state
       this.player.update(dt, this.canvas.height, this.currentLevel);
 
+      // Check if player needs to respawn
+      if (this.player.needsRespawn) { 
+        console.log('Player fell off, resetting level...');
+        this.currentLevel.reset(); // Reset fruits and trophy
+        this.player.respawn(this.currentLevel.startPosition);
+      }
+
       // Update level fruits animation (managed by Level class)
       this.currentLevel.updateFruits(dt);
       // Update trophy animation (managed by Level class)
