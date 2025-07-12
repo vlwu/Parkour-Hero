@@ -261,7 +261,7 @@ export const levelSections = [
   // Section 1 (Tutorial and Basic Mechanics)
   [
     {
-    name: "Level 1: It's too Easy",
+    name: "Level 1: It's Too Easy",
     startPosition: { x: 50, y: 300 },
     platforms: [
       { x: 0, y: 400, width: 192, height: 48, terrainType: 'dirt' },
@@ -283,14 +283,14 @@ export const levelSections = [
     trophy: { x: 1125, y: 350 - 16 }
     },
     {
-      name: "Level 2: Bounce Heights",
+      name: "Level 2: Annoying Drop",
       startPosition: { x: 50, y: 350 },
       platforms: [
         { x: 0, y: 400, width: 192, height: 48, terrainType: 'dirt' },
-        { x: 250, y: 320, width: 144, height: 48, terrainType: 'stone' },
+        { x: 300, y: 320, width: 96, height: 48, terrainType: 'stone' },
         { x: 450, y: 240, width: 144, height: 48, terrainType: 'wood' },
-        { x: 700, y: 160, width: 192, height: 48, terrainType: 'dirt' },
-        { x: 1000, y: 240, width: 144, height: 48, terrainType: 'stone' }
+        { x: 700, y: 160, width: 144, height: 48, terrainType: 'dirt' },
+        { x: 1000, y: 600, width: 144, height: 48, terrainType: 'stone' }
       ],
       fruits: [
         { x: 75, y: 250, fruitType: 'fruit_apple' },
@@ -298,11 +298,11 @@ export const levelSections = [
         { x: 525, y: 190, fruitType: 'fruit_cherries' },
         { x: 800, y: 110, fruitType: 'fruit_kiwi' },
         { x: 1000, y: 100, fruitType: 'fruit_melon' },
-        { x: 150, y: 320, fruitType: 'fruit_orange' },
+        { x: 250, y: 500, fruitType: 'fruit_orange' },
         { x: 650, y: 110, fruitType: 'fruit_pineapple' },
         { x: 950, y: 190, fruitType: 'fruit_strawberry' }
       ],
-      trophy: { x: 1120, y: 224 }
+      trophy: { x: 1120, y: 600 - 16 }
     },
     {
       name: "Level 3: Canyon Dash",
@@ -310,8 +310,8 @@ export const levelSections = [
       platforms: [
         { x: 0, y: 400, width: 144, height: 48, terrainType: 'dirt' },
         { x: 200, y: 350, width: 96, height: 48, terrainType: 'wood' },
-        { x: 350, y: 500, width: 192, height: 48, terrainType: 'stone' }, // Lower path
-        { x: 600, y: 350, width: 96, height: 48, terrainType: 'dirt' },   // Requires dash
+        { x: 350, y: 500, width: 96, height: 48, terrainType: 'stone' }, 
+        { x: 600, y: 350, width: 96, height: 48, terrainType: 'dirt' },   
         { x: 800, y: 250, width: 144, height: 48, terrainType: 'wood' },
         { x: 1050, y: 300, width: 192, height: 48, terrainType: 'stone' }
       ],
@@ -339,7 +339,7 @@ export const levelSections = [
         { x: 950, y: 150, width: 144, height: 48, terrainType: 'wood' }
       ],
       fruits: [
-        { x: 100, y: 600, fruitType: 'fruit_apple' },
+        { x: 100, y: 450, fruitType: 'fruit_apple' },
         { x: 240, y: 500, fruitType: 'fruit_bananas' },
         { x: 400, y: 400, fruitType: 'fruit_cherries' },
         { x: 600, y: 300, fruitType: 'fruit_kiwi' },
@@ -367,9 +367,9 @@ export const levelSections = [
         { x: 420, y: 250, fruitType: 'fruit_cherries' },
         { x: 630, y: 350, fruitType: 'fruit_kiwi' },
         { x: 870, y: 200, fruitType: 'fruit_melon' },
-        { x: 1100, y: 250, fruitType: 'fruit_orange' },
+        { x: 1200, y: 175, fruitType: 'fruit_orange' },
         { x: 800, y: 320, fruitType: 'fruit_pineapple' },
-        { x: 950, y: 250, fruitType: 'fruit_strawberry' }
+        { x: 1000, y: 350, fruitType: 'fruit_strawberry' }
       ],
       trophy: { x: 1080, y: 284 }
     },
@@ -417,7 +417,7 @@ export const levelSections = [
         { x: 870, y: 220, fruitType: 'fruit_melon' },
         { x: 1070, y: 250, fruitType: 'fruit_orange' },
         { x: 350, y: 400, fruitType: 'fruit_pineapple' },
-        { x: 750, y: 200, fruitType: 'fruit_strawberry' }
+        { x: 600, y: 100, fruitType: 'fruit_strawberry' }
       ],
       trophy: { x: 1070, y: 134 }
     },
@@ -429,7 +429,7 @@ export const levelSections = [
         { x: 200, y: 500, width: 96, height: 48, terrainType: 'stone' },   // Lower
         { x: 350, y: 350, width: 96, height: 48, terrainType: 'wood' },    // Requires dash
         { x: 500, y: 500, width: 96, height: 48, terrainType: 'red_brick' },
-        { x: 700, y: 300, width: 144, height: 48, terrainType: 'green_block' },
+        { x: 700, y: 300, width: 48, height: 48, terrainType: 'green_block' },
         { x: 900, y: 450, width: 96, height: 48, terrainType: 'pink_dirt' },
         { x: 1100, y: 350, width: 144, height: 48, terrainType: 'orange_dirt' }
       ],
@@ -440,7 +440,7 @@ export const levelSections = [
         { x: 540, y: 450, fruitType: 'fruit_kiwi' },
         { x: 770, y: 250, fruitType: 'fruit_melon' },
         { x: 950, y: 400, fruitType: 'fruit_orange' },
-        { x: 1170, y: 300, fruitType: 'fruit_pineapple' },
+        { x: 1170, y: 200, fruitType: 'fruit_pineapple' },
         { x: 650, y: 450, fruitType: 'fruit_strawberry' }
       ],
       trophy: { x: 1170, y: 334 }
@@ -465,7 +465,7 @@ export const levelSections = [
         { x: 630, y: 200, fruitType: 'fruit_kiwi' },
         { x: 790, y: 130, fruitType: 'fruit_melon' },
         { x: 980, y: 250, fruitType: 'fruit_orange' },
-        { x: 1150, y: 170, fruitType: 'fruit_pineapple' },
+        { x: 1150, y: 100, fruitType: 'fruit_pineapple' },
         { x: 500, y: 300, fruitType: 'fruit_strawberry' }
       ],
       trophy: { x: 1170, y: 204 }
