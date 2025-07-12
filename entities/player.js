@@ -7,6 +7,7 @@ export class Player {
     this.vx = 0; // x and y velocity
     this.vy = 0; 
     this.needsRespawn = false;
+    this.deathCount = 0; // Track number of deaths
 
     this.jumpCount = 2; // 2 at the start to disable jumping immediately after spawning
     this.jumpPressed = false;  // Tracks whether the jump key is currently down
@@ -192,6 +193,7 @@ export class Player {
       // Fallback ground collision with canvas bottom
       if (this.y > canvasHeight + 100) {
         if (level?.startPosition) {
+          this.deathCount++;
           this.needsRespawn = true;
           return;
         }

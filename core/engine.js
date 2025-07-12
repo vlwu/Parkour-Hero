@@ -427,11 +427,11 @@ export class Engine {
 
       // Determine font size based on number of lines
       const totalFruits = this.currentLevel.getTotalFruitCount(); // Use Level method
-      const collectedFruits = this.currentLevel.getFruitCount();   // Use Level method
+      const collectedFruits = this.currentLevel.getFruitCount();  
       const lines = [
         `${this.currentLevel.name}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
-        `Deaths: `, // TODO implement death count
+        `Deaths: ${this.player.deathCount || 0}`,
       ];
 
       // Adjust font size: more lines = smaller font
