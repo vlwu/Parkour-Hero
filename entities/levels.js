@@ -1,30 +1,32 @@
-// Contains all level configurations organized in sections
+// Level configurations organized in sections for easy access and iteration
 
-// Define level data as sections (each section is an array of levels)
+// Each section is an array of levels; each level is a plain object
 export const levelSections = [
-  // Section 1 (Basic Mechanics)
+  // Section 1: Basic Mechanics
   [
     {
-    name: "Level 1: It's Too Easy",
-    startPosition: { x: 50, y: 300 },
-    platforms: [
-      { x: 0, y: 400, width: 192, height: 48, terrainType: 'dirt' },
-      { x: 300, y: 350, width: 144, height: 48, terrainType: 'wood' },
-      { x: 550, y: 300, width: 96, height: 48, terrainType: 'stone' },
-      { x: 750, y: 250, width: 192, height: 48, terrainType: 'dirt' },
-      { x: 1050, y: 350, width: 144, height: 48, terrainType: 'wood' }
-    ],
-    fruits: [
-      { x: 100, y: 275, fruitType: 'fruit_apple' },
-      { x: 375, y: 300, fruitType: 'fruit_bananas' },
-      { x: 600, y: 250, fruitType: 'fruit_cherries' },
-      { x: 850, y: 200, fruitType: 'fruit_kiwi' },
-      { x: 1000, y: 150, fruitType: 'fruit_melon' },
-      { x: 225, y: 320, fruitType: 'fruit_orange' },
-      { x: 475, y: 270, fruitType: 'fruit_pineapple' },
-      { x: 675, y: 220, fruitType: 'fruit_strawberry' }
-    ],
-    trophy: { x: 1125, y: 350 - 16 }
+      name: "Level 1: It's Too Easy",
+      startPosition: { x: 50, y: 300 },
+      // Platforms: minimal structure, only essential properties
+      platforms: [
+        { x: 0, y: 400, width: 192, height: 48, terrainType: 'dirt' },
+        { x: 300, y: 350, width: 144, height: 48, terrainType: 'wood' },
+        { x: 550, y: 300, width: 96, height: 48, terrainType: 'stone' },
+        { x: 750, y: 250, width: 192, height: 48, terrainType: 'dirt' },
+        { x: 1050, y: 350, width: 144, height: 48, terrainType: 'wood' }
+      ],
+      // Fruits: array of collectible items
+      fruits: [
+        { x: 100, y: 275, fruitType: 'fruit_apple' },
+        { x: 375, y: 300, fruitType: 'fruit_bananas' },
+        { x: 600, y: 250, fruitType: 'fruit_cherries' },
+        { x: 850, y: 200, fruitType: 'fruit_kiwi' },
+        { x: 1000, y: 150, fruitType: 'fruit_melon' },
+        { x: 225, y: 320, fruitType: 'fruit_orange' },
+        { x: 475, y: 270, fruitType: 'fruit_pineapple' },
+        { x: 675, y: 220, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1125, y: 334 }
     },
     {
       name: "Level 2: Big Drop",
@@ -46,7 +48,7 @@ export const levelSections = [
         { x: 650, y: 110, fruitType: 'fruit_pineapple' },
         { x: 950, y: 190, fruitType: 'fruit_strawberry' }
       ],
-      trophy: { x: 1120, y: 600 - 16 }
+      trophy: { x: 1120, y: 584 }
     },
     {
       name: "Level 3: Ups & Downs",
@@ -101,7 +103,7 @@ export const levelSections = [
         { x: 0, y: 400, width: 144, height: 48, terrainType: 'green_block' },
         { x: 200, y: 350, width: 96, height: 48, terrainType: 'orange_dirt' },
         { x: 350, y: 300, width: 144, height: 48, terrainType: 'pink_dirt' },
-        { x: 550, y: 400, width: 96, height: 48, terrainType: 'red_brick' }, // Drop-down
+        { x: 550, y: 400, width: 96, height: 48, terrainType: 'red_brick' },
         { x: 800, y: 250, width: 144, height: 48, terrainType: 'green_block' },
         { x: 1050, y: 300, width: 96, height: 48, terrainType: 'dirt' }
       ],
@@ -239,10 +241,10 @@ export const levelSections = [
       trophy: { x: 1140, y: 184 }
     },
   ],
-  // Section 2 (Cloud 9 and Beyond)
+  // Section 2: Cloud 9 and Beyond
   [
-    {
-      name: 'Level 11: New Beginnings',
-    },
+    { name: 'Level 11: New Beginnings' },
   ],
 ];
+
+// Data is structured for fast access and iteration; no unnecessary nesting or computation.
