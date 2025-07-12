@@ -35,71 +35,68 @@ export class SoundManager {
     }
   }
 
-  // Load sound files from assets
+  // Load sound files from assets - FIXED VERSION
   loadSounds(assets) {
     console.log('Loading sounds...');
+    console.log('Available assets:', Object.keys(assets));
     
-    // Create Audio objects for each sound
+    // The sound keys should match what's loaded in assets.js
     const soundKeys = ['jump', 'collect', 'level_complete'];
     
     soundKeys.forEach(key => {
       if (assets[key]) {
         try {
-          const audio = new Audio();
-          audio.preload = 'auto';
-          audio.volume = this.volume;
+          // The assets are already Audio objects from the asset loader
+          const originalAudio = assets[key];
           
-          // Handle different asset formats - assets are image objects, but for sounds we need the src
-          if (typeof assets[key] === 'string') {
-            audio.src = assets[key];
-          } else if (assets[key].src) {
-            audio.src = assets[key].src;
-          } else {
-            // For our asset loading system, we need to create a new Audio with the path
-            audio.src = this.getSoundPath(key);
-          }
+          // Store the original audio object
+          this.sounds[key] = originalAudio;
           
-          this.sounds[key] = audio;
-          console.log(`Loaded sound: ${key}`);
+          // Set initial volume
+          originalAudio.volume = this.volume;
+          
+          console.log(`Loaded sound: ${key}`, originalAudio);
         } catch (error) {
           console.warn(`Failed to load sound ${key}:`, error);
         }
       } else {
-        console.warn(`Sound asset ${key} not found`);
+        console.warn(`Sound asset ${key} not found in assets`);
       }
     });
+    
+    console.log('Sounds loaded:', Object.keys(this.sounds));
   }
 
-  // Helper to get sound file paths
-  getSoundPath(key) {
-    const soundPaths = {
-      jump: 'assets/Sounds/Player Jump.wav',
-      collect: 'assets/Sounds/Fruit Collect.mp3',
-      level_complete: 'assets/Sounds/Level Complete.mp3'
-    };
-    return soundPaths[key] || '';
-  }
-
-  // Play a sound effect
+  // Play a sound effect - IMPROVED VERSION
   play(soundKey, volume = 1.0) {
-    if (!this.enabled || !this.sounds[soundKey]) {
+    if (!this.enabled) {
+      console.log(`Sound disabled, not playing: ${soundKey}`);
+      return;
+    }
+
+    if (!this.sounds[soundKey]) {
+      console.warn(`Sound not found: ${soundKey}`);
       return;
     }
 
     try {
       const sound = this.sounds[soundKey];
       
-      // Clone the audio for overlapping sounds
-      const audioClone = sound.cloneNode();
-      audioClone.volume = Math.min(this.volume * volume, 1.0);
+      // Reset the sound to the beginning for overlapping sounds
+      sound.currentTime = 0;
+      sound.volume = Math.min(this.volume * volume, 1.0);
       
       // Play the sound
-      const playPromise = audioClone.play();
+      const playPromise = sound.play();
       
       if (playPromise !== undefined) {
-        playPromise.catch(error => {
+        playPromise.then(() => {
+          console.log(`Successfully played sound: ${soundKey}`);
+        }).catch(error => {
           // Auto-play was prevented, this is normal on first load
-          if (error.name !== 'NotAllowedError') {
+          if (error.name === 'NotAllowedError') {
+            console.log(`Auto-play prevented for ${soundKey} - user interaction required`);
+          } else {
             console.warn(`Failed to play sound ${soundKey}:`, error);
           }
         });
@@ -151,6 +148,7 @@ export class SoundManager {
       this.stopAll();
     }
     
+    console.log(`Sound ${this.enabled ? 'enabled' : 'disabled'}`);
     return this.enabled;
   }
 
@@ -172,6 +170,21 @@ export class SoundManager {
     };
   }
 
+  // Test a sound (useful for debugging)
+  testSound(soundKey) {
+    console.log(`Testing sound: ${soundKey}`);
+    console.log(`Sound enabled: ${this.enabled}`);
+    console.log(`Sound exists: ${!!this.sounds[soundKey]}`);
+    console.log(`Volume: ${this.volume}`);
+    
+    if (this.sounds[soundKey]) {
+      console.log(`Sound ready state: ${this.sounds[soundKey].readyState}`);
+      console.log(`Sound duration: ${this.sounds[soundKey].duration}`);
+    }
+    
+    this.play(soundKey);
+  }
+
   // Preload sounds for better performance
   preloadSounds() {
     Object.values(this.sounds).forEach(sound => {
@@ -181,6 +194,24 @@ export class SoundManager {
         } catch (error) {
           // Ignore preload errors
         }
+      }
+    });
+  }
+
+  // Enable audio context (call this on first user interaction)
+  enableAudioContext() {
+    // Try to play a silent sound to enable audio context
+    Object.values(this.sounds).forEach(sound => {
+      if (sound) {
+        const originalVolume = sound.volume;
+        sound.volume = 0;
+        sound.play().then(() => {
+          sound.pause();
+          sound.currentTime = 0;
+          sound.volume = originalVolume;
+        }).catch(() => {
+          // Ignore errors
+        });
       }
     });
   }

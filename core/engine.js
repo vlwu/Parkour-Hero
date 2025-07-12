@@ -23,6 +23,9 @@ export class Engine {
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
     
+    // Initialize audio context activation
+    this.initAudioContext();
+    
     // Level progression system
     this.currentSection = 0;
     this.currentLevelIndex = 0;
@@ -37,6 +40,24 @@ export class Engine {
     this.initInput();
 
     console.log('Engine initialized successfully');
+  }
+
+  initAudioContext() {
+    // Enable audio context on first user interaction
+    const enableAudio = () => {
+      this.soundManager.enableAudioContext();
+      console.log('Audio context enabled');
+      
+      // Remove listeners after first activation
+      window.removeEventListener('keydown', enableAudio);
+      window.removeEventListener('click', enableAudio);
+      window.removeEventListener('touchstart', enableAudio);
+    };
+
+    // Add listeners for user interaction
+    window.addEventListener('keydown', enableAudio);
+    window.addEventListener('click', enableAudio);
+    window.addEventListener('touchstart', enableAudio);
   }
 
   // Initialize input handling
