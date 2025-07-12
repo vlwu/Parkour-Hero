@@ -32,6 +32,11 @@ export async function loadAssets() {
     // Level assets (other than fruits), all 64x64
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
     start: 'assets/Items/Checkpoints/Start/Start (Moving).png',
+
+    // Sounds
+    jump: 'assets/Sounds/Player Jump.wav',
+    collect: 'assets/Sounds/Fruit Collect.mp3',
+    level_complete: 'assets/Sounds/Level Complete.mp3',
   };
 
   console.log('Starting asset loading...');
