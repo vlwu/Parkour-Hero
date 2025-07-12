@@ -43,43 +43,39 @@ export class Engine {
   }
 
   initAudioContext() {
+    console.log('Initializing audio context...');
+    
     // Enable audio context on first user interaction
-    const enableAudio = () => {
+    const enableAudio = (event) => {
+      console.log('User interaction detected, enabling audio...');
       this.soundManager.enableAudioContext();
-      console.log('Audio context enabled');
+      
+      // Test jump sound immediately after enabling
+      setTimeout(() => {
+        console.log('Testing jump sound after audio enable...');
+        this.soundManager.testSound('jump');
+      }, 100);
       
       // Remove listeners after first activation
       window.removeEventListener('keydown', enableAudio);
       window.removeEventListener('click', enableAudio);
       window.removeEventListener('touchstart', enableAudio);
+      
+      console.log('Audio enabled, listeners removed');
     };
 
     // Add listeners for user interaction
     window.addEventListener('keydown', enableAudio);
     window.addEventListener('click', enableAudio);
     window.addEventListener('touchstart', enableAudio);
-  }
-
-  // Initialize input handling
-  initInput() {
-    // Keyboard event listeners
+    
+    // Also add a specific test for jump key
     window.addEventListener('keydown', (e) => {
-      this.keys[e.key.toLowerCase()] = true;
-    });
-
-    window.addEventListener('keyup', (e) => {
-      this.keys[e.key.toLowerCase()] = false;
-    });
-
-    // Prevent default behavior for game keys
-    window.addEventListener('keydown', (e) => {
-      const key = e.key.toLowerCase();
-      if (Object.values(this.keybinds).includes(key) || key === ' ') {
-        e.preventDefault();
+      if (e.key.toLowerCase() === this.keybinds.jump || e.key === ' ') {
+        console.log('Jump key pressed, testing sound...');
+        this.soundManager.testSound('jump');
       }
     });
-
-    console.log('Input system initialized');
   }
 
   // Load game progress from localStorage
@@ -243,22 +239,31 @@ export class Engine {
         dash: this.keys[this.keybinds.dash] || false,
       };
 
-      // Store previous player state to detect sound triggers
-      const prevPlayerState = {
+      // Store previous player state BEFORE update
+      const prevState = {
         isJumping: this.player.isJumping,
         isOnGround: this.player.isOnGround,
-        justJumped: this.player.justJumped || false,
-        justDoubleJumped: this.player.justDoubleJumped || false,
-        justDashed: this.player.justDashed || false
+        canJump: this.player.canJump,
+        canDoubleJump: this.player.canDoubleJump,
+        velocityY: this.player.velocityY,
+        jumpKeyPressed: this.player.jumpKeyPressed
       };
 
       // Update player
       this.player.handleInput(inputActions);
       this.player.update(dt, this.canvas.height, this.currentLevel);
 
-      // Play jump sound when player jumps
-      if (this.player.justJumped || this.player.justDoubleJumped) {
-        this.soundManager.play('jump', 0.8);
+      // Enhanced jump sound detection
+      const jumpTriggered = this.detectJumpSound(prevState);
+      if (jumpTriggered) {
+        console.log('Jump detected! Playing sound...');
+        this.soundManager.play('jump', 0.9);
+        
+        // Add a backup test
+        setTimeout(() => {
+          console.log('Backup jump sound test...');
+          this.soundManager.testSound('jump');
+        }, 50);
       }
 
       // Update camera to follow player
@@ -269,11 +274,7 @@ export class Engine {
         console.log('Player fell off, resetting level...');
         this.currentLevel.reset();
         this.player.respawn(this.currentLevel.startPosition);
-        
-        // Add screen shake for death
         this.camera.shake(15, 0.5);
-        
-        // Increment death count
         this.player.deathCount = (this.player.deathCount || 0) + 1;
       }
 
@@ -295,7 +296,7 @@ export class Engine {
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
 
-      // Fruit collection
+      // Fruit collection with sound
       this.currentLevel.fruits = this.currentLevel.fruits.filter((fruit) => {
         if (fruit.collected) return true;
 
@@ -306,9 +307,9 @@ export class Engine {
 
         if (collided) {
           fruit.collected = true;
-
-          // Play fruit collection sound
-          this.soundManager.play('collect', 0.6);
+          
+          console.log('Fruit collected! Playing sound...');
+          this.soundManager.play('collect', 0.8);
 
           this.collectedFruits.push({
             x: fruit.x,
@@ -327,7 +328,7 @@ export class Engine {
         return true;
       });
 
-      // Trophy collision with screen shake
+      // Trophy collision with sound
       const trophy = this.currentLevel.trophy;
       if (trophy && !trophy.acquired && !trophy.inactive) {
         const px = this.player.x, py = this.player.y, pw = this.player.width, ph = this.player.height;
@@ -335,17 +336,15 @@ export class Engine {
 
         if (px + pw > tx && px < tx + ts && py + ph > ty && py < ty + ts) {
           trophy.acquired = true;
-          
-          // Add screen shake for trophy collection
           this.camera.shake(8, 0.3);
-          
           console.log('Trophy acquired!');
         }
       }
 
       // Check level completion
       if (this.currentLevel.isCompleted()) {
-        console.log('Level completed!');
+        console.log('Level completed! Playing sound...');
+        this.soundManager.play('level_complete', 1.0);
         this.saveProgress();
         this.advanceLevel();
       }
@@ -353,6 +352,115 @@ export class Engine {
     } catch (error) {
       console.error('Error in update loop:', error);
     }
+  }
+
+  // Add debug method to Engine class
+  debugSounds() {
+    console.log('=== ENGINE SOUND DEBUG ===');
+    
+    // Check if sound manager exists
+    console.log('Sound Manager exists:', !!this.soundManager);
+    
+    if (this.soundManager) {
+      console.log('Sound Manager Debug Info:', this.soundManager.getDebugInfo());
+      
+      // Test all sounds
+      console.log('\n=== TESTING ALL SOUNDS ===');
+      ['jump', 'collect', 'level_complete'].forEach(soundKey => {
+        setTimeout(() => {
+          console.log(`Testing ${soundKey}...`);
+          this.soundManager.testSound(soundKey);
+        }, 1000);
+      });
+    }
+    
+    // Check assets
+    console.log('\n=== ASSET DEBUG ===');
+    console.log('Assets loaded:', !!this.assets);
+    if (this.assets) {
+      const soundAssets = ['jump', 'collect', 'level_complete'];
+      soundAssets.forEach(key => {
+        const asset = this.assets[key];
+        console.log(`Asset ${key}:`, {
+          exists: !!asset,
+          type: asset?.constructor.name,
+          readyState: asset?.readyState,
+          duration: asset?.duration,
+          volume: asset?.volume,
+          src: asset?.src?.substring(0, 50) + '...'
+        });
+      });
+    }
+    
+    // Manual sound tests
+    console.log('\n=== MANUAL TESTS ===');
+    
+    // Test 1: Direct asset playback
+    if (this.assets.jump) {
+      console.log('Test 1: Playing jump asset directly...');
+      try {
+        this.assets.jump.volume = 1.0;
+        this.assets.jump.currentTime = 0;
+        this.assets.jump.play().then(() => {
+          console.log('✓ Direct asset playback successful');
+        }).catch(error => {
+          console.log('✗ Direct asset playback failed:', error);
+        });
+      } catch (error) {
+        console.log('✗ Direct asset playback exception:', error);
+      }
+    }
+    
+    // Test 2: Sound manager playback
+    setTimeout(() => {
+      console.log('Test 2: Playing via sound manager...');
+      this.soundManager.play('jump', 1.0);
+    }, 2000);
+    
+    // Test 3: Create new audio element
+    setTimeout(() => {
+      console.log('Test 3: Creating new Audio element...');
+      if (this.assets.jump) {
+        try {
+          const testAudio = new Audio(this.assets.jump.src);
+          testAudio.volume = 1.0;
+          testAudio.play().then(() => {
+            console.log('✓ New audio element successful');
+          }).catch(error => {
+            console.log('✗ New audio element failed:', error);
+          });
+        } catch (error) {
+          console.log('✗ New audio element exception:', error);
+        }
+      }
+    }, 3000);
+  }
+
+  // Add method to test sound on key press
+  testSoundOnKeyPress() {
+    console.log('Setting up sound test key listener...');
+    
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 't') {
+        console.log('T key pressed - testing jump sound...');
+        this.soundManager.testSound('jump');
+      }
+      
+      if (e.key.toLowerCase() === 'y') {
+        console.log('Y key pressed - testing collect sound...');
+        this.soundManager.testSound('collect');
+      }
+      
+      if (e.key.toLowerCase() === 'u') {
+        console.log('U key pressed - testing level complete sound...');
+        this.soundManager.testSound('level_complete');
+      }
+    });
+    
+    console.log('Sound test keys enabled:');
+    console.log('  T - Test jump sound');
+    console.log('  Y - Test collect sound');
+    console.log('  U - Test level complete sound');
   }
 
   render() {
