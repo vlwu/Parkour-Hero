@@ -161,8 +161,7 @@ export class Engine {
 
   update(dt) {
     try {
-      // Create a temporary object to pass to player.handleInput
-      // This maps the abstract actions to the currently bound keys
+      // Create a temporary object to pass to player.handleInput. This maps the abstract actions to the currently bound keys
       const inputActions = {
         moveLeft: this.keys[this.keybinds.moveLeft] || false,
         moveRight: this.keys[this.keybinds.moveRight] || false,
@@ -181,9 +180,9 @@ export class Engine {
         this.player.respawn(this.currentLevel.startPosition);
       }
 
-      // Update level fruits animation (managed by Level class)
+      // Update level fruits animation 
       this.currentLevel.updateFruits(dt);
-      // Update trophy animation (managed by Level class)
+      // Update trophy animation 
       this.currentLevel.updateTrophyAnimation(dt);
 
 
@@ -204,8 +203,7 @@ export class Engine {
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
 
-      // Update collision detection to mark fruits as collected in level
-      // Iterate over a copy to safely modify the original array during filtering
+      // Update collision detection to mark fruits as collected in level. Iterate over a copy to safely modify the original array during filtering
       this.currentLevel.fruits = this.currentLevel.fruits.filter((fruit) => {
         if (fruit.collected) return true; // Keep already collected fruits in the level's array
 
@@ -215,8 +213,7 @@ export class Engine {
         const collided = distance < (fruit.size / 2 + this.player.width / 2);
 
         if (collided) {
-          fruit.collected = true; // Mark as collected in level
-          // The fruitCount is now derived from the level itself
+          fruit.collected = true; 
 
           this.collectedFruits.push({ // Trigger collected animation
             x: fruit.x,
