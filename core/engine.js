@@ -1,41 +1,39 @@
+// Modified engine.js - showing the key changes needed
+
 import { Player } from '../entities/player.js';
 import { createLevel } from '../entities/platform.js'; 
-import { levelSections } from '../entities/levels.js'; 
+import { levelSections } from '../entities/levels.js';
+import { Camera } from './camera.js'; // Import the camera
 
 export class Engine {
-  constructor(ctx, canvas, assets, initialKeybinds) { // Added initialKeybinds parameter
+  constructor(ctx, canvas, assets, initialKeybinds) {
     this.ctx = ctx;
     this.canvas = canvas;
     this.assets = assets;
     this.lastFrameTime = 0;
     this.keys = {};
-    this.keybinds = initialKeybinds; // Store keybinds
-    this.isRunning = false; // Track if the game loop is active
-
+    this.keybinds = initialKeybinds;
+    this.isRunning = false;
+    
+    // Initialize camera
+    this.camera = new Camera(canvas.width, canvas.height);
+    
     // Level progression system
-    this.currentSection = 0;  // First section (0-based index)
-    this.currentLevelIndex = 0;    // First level in section (0-based index)
-    this.levelProgress = this.loadProgress(); // Load saved progress
+    this.currentSection = 0;
+    this.currentLevelIndex = 0;
+    this.levelProgress = this.loadProgress();
     
     // Initialize the current level
     this.loadLevel(this.currentSection, this.currentLevelIndex);
+    
+    // Snap camera to player initial position
+    this.camera.snapToPlayer(this.player);
 
     this.initInput();
 
-    // Log successful initialization for debugging
     console.log('Engine initialized successfully');
-    console.log('Available assets:', Object.keys(this.assets));
-    console.log('Level loaded:', this.currentLevel.name);
-    console.log('Fruits in level:', this.fruits.length);
   }
 
-  // Method to update keybinds from outside (e.g., from UI)
-  updateKeybinds(newKeybinds) {
-    this.keybinds = { ...newKeybinds }; // Create a new object to ensure reactivity
-    console.log('Keybinds updated:', this.keybinds);
-  }
-
-    // Load level based on section and level indices
   loadLevel(sectionIndex, levelIndex) {
     // Validate indices
     if (sectionIndex >= levelSections.length || 
@@ -51,117 +49,23 @@ export class Engine {
     this.fruitCount = 0;
     this.collectedFruits = [];
     
-    // Initialize player with assets and level starting position
+    // Initialize player
     this.player = new Player(
       this.currentLevel.startPosition.x,
       this.currentLevel.startPosition.y,
       this.assets
     );
     
+    // Update camera bounds for new level and snap to player
+    this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
+    this.camera.snapToPlayer(this.player);
+    
     console.log(`Loaded: ${this.currentLevel.name}`);
-  }
-
-  // Advance to next level
-  advanceLevel() {
-    const currentSection = levelSections[this.currentSection];
-    
-    // Check if there's another level in this section
-    if (this.currentLevelIndex + 1 < currentSection.length) {
-      this.currentLevelIndex++;
-      this.loadLevel(this.currentSection, this.currentLevelIndex);
-      return;
-    }
-    
-    // Check if there's another section to advance to
-    if (this.currentSection + 1 < levelSections.length) {
-      this.currentSection++;
-      this.currentLevelIndex = 0;
-      this.loadLevel(this.currentSection, this.currentLevelIndex);
-      return; // Early exit for performance
-    }
-    
-    // Game completed! For now, loop back to first level
-    console.log("Congratulations! You've completed all levels!");
-    this.currentSection = 0;
-    this.currentLevelIndex = 0;
-    this.loadLevel(this.currentSection, this.currentLevelIndex);
-  }
-
-  // Save progress to localStorage (optimized: minimal object, single call)
-  saveProgress() {
-    localStorage.setItem('gameProgress', JSON.stringify({
-      section: this.currentSection,
-      level: this.currentLevelIndex,
-    }));
-  }
-
-  // Load progress from localStorage
-  loadProgress() {
-    const saved = localStorage.getItem('gameProgress');
-    return saved ? JSON.parse(saved) : { section: 0, level: 0 };
-  }
-
-  initInput() {
-    window.addEventListener('keydown', (e) => {
-      // Only process input if game is running (not paused by modal)
-      if (this.isRunning) {
-        this.keys[e.key.toLowerCase()] = true;
-      }
-    });
-
-    window.addEventListener('keyup', (e) => {
-      // Only process input if game is running (not paused by modal)
-      if (this.isRunning) {
-        this.keys[e.key.toLowerCase()] = false;
-
-        // Reset horizontal velocity when movement keys are released
-        // Check if the released key is one of the currently bound movement keys
-        if (e.key.toLowerCase() === this.keybinds.moveLeft || e.key.toLowerCase() === this.keybinds.moveRight) {
-          this.player.vx = 0;
-        }
-      }
-    });
-  }
-
-  start() {
-    console.log('Starting game loop...');
-    this.isRunning = true;
-    requestAnimationFrame(this.loop.bind(this));
-  }
-
-  pause() {
-    console.log('Game paused.');
-    this.isRunning = false;
-  }
-
-  resume() {
-    console.log('Game resumed.');
-    this.isRunning = true;
-    this.lastFrameTime = performance.now(); // Reset lastFrameTime to prevent large deltaTime after pause
-    requestAnimationFrame(this.loop.bind(this));
-  }
-
-  loop(timestamp) {
-    if (!this.isRunning) {
-      return; // Stop the loop if game is paused
-    }
-
-    // Calculate delta time for smooth frame-rate independent movement
-    const deltaTime = (timestamp - this.lastFrameTime) / 1000;
-    this.lastFrameTime = timestamp;
-
-    // Cap delta time to prevent large jumps when tab is unfocused
-    const cappedDeltaTime = Math.min(deltaTime, 0.016); // Max 60 FPS equivalent
-
-    this.update(cappedDeltaTime);
-    this.render();
-
-    requestAnimationFrame(this.loop.bind(this));
   }
 
   update(dt) {
     try {
-      // Create a temporary object to pass to player.handleInput. This maps the abstract actions to the currently bound keys
+      // Create input actions object
       const inputActions = {
         moveLeft: this.keys[this.keybinds.moveLeft] || false,
         moveRight: this.keys[this.keybinds.moveRight] || false,
@@ -169,33 +73,34 @@ export class Engine {
         dash: this.keys[this.keybinds.dash] || false,
       };
 
-      // Update player input and physics
-      this.player.handleInput(inputActions); // Pass the mapped input state
+      // Update player
+      this.player.handleInput(inputActions);
       this.player.update(dt, this.canvas.height, this.currentLevel);
+
+      // Update camera to follow player
+      this.camera.update(this.player, dt);
 
       // Check if player needs to respawn
       if (this.player.needsRespawn) { 
         console.log('Player fell off, resetting level...');
-        this.currentLevel.reset(); // Reset fruits and trophy
+        this.currentLevel.reset();
         this.player.respawn(this.currentLevel.startPosition);
+        
+        // Add screen shake for death
+        this.camera.shake(15, 0.5);
       }
 
-      // Update level fruits animation 
+      // Update level animations
       this.currentLevel.updateFruits(dt);
-      // Update trophy animation 
       this.currentLevel.updateTrophyAnimation(dt);
 
-
-      // Update collected fruit animations (these are separate visual effects)
+      // Update collected fruit animations
       this.collectedFruits = this.collectedFruits || [];
-
       for (const collected of this.collectedFruits) {
         collected.frameTimer += dt;
         if (collected.frameTimer >= collected.frameSpeed) {
           collected.frameTimer = 0;
           collected.frame++;
-
-          // Remove when animation finishes
           if (collected.frame >= collected.collectedFrameCount) {
             collected.done = true;
           }
@@ -203,9 +108,9 @@ export class Engine {
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
 
-      // Update collision detection to mark fruits as collected in level. Iterate over a copy to safely modify the original array during filtering
+      // Fruit collection with screen shake
       this.currentLevel.fruits = this.currentLevel.fruits.filter((fruit) => {
-        if (fruit.collected) return true; // Keep already collected fruits in the level's array
+        if (fruit.collected) return true;
 
         const dx = fruit.x - (this.player.x + this.player.width / 2);
         const dy = fruit.y - (this.player.y + this.player.height / 2);
@@ -213,9 +118,12 @@ export class Engine {
         const collided = distance < (fruit.size / 2 + this.player.width / 2);
 
         if (collided) {
-          fruit.collected = true; 
+          fruit.collected = true;
+          
+          // Add small screen shake for fruit collection
+          this.camera.shake(3, 0.2);
 
-          this.collectedFruits.push({ // Trigger collected animation
+          this.collectedFruits.push({
             x: fruit.x,
             y: fruit.y,
             size: fruit.size,
@@ -224,32 +132,36 @@ export class Engine {
             frameTimer: 0,
             collectedFrameCount: 6
           });
+          
           console.log(`Collected ${fruit.spriteKey}! Total: ${this.currentLevel.getFruitCount()}`);
-
-          return true; // Keep the fruit in the level's array, just mark it collected
+          return true;
         }
 
-        return true; // Keep uncollected fruits
+        return true;
       });
 
-    // Trophy collision handling
-    const trophy = this.currentLevel.trophy;
-    if (trophy && !trophy.acquired && !trophy.inactive) {
-      const px = this.player.x, py = this.player.y, pw = this.player.width, ph = this.player.height;
-      const tx = trophy.x - trophy.size / 2, ty = trophy.y - trophy.size / 2, ts = trophy.size;
+      // Trophy collision with screen shake
+      const trophy = this.currentLevel.trophy;
+      if (trophy && !trophy.acquired && !trophy.inactive) {
+        const px = this.player.x, py = this.player.y, pw = this.player.width, ph = this.player.height;
+        const tx = trophy.x - trophy.size / 2, ty = trophy.y - trophy.size / 2, ts = trophy.size;
 
-      if (px + pw > tx && px < tx + ts && py + ph > ty && py < ty + ts) {
-        trophy.acquired = true;
-        console.log('Trophy acquired!');
+        if (px + pw > tx && px < tx + ts && py + ph > ty && py < ty + ts) {
+          trophy.acquired = true;
+          
+          // Add screen shake for trophy collection
+          this.camera.shake(8, 0.4);
+          
+          console.log('Trophy acquired!');
+        }
       }
-    }
 
-    // Check if level is completed
-    if (this.currentLevel.isCompleted()) {
-      console.log('Level completed!');
-      this.saveProgress();
-      this.advanceLevel();
-    }
+      // Check level completion
+      if (this.currentLevel.isCompleted()) {
+        console.log('Level completed!');
+        this.saveProgress();
+        this.advanceLevel();
+      }
 
     } catch (error) {
       console.error('Error in update loop:', error);
@@ -263,45 +175,35 @@ export class Engine {
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw tiled background
+      // Apply camera transformation
+      this.camera.apply(ctx);
+
+      // Draw tiled background (now affected by camera)
       this.drawBackground();
 
-      // Render level platforms and trophy (handled by Level.render)
+      // Render level platforms and trophy
       this.currentLevel.render(ctx, assets);
 
       // Draw player
       this.player.render(ctx);
 
-      // Draw animated fruits (only active ones from the level)
+      // Draw fruits
       this.drawFruits();
 
-      // Draw collected fruit animations (optimized for performance)
-      // Use a for loop instead of for...of for better performance in tight loops
-      const collectedArr = this.collectedFruits;
-      const sprite = this.assets['fruit_collected'];
-      if (sprite) {
-        const frameWidth = sprite.width / 6; // 6 frames for collected animation
-        const frameHeight = sprite.height;
-        for (let i = 0, len = collectedArr.length; i < len; i++) {
-          const collected = collectedArr[i];
-          const srcX = collected.frame * frameWidth; // Calculate source X for current frame
-          this.ctx.drawImage( // Draw the collected fruit animation frame, centered on fruit position
-        sprite,
-        srcX, 0,
-        frameWidth, frameHeight,
-        collected.x - collected.size / 2, collected.y - collected.size / 2,
-        collected.size, collected.size
-          );
-        }
-      }
-      // If sprite is missing, skip drawing collected animations for performance
+      // Draw collected fruit animations
+      this.drawCollectedFruits();
 
-      // Draw HUD
+      // Restore camera transformation
+      this.camera.restore(ctx);
+
+      // Draw HUD (not affected by camera)
       this.drawHUD();
+
+      // Draw camera debug info (uncomment for debugging)
+      // this.camera.drawDebug(ctx);
 
     } catch (error) {
       console.error('Error in render loop:', error);
-      // Draw error message on canvas
       ctx.fillStyle = 'red';
       ctx.font = '20px sans-serif';
       ctx.fillText('Rendering Error - Check Console', 10, 30);
@@ -312,70 +214,67 @@ export class Engine {
     const { ctx, canvas, assets } = this;
     const bg = assets.backgroundTile;
 
-    // Check if background asset loaded successfully
     if (!bg) {
       console.warn('Background tile not loaded, using fallback');
-      // Fallback: draw a simple gradient background
       const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, '#87CEEB'); // Sky blue
-      gradient.addColorStop(1, '#98FB98'); // Light green
+      gradient.addColorStop(0, '#87CEEB');
+      gradient.addColorStop(1, '#98FB98');
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(this.camera.x, this.camera.y, canvas.width, canvas.height);
       return;
     }
 
-    // Background sprite sheet info - Blue.png is typically 64x64 with blue tile at position 0,0
-    const spriteSize = 64;    // Each tile in the sprite sheet is 64x64
-    const tileSize = 64;      // Size to draw each tile on screen
-
-    // Source coordinates for the blue tile (usually top-left of sprite sheet)
+    const spriteSize = 64;
+    const tileSize = 64;
     const srcX = 0;
     const srcY = 0;
 
-    // Draw tiled background covering the entire canvas
-    const tilesX = Math.ceil(canvas.width / tileSize); // Pre-calculate number of tiles to avoid unnecessary iterations
-    const tilesY = Math.ceil(canvas.height / tileSize);
+    // Calculate which tiles are visible based on camera position
+    const startX = Math.floor(this.camera.x / tileSize);
+    const startY = Math.floor(this.camera.y / tileSize);
+    const endX = Math.ceil((this.camera.x + canvas.width) / tileSize);
+    const endY = Math.ceil((this.camera.y + canvas.height) / tileSize);
 
-    for (let i = 0; i < tilesX; i++) {
+    // Only draw visible tiles for better performance
+    for (let i = startX; i <= endX; i++) {
       const x = i * tileSize;
-      for (let j = 0; j < tilesY; j++) {
-      const y = j * tileSize;
-      try {
-        ctx.drawImage(
-        bg,
-        srcX, srcY,
-        spriteSize, spriteSize,
-        x, y,
-        tileSize, tileSize
-        );
-      } catch (error) {
-        // Only log once per frame for performance
-        if (i === 0 && j === 0) {
-        console.warn('Failed to draw background tile:', error);
+      for (let j = startY; j <= endY; j++) {
+        const y = j * tileSize;
+        try {
+          ctx.drawImage(
+            bg,
+            srcX, srcY,
+            spriteSize, spriteSize,
+            x, y,
+            tileSize, tileSize
+          );
+        } catch (error) {
+          if (i === startX && j === startY) {
+            console.warn('Failed to draw background tile:', error);
+          }
+          ctx.fillStyle = '#87CEEB';
+          ctx.fillRect(x, y, tileSize, tileSize);
         }
-        ctx.fillStyle = '#87CEEB';
-        ctx.fillRect(x, y, tileSize, tileSize);
-      }
       }
     }
   }
 
-  // Draw all uncollected fruits in the current level
   drawFruits() {
     const { ctx, assets } = this;
-
-    // Use a for loop for performance (avoids array iterator overhead)
     const fruits = this.currentLevel.fruits;
+    
     for (let i = 0, len = fruits.length; i < len; i++) {
       const fruit = fruits[i];
-      if (fruit.collected) continue; // Skip collected fruits
+      if (fruit.collected) continue;
 
-      // Try to draw the fruit sprite, fallback to circle if missing or error
+      // Only draw fruits that are visible to the camera
+      if (!this.camera.isVisible(fruit.x - fruit.size/2, fruit.y - fruit.size/2, fruit.size, fruit.size)) {
+        continue;
+      }
+
       try {
         const img = assets[fruit.spriteKey];
-
         if (!img) {
-          // Sprite not loaded: fallback to simple colored circle
           ctx.fillStyle = '#FF6B6B';
           ctx.beginPath();
           ctx.arc(fruit.x, fruit.y, fruit.size / 2, 0, Math.PI * 2);
@@ -383,27 +282,52 @@ export class Engine {
           continue;
         }
 
-        // Calculate frame dimensions for fruit animation (assume 17 frames)
         const frameWidth = img.width / fruit.frameCount;
         const srcX = frameWidth * fruit.frame;
 
-        // Draw the animated fruit sprite, centered on fruit position
         ctx.drawImage(
           img,
-          srcX, 0, frameWidth, img.height, // Source rect (frame)
-          fruit.x - fruit.size / 2, fruit.y - fruit.size / 2, // Dest position
-          fruit.size, fruit.size // Dest size
+          srcX, 0, frameWidth, img.height,
+          fruit.x - fruit.size / 2, fruit.y - fruit.size / 2,
+          fruit.size, fruit.size
         );
 
       } catch (error) {
-        // Drawing failed: fallback to simple colored circle
         ctx.fillStyle = '#FF6B6B';
         ctx.beginPath();
         ctx.arc(fruit.x, fruit.y, fruit.size / 2, 0, Math.PI * 2);
         ctx.fill();
-        // Only log once per frame for performance
         if (i === 0) console.warn('Error drawing fruit:', error);
       }
+    }
+  }
+
+  drawCollectedFruits() {
+    const { ctx, assets } = this;
+    const collectedArr = this.collectedFruits;
+    const sprite = assets['fruit_collected'];
+    
+    if (!sprite) return;
+
+    const frameWidth = sprite.width / 6;
+    const frameHeight = sprite.height;
+    
+    for (let i = 0, len = collectedArr.length; i < len; i++) {
+      const collected = collectedArr[i];
+      
+      // Only draw if visible to camera
+      if (!this.camera.isVisible(collected.x - collected.size/2, collected.y - collected.size/2, collected.size, collected.size)) {
+        continue;
+      }
+      
+      const srcX = collected.frame * frameWidth;
+      ctx.drawImage(
+        sprite,
+        srcX, 0,
+        frameWidth, frameHeight,
+        collected.x - collected.size / 2, collected.y - collected.size / 2,
+        collected.size, collected.size
+      );
     }
   }
 
@@ -411,51 +335,61 @@ export class Engine {
     const { ctx } = this;
 
     try {
-      // HUD box settings
+      // Save context to avoid camera transform affecting HUD
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+
       const hudX = 10;
       const hudY = 10;
-      const hudWidth = 280; // Made wider for more info
-      const hudHeight = 80;  // Made taller for level info
+      const hudWidth = 280;
+      const hudHeight = 80;
 
-      // Draw semi-transparent HUD background
+      // Draw HUD background
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.fillRect(hudX, hudY, hudWidth, hudHeight);
 
-      // Determine font size based on number of lines
-      const totalFruits = this.currentLevel.getTotalFruitCount(); // Use Level method
-      const collectedFruits = this.currentLevel.getFruitCount();  
+      const totalFruits = this.currentLevel.getTotalFruitCount();
+      const collectedFruits = this.currentLevel.getFruitCount();
       const lines = [
         `${this.currentLevel.name}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
         `Deaths: ${this.player.deathCount || 0}`,
       ];
 
-      // Adjust font size: more lines = smaller font
       let fontSize = 18;
       if (lines.length >= 4) fontSize = 15;
       else if (lines.length === 3) fontSize = 17;
+      
       ctx.font = `${fontSize}px sans-serif`;
       ctx.strokeStyle = 'black';
       ctx.lineWidth = 2;
       ctx.fillStyle = 'white';
 
-      // Line height and top offset to vertically center within the box
       const lineHeight = 22;
       const totalTextHeight = lines.length * lineHeight;
       const startY = hudY + (hudHeight - totalTextHeight) / 2 + lineHeight - 6;
-
-      // X-position to left-align nicely with some margin
       const textX = hudX + hudWidth / 2;
 
-      // Draw each line
       lines.forEach((text, index) => {
         const y = startY + index * lineHeight;
         ctx.strokeText(text, textX, y);
         ctx.fillText(text, textX, y);
       });
 
+      ctx.restore();
+
     } catch (error) {
       console.warn('Error drawing HUD:', error);
     }
+  }
+
+  // Add method to get camera for external access
+  getCamera() {
+    return this.camera;
+  }
+
+  // Add method to manually trigger screen shake
+  shakeScreen(intensity = 10, duration = 0.3) {
+    this.camera.shake(intensity, duration);
   }
 }
