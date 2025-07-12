@@ -1,5 +1,6 @@
 import { Player } from '../entities/player.js';
-import { createLevel, levelSections } from '../entities/platform.js'; // Updated import
+import { createLevel } from '../entities/platform.js'; 
+import { levelSections } from '../entities/levels.js'; 
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) { // Added initialKeybinds parameter
@@ -11,7 +12,7 @@ export class Engine {
     this.keybinds = initialKeybinds; // Store keybinds
     this.isRunning = false; // Track if the game loop is active
 
-        // Level progression system
+    // Level progression system
     this.currentSection = 0;  // First section (0-based index)
     this.currentLevelIndex = 0;    // First level in section (0-based index)
     this.levelProgress = this.loadProgress(); // Load saved progress
