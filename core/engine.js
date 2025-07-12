@@ -236,27 +236,13 @@ export class Engine {
         return true; // Keep uncollected fruits
       });
 
-    // Trophy collision handling - SIMPLIFIED VERSION
+    // Trophy collision handling
     const trophy = this.currentLevel.trophy;
-    if (trophy && !trophy.acquired) {
-      // Calculate collision
-      const playerLeft = this.player.x;
-      const playerRight = this.player.x + this.player.width;
-      const playerTop = this.player.y;
-      const playerBottom = this.player.y + this.player.height;
-      
-      const trophyLeft = trophy.x - trophy.size / 2;
-      const trophyRight = trophy.x + trophy.size / 2;
-      const trophyTop = trophy.y - trophy.size / 2;
-      const trophyBottom = trophy.y + trophy.size / 2;
-      
-      const collided = playerRight > trophyLeft &&
-                      playerLeft < trophyRight &&
-                      playerBottom > trophyTop &&
-                      playerTop < trophyBottom;
-      
-      // Only acquire trophy if it's active AND there's current collision
-      if (collided && !trophy.inactive) {
+    if (trophy && !trophy.acquired && !trophy.inactive) {
+      const px = this.player.x, py = this.player.y, pw = this.player.width, ph = this.player.height;
+      const tx = trophy.x - trophy.size / 2, ty = trophy.y - trophy.size / 2, ts = trophy.size;
+
+      if (px + pw > tx && px < tx + ts && py + ph > ty && py < ty + ts) {
         trophy.acquired = true;
         console.log('Trophy acquired!');
       }
@@ -293,23 +279,26 @@ export class Engine {
       // Draw animated fruits (only active ones from the level)
       this.drawFruits();
 
-      // Draw collected fruit animations
-      for (const collected of this.collectedFruits) {
-        const sprite = this.assets['fruit_collected'];
-        if (!sprite) continue;
-
-        const frameWidth = sprite.width / collected.collectedFrameCount;
+      // Draw collected fruit animations (optimized for performance)
+      // Use a for loop instead of for...of for better performance in tight loops
+      const collectedArr = this.collectedFruits;
+      const sprite = this.assets['fruit_collected'];
+      if (sprite) {
+        const frameWidth = sprite.width / 6; // 6 frames for collected animation
         const frameHeight = sprite.height;
-        const srcX = collected.frame * frameWidth;
-
-        this.ctx.drawImage(
-          sprite,
-          srcX, 0,
-          frameWidth, frameHeight,
-          collected.x - collected.size / 2, collected.y - collected.size / 2,
-          collected.size, collected.size
-        );
+        for (let i = 0, len = collectedArr.length; i < len; i++) {
+          const collected = collectedArr[i];
+          const srcX = collected.frame * frameWidth; // Calculate source X for current frame
+          this.ctx.drawImage( // Draw the collected fruit animation frame, centered on fruit position
+        sprite,
+        srcX, 0,
+        frameWidth, frameHeight,
+        collected.x - collected.size / 2, collected.y - collected.size / 2,
+        collected.size, collected.size
+          );
+        }
       }
+      // If sprite is missing, skip drawing collected animations for performance
 
       // Draw HUD
       this.drawHUD();
@@ -348,40 +337,49 @@ export class Engine {
     const srcY = 0;
 
     // Draw tiled background covering the entire canvas
-    for (let x = 0; x < canvas.width; x += tileSize) {
-      for (let y = 0; y < canvas.height; y += tileSize) {
-        try {
-          // Draw specific tile from sprite sheet
-          ctx.drawImage(
-            bg,                    // source image
-            srcX, srcY,           // source x, y (position in sprite sheet)
-            spriteSize, spriteSize, // source width, height
-            x, y,                 // destination x, height
-            tileSize, tileSize    // destination width, height
-          );
-        } catch (error) {
-          console.warn('Failed to draw background tile:', error);
-          // Fallback for individual tile
-          ctx.fillStyle = '#87CEEB';
-          ctx.fillRect(x, y, tileSize, tileSize);
+    const tilesX = Math.ceil(canvas.width / tileSize); // Pre-calculate number of tiles to avoid unnecessary iterations
+    const tilesY = Math.ceil(canvas.height / tileSize);
+
+    for (let i = 0; i < tilesX; i++) {
+      const x = i * tileSize;
+      for (let j = 0; j < tilesY; j++) {
+      const y = j * tileSize;
+      try {
+        ctx.drawImage(
+        bg,
+        srcX, srcY,
+        spriteSize, spriteSize,
+        x, y,
+        tileSize, tileSize
+        );
+      } catch (error) {
+        // Only log once per frame for performance
+        if (i === 0 && j === 0) {
+        console.warn('Failed to draw background tile:', error);
         }
+        ctx.fillStyle = '#87CEEB';
+        ctx.fillRect(x, y, tileSize, tileSize);
+      }
       }
     }
   }
 
+  // Draw all uncollected fruits in the current level
   drawFruits() {
     const { ctx, assets } = this;
 
-    // Iterate over the level's fruits, drawing only uncollected ones
-    for (const fruit of this.currentLevel.fruits) {
+    // Use a for loop for performance (avoids array iterator overhead)
+    const fruits = this.currentLevel.fruits;
+    for (let i = 0, len = fruits.length; i < len; i++) {
+      const fruit = fruits[i];
       if (fruit.collected) continue; // Skip collected fruits
 
+      // Try to draw the fruit sprite, fallback to circle if missing or error
       try {
         const img = assets[fruit.spriteKey];
 
         if (!img) {
-          console.warn(`Fruit sprite ${fruit.spriteKey} not loaded`);
-          // Fallback: draw a colored circle
+          // Sprite not loaded: fallback to simple colored circle
           ctx.fillStyle = '#FF6B6B';
           ctx.beginPath();
           ctx.arc(fruit.x, fruit.y, fruit.size / 2, 0, Math.PI * 2);
@@ -389,34 +387,26 @@ export class Engine {
           continue;
         }
 
-        // Calculate sprite frame dimensions for fruit animation (17 frames)
+        // Calculate frame dimensions for fruit animation (assume 17 frames)
         const frameWidth = img.width / fruit.frameCount;
-        const frameHeight = img.height;
-
-        // Calculate source position (which frame to draw)
         const srcX = frameWidth * fruit.frame;
-        const srcY = 0;
 
-        // Calculate destination position (centered on fruit position)
-        const dx = fruit.x - fruit.size / 2;
-        const dy = fruit.y - fruit.size / 2;
-
-        // Draw the animated fruit sprite
+        // Draw the animated fruit sprite, centered on fruit position
         ctx.drawImage(
-          img,                     // source image
-          srcX, srcY,             // source x, y (frame position)
-          frameWidth, frameHeight, // source width, height
-          dx, dy,                 // destination x, y
-          fruit.size, fruit.size  // destination width, height
+          img,
+          srcX, 0, frameWidth, img.height, // Source rect (frame)
+          fruit.x - fruit.size / 2, fruit.y - fruit.size / 2, // Dest position
+          fruit.size, fruit.size // Dest size
         );
 
       } catch (error) {
-        console.warn('Error drawing fruit:', error);
-        // Fallback: draw a simple circle
+        // Drawing failed: fallback to simple colored circle
         ctx.fillStyle = '#FF6B6B';
         ctx.beginPath();
         ctx.arc(fruit.x, fruit.y, fruit.size / 2, 0, Math.PI * 2);
         ctx.fill();
+        // Only log once per frame for performance
+        if (i === 0) console.warn('Error drawing fruit:', error);
       }
     }
   }
@@ -435,13 +425,7 @@ export class Engine {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.fillRect(hudX, hudY, hudWidth, hudHeight);
 
-      // Text style
-      ctx.font = '18px sans-serif';
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 2;
-      ctx.fillStyle = 'white';
-
-      // Text lines with level info
+      // Determine font size based on number of lines
       const totalFruits = this.currentLevel.getTotalFruitCount(); // Use Level method
       const collectedFruits = this.currentLevel.getFruitCount();   // Use Level method
       const lines = [
@@ -449,6 +433,15 @@ export class Engine {
         `Fruits: ${collectedFruits}/${totalFruits}`,
         `Deaths: `, // TODO implement death count
       ];
+
+      // Adjust font size: more lines = smaller font
+      let fontSize = 18;
+      if (lines.length >= 4) fontSize = 15;
+      else if (lines.length === 3) fontSize = 17;
+      ctx.font = `${fontSize}px sans-serif`;
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 2;
+      ctx.fillStyle = 'white';
 
       // Line height and top offset to vertically center within the box
       const lineHeight = 22;

@@ -20,24 +20,24 @@ export class Platform {
     this.tileSize = 48; // Size of each tile in the spritesheet
   }
 
-  // Check if a point or rectangle collides with this platform
+  // Fast AABB collision check (point or rectangle)
   collidesWith(x, y, width = 0, height = 0) {
-    return x < this.x + this.width &&
-           x + width > this.x &&
-           y < this.y + this.height &&
-           y + height > this.y;
+    // Early exit for non-overlapping cases
+    if (x + width <= this.x || x >= this.x + this.width) return false;
+    if (y + height <= this.y || y >= this.y + this.height) return false;
+    return true;
   }
 
-  // Check if the player is standing on top of this platform
+  // Fast check: is player standing on top of this platform?
   isPlayerOnTop(player) {
-    const playerBottom = player.y + player.height;
-    const platformTop = this.y;
+    const pb = player.y + player.height; // Player bottom
+    const pt = this.y; // Platform top
 
-    // Player must be above the platform and within horizontal bounds
-    return playerBottom >= platformTop &&
-           playerBottom <= platformTop + 10 && // Allow some tolerance
-           player.x + player.width > this.x &&
-           player.x < this.x + this.width;
+    // Early exit if not horizontally aligned
+    if (player.x + player.width <= this.x || player.x >= this.x + this.width) return false;
+
+    // Check vertical overlap with small tolerance (<= 10px)
+    return pb >= pt && pb <= pt + 10;
   }
 
   render(ctx, assets) {
@@ -101,10 +101,10 @@ export class Level {
     return platform;
   }
 
+  // Add a fruit to the level (minimal allocation, direct push)
   addFruit(x, y, fruitType) {
     this.fruits.push({
-      x: x,
-      y: y,
+      x, y,
       size: 28,
       spriteKey: fruitType,
       frame: 0,
@@ -130,27 +130,37 @@ export class Level {
     };
   }
 
-  // Method to update fruit animations
+  // Efficiently update fruit animations (single loop, minimal allocation)
   updateFruits(dt) {
-    this.fruits.forEach(fruit => {
+    for (let i = 0, len = this.fruits.length; i < len; ++i) {
+      const fruit = this.fruits[i];
       if (!fruit.collected) {
         fruit.frameTimer += dt;
         if (fruit.frameTimer >= fruit.frameSpeed) {
-          fruit.frameTimer = 0;
+          fruit.frameTimer -= fruit.frameSpeed; // Carry over excess time
           fruit.frame = (fruit.frame + 1) % fruit.frameCount;
         }
       }
-    });
+    }
   }
 
-  // Get only active (uncollected) fruits
+  // Return array of uncollected fruits (no allocation if all collected)
   getActiveFruits() {
-    return this.fruits.filter(fruit => !fruit.collected);
+    if (!this.fruits.length) return [];
+    const result = [];
+    for (let i = 0, len = this.fruits.length; i < len; ++i) {
+      if (!this.fruits[i].collected) result.push(this.fruits[i]);
+    }
+    return result;
   }
 
-  // Get count of collected fruits
+  // Count collected fruits (single loop, no filter allocation)
   getFruitCount() {
-    return this.fruits.filter(fruit => fruit.collected).length;
+    let count = 0;
+    for (let i = 0, len = this.fruits.length; i < len; ++i) {
+      if (this.fruits[i].collected) ++count;
+    }
+    return count;
   }
 
   // Get total fruit count
@@ -158,16 +168,20 @@ export class Level {
     return this.fruits.length;
   }
 
-  // Check if all fruits are collected
+  // Fast check if all fruits are collected (early exit)
   allFruitsCollected() {
-    return this.fruits.every(fruit => fruit.collected);
+    for (let i = 0, len = this.fruits.length; i < len; ++i) {
+      if (!this.fruits[i].collected) return false;
+    }
+    return true;
   }
 
+  // Fast collision check: returns first platform colliding with player, or null
   checkCollisionWithPlatforms(player) {
-    for (const platform of this.platforms) {
-      if (platform.collidesWith(player.x, player.y, player.width, player.height)) {
-        return platform;
-      }
+    const px = player.x, py = player.y, pw = player.width, ph = player.height;
+    for (let i = 0, len = this.platforms.length; i < len; ++i) {
+      const plat = this.platforms[i];
+      if (plat.collidesWith(px, py, pw, ph)) return plat;
     }
     return null;
   }
@@ -183,15 +197,16 @@ export class Level {
     return null;
   }
 
+  // Efficiently render platforms and trophy; optimized for performance
   render(ctx, assets, camera) {
-    // Render all platforms
-    for (const platform of this.platforms) {
-      platform.render(ctx, assets);
+    // Render platforms (no allocation, direct loop)
+    for (let i = 0, len = this.platforms.length; i < len; ++i) {
+      this.platforms[i].render(ctx, assets);
     }
 
-    // Update and render trophy regardless of acquisition status
+    // Trophy: update animation and render if present
     if (this.trophy) {
-      this.updateTrophyAnimation(1 / 60); // Ideally pass `dt`, but fallback here
+      this.updateTrophyAnimation(1 / 60); // Use fixed dt for smoothness
       this.renderTrophy(ctx, assets);
     }
   }
@@ -237,50 +252,54 @@ export class Level {
     );
 
     ctx.globalAlpha = 1.0; // Reset transparency
-
   }
 
-  // Update the trophy inactive state more accurately:
+  // Efficiently update trophy animation and inactive state
   updateTrophyAnimation(dt) {
     const trophy = this.trophy;
     if (!trophy) return;
-    
-    // Update inactive state - only active when all fruits are collected
+
+    // Trophy is inactive until all fruits are collected
     trophy.inactive = !this.allFruitsCollected();
-    
-    // Only animate if trophy is active and not acquired
+
+    // Animate only if active and not acquired
     if (!trophy.inactive && !trophy.acquired) {
       trophy.animationTimer += dt;
       if (trophy.animationTimer >= trophy.animationSpeed) {
-        trophy.animationTimer = 0;
+        trophy.animationTimer -= trophy.animationSpeed; // Carry over excess time
         trophy.animationFrame = (trophy.animationFrame + 1) % trophy.frameCount;
       }
     }
   }
 
+  // Fast check for level completion (all fruits + trophy acquired)
   isCompleted() {
-    const allFruitsCollected = this.allFruitsCollected();
-    const trophyCollected = this.trophy ? this.trophy.acquired : true;
-    
-    // Only complete if trophy was properly acquired
-    return allFruitsCollected && trophyCollected;
+    // Avoid function call if no fruits
+    if (this.fruits.length && !this.fruits.every(f => f.collected)) return false;
+    // Trophy must be acquired if present
+    return !this.trophy || this.trophy.acquired;
   }
 
-  // Reset level
+  // Reset level state for replay; optimized for performance
   reset() {
-    this.fruits.forEach(fruit => {
+    // Reset fruits in a single loop
+    for (let i = 0, len = this.fruits.length; i < len; ++i) {
+      const fruit = this.fruits[i];
       fruit.collected = false;
       fruit.frame = 0;
       fruit.frameTimer = 0;
-    });
-    
-    if (this.trophy) {
-      this.trophy.acquired = false;
-      this.trophy.inactive = true;
-      this.trophy.animationFrame = 0;
-      this.trophy.animationTimer = 0;
     }
-    
+
+    // Reset trophy if present
+    const trophy = this.trophy;
+    if (trophy) {
+      trophy.acquired = false;
+      trophy.inactive = true;
+      trophy.animationFrame = 0;
+      trophy.animationTimer = 0;
+    }
+
+    // Reset completion flag
     this.completed = false;
   }
 }

@@ -157,7 +157,11 @@ window.addEventListener('keydown', (e) => {
     const newKey = e.key.toLowerCase();
 
     // Basic validation: prevent empty or modifier keys alone
-    if (newKey && newKey.length <= 1 && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
+    if (
+      newKey &&
+      ((newKey.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ||
+      ['arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(newKey))
+    ) {
       keybinds[action] = newKey;
       updateKeybindDisplay();
       activeKeybindInput.classList.remove('active-rebind');
