@@ -125,6 +125,7 @@ export class Level {
       animationTimer: 0,
       animationSpeed: 0.35, // seconds between frames
       acquired: false,
+      inactive: false, // Added inactive state
     };
   }
 
@@ -202,6 +203,10 @@ export class Level {
     if (!sprite) {
       // Fallback rendering
       ctx.fillStyle = trophy.acquired ? 'silver' : 'gold';
+      if (trophy.inactive) {
+        ctx.fillStyle = 'gray'; // Show inactive trophy differently
+      }
+
       ctx.beginPath();
       ctx.arc(trophy.x, trophy.y, trophy.size / 2, 0, Math.PI * 2);
       ctx.fill();
@@ -217,6 +222,11 @@ export class Level {
     const frameHeight = sprite.height;
     const srcX = frameWidth * trophy.animationFrame;
 
+    // Apply transparency if trophy is inactive
+    if (trophy.inactive) {
+      ctx.globalAlpha = 0.5; // Make trophy semi-transparent
+    }
+
     ctx.drawImage(
       sprite,
       srcX, 0,
@@ -224,33 +234,39 @@ export class Level {
       trophy.x - trophy.size / 2, trophy.y - trophy.size / 2,
       trophy.size, trophy.size
     );
+
+    ctx.globalAlpha = 1.0; // Reset transparency
+
   }
 
   updateTrophyAnimation(dt) {
     const trophy = this.trophy;
     if (!trophy) return;
-
-    trophy.animationTimer += dt;
-    if (trophy.animationTimer >= trophy.animationSpeed && !trophy.acquired) {
-      trophy.animationTimer = 0;
-      trophy.animationFrame = (trophy.animationFrame + 1) % trophy.frameCount; // 8 frames in the sprite sheet
+    
+    trophy.inactive = !this.allFruitsCollected(); // Only animate if trophy is active and not acquired
+    
+    if (!trophy.inactive && !trophy.acquired) {
+      trophy.animationTimer += dt;
+      if (trophy.animationTimer >= trophy.animationSpeed) {
+        trophy.animationTimer = 0;
+        trophy.animationFrame = (trophy.animationFrame + 1) % trophy.frameCount;
+      }
     }
   }
 
   isCompleted() {
-    // TODO: Level is completed when all fruits are collected and trophy is obtained, but trophy can only be acquired after all fruits are collected
     const allFruitsCollected = this.fruits.every(fruit => fruit.collected);
     const trophyCollected = this.trophy ? this.trophy.acquired : true;
 
-    // Only allow completion if all fruits are collected and trophy is acquired
     return allFruitsCollected && trophyCollected;
   }
 
-  // Reset level (useful for restarting)
+  // Reset level
   reset() {
     this.fruits.forEach(fruit => fruit.collected = false);
     if (this.trophy) {
       this.trophy.acquired = false;
+      this.trophy.inactive = false;
     }
     this.completed = false;
   }

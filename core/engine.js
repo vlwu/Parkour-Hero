@@ -239,14 +239,20 @@ export class Engine {
       // Check for trophy collision
       const trophy = this.currentLevel.trophy;
       if (trophy && !trophy.acquired) {
-        const dx = trophy.x - (this.player.x + this.player.width / 2);
-        const dy = trophy.y - (this.player.y + this.player.height / 2);
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const collided = distance < (trophy.size / 2 + this.player.width / 2);
+        // Only allow trophy collection if all fruits are collected
+        if (this.currentLevel.allFruitsCollected()) {
+          const dx = trophy.x - (this.player.x + this.player.width / 2);
+          const dy = trophy.y - (this.player.y + this.player.height / 2);
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const collided = distance < (trophy.size / 2 + this.player.width / 2);
 
-        if (collided) {
-          trophy.acquired = true;
-          console.log('Trophy acquired!');
+          if (collided) {
+            trophy.acquired = true;
+            console.log('Trophy acquired!');
+          }
+        } else {
+          // Trophy is inactive - show visual feedback
+          trophy.inactive = true;
         }
       }
 
@@ -435,7 +441,7 @@ export class Engine {
       const lines = [
         `${this.currentLevel.name}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
-        `Trophy: ${this.currentLevel.trophy.acquired ? 'Acquired' : 'Not Acquired'}`,
+        `Deaths: `, // TODO implement death count
       ];
 
       // Line height and top offset to vertically center within the box
