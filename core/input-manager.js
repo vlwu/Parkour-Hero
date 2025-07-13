@@ -1,4 +1,3 @@
-// core/input-manager.js
 export class InputManager {
   constructor(initialKeybinds) {
     this.keys = {};

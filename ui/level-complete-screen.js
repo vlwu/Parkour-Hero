@@ -1,4 +1,3 @@
-// ui/level-complete-screen.js
 export class LevelCompleteScreen {
   constructor(canvas) {
     this.canvas = canvas;
