@@ -101,10 +101,9 @@ export const levelSections = [
       startPosition: { x: 50, y: 350 },
       platforms: [
         { x: 0, y: 400, width: 144, height: 48, terrainType: 'green_block' },
-        { x: 200, y: 350, width: 96, height: 48, terrainType: 'orange_dirt' },
         { x: 350, y: 300, width: 144, height: 48, terrainType: 'pink_dirt' },
         { x: 550, y: 400, width: 96, height: 48, terrainType: 'red_brick' },
-        { x: 800, y: 250, width: 144, height: 48, terrainType: 'green_block' },
+        { x: 800, y: 250, width: 144, height: 48, terrainType: 'orange_dirt' },
         { x: 1050, y: 300, width: 96, height: 48, terrainType: 'dirt' }
       ],
       fruits: [
@@ -242,9 +241,6 @@ export const levelSections = [
     },
   ],
   // Section 2: Cloud 9 and Beyond
-  [
-    { name: 'Level 11: New Beginnings' },
-  ],
 ];
 
 // Data is structured for fast access and iteration; no unnecessary nesting or computation.
