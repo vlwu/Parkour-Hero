@@ -122,6 +122,11 @@ export class Engine {
   // Handle level complete screen actions
   handleLevelCompleteAction(action) {
     this.showingLevelComplete = false;
+
+    // Clear any false respawn flags
+    if (this.player) {
+      this.player.needsRespawn = false;
+    }
     
     if (action === 'next') {
       if (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) {
@@ -217,6 +222,11 @@ export class Engine {
   pause() {
     this.isRunning = false;
     this.soundManager.stopAll();
+
+    // Clear respawn flag to prevent false deaths when resuming
+    if (this.player) {
+      this.player.needsRespawn = false;
+    }
   }
 
   // Resume the game
@@ -324,7 +334,7 @@ export class Engine {
       this.camera.update(this.player, dt);
 
       // Check if player needs to respawn, death count is incremented in player.js
-      if (this.player.needsRespawn) { 
+      if (this.player.needsRespawn && !this.showingLevelComplete) { 
         this.currentLevel.reset();
         this.player.respawn(this.currentLevel.startPosition);
         this.camera.shake(15, 0.5);
