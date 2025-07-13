@@ -247,7 +247,8 @@ export class Engine {
         this.soundManager.play('jump', 0.8);
       }
 
-      if (inputActions.dash && this.player.canDash) {
+      // Play dash sound effect 
+      if (inputActions.dash && !this.player.isDashing && this.player.dashCooldownTimer <= 0) {
         this.soundManager.play('dash', 0.6);
       }
 
