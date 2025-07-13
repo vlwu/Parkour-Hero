@@ -177,13 +177,12 @@ export class Player {
 
       // Fallback ground collision with canvas bottom
       if (this.y > canvasHeight + 100) {
-        if (level?.startPosition) {
+        if (level?.startPosition && !this.needsRespawn) {
           this.deathCount++;
           this.needsRespawn = true;
           return;
         }
       }
-
       // Update onGround status
       if (!groundCollision) this.onGround = false;
 

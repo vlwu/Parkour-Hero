@@ -121,6 +121,7 @@ export class Engine {
 
   // Handle level complete screen actions
   handleLevelCompleteAction(action) {
+    this.player.needsRespawn = false;
     this.showingLevelComplete = false;
     
     if (action === 'next') {
@@ -329,6 +330,7 @@ export class Engine {
         this.player.respawn(this.currentLevel.startPosition);
         this.camera.shake(15, 0.5);
         this.soundManager.play('death_sound'); // Play the death sound
+        this.player.needsRespawn = false; // Reset the flag immediately
       }
 
       // Update level animations
