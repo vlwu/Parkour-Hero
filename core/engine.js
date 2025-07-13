@@ -485,7 +485,8 @@ export class Engine {
       const hudHeight = 100;
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.roundRect(hudX, hudY, hudWidth, hudHeight, 10); // 10 is the corner radius
+      ctx.beginPath();
+      ctx.roundRect(hudX, hudY, hudWidth, hudHeight, 10);
       ctx.fill();
 
       const totalFruits = this.currentLevel.getTotalFruitCount();
