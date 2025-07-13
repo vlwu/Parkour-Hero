@@ -144,18 +144,25 @@ function updateSoundSettingsDisplay() {
 // Function to toggle the settings modal visibility
 function toggleSettingsModal() {
   settingsModal.classList.toggle('hidden');
+  
   if (!settingsModal.classList.contains('hidden')) {
-    // When modal opens, update display and disable game input
+    // When modal opens, update display and pause game
     updateKeybindDisplay();
     updateSoundSettingsDisplay();
-    // Potentially pause the game engine here if it's running
-    if (typeof engine !== 'undefined' && engine.isRunning) {
-      engine.pause();
+    
+    if (typeof engine !== 'undefined') {
+      engine.pauseForSettings = true; // Add a specific flag
+      if (engine.isRunning) {
+        engine.pause();
+      }
     }
   } else {
-    // When modal closes, re-enable game input
-    if (typeof engine !== 'undefined' && !engine.isRunning) {
-      engine.resume();
+    // When modal closes, resume game
+    if (typeof engine !== 'undefined') {
+      engine.pauseForSettings = false; // Clear the flag
+      if (!engine.isRunning) {
+        engine.resume();
+      }
     }
   }
 }
@@ -234,12 +241,14 @@ keybindInputs.forEach(input => {
 
 // Global keydown listener for remapping keybinds
 window.addEventListener('keydown', (e) => {
+  // Only handle keybind remapping when settings modal is open AND actively remapping
   if (activeKeybindInput && !settingsModal.classList.contains('hidden')) {
-    e.preventDefault(); // Prevent default browser action for the key
+    e.preventDefault();
+    e.stopPropagation(); // Prevent event from reaching game
+    
     const action = activeKeybindInput.dataset.action;
     const newKey = e.key.toLowerCase();
 
-    // Basic validation: prevent empty or modifier keys alone
     if (
       newKey &&
       ((newKey.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ||
@@ -250,12 +259,10 @@ window.addEventListener('keydown', (e) => {
       activeKeybindInput.classList.remove('active-rebind');
       activeKeybindInput = null;
 
-      // Update the engine's keybinds immediately
       if (typeof engine !== 'undefined') {
         engine.updateKeybinds(keybinds);
       }
     } else {
-      // If an invalid key was pressed, revert the input field
       activeKeybindInput.value = keybinds[action] === ' ' ? 'Space' : keybinds[action].toUpperCase();
       activeKeybindInput.classList.remove('active-rebind');
       activeKeybindInput = null;
@@ -263,23 +270,88 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+function preventInputConflicts() {
+  // Add a flag to check if any menu is active
+  window.isMenuActive = false;
+  
+  // Override the engine's input handling when menus are active
+  if (typeof engine !== 'undefined') {
+    const originalHandleInput = engine.handleInput;
+    
+    engine.handleInput = function(inputActions) {
+      // Skip game input when any menu is active
+      if (window.isMenuActive || this.pauseForSettings) {
+        return;
+      }
+      
+      // Call original input handling
+      return originalHandleInput.call(this, inputActions);
+    };
+  }
+}
+
+// Add click handler for level complete screen
+canvas.addEventListener('click', (e) => {
+  if (engine.showingLevelComplete) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Button dimensions and positions (matching the render code)
+    const buttonWidth = 120;
+    const buttonHeight = 40;
+    const buttonY = (canvas.height - 300) / 2 + 200;
+    
+    if (engine.hasNextLevel()) {
+      const nextButtonX = canvas.width / 2 - buttonWidth - 10;
+      if (x >= nextButtonX && x <= nextButtonX + buttonWidth && 
+          y >= buttonY && y <= buttonY + buttonHeight) {
+        engine.handleLevelCompleteAction('next');
+        return;
+      }
+    }
+    
+    const restartButtonX = canvas.width / 2 + 10;
+    if (x >= restartButtonX && x <= restartButtonX + buttonWidth && 
+        y >= buttonY && y <= buttonY + buttonHeight) {
+      engine.handleLevelCompleteAction('restart');
+      return;
+    }
+  }
+});
+
 // Function to enable audio context on first user interaction
 function enableAudioOnFirstInteraction() {
-  const enableAudio = () => {
+  let audioEnabled = false;
+  
+  const enableAudio = (event) => {
+    // Skip if audio already enabled or if this is a menu click
+    if (audioEnabled) return;
+    
+    // Check if the click is on a menu button (avoid enabling audio on menu clicks)
+    const target = event.target;
+    if (target && target.closest('.menu-button, #settingsModal')) {
+      return; // Don't enable audio on menu interactions
+    }
+    
     if (typeof engine !== 'undefined' && engine.soundManager) {
       engine.soundManager.enableAudioContext();
       console.log('Audio context enabled on user interaction');
+      audioEnabled = true;
     }
+    
     // Remove listeners after first interaction
-    document.removeEventListener('click', enableAudio);
-    document.removeEventListener('keydown', enableAudio);
-    document.removeEventListener('touchstart', enableAudio);
+    if (audioEnabled) {
+      document.removeEventListener('click', enableAudio);
+      document.removeEventListener('keydown', enableAudio);
+      document.removeEventListener('touchstart', enableAudio);
+    }
   };
   
-  // Add listeners for first user interaction
-  document.addEventListener('click', enableAudio);
-  document.addEventListener('keydown', enableAudio);
-  document.addEventListener('touchstart', enableAudio);
+  // Add listeners with lower priority to avoid conflicts
+  document.addEventListener('click', enableAudio, false);
+  document.addEventListener('keydown', enableAudio, false);
+  document.addEventListener('touchstart', enableAudio, false);
 }
 
 // Load assets and start the game

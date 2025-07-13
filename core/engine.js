@@ -31,6 +31,7 @@ export class Engine {
     this.currentSection = 0;
     this.currentLevelIndex = 0;
     this.levelProgress = this.loadProgress();
+    this.showingLevelComplete = false;
     
     // Initialize the current level
     this.loadLevel(this.currentSection, this.currentLevelIndex);
@@ -120,23 +121,43 @@ export class Engine {
     }
 
     this.soundManager.play('level_complete', 1.0);
+    this.showingLevelComplete = true; // Show the completion screen
+    this.pause(); // Pause the game
+  }
 
-    if (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) {
-      this.currentLevelIndex++;
-      this.loadLevel(this.currentSection, this.currentLevelIndex);
-    } else {
-      if (this.currentSection + 1 < levelSections.length) {
-        this.currentSection++;
-        this.currentLevelIndex = 0;
+  // Handle level complete screen actions
+  handleLevelCompleteAction(action) {
+    this.showingLevelComplete = false;
+    
+    if (action === 'next') {
+      if (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) {
+        this.currentLevelIndex++;
         this.loadLevel(this.currentSection, this.currentLevelIndex);
-        
-        if (this.currentSection >= this.levelProgress.unlockedSections) {
-          this.levelProgress.unlockedSections = this.currentSection + 1;
-        }
       } else {
-        console.log('Game completed!');
+        if (this.currentSection + 1 < levelSections.length) {
+          this.currentSection++;
+          this.currentLevelIndex = 0;
+          this.loadLevel(this.currentSection, this.currentLevelIndex);
+          
+          if (this.currentSection >= this.levelProgress.unlockedSections) {
+            this.levelProgress.unlockedSections = this.currentSection + 1;
+          }
+        } else {
+          console.log('Game completed!');
+          return;
+        }
       }
+    } else if (action === 'restart') {
+      this.restartLevel();
     }
+    
+    this.resume();
+  }
+
+  // Check if there's a next level available
+  hasNextLevel() {
+    return (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) ||
+          (this.currentSection + 1 < levelSections.length);
   }
 
   // Update keybinds
@@ -249,7 +270,7 @@ export class Engine {
 
       // Play dash sound effect 
       if (inputActions.dash && !this.player.isDashing && this.player.dashCooldownTimer <= 0) {
-        this.soundManager.play('dash', 0.6);
+        this.soundManager.play('dash', 0.7);
       }
 
       // Update player
@@ -326,6 +347,11 @@ export class Engine {
         }
       }
 
+      // Skip other updates if showing level complete screen
+      if (this.showingLevelComplete) {
+        return;
+      }
+
       // Check level completion
       if (this.currentLevel.isCompleted()) {
         this.saveProgress();
@@ -353,6 +379,10 @@ export class Engine {
 
       this.camera.restore(ctx);
       this.drawHUD();
+
+      if (this.showingLevelComplete) {
+        this.drawLevelCompleteScreen();
+      }
 
     } catch (error) {
       console.error('Error in render loop:', error);
@@ -526,6 +556,79 @@ export class Engine {
     } catch (error) {
       console.warn('Error drawing HUD:', error);
     }
+  }
+
+  drawLevelCompleteScreen() {
+    const { ctx, canvas } = this;
+    
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Main panel
+    const panelWidth = 400;
+    const panelHeight = 300;
+    const panelX = (canvas.width - panelWidth) / 2;
+    const panelY = (canvas.height - panelHeight) / 2;
+    
+    ctx.fillStyle = 'rgba(50, 50, 50, 0.95)';
+    ctx.beginPath();
+    ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#4CAF50';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Title
+    ctx.fillStyle = '#4CAF50';
+    ctx.font = 'bold 32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Level Complete!', canvas.width / 2, panelY + 60);
+    
+    // Stats
+    const totalFruits = this.currentLevel.getTotalFruitCount();
+    const collectedFruits = this.currentLevel.getFruitCount();
+    const deaths = this.player.deathCount || 0;
+    
+    ctx.fillStyle = '#fff';
+    ctx.font = '18px sans-serif';
+    ctx.fillText(`Fruits Collected: ${collectedFruits}/${totalFruits}`, canvas.width / 2, panelY + 120);
+    ctx.fillText(`Deaths: ${deaths}`, canvas.width / 2, panelY + 150);
+    
+    // Buttons
+    const buttonWidth = 120;
+    const buttonHeight = 40;
+    const buttonY = panelY + 200;
+    
+    if (this.hasNextLevel()) {
+      // Next Level button
+      const nextButtonX = canvas.width / 2 - buttonWidth - 10;
+      ctx.fillStyle = '#4CAF50';
+      ctx.beginPath();
+      ctx.roundRect(nextButtonX, buttonY, buttonWidth, buttonHeight, 8);
+      ctx.fill();
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText('Next Level', nextButtonX + buttonWidth / 2, buttonY + 25);
+    }
+    
+    // Restart button
+    const restartButtonX = canvas.width / 2 + 10;
+    ctx.fillStyle = '#ff9800';
+    ctx.beginPath();
+    ctx.roundRect(restartButtonX, buttonY, buttonWidth, buttonHeight, 8);
+    ctx.fill();
+    
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('Restart', restartButtonX + buttonWidth / 2, buttonY + 25);
+    
+    ctx.restore();
   }
 
   // Get camera for external access
