@@ -733,4 +733,4 @@ drawLevelCompleteScreen() {
   restartLevel() {
     this.loadLevel(this.currentSection, this.currentLevelIndex);
   }
-}// core/engine.js (refactored)
+}
