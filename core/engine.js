@@ -254,12 +254,12 @@ export class Engine {
       // Update camera to follow player
       this.camera.update(this.player, dt);
 
-      // Check if player needs to respawn
+      // Check if player needs to respawn, death count is incremented in player.js
       if (this.player.needsRespawn) { 
         this.currentLevel.reset();
         this.player.respawn(this.currentLevel.startPosition);
         this.camera.shake(15, 0.5);
-        this.player.deathCount = (this.player.deathCount || 0) + 1;
+        this.soundManager.play('death_sound'); // Play the death sound
       }
 
       // Update level animations
