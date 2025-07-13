@@ -601,8 +601,8 @@ export class Engine {
     }
   }
 
-  drawLevelCompleteScreen() {
-    const { ctx, canvas } = this;
+drawLevelCompleteScreen() {
+    const { ctx, canvas, assets } = this;
     
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -639,30 +639,46 @@ export class Engine {
     
     ctx.fillStyle = '#fff';
     ctx.font = '18px sans-serif';
-    ctx.fillText(`Fruits Collected: ${collectedFruits}/${totalFruits}`, canvas.width / 2, panelY + 120);
+    ctx.fillText(`Time Taken: placeholder`, canvas.width / 2, panelY + 120);
     ctx.fillText(`Deaths: ${deaths}`, canvas.width / 2, panelY + 150);
     
     // Buttons
-    const buttonWidth = 120;
+    const buttonWidth = 40;
     const buttonHeight = 40;
     const buttonY = panelY + 200;
     
     if (this.hasNextLevel()) {
-      // Next Level button - replace with image
+      // Next Level button
       const nextButtonX = canvas.width / 2 - buttonWidth - 10;
       
-      // Draw image instead of filled rectangle
-      if (this.nextLevelButtonImage) {
-        ctx.drawImage(this.nextLevelButtonImage, nextButtonX, buttonY, buttonWidth, buttonHeight);
+      const nextButtonImage = assets.next_level_button;
+      if (nextButtonImage) {
+        ctx.drawImage(nextButtonImage, nextButtonX, buttonY, buttonWidth, buttonHeight);
+      } else {
+        // Fallback rectangle if image not loaded
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillRect(nextButtonX, buttonY, buttonWidth, buttonHeight);
+        ctx.fillStyle = 'white';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Next Level', nextButtonX + buttonWidth/2, buttonY + 25);
       }
     }
 
-    // Restart button - replace with image
+    // Restart button
     const restartButtonX = canvas.width / 2 + 10;
-
-    // Draw image instead of filled rectangle
-    if (this.restartButtonImage) {
-      ctx.drawImage(this.restartButtonImage, restartButtonX, buttonY, buttonWidth, buttonHeight);
+    
+    const restartButtonImage = assets.restart_level_button;
+    if (restartButtonImage) {
+      ctx.drawImage(restartButtonImage, restartButtonX, buttonY, buttonWidth, buttonHeight);
+    } else {
+      // Fallback rectangle if image not loaded
+      ctx.fillStyle = '#FF6B6B';
+      ctx.fillRect(restartButtonX, buttonY, buttonWidth, buttonHeight);
+      ctx.fillStyle = 'white';
+      ctx.font = '16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Restart', restartButtonX + buttonWidth/2, buttonY + 25);
     }
 
     ctx.restore();
