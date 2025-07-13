@@ -3,6 +3,7 @@ import { createLevel } from '../entities/platform.js';
 import { levelSections } from '../entities/levels.js';
 import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
+import { HUD } from '../ui/hud.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) {
@@ -14,7 +15,8 @@ export class Engine {
     this.keybinds = initialKeybinds;
     this.isRunning = false;
     
-    this.camera = new Camera(canvas.width, canvas.height); // Initialize camera
+    this.camera = new Camera(canvas.width, canvas.height);
+    this.hud = new HUD(canvas); // Initialize HUD
     
     // Initialize sound manager
     this.soundManager = new SoundManager();
@@ -30,11 +32,10 @@ export class Engine {
     this.levelProgress = this.loadProgress();
     this.showingLevelComplete = false;
     
-    this.loadLevel(this.currentSection, this.currentLevelIndex); // Initialize the current level
-    
-    this.camera.snapToPlayer(this.player); // Snap camera to player initial position
+    this.loadLevel(this.currentSection, this.currentLevelIndex);
+    this.camera.snapToPlayer(this.player);
 
-    this.initInput();  // Input handling
+    this.initInput();
     
     // Simplified jump tracking
     this.wasJumpPressed = false;
@@ -64,31 +65,25 @@ export class Engine {
     document.addEventListener('touchstart', unlockAudio);
   }
 
-  // Simplified jump detection - just check for jump key press transitions
+  // Simplified jump detection
   detectJumpSound(inputActions) {
     const now = Date.now();
     const jumpPressed = inputActions.jump;
     
-    // Check if jump was just pressed (transition from false to true)
     const jumpJustPressed = jumpPressed && !this.wasJumpPressed;
-    
-    // Update state for next frame
     this.wasJumpPressed = jumpPressed;
     
-    // If jump was just pressed and enough time has passed since last jump sound
     if (jumpJustPressed && (now - this.lastJumpTime) > this.jumpCooldown) {
       this.lastJumpTime = now;
       
-      // If player is on ground or was recently on ground, it's a first jump
       if (this.player.onGround || this.isFirstJump) {
         this.isFirstJump = false;
         return { type: 'first' };
       } else {
-        return { type: 'second' }; // This is a second jump (double jump)
+        return { type: 'second' };
       }
     }
     
-    // Reset first jump flag when player lands
     if (this.player.isOnGround) {
       this.isFirstJump = true;
     }
@@ -96,7 +91,7 @@ export class Engine {
     return null;
   }
 
-  // Load game progress (using in-memory storage)
+  // Load game progress
   loadProgress() {
     if (this.gameProgress) {
       return this.gameProgress;
@@ -111,7 +106,7 @@ export class Engine {
     return this.gameProgress;
   }
 
-  // Save game progress (using in-memory storage)
+  // Save game progress
   saveProgress() {
     this.gameProgress = {
       unlockedSections: this.levelProgress.unlockedSections,
@@ -128,15 +123,14 @@ export class Engine {
     }
 
     this.soundManager.play('level_complete', 1.0);
-    this.showingLevelComplete = true; // Show the completion screen
-    this.pause(); // Pause the game
+    this.showingLevelComplete = true;
+    this.pause();
   }
 
   // Handle level complete screen actions
   handleLevelCompleteAction(action) {
     this.showingLevelComplete = false;
 
-    // Clear any false respawn flags
     if (this.player) {
       this.player.needsRespawn = false;
     }
@@ -169,38 +163,17 @@ export class Engine {
   handleLevelCompleteClick(event) {
     if (!this.showingLevelComplete) return false;
     
-    const rect = this.canvas.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
+    const action = this.hud.handleLevelCompleteClick(
+      event, 
+      this.hasNextLevel()
+    );
     
-    const panelWidth = 400;
-    const panelHeight = 300;
-    const panelX = (this.canvas.width - panelWidth) / 2;
-    const panelY = (this.canvas.height - panelHeight) / 2;
-    
-    const buttonWidth = 120;
-    const buttonHeight = 40;
-    const buttonY = panelY + 200;
-    
-    // Check Next Level button (if available)
-    if (this.hasNextLevel()) {
-      const nextButtonX = this.canvas.width / 2 - buttonWidth - 10;
-      if (clickX >= nextButtonX && clickX <= nextButtonX + buttonWidth &&
-          clickY >= buttonY && clickY <= buttonY + buttonHeight) {
-        this.handleLevelCompleteAction('next');
-        return true; // Consumed the click
-      }
+    if (action) {
+      this.handleLevelCompleteAction(action);
+      return true;
     }
     
-    // Check Restart button
-    const restartButtonX = this.canvas.width / 2 + 10;
-    if (clickX >= restartButtonX && clickX <= restartButtonX + buttonWidth &&
-        clickY >= buttonY && clickY <= buttonY + buttonHeight) {
-      this.handleLevelCompleteAction('restart');
-      return true; // Consumed the click
-    }
-    
-    return false; // Click not consumed
+    return false;
   }
 
   // Check if there's a next level available
@@ -236,7 +209,6 @@ export class Engine {
     this.isRunning = false;
     this.soundManager.stopAll();
 
-    // Clear respawn flag to prevent false deaths when resuming
     if (this.player) {
       this.player.needsRespawn = false;
     }
@@ -246,7 +218,6 @@ export class Engine {
   resume() {
     if (!this.isRunning) {
       this.isRunning = true;
-      // Reset lastFrameTime to prevent large delta time jump
       this.lastFrameTime = performance.now();
       this.gameLoop();
     }
@@ -260,7 +231,6 @@ export class Engine {
   gameLoop(currentTime = performance.now()) {
     if (!this.isRunning) return;
 
-    // Prevent large delta time jumps (like when resuming from pause)
     const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.016);
     this.lastFrameTime = currentTime;
 
@@ -287,9 +257,8 @@ export class Engine {
     });
 
     window.addEventListener('click', (e) => {
-      // Handle level complete screen clicks first
       if (this.handleLevelCompleteClick(e)) {
-        return; // Don't process other click effects
+        return;
       }
       
       if (!this.audioUnlocked) {
@@ -317,7 +286,7 @@ export class Engine {
       this.currentLevel.startPosition.y,
       this.assets,
     );
-    this.player.deathCount = 0 // Reset death count for new level
+    this.player.deathCount = 0;
 
     this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
     this.camera.snapToPlayer(this.player);
@@ -357,13 +326,13 @@ export class Engine {
       // Update camera to follow player
       this.camera.update(this.player, dt);
 
-      // Check if player needs to respawn, death count is incremented in player.js
+      // Check if player needs to respawn
       if (this.player.needsRespawn && !this.showingLevelComplete && this.isRunning) { 
         this.currentLevel.reset();
         this.player.respawn(this.currentLevel.startPosition);
         this.camera.shake(15, 0.5);
-        this.soundManager.play('death_sound'); // Play the death sound
-        this.player.needsRespawn = false; // Reset the flag immediately
+        this.soundManager.play('death_sound');
+        this.player.needsRespawn = false;
       }
 
       // Update level animations
@@ -456,10 +425,18 @@ export class Engine {
       this.drawCollectedFruits();
 
       this.camera.restore(ctx);
-      this.drawHUD();
+      
+      // Use HUD class for rendering
+      this.hud.drawGameHUD(ctx, this.currentLevel, this.player, this.soundManager);
 
       if (this.showingLevelComplete) {
-        this.drawLevelCompleteScreen();
+        this.hud.drawLevelCompleteScreen(
+          ctx, 
+          this.currentLevel, 
+          this.player, 
+          this.assets, 
+          this.hasNextLevel()
+        );
       }
 
     } catch (error) {
@@ -583,140 +560,6 @@ export class Engine {
         collected.size, collected.size
       );
     }
-  }
-
-  drawHUD() {
-    const { ctx } = this;
-
-    try {
-      ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-      const hudX = 10;
-      const hudY = 10;
-      const hudWidth = 280;
-      const hudHeight = 100;
-
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.beginPath();
-      ctx.roundRect(hudX, hudY, hudWidth, hudHeight, 10);
-      ctx.fill();
-
-      const totalFruits = this.currentLevel.getTotalFruitCount();
-      const collectedFruits = this.currentLevel.getFruitCount();
-      const soundSettings = this.soundManager.getSettings();
-      
-      const lines = [
-        `${this.currentLevel.name}`,
-        `Fruits: ${collectedFruits}/${totalFruits}`,
-        `Deaths: ${this.player.deathCount || 0}`,
-        `Sound: ${soundSettings.enabled ? 'ON' : 'OFF'} (${Math.round(soundSettings.volume * 100)}%)`
-      ];
-
-      ctx.font = '16px sans-serif';
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 2;
-      ctx.fillStyle = 'white';
-
-      const lineHeight = 22;
-      const totalTextHeight = lines.length * lineHeight;
-      const startY = hudY + (hudHeight - totalTextHeight) / 2 + lineHeight - 6;
-      const textX = hudX + hudWidth / 2;
-
-      lines.forEach((text, index) => {
-        const y = startY + index * lineHeight;
-        ctx.strokeText(text, textX, y);
-        ctx.fillText(text, textX, y);
-      });
-
-      ctx.restore();
-
-    } catch (error) {
-      console.warn('Error drawing HUD:', error);
-    }
-  }
-
-drawLevelCompleteScreen() {
-    const { ctx, canvas, assets } = this;
-    
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    
-    // Semi-transparent overlay
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Main panel
-    const panelWidth = 400;
-    const panelHeight = 300;
-    const panelX = (canvas.width - panelWidth) / 2;
-    const panelY = (canvas.height - panelHeight) / 2;
-    
-    ctx.fillStyle = 'rgba(50, 50, 50, 0.95)';
-    ctx.beginPath();
-    ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
-    ctx.fill();
-    
-    ctx.strokeStyle = '#4CAF50';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    // Title
-    ctx.fillStyle = '#4CAF50';
-    ctx.font = 'bold 32px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Level Complete!', canvas.width / 2, panelY + 60);
-    
-    // Stats
-    const totalFruits = this.currentLevel.getTotalFruitCount();
-    const collectedFruits = this.currentLevel.getFruitCount();
-    const deaths = this.player.deathCount || 0;
-    
-    ctx.fillStyle = '#fff';
-    ctx.font = '18px sans-serif';
-    ctx.fillText(`Time Taken: placeholder`, canvas.width / 2, panelY + 120);
-    ctx.fillText(`Deaths: ${deaths}`, canvas.width / 2, panelY + 150);
-    
-    // Buttons
-    const buttonWidth = 40;
-    const buttonHeight = 40;
-    const buttonY = panelY + 200;
-    
-    if (this.hasNextLevel()) {
-      // Next Level button
-      const nextButtonX = canvas.width / 2 - buttonWidth - 10;
-      
-      const nextButtonImage = assets.next_level_button;
-      if (nextButtonImage) {
-        ctx.drawImage(nextButtonImage, nextButtonX, buttonY, buttonWidth, buttonHeight);
-      } else {
-        // Fallback rectangle if image not loaded
-        ctx.fillStyle = '#4CAF50';
-        ctx.fillRect(nextButtonX, buttonY, buttonWidth, buttonHeight);
-        ctx.fillStyle = 'white';
-        ctx.font = '16px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Next Level', nextButtonX + buttonWidth/2, buttonY + 25);
-      }
-    }
-
-    // Restart button
-    const restartButtonX = canvas.width / 2 + 10;
-    
-    const restartButtonImage = assets.restart_level_button;
-    if (restartButtonImage) {
-      ctx.drawImage(restartButtonImage, restartButtonX, buttonY, buttonWidth, buttonHeight);
-    } else {
-      // Fallback rectangle if image not loaded
-      ctx.fillStyle = '#FF6B6B';
-      ctx.fillRect(restartButtonX, buttonY, buttonWidth, buttonHeight);
-      ctx.fillStyle = 'white';
-      ctx.font = '16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Restart', restartButtonX + buttonWidth/2, buttonY + 25);
-    }
-
-    ctx.restore();
   }
 
   // Get camera for external access

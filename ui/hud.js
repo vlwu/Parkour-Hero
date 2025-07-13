@@ -103,11 +103,11 @@ export class HUD {
     
     ctx.fillStyle = '#fff';
     ctx.font = '18px sans-serif';
-    ctx.fillText(`Fruits: ${collectedFruits}/${totalFruits}`, this.canvas.width / 2, panelY + 120);
+    ctx.fillText(`Time Taken: placeholder`, this.canvas.width / 2, panelY + 120);
     ctx.fillText(`Deaths: ${deaths}`, this.canvas.width / 2, panelY + 150);
     
     // Buttons
-    const buttonWidth = 120;
+    const buttonWidth = 40;
     const buttonHeight = 40;
     const buttonY = panelY + 200;
     
