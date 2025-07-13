@@ -233,6 +233,8 @@ export class Engine {
   resume() {
     if (!this.isRunning) {
       this.isRunning = true;
+      // Reset lastFrameTime to prevent large delta time jump
+      this.lastFrameTime = performance.now();
       this.gameLoop();
     }
 
@@ -242,9 +244,10 @@ export class Engine {
   }
 
   // Main game loop
-  gameLoop(currentTime = 0) {
+  gameLoop(currentTime = performance.now()) {
     if (!this.isRunning) return;
 
+    // Prevent large delta time jumps (like when resuming from pause)
     const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.016);
     this.lastFrameTime = currentTime;
 
