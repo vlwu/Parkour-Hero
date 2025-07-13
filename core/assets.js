@@ -24,13 +24,6 @@ export async function loadAssets() {
     fruit_strawberry: 'assets/Items/Fruits/Strawberry.png',
     fruit_collected: 'assets/Items/Fruits/Collected.png',
 
-    // Menu items
-    settings_button: 'assets/Menu/Buttons/Settings.png',
-    close_button: 'assets/Menu/Buttons/Close.png',
-    restart_button: 'assets/Menu/Buttons/Restart.png',
-    levels_button: 'assets/Menu/Buttons/Levels.png',
-    volume_settings_button: 'assets/Menu/Buttons/Volume.png',
-
     // Level assets
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
     start: 'assets/Items/Checkpoints/Start/Start (Moving).png',
