@@ -121,7 +121,6 @@ export class Engine {
 
   // Handle level complete screen actions
   handleLevelCompleteAction(action) {
-    this.player.needsRespawn = false;
     this.showingLevelComplete = false;
     
     if (action === 'next') {
