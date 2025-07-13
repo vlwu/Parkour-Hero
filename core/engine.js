@@ -237,8 +237,10 @@ export class Engine {
     this.player = new Player(
       this.currentLevel.startPosition.x,
       this.currentLevel.startPosition.y,
-      this.assets
+      this.assets,
+      this.deathCount = 0 // Reset death count for new level
     );
+
     
     this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
     this.camera.snapToPlayer(this.player);
