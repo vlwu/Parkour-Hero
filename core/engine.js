@@ -40,7 +40,7 @@ export class Engine {
     // Simplified jump tracking
     this.wasJumpPressed = false;
     this.lastJumpTime = 0;
-    this.jumpCooldown = 150; // ms
+    this.jumpCooldown = 100; // ms
     this.isFirstJump = true; 
 
     console.log('Engine initialized successfully');
