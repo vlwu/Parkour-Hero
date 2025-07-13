@@ -15,6 +15,8 @@ export class Player {
     this.state = 'idle';
     this.assets = assets;
     this.onGround = false;  // Track if player is on ground/platform
+    this.hasDoubleJump = true; // Whether player has double jump ability
+    this.usedDoubleJump = false; // Track if double jump was used
 
     // Dash properties
     this.isDashing = false;   
@@ -75,14 +77,23 @@ export class Player {
 
     // Fast jump edge detection
     if (jumpKeyDown && !this.jumpPressed) {
-      if (this.jumpCount < 2) { // Allow up to 2 jumps
-      this.vy = -this.jumpForce; // Apply jump velocity
-      this.jumpCount++;
-      this.state = this.jumpCount === 2 ? 'double_jump' : 'jump'; // Set state
-      this.onGround = false;
+      // Ground jump
+      if (this.onGround) {
+          this.vy = -this.jumpForce;
+          this.jumpCount = 1;
+          this.usedDoubleJump = false;
+          this.state = 'jump';
+          this.onGround = false;
       }
-      this.jumpPressed = true; // Mark jump as handled
-    }
+      // Double jump (in air and hasn't used it yet)
+      else if (this.hasDoubleJump && !this.usedDoubleJump && this.jumpCount < 2) {
+          this.vy = -this.jumpForce;
+          this.jumpCount++;
+          this.usedDoubleJump = true;
+          this.state = 'double_jump';
+      }
+      this.jumpPressed = true;
+  }
 
     if (!jumpKeyDown) {
       this.jumpPressed = false; // Reset when key is released
@@ -187,13 +198,19 @@ export class Player {
       if (!groundCollision) this.onGround = false;
 
       // Fast state update: skip if dashing
-      if (!this.isDashing) {
-        if (this.onGround) {
-          this.state = this.vx !== 0 ? 'run' : 'idle'; // Running or idle
-        } else if (this.state !== 'cling') {
-          // Airborne: set state based on velocity/jumpCount
-          this.state = this.vy > 0 ? 'fall' : (this.jumpCount === 2 ? 'double_jump' : 'jump');
-        }
+      if (this.onGround) {
+          this.jumpCount = 0;
+          this.usedDoubleJump = false;
+          this.state = this.vx !== 0 ? 'run' : 'idle';
+      } else if (this.state !== 'cling') {
+          // Airborne states
+          if (this.vy > 0) {
+              this.state = 'fall';
+          } else if (this.jumpCount === 2) {
+              this.state = 'double_jump';
+          } else {
+              this.state = 'jump';
+          }
       }
 
       // Wall boundaries (optimized, with concise comments)

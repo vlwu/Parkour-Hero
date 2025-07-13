@@ -67,28 +67,30 @@ export class Engine {
 
   // Simplified jump detection
   detectJumpSound(inputActions) {
-    const now = Date.now();
-    const jumpPressed = inputActions.jump;
-    
-    const jumpJustPressed = jumpPressed && !this.wasJumpPressed;
-    this.wasJumpPressed = jumpPressed;
-    
-    if (jumpJustPressed && (now - this.lastJumpTime) > this.jumpCooldown) {
-      this.lastJumpTime = now;
+      const now = Date.now();
+      const jumpPressed = inputActions.jump;
       
-      if (this.player.onGround || this.isFirstJump) {
-        this.isFirstJump = false;
-        return { type: 'first' };
-      } else {
-        return { type: 'second' };
+      // Only trigger on key press (not hold)
+      const jumpJustPressed = jumpPressed && !this.wasJumpPressed;
+      this.wasJumpPressed = jumpPressed;
+
+      // Don't play sounds if jump wasn't just pressed or is on cooldown
+      if (!jumpJustPressed || (now - this.lastJumpTime) < this.jumpCooldown) {
+          return null;
       }
-    }
-    
-    if (this.player.isOnGround) {
-      this.isFirstJump = true;
-    }
-    
-    return null;
+
+      // Ground jump sound
+      if (this.player.onGround) {
+          this.lastJumpTime = now;
+          return { type: 'first' };
+      }
+      // Double jump sound
+      else if (this.player.hasDoubleJump && !this.player.usedDoubleJump) {
+          this.lastJumpTime = now;
+          return { type: 'second' };
+      }
+
+      return null;
   }
 
   // Load game progress
