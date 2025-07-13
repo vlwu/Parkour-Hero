@@ -32,6 +32,7 @@ export async function loadAssets() {
     next_level_button: 'assets/Menu/Buttons/Next.png',
     restart_level_button: 'assets/Menu/Buttons/Restart.png',
     previous_level_button: 'assets/Menu/Buttons/Previous.png',
+    level_menu_button: 'assets/Menu/Buttons/Levels.png',
   };
 
   const soundPaths = {

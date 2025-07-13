@@ -86,7 +86,7 @@ export class HUD {
     ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
     ctx.fill();
     
-    ctx.strokeStyle = '#4CAF50';
+    ctx.strokeStyle = '#4d4d4dff';
     ctx.lineWidth = 3;
     ctx.stroke();
     
@@ -94,7 +94,7 @@ export class HUD {
     ctx.fillStyle = '#4CAF50';
     ctx.font = 'bold 32px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Level Complete!', this.canvas.width / 2, panelY + 60);
+    ctx.fillText(`Level Complete!`, this.canvas.width / 2, panelY + 60);
     
     // Stats
     const totalFruits = level.getTotalFruitCount();
@@ -112,8 +112,7 @@ export class HUD {
     const buttonY = panelY + 200;
     
     if (hasNextLevel) {
-      // Next Level button
-      const nextButtonX = this.canvas.width / 2 - buttonWidth - 10;
+      const nextButtonX = this.canvas.width / 2 - buttonWidth - 10; // Next Level button
       
       const nextButtonImage = assets.next_level_button;
       if (nextButtonImage) {
@@ -129,8 +128,7 @@ export class HUD {
       }
     }
 
-    // Restart button
-    const restartButtonX = this.canvas.width / 2 + 10;
+    const restartButtonX = this.canvas.width / 2 + 10; // Restart button
     
     const restartButtonImage = assets.restart_level_button;
     if (restartButtonImage) {
@@ -159,7 +157,7 @@ export class HUD {
     const panelX = (this.canvas.width - panelWidth) / 2;
     const panelY = (this.canvas.height - panelHeight) / 2;
     
-    const buttonWidth = 120;
+    const buttonWidth = 40;
     const buttonHeight = 40;
     const buttonY = panelY + 200;
     
@@ -168,6 +166,7 @@ export class HUD {
       const nextButtonX = this.canvas.width / 2 - buttonWidth - 10;
       if (clickX >= nextButtonX && clickX <= nextButtonX + buttonWidth &&
           clickY >= buttonY && clickY <= buttonY + buttonHeight) {
+        event.stopPropagation(); // Add this line
         return 'next';
       }
     }
@@ -176,6 +175,7 @@ export class HUD {
     const restartButtonX = this.canvas.width / 2 + 10;
     if (clickX >= restartButtonX && clickX <= restartButtonX + buttonWidth &&
         clickY >= buttonY && clickY <= buttonY + buttonHeight) {
+      event.stopPropagation(); // Add this line
       return 'restart';
     }
     
@@ -199,51 +199,6 @@ export class HUD {
     ctx.lineWidth = 4;
     ctx.strokeText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
     ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
-    
-    ctx.restore();
-  }
-
-  // Draw settings menu (for future use)
-  drawSettingsMenu(ctx, soundManager) {
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    
-    // Semi-transparent overlay
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Settings panel
-    const panelWidth = 350;
-    const panelHeight = 250;
-    const panelX = (this.canvas.width - panelWidth) / 2;
-    const panelY = (this.canvas.height - panelHeight) / 2;
-    
-    ctx.fillStyle = 'rgba(50, 50, 50, 0.95)';
-    ctx.beginPath();
-    ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
-    ctx.fill();
-    
-    ctx.strokeStyle = '#4CAF50';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    // Title
-    ctx.fillStyle = '#4CAF50';
-    ctx.font = 'bold 24px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Settings', this.canvas.width / 2, panelY + 40);
-    
-    // Sound settings
-    const soundSettings = soundManager.getSettings();
-    ctx.fillStyle = 'white';
-    ctx.font = '18px sans-serif';
-    ctx.fillText(`Sound: ${soundSettings.enabled ? 'ON' : 'OFF'}`, this.canvas.width / 2, panelY + 80);
-    ctx.fillText(`Volume: ${Math.round(soundSettings.volume * 100)}%`, this.canvas.width / 2, panelY + 110);
-    
-    // Instructions
-    ctx.font = '14px sans-serif';
-    ctx.fillStyle = '#ccc';
-    ctx.fillText('Press ESC to close', this.canvas.width / 2, panelY + 200);
     
     ctx.restore();
   }
