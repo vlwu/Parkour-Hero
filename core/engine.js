@@ -235,6 +235,10 @@ export class Engine {
       this.isRunning = true;
       this.gameLoop();
     }
+
+    if (this.player) {
+      this.player.needsRespawn = false;
+    }
   }
 
   // Main game loop
@@ -334,7 +338,7 @@ export class Engine {
       this.camera.update(this.player, dt);
 
       // Check if player needs to respawn, death count is incremented in player.js
-      if (this.player.needsRespawn && !this.showingLevelComplete) { 
+      if (this.player.needsRespawn && !this.showingLevelComplete && this.isRunning) { 
         this.currentLevel.reset();
         this.player.respawn(this.currentLevel.startPosition);
         this.camera.shake(15, 0.5);
