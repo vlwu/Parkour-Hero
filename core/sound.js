@@ -1,4 +1,4 @@
-// Enhanced Sound Manager with fixes and improvements
+// Enhanced Sound Manager with settings integration
 export class SoundManager {
   constructor() {
     this.sounds = {};
@@ -29,6 +29,16 @@ export class SoundManager {
     this.settings.enabled = this.enabled;
     this.settings.volume = this.volume;
     console.log('Sound settings saved to memory:', this.settings);
+    
+    // Trigger UI update if callback is available
+    if (this.onSettingsChange) {
+      this.onSettingsChange(this.getSettings());
+    }
+  }
+
+  // Set callback for settings changes (for UI updates)
+  setSettingsChangeCallback(callback) {
+    this.onSettingsChange = callback;
   }
 
   // Simplified sound loading using existing assets directly

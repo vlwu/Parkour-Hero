@@ -29,7 +29,7 @@ export async function loadAssets() {
     close_button: 'assets/Menu/Buttons/Close.png',
     restart_button: 'assets/Menu/Buttons/Restart.png',
     levels_button: 'assets/Menu/Buttons/Levels.png',
-    sound_button: 'assets/Menu/Buttons/Volume.png',
+    volume_settings_button: 'assets/Menu/Buttons/Volume.png',
 
     // Level assets
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',

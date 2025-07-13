@@ -62,7 +62,9 @@ canvas {
   text-align: center;
   position: relative;
   width: 90%;
-  max-width: 400px; /* Max width for larger screens */
+  max-width: 500px; /* Increased max width for sound settings */
+  max-height: 80vh; /* Limit height for scroll */
+  overflow-y: auto; /* Enable scroll if needed */
   box-sizing: border-box; /* Include padding in width */
 }
 
@@ -93,19 +95,172 @@ canvas {
   transform: scale(1.1);
 }
 
+/* Settings Sections */
+.settings-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #444;
+  border-radius: 8px;
+  border: 1px solid #555;
+}
+
+.settings-section h3 {
+  color: #fff;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.4em;
+  border-bottom: 2px solid #666;
+  padding-bottom: 10px;
+}
+
+/* Setting Items */
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #555;
+  border-radius: 6px;
+}
+
+.setting-item label {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #eee;
+  flex-grow: 1;
+  text-align: left;
+}
+
+/* Toggle Button */
+.toggle-button {
+  background-color: #666;
+  color: #fff;
+  border: 2px solid #777;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  min-width: 60px;
+  transition: all 0.2s ease-in-out;
+}
+
+.toggle-button.sound-enabled {
+  background-color: #4CAF50;
+  border-color: #45a049;
+}
+
+.toggle-button.sound-disabled {
+  background-color: #f44336;
+  border-color: #d32f2f;
+}
+
+.toggle-button:hover {
+  transform: scale(1.05);
+}
+
+/* Volume Control */
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.volume-control input[type="range"] {
+  width: 120px;
+  height: 6px;
+  background: #666;
+  border-radius: 3px;
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.volume-control input[type="range"]:hover {
+  opacity: 1;
+}
+
+.volume-control input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #4CAF50;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.volume-control input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #4CAF50;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+#volumeValue {
+  font-size: 1em;
+  font-weight: bold;
+  color: #4CAF50;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* Action Buttons */
+.action-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+}
+
+.action-button:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+.action-button:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Debug Button */
+.debug-button {
+  background-color: #ff9800;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+}
+
+.debug-button:hover {
+  background-color: #f57c00;
+  transform: scale(1.05);
+}
+
 /* Keybind List */
 .keybind-list {
   display: flex;
   flex-direction: column;
   gap: 15px; /* Space between keybind items */
-  margin-top: 20px;
 }
 
 .keybind-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #444; /* Slightly lighter background for items */
+  background-color: #555; /* Slightly lighter background for items */
   padding: 10px 15px;
   border-radius: 8px;
 }
@@ -119,9 +274,9 @@ canvas {
 }
 
 .keybind-item input[type="text"] {
-  background-color: #555;
+  background-color: #666;
   color: #fff;
-  border: 1px solid #666;
+  border: 1px solid #777;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 1.1em;
@@ -133,13 +288,19 @@ canvas {
 }
 
 .keybind-item input[type="text"]:hover {
-  border-color: #777;
-  background-color: #666;
+  border-color: #888;
+  background-color: #777;
 }
 
 .keybind-item input[type="text"]:focus {
   border-color: #007bff; /* Highlight on focus */
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.keybind-item input[type="text"].active-rebind {
+  border-color: #ff9800;
+  background-color: #444;
+  box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
 }
 
 /* Responsive adjustments */
@@ -154,6 +315,7 @@ canvas {
   .modal-content {
     padding: 20px;
     border-radius: 8px;
+    max-width: 95%;
   }
 
   .modal-content h2 {
@@ -166,6 +328,36 @@ canvas {
     height: 28px;
     top: 10px;
     right: 10px;
+  }
+
+  .settings-section {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .settings-section h3 {
+    font-size: 1.2em;
+  }
+
+  .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .setting-item label {
+    margin-bottom: 5px;
+    margin-right: 0;
+  }
+
+  .volume-control {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .volume-control input[type="range"] {
+    width: 150px;
   }
 
   .keybind-item {

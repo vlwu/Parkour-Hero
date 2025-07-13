@@ -112,12 +112,42 @@ function updateKeybindDisplay() {
   });
 }
 
+// Function to update sound settings display
+function updateSoundSettingsDisplay() {
+  if (typeof engine !== 'undefined' && engine.soundManager) {
+    const settings = engine.soundManager.getSettings();
+    
+    // Update sound toggle button
+    const soundToggle = document.getElementById('soundToggle');
+    if (soundToggle) {
+      soundToggle.textContent = settings.enabled ? 'ON' : 'OFF';
+      soundToggle.classList.toggle('sound-enabled', settings.enabled);
+      soundToggle.classList.toggle('sound-disabled', !settings.enabled);
+    }
+    
+    // Update volume slider
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeValue = document.getElementById('volumeValue');
+    if (volumeSlider && volumeValue) {
+      volumeSlider.value = settings.volume;
+      volumeValue.textContent = Math.round(settings.volume * 100) + '%';
+    }
+    
+    // Update test sound button state
+    const testSoundButton = document.getElementById('testSoundButton');
+    if (testSoundButton) {
+      testSoundButton.disabled = !settings.enabled;
+    }
+  }
+}
+
 // Function to toggle the settings modal visibility
 function toggleSettingsModal() {
   settingsModal.classList.toggle('hidden');
   if (!settingsModal.classList.contains('hidden')) {
     // When modal opens, update display and disable game input
     updateKeybindDisplay();
+    updateSoundSettingsDisplay();
     // Potentially pause the game engine here if it's running
     if (typeof engine !== 'undefined' && engine.isRunning) {
       engine.pause();
@@ -127,6 +157,59 @@ function toggleSettingsModal() {
     if (typeof engine !== 'undefined' && !engine.isRunning) {
       engine.resume();
     }
+  }
+}
+
+// Sound settings event handlers
+function setupSoundSettings() {
+  // Sound toggle button
+  const soundToggle = document.getElementById('soundToggle');
+  if (soundToggle) {
+    soundToggle.addEventListener('click', () => {
+      if (typeof engine !== 'undefined' && engine.soundManager) {
+        const newState = engine.soundManager.toggleSound();
+        updateSoundSettingsDisplay();
+        console.log(`Sound ${newState ? 'enabled' : 'disabled'}`);
+      }
+    });
+  }
+  
+  // Volume slider
+  const volumeSlider = document.getElementById('volumeSlider');
+  if (volumeSlider) {
+    volumeSlider.addEventListener('input', (e) => {
+      const volume = parseFloat(e.target.value);
+      if (typeof engine !== 'undefined' && engine.soundManager) {
+        engine.soundManager.setVolume(volume);
+        updateSoundSettingsDisplay();
+      }
+    });
+  }
+  
+  // Test sound button
+  const testSoundButton = document.getElementById('testSoundButton');
+  if (testSoundButton) {
+    testSoundButton.addEventListener('click', () => {
+      if (typeof engine !== 'undefined' && engine.soundManager) {
+        // Enable audio context if needed
+        engine.soundManager.enableAudioContext();
+        // Test the jump sound
+        engine.soundManager.play('jump', 0.8);
+        console.log('Testing sound...');
+      }
+    });
+  }
+  
+  // Sound debug button (for development)
+  const debugSoundButton = document.getElementById('debugSoundButton');
+  if (debugSoundButton) {
+    debugSoundButton.addEventListener('click', () => {
+      if (typeof engine !== 'undefined' && engine.soundManager) {
+        console.log('=== SOUND DEBUG INFO ===');
+        console.log(engine.soundManager.getDebugInfo());
+        engine.soundManager.quickTest();
+      }
+    });
   }
 }
 
@@ -180,6 +263,25 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// Function to enable audio context on first user interaction
+function enableAudioOnFirstInteraction() {
+  const enableAudio = () => {
+    if (typeof engine !== 'undefined' && engine.soundManager) {
+      engine.soundManager.enableAudioContext();
+      console.log('Audio context enabled on user interaction');
+    }
+    // Remove listeners after first interaction
+    document.removeEventListener('click', enableAudio);
+    document.removeEventListener('keydown', enableAudio);
+    document.removeEventListener('touchstart', enableAudio);
+  };
+  
+  // Add listeners for first user interaction
+  document.addEventListener('click', enableAudio);
+  document.addEventListener('keydown', enableAudio);
+  document.addEventListener('touchstart', enableAudio);
+}
+
 // Load assets and start the game
 let engine; // Declare engine in a scope accessible to modal functions
 loadAssets().then((assets) => {
@@ -189,6 +291,12 @@ loadAssets().then((assets) => {
     // Initialize and start the game engine, passing keybinds
     engine = new Engine(ctx, canvas, assets, keybinds);
     engine.start();
+    
+    // Set up sound settings after engine is initialized
+    setupSoundSettings();
+    
+    // Enable audio context on first user interaction
+    enableAudioOnFirstInteraction();
     
     console.log('Game started successfully!');
   } catch (error) {
