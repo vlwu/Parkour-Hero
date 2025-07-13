@@ -62,7 +62,7 @@ canvas {
   text-align: center;
   position: relative;
   width: 90%;
-  max-width: 500px; /* Increased max width for sound settings */
+  max-width: 600px; /* Increased from 500px to 600px */
   max-height: 80vh; /* Limit height for scroll */
   overflow-y: auto; /* Enable scroll if needed */
   box-sizing: border-box; /* Include padding in width */
@@ -261,7 +261,7 @@ canvas {
   justify-content: space-between;
   align-items: center;
   background-color: #555; /* Slightly lighter background for items */
-  padding: 10px 15px;
+  padding: 12px 15px; /* Slightly more padding */
   border-radius: 8px;
 }
 
@@ -271,20 +271,23 @@ canvas {
   margin-right: 15px;
   flex-grow: 1; /* Allow label to take available space */
   text-align: left;
+  min-width: 120px; /* Ensure consistent label width */
 }
 
 .keybind-item input[type="text"] {
   background-color: #666;
   color: #fff;
   border: 1px solid #777;
-  padding: 8px 12px;
+  padding: 10px 15px; /* Increased padding for better appearance */
   border-radius: 6px;
   font-size: 1.1em;
   text-align: center;
-  width: 80px; /* Fixed width for key input */
+  width: 120px; /* Increased from 80px to 120px */
+  min-width: 120px; /* Ensure minimum width */
   cursor: pointer;
   outline: none;
   transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+  font-family: 'Courier New', monospace; /* Monospace font for better key display */
 }
 
 .keybind-item input[type="text"]:hover {
@@ -304,75 +307,28 @@ canvas {
 }
 
 /* Responsive adjustments */
-@media (max-width: 600px) {
-  .settings-button {
-    width: 40px;
-    height: 40px;
-    top: 10px;
-    right: 10px;
-  }
-
+@media (max-width: 700px) {
   .modal-content {
-    padding: 20px;
-    border-radius: 8px;
     max-width: 95%;
+    padding: 20px;
   }
-
-  .modal-content h2 {
-    font-size: 1.5em;
-    margin-bottom: 20px;
-  }
-
-  .close-button {
-    width: 28px;
-    height: 28px;
-    top: 10px;
-    right: 10px;
-  }
-
-  .settings-section {
-    padding: 15px;
-    margin-bottom: 20px;
-  }
-
-  .settings-section h3 {
-    font-size: 1.2em;
-  }
-
-  .setting-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px;
-  }
-
-  .setting-item label {
-    margin-bottom: 5px;
-    margin-right: 0;
-  }
-
-  .volume-control {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .volume-control input[type="range"] {
-    width: 150px;
-  }
-
+  
   .keybind-item {
     flex-direction: column;
     align-items: flex-start;
-    padding: 10px;
+    padding: 15px;
+    gap: 10px;
   }
 
   .keybind-item label {
     margin-bottom: 5px;
     margin-right: 0;
+    min-width: auto;
   }
 
   .keybind-item input[type="text"] {
     width: 100%; /* Full width for input on small screens */
-    text-align: left;
+    text-align: center;
+    min-width: auto;
   }
 }
