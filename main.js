@@ -270,52 +270,94 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-function preventInputConflicts() {
-  // Add a flag to check if any menu is active
-  window.isMenuActive = false;
+// Function to convert display coordinates to canvas coordinates
+function getCanvasCoordinates(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
   
-  // Override the engine's input handling when menus are active
-  if (typeof engine !== 'undefined') {
-    const originalHandleInput = engine.handleInput;
-    
-    engine.handleInput = function(inputActions) {
-      // Skip game input when any menu is active
-      if (window.isMenuActive || this.pauseForSettings) {
-        return;
-      }
-      
-      // Call original input handling
-      return originalHandleInput.call(this, inputActions);
-    };
-  }
+  // Get the display size of the canvas
+  const displayWidth = rect.width;
+  const displayHeight = rect.height;
+  
+  // Calculate the position relative to the canvas display area
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  
+  // Scale from display coordinates to internal canvas coordinates
+  const canvasX = (x / displayWidth) * canvas.width;
+  const canvasY = (y / displayHeight) * canvas.height;
+  
+  return { x: canvasX, y: canvasY };
 }
 
 // Add click handler for level complete screen
 canvas.addEventListener('click', (e) => {
-  if (engine.showingLevelComplete) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  if (typeof engine !== 'undefined' && engine.showingLevelComplete) {
+    const coords = getCanvasCoordinates(e.clientX, e.clientY);
     
-    // Button dimensions and positions (matching the render code)
+    // Button dimensions and positions (matching the render code in engine.js)
     const buttonWidth = 120;
     const buttonHeight = 40;
-    const buttonY = (canvas.height - 300) / 2 + 200;
+    const panelHeight = 300;
+    const buttonY = (canvas.height - panelHeight) / 2 + 200;
     
-    if (engine.hasNextLevel()) {
-      const nextButtonX = canvas.width / 2 - buttonWidth - 10;
-      if (x >= nextButtonX && x <= nextButtonX + buttonWidth && 
-          y >= buttonY && y <= buttonY + buttonHeight) {
-        engine.handleLevelCompleteAction('next');
+    // Check if click is within button area vertically
+    if (coords.y >= buttonY && coords.y <= buttonY + buttonHeight) {
+      if (engine.hasNextLevel()) {
+        // Next Level button
+        const nextButtonX = canvas.width / 2 - buttonWidth - 10;
+        if (coords.x >= nextButtonX && coords.x <= nextButtonX + buttonWidth) {
+          console.log('Next Level button clicked');
+          engine.handleLevelCompleteAction('next');
+          return;
+        }
+      }
+      
+      // Restart button
+      const restartButtonX = canvas.width / 2 + 10;
+      if (coords.x >= restartButtonX && coords.x <= restartButtonX + buttonWidth) {
+        console.log('Restart button clicked');
+        engine.handleLevelCompleteAction('restart');
         return;
       }
     }
+  }
+});
+
+// Add keyboard support for level complete screen
+window.addEventListener('keydown', (e) => {
+  // Only handle level complete keys when not in settings and level is complete
+  if (typeof engine !== 'undefined' && 
+      engine.showingLevelComplete && 
+      !activeKeybindInput && 
+      settingsModal.classList.contains('hidden')) {
     
-    const restartButtonX = canvas.width / 2 + 10;
-    if (x >= restartButtonX && x <= restartButtonX + buttonWidth && 
-        y >= buttonY && y <= buttonY + buttonHeight) {
-      engine.handleLevelCompleteAction('restart');
-      return;
+    switch(e.key.toLowerCase()) {
+      case 'enter':
+      case ' ':
+        // Space or Enter goes to next level if available, otherwise restart
+        if (engine.hasNextLevel()) {
+          console.log('Next Level (keyboard)');
+          engine.handleLevelCompleteAction('next');
+        } else {
+          console.log('Restart (keyboard)');
+          engine.handleLevelCompleteAction('restart');
+        }
+        e.preventDefault();
+        break;
+      case 'r':
+        // R always restarts
+        console.log('Restart (keyboard)');
+        engine.handleLevelCompleteAction('restart');
+        e.preventDefault();
+        break;
+      case 'n':
+        // N goes to next level if available
+        if (engine.hasNextLevel()) {
+          console.log('Next Level (keyboard)');
+          engine.handleLevelCompleteAction('next');
+        }
+        e.preventDefault();
+        break;
     }
   }
 });
