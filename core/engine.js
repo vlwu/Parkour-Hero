@@ -148,6 +148,43 @@ export class Engine {
     this.resume();
   }
 
+  handleLevelCompleteClick(event) {
+    if (!this.showingLevelComplete) return false;
+    
+    const rect = this.canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+    
+    const panelWidth = 400;
+    const panelHeight = 300;
+    const panelX = (this.canvas.width - panelWidth) / 2;
+    const panelY = (this.canvas.height - panelHeight) / 2;
+    
+    const buttonWidth = 120;
+    const buttonHeight = 40;
+    const buttonY = panelY + 200;
+    
+    // Check Next Level button (if available)
+    if (this.hasNextLevel()) {
+      const nextButtonX = this.canvas.width / 2 - buttonWidth - 10;
+      if (clickX >= nextButtonX && clickX <= nextButtonX + buttonWidth &&
+          clickY >= buttonY && clickY <= buttonY + buttonHeight) {
+        this.handleLevelCompleteAction('next');
+        return true; // Consumed the click
+      }
+    }
+    
+    // Check Restart button
+    const restartButtonX = this.canvas.width / 2 + 10;
+    if (clickX >= restartButtonX && clickX <= restartButtonX + buttonWidth &&
+        clickY >= buttonY && clickY <= buttonY + buttonHeight) {
+      this.handleLevelCompleteAction('restart');
+      return true; // Consumed the click
+    }
+    
+    return false; // Click not consumed
+  }
+
   // Check if there's a next level available
   hasNextLevel() {
     return (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) ||
@@ -218,6 +255,17 @@ export class Engine {
       this.keys[e.key] = false;
       this.keys[e.key.toLowerCase()] = false;
     });
+
+    window.addEventListener('click', (e) => {
+      // Handle level complete screen clicks first
+      if (this.handleLevelCompleteClick(e)) {
+        return; // Don't process other click effects
+      }
+      
+      if (!this.audioUnlocked) {
+        this.setupAudioUnlock();
+      }
+    });
   }
 
   loadLevel(sectionIndex, levelIndex) {
@@ -238,10 +286,9 @@ export class Engine {
       this.currentLevel.startPosition.x,
       this.currentLevel.startPosition.y,
       this.assets,
-      this.deathCount = 0 // Reset death count for new level
     );
+    this.player.deathCount = 0 // Reset death count for new level
 
-    
     this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
     this.camera.snapToPlayer(this.player);
     
