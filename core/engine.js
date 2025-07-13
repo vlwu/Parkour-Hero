@@ -648,29 +648,23 @@ export class Engine {
     const buttonY = panelY + 200;
     
     if (this.hasNextLevel()) {
-      // Next Level button
+      // Next Level button - replace with image
       const nextButtonX = canvas.width / 2 - buttonWidth - 10;
-      ctx.fillStyle = '#4CAF50';
-      ctx.beginPath();
-      ctx.roundRect(nextButtonX, buttonY, buttonWidth, buttonHeight, 8);
-      ctx.fill();
       
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillText('Next Level', nextButtonX + buttonWidth / 2, buttonY + 25);
+      // Draw image instead of filled rectangle
+      if (this.nextLevelButtonImage) {
+        ctx.drawImage(this.nextLevelButtonImage, nextButtonX, buttonY, buttonWidth, buttonHeight);
+      }
     }
-    
-    // Restart button
+
+    // Restart button - replace with image
     const restartButtonX = canvas.width / 2 + 10;
-    ctx.fillStyle = '#ff9800';
-    ctx.beginPath();
-    ctx.roundRect(restartButtonX, buttonY, buttonWidth, buttonHeight, 8);
-    ctx.fill();
-    
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.fillText('Restart', restartButtonX + buttonWidth / 2, buttonY + 25);
-    
+
+    // Draw image instead of filled rectangle
+    if (this.restartButtonImage) {
+      ctx.drawImage(this.restartButtonImage, restartButtonX, buttonY, buttonWidth, buttonHeight);
+    }
+
     ctx.restore();
   }
 

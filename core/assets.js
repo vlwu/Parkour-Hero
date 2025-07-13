@@ -27,6 +27,11 @@ export async function loadAssets() {
     // Level assets
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
     start: 'assets/Items/Checkpoints/Start/Start (Moving).png',
+
+    // Menu buttons
+    next_level_button: 'assets/Menu/Buttons/Next.png',
+    restart_level_button: 'assets/Menu/Buttons/Restart.png',
+    previous_level_button: 'assets/Menu/Buttons/Previous.png',
   };
 
   const soundPaths = {
