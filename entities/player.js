@@ -1,7 +1,7 @@
 export class Player {
   constructor(x, y, assets) {
-    this.x = x || 0;
-    this.y = y || 0;
+    this.x = x;
+    this.y = y;
     this.width = 32;  // 32x32 sprite size
     this.height = 32;
     this.vx = 0; // x and y velocity
@@ -9,11 +9,11 @@ export class Player {
     this.needsRespawn = false;
     this.deathCount = 0; // Track number of deaths
 
-    this.jumpCount = 2;
+    this.jumpCount = 2; // 2 at the start to disable jumping immediately after spawning
     this.jumpPressed = false;  // Tracks whether the jump key is currently down
     this.direction = 'right';
     this.state = 'idle';
-    this.assets = assets || {};
+    this.assets = assets;
     this.onGround = false;  // Track if player is on ground/platform
 
     // Dash properties
@@ -52,8 +52,6 @@ export class Player {
 
   // Modified to accept an object of active actions
   handleInput(inputActions) {
-    if (!inputActions) return; // Safety check
-    
     const prevState = this.state;  // Store previous state to reset animation on state change
 
     if (this.isDashing) return; // Skip inputs during dash
@@ -78,10 +76,10 @@ export class Player {
     // Fast jump edge detection
     if (jumpKeyDown && !this.jumpPressed) {
       if (this.jumpCount < 2) { // Allow up to 2 jumps
-        this.vy = -this.jumpForce; // Apply jump velocity
-        this.jumpCount++;
-        this.state = this.jumpCount === 2 ? 'double_jump' : 'jump'; // Set state
-        this.onGround = false;
+      this.vy = -this.jumpForce; // Apply jump velocity
+      this.jumpCount++;
+      this.state = this.jumpCount === 2 ? 'double_jump' : 'jump'; // Set state
+      this.onGround = false;
       }
       this.jumpPressed = true; // Mark jump as handled
     }
@@ -113,9 +111,6 @@ export class Player {
 
   update(dt, canvasHeight, level = null) {
     try {
-      // Validate inputs
-      if (dt <= 0 || dt > 0.1) return; // Skip invalid delta times
-      
       // Store previous position for collision resolution
       const prevX = this.x;
       const prevY = this.y;
@@ -150,44 +145,44 @@ export class Player {
       this.x += this.vx * dt;
       
       // Handle horizontal collision with platforms
-      if (level && level.platforms) this.handleHorizontalCollision(level, prevX);
+      if (level) this.handleHorizontalCollision(level, prevX);
 
       // Update vertical position
       this.y += this.vy * dt;
       
       // Handle vertical collision with platforms
       let groundCollision = false;
-      if (level && level.platforms) groundCollision = this.handleVerticalCollision(level, prevY);
+      if (level) groundCollision = this.handleVerticalCollision(level, prevY);
 
       // If clinging but no longer touching a wall, exit cling
-      if (this.state === 'cling' && level && level.platforms) {
+      // Fast wall cling exit: check if still touching wall
+      if (this.state === 'cling') {
         let touchingWall = false;
         for (let i = 0, len = level.platforms.length; i < len; i++) {
           const p = level.platforms[i];
           // Check vertical overlap
           if (this.y + this.height > p.y && this.y < p.y + p.height) {
-            // Check near left/right edge (within 2px)
-            if (
-              Math.abs((this.x + this.width) - p.x) < 2 ||
-              Math.abs(this.x - (p.x + p.width)) < 2
-            ) {
-              touchingWall = true;
-              break;
-            }
+        // Check near left/right edge (within 2px)
+        if (
+          Math.abs((this.x + this.width) - p.x) < 2 ||
+          Math.abs(this.x - (p.x + p.width)) < 2
+        ) {
+          touchingWall = true;
+          break;
+        }
           }
         }
         if (!touchingWall) this.state = 'fall'; // Exit cling if not touching wall
       }
 
       // Fallback ground collision with canvas bottom
-      if (this.y > (canvasHeight || 720) + 100) {
+      if (this.y > canvasHeight + 100) {
         if (level?.startPosition && !this.needsRespawn) {
           this.deathCount++;
           this.needsRespawn = true;
           return;
         }
       }
-      
       // Update onGround status
       if (!groundCollision) this.onGround = false;
 
@@ -203,12 +198,11 @@ export class Player {
 
       // Wall boundaries (optimized, with concise comments)
       // Clamp player X position within [0, 1280 - width]
-      const maxX = 1280 - this.width;
       if (this.x < 0) {
         this.x = 0;
         this.vx = 0;
-      } else if (this.x > maxX) {
-        this.x = maxX;
+      } else if (this.x + this.width > 1280) {
+        this.x = 1280 - this.width;
         this.vx = 0;
       }
 
@@ -229,15 +223,10 @@ export class Player {
 
   // Fast respawn: reset position, velocity, state, timers
   respawn(startPosition) {
-    if (!startPosition) {
-      console.warn('No start position provided for respawn');
-      return;
-    }
-    
-    this.x = startPosition.x || 0;
-    this.y = startPosition.y || 0;
+    this.x = startPosition.x;
+    this.y = startPosition.y;
     this.vx = this.vy = 0;
-    this.jumpCount = 0; // Fixed: Reset to 0 instead of 2
+    this.jumpCount = 2;
     this.jumpPressed = false;
     this.onGround = false;
     this.isDashing = false;
@@ -249,14 +238,10 @@ export class Player {
 
   // Handles horizontal collision with platforms and wall cling logic
   handleHorizontalCollision(level, prevX) {
-    if (!level.platforms || !Array.isArray(level.platforms)) return;
-    
     // Use local variables for performance
     const px = this.x, py = this.y, pw = this.width, ph = this.height;
     for (let i = 0, len = level.platforms.length; i < len; i++) {
       const platform = level.platforms[i];
-      if (!platform) continue;
-      
       // Early exit for non-overlapping cases (AABB)
       if (
         px + pw <= platform.x ||
@@ -292,13 +277,11 @@ export class Player {
 
   // Handles vertical collision with platforms and updates ground status
   handleVerticalCollision(level, prevY) {
-    if (!level.platforms || !Array.isArray(level.platforms)) return false;
-    
     let groundCollision = false;
 
     // Iterate platforms for collision detection
     for (const platform of level.platforms) {
-      if (!platform || !this.isCollidingWith(platform)) continue;
+      if (!this.isCollidingWith(platform)) continue;
 
       // Check if player is falling and hits the top of the platform
       const hitFromAbove = prevY + this.height <= platform.y && this.vy > 0;
@@ -325,13 +308,9 @@ export class Player {
   }
 
   isCollidingWith(platform) {
-    if (!platform) return false;
-    
     // Use local variables to minimize property lookups
-    const px = platform.x || 0, py = platform.y || 0;
-    const pw = platform.width || 0, ph = platform.height || 0;
+    const px = platform.x, py = platform.y, pw = platform.width, ph = platform.height;
     const x = this.x, y = this.y, w = this.width, h = this.height;
-    
     // Early exit for non-overlapping cases
     if (x + w <= px || x >= px + pw || y + h <= py || y >= py + ph) return false;
     return true;
@@ -339,8 +318,6 @@ export class Player {
 
   render(ctx) {
     try {
-      if (!ctx) return;
-      
       // Get the appropriate sprite based on current state
       const spriteKey = this.getSpriteKey();
       const sprite = this.assets[spriteKey];
@@ -411,8 +388,6 @@ export class Player {
   }
 
   renderFallback(ctx) {
-    if (!ctx) return;
-    
     // Fallback rendering when sprites aren't available
     ctx.fillStyle = '#FF6B35'; // Orange color
     ctx.fillRect(this.x, this.y, this.width, this.height);
