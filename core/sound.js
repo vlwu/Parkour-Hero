@@ -46,7 +46,7 @@ export class SoundManager {
     console.log('Loading sounds...');
     console.log('Available assets:', Object.keys(assets));
     
-    const soundKeys = ['jump', 'collect', 'level_complete', 'death_sound', 'dash'];
+    const soundKeys = ['jump', 'double_jump', 'collect', 'level_complete', 'death_sound', 'dash'];
     
     soundKeys.forEach(key => {
       if (assets[key]) {

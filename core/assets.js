@@ -36,7 +36,7 @@ export async function loadAssets() {
 
   const soundPaths = {
     jump: 'assets/Sounds/Player Jump.mp3',
-    double_jump: '',
+    double_jump: 'assets/Sounds/Player Double Jump.mp3',
     collect: 'assets/Sounds/Fruit Collect.mp3',
     level_complete: 'assets/Sounds/Level Complete.mp3',
     death_sound: 'assets/Sounds/Death.mp3',
