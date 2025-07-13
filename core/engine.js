@@ -241,10 +241,14 @@ export class Engine {
         dash: this.keys[this.keybinds.dash] || false,
       };
 
-      // Check for jump sound BEFORE updating player
+      // Check for jump sound before updating player
       const shouldPlayJumpSound = this.detectJumpSound(inputActions);
       if (shouldPlayJumpSound) {
         this.soundManager.play('jump', 0.8);
+      }
+
+      if (inputActions.dash && this.player.canDash) {
+        this.soundManager.play('dash', 0.6);
       }
 
       // Update player
