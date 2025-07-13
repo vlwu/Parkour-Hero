@@ -485,7 +485,8 @@ export class Engine {
       const hudHeight = 100;
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(hudX, hudY, hudWidth, hudHeight);
+      ctx.roundRect(hudX, hudY, hudWidth, hudHeight, 10); // 10 is the corner radius
+      ctx.fill();
 
       const totalFruits = this.currentLevel.getTotalFruitCount();
       const collectedFruits = this.currentLevel.getFruitCount();
@@ -498,12 +499,12 @@ export class Engine {
         `Sound: ${soundSettings.enabled ? 'ON' : 'OFF'} (${Math.round(soundSettings.volume * 100)}%)`
       ];
 
-      ctx.font = '14px sans-serif';
+      ctx.font = '16px sans-serif';
       ctx.strokeStyle = 'black';
       ctx.lineWidth = 2;
       ctx.fillStyle = 'white';
 
-      const lineHeight = 18;
+      const lineHeight = 22;
       const totalTextHeight = lines.length * lineHeight;
       const startY = hudY + (hudHeight - totalTextHeight) / 2 + lineHeight - 6;
       const textX = hudX + hudWidth / 2;
