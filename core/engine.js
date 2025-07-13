@@ -1,5 +1,3 @@
-// Fixed engine.js with simplified jump detection
-
 import { Player } from '../entities/player.js';
 import { createLevel } from '../entities/platform.js'; 
 import { levelSections } from '../entities/levels.js';
@@ -16,8 +14,7 @@ export class Engine {
     this.keybinds = initialKeybinds;
     this.isRunning = false;
     
-    // Initialize camera
-    this.camera = new Camera(canvas.width, canvas.height);
+    this.camera = new Camera(canvas.width, canvas.height); // Initialize camera
     
     // Initialize sound manager
     this.soundManager = new SoundManager();
@@ -33,14 +30,11 @@ export class Engine {
     this.levelProgress = this.loadProgress();
     this.showingLevelComplete = false;
     
-    // Initialize the current level
-    this.loadLevel(this.currentSection, this.currentLevelIndex);
+    this.loadLevel(this.currentSection, this.currentLevelIndex); // Initialize the current level
     
-    // Snap camera to player initial position
-    this.camera.snapToPlayer(this.player);
+    this.camera.snapToPlayer(this.player); // Snap camera to player initial position
 
-    // Input handling
-    this.initInput();
+    this.initInput();  // Input handling
     
     // Simplified jump tracking
     this.wasJumpPressed = false;

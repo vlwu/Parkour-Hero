@@ -206,18 +206,6 @@ function setupSoundSettings() {
       }
     });
   }
-  
-  // Sound debug button (for development)
-  const debugSoundButton = document.getElementById('debugSoundButton');
-  if (debugSoundButton) {
-    debugSoundButton.addEventListener('click', () => {
-      if (typeof engine !== 'undefined' && engine.soundManager) {
-        console.log('=== SOUND DEBUG INFO ===');
-        console.log(engine.soundManager.getDebugInfo());
-        engine.soundManager.quickTest();
-      }
-    });
-  }
 }
 
 // Event listener for settings button

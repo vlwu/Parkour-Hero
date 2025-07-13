@@ -231,24 +231,6 @@ canvas {
   transform: none;
 }
 
-/* Debug Button */
-.debug-button {
-  background-color: #ff9800;
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9em;
-  font-weight: bold;
-  transition: all 0.2s ease-in-out;
-}
-
-.debug-button:hover {
-  background-color: #f57c00;
-  transform: scale(1.05);
-}
-
 /* Keybind List */
 .keybind-list {
   display: flex;
