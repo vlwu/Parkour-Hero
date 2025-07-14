@@ -35,9 +35,9 @@ export class HUD {
       
       const lines = [
         `${level.name}`,
-        `Fruits: ${collectedFruits}/${totalFruits}`,
+        `Fruits: ${collectedFruits} / ${totalFruits}`,
         `Deaths: ${player.deathCount || 0}`,
-        `Sound: ${soundSettings.enabled ? 'ON' : 'OFF'} (${Math.round(soundSettings.volume * 100)}%)`
+        `Sound: ${soundSettings.enabled ? 'On' : 'Off'} (${Math.round(soundSettings.volume * 100)}%)`
       ];
 
       // Text styling
@@ -157,8 +157,8 @@ export class HUD {
     const panelX = (this.canvas.width - panelWidth) / 2;
     const panelY = (this.canvas.height - panelHeight) / 2;
     
-    const buttonWidth = 40;
-    const buttonHeight = 40;
+    const buttonWidth = 32;
+    const buttonHeight = 32;
     const buttonY = panelY + 200;
     
     // Check Next Level button (if available)

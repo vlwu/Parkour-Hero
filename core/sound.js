@@ -2,7 +2,7 @@ export class SoundManager {
   constructor() {
     this.sounds = {};
     this.enabled = true;
-    this.volume = 0.8;
+    this.volume = 0.5;
     this.audioContext = null;
     this.audioEnabled = false;
     this.audioUnlocked = false; // Track if audio has been unlocked
@@ -10,7 +10,7 @@ export class SoundManager {
     // In-memory settings storage (localStorage not supported in artifacts)
     this.settings = {
       enabled: true,
-      volume: 0.8
+      volume: 0.5
     };
     
     console.log('SoundManager initialized with volume:', this.volume);
