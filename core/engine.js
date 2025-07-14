@@ -167,8 +167,15 @@ export class Engine {
           return;
         }
       }
+
     } else if (action === 'restart') {
       this.restartLevel();
+
+    } else if (action === 'previous') {
+      if (this.currentLevelIndex > 0) {
+        this.currentLevelIndex--;
+        this.loadLevel(this.currentSection, this.currentLevelIndex);
+      }
     }
     
     this.resume();
@@ -179,7 +186,8 @@ export class Engine {
     
     const action = this.hud.handleLevelCompleteClick(
       event, 
-      this.hasNextLevel()
+      this.hasNextLevel(),
+      this.hasPreviousLevel()
     );
     
     if (action) {
@@ -194,6 +202,11 @@ export class Engine {
   hasNextLevel() {
     return (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) ||
           (this.currentSection + 1 < levelSections.length);
+  }
+
+  // Check if there's a previous level available
+  hasPreviousLevel() {
+    return this.currentLevelIndex > 0;
   }
 
   // Update keybinds
@@ -458,7 +471,8 @@ export class Engine {
           this.currentLevel, 
           this.player, 
           this.assets, 
-          this.hasNextLevel()
+          this.hasNextLevel(),
+          this.hasPreviousLevel(),
         );
       }
 

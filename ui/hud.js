@@ -67,7 +67,7 @@ export class HUD {
   }
 
   // Draw level complete screen
-  drawLevelCompleteScreen(ctx, level, player, assets, hasNextLevel) {
+  drawLevelCompleteScreen(ctx, level, player, assets, hasNextLevel, hasPreviousLevel) {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     
@@ -106,47 +106,74 @@ export class HUD {
     ctx.fillText(`Deaths: ${deaths}`, this.canvas.width / 2, panelY + 150);
     
     // Buttons
-    const buttonWidth = 40;
-    const buttonHeight = 40;
+    const buttonWidth = 32;
+    const buttonHeight = 32;
     const buttonY = panelY + 200;
-    
-    if (hasNextLevel) {
-      const nextButtonX = this.canvas.width / 2 - buttonWidth - 10; // Next Level button
-      
-      const nextButtonImage = assets.next_level_button;
-      if (nextButtonImage) {
-        ctx.drawImage(nextButtonImage, nextButtonX, buttonY, buttonWidth, buttonHeight);
+
+    // Calculate button positions based on available buttons
+    const availableButtons = [];
+    if (hasPreviousLevel) availableButtons.push('previous');
+    if (hasNextLevel) availableButtons.push('next');
+    availableButtons.push('restart');
+
+    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 10;
+    const startX = (this.canvas.width - totalButtonWidth) / 2;
+
+    let currentX = startX;
+
+    // Previous Level button
+    if (hasPreviousLevel) {
+      const previousButtonImage = assets.previous_level_button;
+      if (previousButtonImage) {
+        ctx.drawImage(previousButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
       } else {
         // Fallback rectangle if image not loaded
-        ctx.fillStyle = '#4CAF50';
-        ctx.fillRect(nextButtonX, buttonY, buttonWidth, buttonHeight);
+        ctx.fillStyle = '#2196F3';
+        ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
         ctx.fillStyle = 'white';
         ctx.font = '16px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Next Level', nextButtonX + buttonWidth/2, buttonY + 25);
+        ctx.fillText('Prev', currentX + buttonWidth/2, buttonY + 25);
       }
+      currentX += buttonWidth + 10;
     }
 
-    const restartButtonX = this.canvas.width / 2 + 10; // Restart button
+    // Next Level button
+    if (hasNextLevel) {
+      const nextButtonImage = assets.next_level_button;
+      if (nextButtonImage) {
+        ctx.drawImage(nextButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
+      } else {
+        // Fallback rectangle if image not loaded
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
+        ctx.fillStyle = 'white';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Next', currentX + buttonWidth/2, buttonY + 25);
+      }
+      currentX += buttonWidth + 10;
+    }
     
+    // Restart button
     const restartButtonImage = assets.restart_level_button;
     if (restartButtonImage) {
-      ctx.drawImage(restartButtonImage, restartButtonX, buttonY, buttonWidth, buttonHeight);
+      ctx.drawImage(restartButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
     } else {
       // Fallback rectangle if image not loaded
       ctx.fillStyle = '#FF6B6B';
-      ctx.fillRect(restartButtonX, buttonY, buttonWidth, buttonHeight);
+      ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
       ctx.fillStyle = 'white';
       ctx.font = '16px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Restart', restartButtonX + buttonWidth/2, buttonY + 25);
+      ctx.fillText('Restart', currentX + buttonWidth/2, buttonY + 25);
     }
 
     ctx.restore();
   }
 
   // Handle clicks on level complete screen
-  handleLevelCompleteClick(event, hasNextLevel) {
+  handleLevelCompleteClick(event, hasNextLevel, hasPreviousLevel) {
     const rect = this.canvas.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
     const clickY = event.clientY - rect.top;
@@ -159,22 +186,42 @@ export class HUD {
     const buttonWidth = 32;
     const buttonHeight = 32;
     const buttonY = panelY + 200;
-    
-    // Check Next Level button (if available)
-    if (hasNextLevel) {
-      const nextButtonX = this.canvas.width / 2 - buttonWidth - 10;
-      if (clickX >= nextButtonX && clickX <= nextButtonX + buttonWidth &&
+
+    // Calculate button positions based on available buttons
+    const availableButtons = [];
+    if (hasPreviousLevel) availableButtons.push('previous');
+    if (hasNextLevel) availableButtons.push('next');
+    availableButtons.push('restart');
+
+    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 10;
+    const startX = (this.canvas.width - totalButtonWidth) / 2;
+
+    let currentX = startX;
+
+    // Check Previous Level button
+    if (hasPreviousLevel) {
+      if (clickX >= currentX && clickX <= currentX + buttonWidth &&
           clickY >= buttonY && clickY <= buttonY + buttonHeight) {
-        event.stopPropagation(); // Add this line
+        event.stopPropagation();
+        return 'previous';
+      }
+      currentX += buttonWidth + 10;
+    }
+
+    // Check Next Level button
+    if (hasNextLevel) {
+      if (clickX >= currentX && clickX <= currentX + buttonWidth &&
+          clickY >= buttonY && clickY <= buttonY + buttonHeight) {
+        event.stopPropagation();
         return 'next';
       }
+      currentX += buttonWidth + 10;
     }
     
     // Check Restart button
-    const restartButtonX = this.canvas.width / 2 + 10;
-    if (clickX >= restartButtonX && clickX <= restartButtonX + buttonWidth &&
+    if (clickX >= currentX && clickX <= currentX + buttonWidth &&
         clickY >= buttonY && clickY <= buttonY + buttonHeight) {
-      event.stopPropagation(); // Add this line
+      event.stopPropagation();
       return 'restart';
     }
     
