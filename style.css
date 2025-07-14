@@ -29,8 +29,28 @@ canvas {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Subtle shadow */
   transition: transform 0.2s ease-in-out;
 }
-
 .settings-button:hover {
+  transform: scale(1.1);
+}
+
+/* Pause Button */
+.pause-button {
+  position: absolute;
+  top: 78px; /* Directly below the settings button (48px height + 10px gap + margin) */
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background-image: url('assets/Menu/Buttons/Pause.png'); /* Replace with your actual pause icon path */
+  background-size: cover;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 100;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease-in-out;
+}
+.pause-button:hover {
   transform: scale(1.1);
 }
 

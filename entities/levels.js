@@ -64,7 +64,7 @@ export const levelSections = [
       fruits: [
         { x: 50, y: 250, fruitType: 'fruit_apple' },
         { x: 240, y: 300, fruitType: 'fruit_bananas' },
-        { x: 230, y: 450, fruitType: 'fruit_cherries' },
+        { x: 230, y: 500, fruitType: 'fruit_cherries' },
         { x: 650, y: 300, fruitType: 'fruit_kiwi' },
         { x: 850, y: 150, fruitType: 'fruit_melon' },
         { x: 1150, y: 250, fruitType: 'fruit_orange' },
@@ -113,8 +113,8 @@ export const levelSections = [
         { x: 630, y: 350, fruitType: 'fruit_kiwi' },
         { x: 870, y: 200, fruitType: 'fruit_melon' },
         { x: 1200, y: 175, fruitType: 'fruit_orange' },
-        { x: 800, y: 320, fruitType: 'fruit_pineapple' },
-        { x: 1000, y: 350, fruitType: 'fruit_strawberry' }
+        { x: 800, y: 350, fruitType: 'fruit_pineapple' },
+        { x: 1000, y: 100, fruitType: 'fruit_strawberry' }
       ],
       trophy: { x: 1080, y: 284 }
     },
