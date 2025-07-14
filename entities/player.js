@@ -10,11 +10,14 @@ export class Player {
     this.deathCount = 0; // Track number of deaths
 
     this.jumpCount = 2; // 2 at the start to disable jumping immediately after spawning
-    this.jumpPressed = false;  // Tracks whether the jump key is currently down
+    this.jumpPressed = false; 
     this.direction = 'right';
     this.state = 'idle';
     this.assets = assets;
-    this.onGround = false;  // Track if player is on ground/platform
+    this.onGround = false;  
+
+    this.isSpawning = true;
+    this.spawnComplete = false;
 
     // Dash properties
     this.isDashing = false;   
@@ -28,7 +31,8 @@ export class Player {
     // Animation properties
     this.animationFrame = 0;
     this.animationTimer = 0;
-    this.animationSpeed = 0.05; // Time between frames (0.05 = 50ms)
+    this.animationSpeed = 0.05; // in s
+    this.spawnAnimationSpeed = 0.12; 
 
     // Animation frame counts for each state (1 for static images)
     this.animationFrames = {
@@ -56,7 +60,9 @@ export class Player {
   handleInput(inputActions) {
     const prevState = this.state;  // Store previous state to reset animation on state change
 
-    if (this.isDashing) return; // Skip inputs during dash
+    // Skip input handling depending on state
+    if (this.isSpawning && !this.spawnComplete) return;
+    if (this.isDashing) return; 
     
     // Horizontal movement
     if (inputActions.moveLeft) {
@@ -113,6 +119,17 @@ export class Player {
 
   update(dt, canvasHeight, level = null) {
     try {
+      if (this.isSpawning && !this.spawnComplete) {
+        // Only update animation timer and frame during spawn
+        this.animationTimer += dt;
+        if (this.animationTimer >= this.spawnAnimationSpeed) { 
+          this.animationTimer = 0;
+          const frameCount = this.animationFrames[this.state] || 1;
+          this.animationFrame = (this.animationFrame + 1) % frameCount;
+        }
+        return;
+      }
+
       // Store previous position for collision resolution
       const prevX = this.x;
       const prevY = this.y;
@@ -183,26 +200,34 @@ export class Player {
           return;
         }
       }
-      // Update onGround status
-      if (!groundCollision) this.onGround = false;
 
-      // Fast state update: skip if dashing
-      if (!this.isDashing && this.onGround) {
-          this.jumpCount = 0;
-          this.usedDoubleJump = false;
-          this.state = this.vx !== 0 ? 'run' : 'idle';
+      if (!groundCollision) this.onGround = false; // Update onGround status
+
+      // Handle spawn animation first
+      if (this.isSpawning && !this.spawnComplete) {
+        this.state = 'spawn';
+        // Check if spawn animation is complete
+        if (this.animationFrame >= this.animationFrames['spawn'] - 1) {
+          this.spawnComplete = true;
+          this.isSpawning = false;
+          this.state = 'idle';
+        }
+      } else if (!this.isDashing && this.onGround) {
+        this.jumpCount = 0;
+        this.usedDoubleJump = false;
+        this.state = this.vx !== 0 ? 'run' : 'idle';
       } else if (!this.isDashing && this.state !== 'cling') {
-          // Airborne states
-          if (this.vy > 0) {
-              this.state = 'fall';
-          } else if (this.jumpCount === 2) {
-              this.state = 'double_jump';
-          } else {
-              this.state = 'jump';
-          }
+        // Airborne states
+        if (this.vy > 0) {
+          this.state = 'fall';
+        } else if (this.jumpCount === 2) {
+          this.state = 'double_jump';
+        } else {
+          this.state = 'jump';
+        }
       }
 
-      // Wall boundaries (optimized, with concise comments)
+      // Wall boundaries
       // Clamp player X position within [0, 1280 - width]
       if (this.x < 0) {
         this.x = 0;
@@ -214,7 +239,9 @@ export class Player {
 
       // Update animation timer and frame
       this.animationTimer += dt;
-      if (this.animationTimer >= this.animationSpeed) {
+      const currentAnimationSpeed = (this.state === 'spawn') ? this.spawnAnimationSpeed : this.animationSpeed;
+
+      if (this.animationTimer >= currentAnimationSpeed) {
         this.animationTimer = 0;
         
         // Get the frame count for current state
@@ -227,7 +254,6 @@ export class Player {
     }
   }
 
-  // Fast respawn: reset position, velocity, state, timers
   respawn(startPosition) {
     this.x = startPosition.x;
     this.y = startPosition.y;
@@ -240,11 +266,12 @@ export class Player {
     this.state = 'idle';
     this.animationFrame = this.animationTimer = 0;
     this.needsRespawn = false;
+    this.isSpawning = true;
+    this.spawnComplete = false;
   }
 
   // Handles horizontal collision with platforms and wall cling logic
   handleHorizontalCollision(level, prevX) {
-    // Use local variables for performance
     const px = this.x, py = this.y, pw = this.width, ph = this.height;
     for (let i = 0, len = level.platforms.length; i < len; i++) {
       const platform = level.platforms[i];
@@ -256,7 +283,6 @@ export class Player {
         py >= platform.y + platform.height
       ) continue;
 
-      // Determine collision direction
       const fromLeft = prevX + pw <= platform.x;
       const fromRight = prevX >= platform.x + platform.width;
 
@@ -268,7 +294,7 @@ export class Player {
         this.vx = 0;
       }
 
-      // Wall cling: only if airborne and falling
+      // Wall cling only if airborne and falling
       if (!this.onGround && this.vy >= 0 && (fromLeft || fromRight)) {
         this.state = 'cling';
         this.vy = 30;        

@@ -198,6 +198,9 @@ export class Engine {
       this.currentLevel.startPosition.y,
       this.assets,
     );
+    this.player.isSpawning = true;
+    this.player.spawnComplete = false;
+    this.player.state = 'spawn';
     this.player.deathCount = 0;
 
     this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
