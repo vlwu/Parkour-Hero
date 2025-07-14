@@ -15,8 +15,6 @@ export class Player {
     this.state = 'idle';
     this.assets = assets;
     this.onGround = false;  // Track if player is on ground/platform
-    this.hasDoubleJump = true; // Whether player has double jump ability
-    this.usedDoubleJump = false; // Track if double jump was used
 
     // Dash properties
     this.isDashing = false;   
@@ -77,23 +75,14 @@ export class Player {
 
     // Fast jump edge detection
     if (jumpKeyDown && !this.jumpPressed) {
-      // Ground jump
-      if (this.onGround) {
-          this.vy = -this.jumpForce;
-          this.jumpCount = 1;
-          this.usedDoubleJump = false;
-          this.state = 'jump';
-          this.onGround = false;
+      if (this.jumpCount < 2) { // Allow up to 2 jumps
+      this.vy = -this.jumpForce; // Apply jump velocity
+      this.jumpCount++;
+      this.state = this.jumpCount === 2 ? 'double_jump' : 'jump'; // Set state
+      this.onGround = false;
       }
-      // Double jump (in air and hasn't used it yet)
-      else if (this.hasDoubleJump && !this.usedDoubleJump && this.jumpCount < 2) {
-          this.vy = -this.jumpForce;
-          this.jumpCount++;
-          this.usedDoubleJump = true;
-          this.state = 'double_jump';
-      }
-      this.jumpPressed = true;
-  }
+      this.jumpPressed = true; // Mark jump as handled
+    }
 
     if (!jumpKeyDown) {
       this.jumpPressed = false; // Reset when key is released
@@ -136,34 +125,37 @@ export class Player {
       if (this.isDashing) {
         this.state = 'dash';
         this.dashTimer -= dt;
-        
-        this.x += this.vx * dt; // Apply dash movement
-        
         if (this.dashTimer <= 0) {
           this.isDashing = false;
           this.vx = 0;
-          this.dashCooldownTimer = this.dashCooldown;
+          this.dashCooldownTimer = this.dashCooldown; // Start cooldown
+
+          // Restore state fast (no branching)
           this.state = this.onGround ? 'idle' : (this.vy > 0 ? 'fall' : 'jump');
         }
-        
-        this.updateAnimation(dt); // Update animation
       }
 
-      if (!this.isDashing) this.vy += this.gravity * dt; // Apply gravity only when not dashing (dash is perfectly horizontal)
-       
-      if (this.vy > this.maxFallSpeed) this.vy = this.maxFallSpeed; // Cap falling speed to prevent going too fast
-
-      this.x += this.vx * dt; // Update horizontal position
+      // Apply gravity only when not dashing (dash is perfectly horizontal)
+      if (!this.isDashing) this.vy += this.gravity * dt;
       
-      if (level) this.handleHorizontalCollision(level, prevX); // Handle horizontal collision with platforms
+      // Cap falling speed to prevent going too fast
+      if (this.vy > this.maxFallSpeed) this.vy = this.maxFallSpeed;
 
-      this.y += this.vy * dt; // Update vertical position
+      // Update horizontal position
+      this.x += this.vx * dt;
+      
+      // Handle horizontal collision with platforms
+      if (level) this.handleHorizontalCollision(level, prevX);
+
+      // Update vertical position
+      this.y += this.vy * dt;
       
       // Handle vertical collision with platforms
       let groundCollision = false;
       if (level) groundCollision = this.handleVerticalCollision(level, prevY);
 
       // If clinging but no longer touching a wall, exit cling
+      // Fast wall cling exit: check if still touching wall
       if (this.state === 'cling') {
         let touchingWall = false;
         for (let i = 0, len = level.platforms.length; i < len; i++) {
@@ -210,7 +202,7 @@ export class Player {
           }
       }
 
-      // Wall boundaries 
+      // Wall boundaries (optimized, with concise comments)
       // Clamp player X position within [0, 1280 - width]
       if (this.x < 0) {
         this.x = 0;
@@ -235,7 +227,7 @@ export class Player {
     }
   }
 
-  // reset position, velocity, state, timers
+  // Fast respawn: reset position, velocity, state, timers
   respawn(startPosition) {
     this.x = startPosition.x;
     this.y = startPosition.y;
@@ -278,15 +270,11 @@ export class Player {
         this.vx = 0;
       }
 
-      // Wall cling
-      if (!this.onGround && this.vy >= 0) {
+      // Wall cling: only if airborne and falling
+      if (!this.onGround && this.vy > 0) {
         this.state = 'cling';
         this.vy = 30;        // Slow fall while clinging
-
-        // Allow double jump off wall
-        this.jumpCount = 1;  
-        this.hasDoubleJump = true;
-        this.usedDoubleJump = false;
+        this.jumpCount = 1;  // Allow double jump off wall
       }
 
       break; // Only handle first collision for performance
