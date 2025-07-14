@@ -224,27 +224,6 @@ export class HUD {
     return null; // No button clicked
   }
 
-  // Draw pause screen (for future use)
-  drawPauseScreen(ctx) {
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    
-    // Semi-transparent overlay
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Pause text
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 48px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = 'black';
-    ctx.lineWidth = 4;
-    ctx.strokeText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
-    ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
-    
-    ctx.restore();
-  }
-
   // Draw loading screen (for future use)
   drawLoadingScreen(ctx, progress = 0) {
     ctx.save();
@@ -295,21 +274,5 @@ export class HUD {
     const milliseconds = Math.floor((remainingSeconds - wholeSeconds) * 1000);
     
     return `${minutes.toString().padStart(2, '0')}:${wholeSeconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
-  }
-
-  drawPauseIndicator(ctx) {
-    // Semi-transparent overlay
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Pause text
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
-    
-    // Instructions
-    ctx.font = '20px Arial';
-    ctx.fillText('Press ESC or Pause button to resume', this.canvas.width / 2, this.canvas.height / 2 + 60);
   }
 }
