@@ -1,10 +1,13 @@
+// core/engine.js
+
 import { Player } from '../entities/player.js';
-import { createLevel } from '../entities/platform.js'; 
+import { createLevel } from '../entities/platform.js';
 import { levelSections } from '../entities/levels.js';
 import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
 import { HUD } from '../ui/hud.js';
 import { GameState } from './game-state.js';
+import { CollisionSystem } from './collision-system.js'; // Import the new system
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) {
@@ -12,21 +15,20 @@ export class Engine {
     this.canvas = canvas;
     this.assets = assets;
     this.lastFrameTime = 0;
-    this.keys = {}; // Still used to track keys from main.js
+    this.keys = {};
     this.keybinds = initialKeybinds;
     this.isRunning = false;
-    this.pauseForSettings = false; // New property
+    this.pauseForSettings = false;
 
     this.camera = new Camera(canvas.width, canvas.height);
     this.hud = new HUD(canvas);
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
+    this.collisionSystem = new CollisionSystem(); // Instantiate the new system
 
-    // Level timer properties now live directly in the engine
     this.levelStartTime = 0;
     this.levelTime = 0;
 
-    // GameState is now initialized *with* its dependencies.
     this.gameState = new GameState(levelSections, {
       loadLevel: this.loadLevel.bind(this),
       pause: this.pause.bind(this),
@@ -44,30 +46,27 @@ export class Engine {
 
     this.wasJumpPressed = false;
     this.lastJumpTime = 0;
-    this.jumpCooldown = 100; // ms
+    this.jumpCooldown = 100;
     this.wasDashPressed = false;
   }
 
-  // Simplified jump detection
+  // ... (detectJumpSound, updateKeybinds, getSoundManager, start, stop, pause, resume, gameLoop, loadLevel methods are unchanged) ...
+  // detectJumpSound
   detectJumpSound(inputActions) {
       const now = Date.now();
       const jumpPressed = inputActions.jump;
       
-      // Only trigger on key press (not hold)
       const jumpJustPressed = jumpPressed && !this.wasJumpPressed;
       this.wasJumpPressed = jumpPressed;
 
-      // Don't play sounds if jump wasn't just pressed or is on cooldown
       if (!jumpJustPressed || (now - this.lastJumpTime) < this.jumpCooldown) {
           return null;
       }
 
-      // Ground jump sound
       if (this.player.onGround || this.player.jumpCount === 0) {
           this.lastJumpTime = now;
           return { type: 'first' };
       }
-      // Double jump sound
       else if (this.player.jumpCount === 1 && !this.player.onGround) {
           this.lastJumpTime = now;
           return { type: 'second' };
@@ -107,13 +106,11 @@ export class Engine {
         this.player.needsRespawn = false;
       }
       
-      // Manually trigger a render to show the new paused state immediately
       this.render(); 
   }
 
   // Resume the game
   resume() {
-    // Do not resume if the settings modal is the reason we're paused
     if (this.pauseForSettings) return; 
 
     if (!this.isRunning) {
@@ -170,14 +167,13 @@ export class Engine {
     this.levelStartTime = performance.now();
 }
 
+
   update(dt) {
     try {
-      // Update level timer
       if (this.isRunning && !this.gameState.showingLevelComplete) {
         this.levelTime = (performance.now() - this.levelStartTime) / 1000;
       }
 
-      // Create input actions object
       const inputActions = {
         moveLeft: this.keys[this.keybinds.moveLeft] || false,
         moveRight: this.keys[this.keybinds.moveRight] || false,
@@ -185,33 +181,23 @@ export class Engine {
         dash: this.keys[this.keybinds.dash] || false,
       };
 
-      // Check for jump sound before updating player
       const jumpSoundInfo = this.detectJumpSound(inputActions);
       if (jumpSoundInfo) {
-        if (jumpSoundInfo.type === 'first') {
-          this.soundManager.play('jump', 0.8);
-        } else if (jumpSoundInfo.type === 'second') {
-          this.soundManager.play('double_jump', 0.8);
-        }
+        if (jumpSoundInfo.type === 'first') this.soundManager.play('jump', 0.8);
+        else if (jumpSoundInfo.type === 'second') this.soundManager.play('double_jump', 0.8);
       }
 
-      // Play dash sound effect 
       const dashJustPressed = inputActions.dash && !this.wasDashPressed;
       this.wasDashPressed = inputActions.dash;
-
       if (dashJustPressed && !this.player.isDashing && this.player.dashCooldownTimer <= 0) {
         this.soundManager.play('dash', 0.7);
       }
 
-      // Update player
       this.player.handleInput(inputActions);
       this.player.update(dt, this.canvas.height, this.currentLevel);
-
-      // Update camera to follow player
       this.camera.update(this.player, dt);
 
-      // Check if player needs to respawn
-      if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) { 
+      if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
         this.currentLevel.reset();
         this.player.respawn(this.currentLevel.startPosition);
         this.camera.shake(15, 0.5);
@@ -219,10 +205,9 @@ export class Engine {
         this.player.needsRespawn = false;
       }
 
-      // Update level animations
       this.currentLevel.updateFruits(dt);
       this.currentLevel.updateTrophyAnimation(dt);
-
+      
       // Update collected fruit animations
       this.collectedFruits = this.collectedFruits || [];
       for (const collected of this.collectedFruits) {
@@ -237,48 +222,29 @@ export class Engine {
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
 
-      // Fruit collection with sound
-      this.currentLevel.fruits = this.currentLevel.fruits.filter((fruit) => {
-        if (fruit.collected) return true;
+      // --- COLLISION LOGIC IS NOW DELEGATED ---
+      const collisionResults = this.collisionSystem.update(this.player, this.currentLevel);
 
-        const dx = fruit.x - (this.player.x + this.player.width / 2);
-        const dy = fruit.y - (this.player.y + this.player.height / 2);
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const collided = distance < (fruit.size / 2 + this.player.width / 2);
-
-        if (collided) {
+      // Handle fruit collection consequences
+      if (collisionResults.newlyCollectedFruits.length > 0) {
+        for (const fruit of collisionResults.newlyCollectedFruits) {
           fruit.collected = true;
           this.soundManager.play('collect', 0.8);
 
           this.collectedFruits.push({
-            x: fruit.x,
-            y: fruit.y,
-            size: fruit.size,
-            frame: 0,
-            frameSpeed: 0.1,
-            frameTimer: 0,
-            collectedFrameCount: 6
+            x: fruit.x, y: fruit.y, size: fruit.size, frame: 0,
+            frameSpeed: 0.1, frameTimer: 0, collectedFrameCount: 6
           });
-          
-          return true;
-        }
-
-        return true;
-      });
-
-      // Trophy collision
-      const trophy = this.currentLevel.trophy;
-      if (trophy && !trophy.acquired && !trophy.inactive) {
-        const px = this.player.x, py = this.player.y, pw = this.player.width, ph = this.player.height;
-        const tx = trophy.x - trophy.size / 2, ty = trophy.y - trophy.size / 2, ts = trophy.size;
-
-        if (px + pw > tx && px < tx + ts && py + ph > ty && py < ty + ts) {
-          trophy.acquired = true;
-          this.camera.shake(8, 0.3);
         }
       }
 
-      // Skip other updates if showing level complete screen
+      // Handle trophy collision consequences
+      if (collisionResults.trophyCollision) {
+        this.currentLevel.trophy.acquired = true;
+        this.camera.shake(8, 0.3);
+      }
+      // --- END OF DELEGATED COLLISION LOGIC ---
+
       if (this.gameState.showingLevelComplete) {
         return;
       }
@@ -293,6 +259,7 @@ export class Engine {
     }
   }
 
+  // ... (render and other methods are unchanged) ...
   render() {
     try {
       const { ctx, canvas, assets } = this;
@@ -309,11 +276,10 @@ export class Engine {
 
       this.camera.restore(ctx);
       
-      // Use HUD class for rendering
       this.hud.drawGameHUD(ctx, this.currentLevel, this.player, this.soundManager);
 
       if (this.gameState.showingLevelComplete) {
-        this.hud.levelTime = this.levelTime; // Pass level time to HUD
+        this.hud.levelTime = this.levelTime;
         this.hud.drawLevelCompleteScreen(
           ctx, 
           this.currentLevel, 
@@ -324,7 +290,6 @@ export class Engine {
         );
       }
 
-      // Draw pause screen if game is paused for gameplay, not settings
       if (!this.isRunning && !this.gameState.showingLevelComplete && !this.pauseForSettings) {
         this.hud.drawPauseScreen(ctx);
       }
@@ -470,12 +435,10 @@ export class Engine {
       this.keys[key] = isDown;
   }
 
-  // Get camera for external access
   getCamera() {
     return this.camera;
   }
 
-  // Manual screen shake
   shakeScreen(intensity = 10, duration = 0.2) {
     this.camera.shake(intensity, duration);
   }
