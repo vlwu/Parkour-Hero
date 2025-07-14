@@ -203,19 +203,19 @@ export class HUD {
     ctx.font = '18px sans-serif';
     ctx.fillText('Click the button or press ESC to resume', this.canvas.width / 2, panelY + 120);
 
-    // Resume button (example)
+    // Resume button (temporary, will replace with image)
     const buttonWidth = 200;
     const buttonHeight = 50;
     const buttonX = (this.canvas.width - buttonWidth) / 2;
     const buttonY = panelY + 180;
 
-    ctx.fillStyle = '#4CAF50';
+    ctx.fillStyle = '#55aa58ff';
     ctx.beginPath();
     ctx.roundRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
     ctx.fill();
 
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 24px sans-serif';
+    ctx.font = 'bold 20px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('Resume', this.canvas.width / 2, buttonY + buttonHeight / 2);
@@ -311,7 +311,7 @@ export class HUD {
     ctx.fillRect(barX, barY, barWidth, barHeight);
     
     // Progress bar fill
-    ctx.fillStyle = '#4CAF50';
+    ctx.fillStyle = '#367338ff';
     ctx.fillRect(barX, barY, barWidth * progress, barHeight);
     
     // Progress percentage
