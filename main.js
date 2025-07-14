@@ -280,29 +280,56 @@ function getCanvasCoordinates(clientX, clientY) {
 // Add click handler for level complete screen
 canvas.addEventListener('click', (e) => {
   if (typeof engine !== 'undefined' && engine.showingLevelComplete) {
-    const coords = getCanvasCoordinates(e.clientX, e.clientY);
+    const rect = canvas.getBoundingClientRect();
     
-    // Button dimensions and positions (matching the render code in engine.js)
-    const buttonWidth = 120;
-    const buttonHeight = 40;
+    // Convert to canvas coordinates (matching the display scaling)
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    const x = (e.clientX - rect.left) / displayWidth * canvas.width;
+    const y = (e.clientY - rect.top) / displayHeight * canvas.height;
+    
+    // Button dimensions and positions (matching HUD.js exactly)
+    const buttonWidth = 32;
+    const buttonHeight = 32;
     const panelHeight = 300;
-    const buttonY = (canvas.height - panelHeight) / 2 + 200;
-    
+    const panelY = (canvas.height - panelHeight) / 2;
+    const buttonY = panelY + 200;
+
+    // Calculate button positions based on available buttons (matching HUD.js)
+    const availableButtons = [];
+    if (engine.hasPreviousLevel()) availableButtons.push('previous');
+    if (engine.hasNextLevel()) availableButtons.push('next');
+    availableButtons.push('restart');
+
+    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 10;
+    const startX = (canvas.width - totalButtonWidth) / 2;
+
+    let currentX = startX;
+
     // Check if click is within button area vertically
-    if (coords.y >= buttonY && coords.y <= buttonY + buttonHeight) {
+    if (y >= buttonY && y <= buttonY + buttonHeight) {
+      // Check Previous Level button
+      if (engine.hasPreviousLevel()) {
+        if (x >= currentX && x <= currentX + buttonWidth) {
+          console.log('Previous Level button clicked');
+          engine.handleLevelCompleteAction('previous');
+          return;
+        }
+        currentX += buttonWidth + 10;
+      }
+
+      // Check Next Level button
       if (engine.hasNextLevel()) {
-        // Next Level button
-        const nextButtonX = canvas.width / 2 - buttonWidth - 10;
-        if (coords.x >= nextButtonX && coords.x <= nextButtonX + buttonWidth) {
+        if (x >= currentX && x <= currentX + buttonWidth) {
           console.log('Next Level button clicked');
           engine.handleLevelCompleteAction('next');
           return;
         }
+        currentX += buttonWidth + 10;
       }
       
-      // Restart button
-      const restartButtonX = canvas.width / 2 + 10;
-      if (coords.x >= restartButtonX && coords.x <= restartButtonX + buttonWidth) {
+      // Check Restart button
+      if (x >= currentX && x <= currentX + buttonWidth) {
         console.log('Restart button clicked');
         engine.handleLevelCompleteAction('restart');
         return;

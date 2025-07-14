@@ -178,9 +178,7 @@ export class HUD {
     const clickX = event.clientX - rect.left;
     const clickY = event.clientY - rect.top;
     
-    const panelWidth = 400;
     const panelHeight = 300;
-    const panelX = (this.canvas.width - panelWidth) / 2;
     const panelY = (this.canvas.height - panelHeight) / 2;
     
     const buttonWidth = 32;
