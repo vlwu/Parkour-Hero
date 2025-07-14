@@ -120,15 +120,21 @@ export class Player {
   update(dt, canvasHeight, level = null) {
     try {
       if (this.isSpawning && !this.spawnComplete) {
-        // Only update animation timer and frame during spawn
-        this.animationTimer += dt;
-        if (this.animationTimer >= this.spawnAnimationSpeed) { 
-          this.animationTimer = 0;
-          const frameCount = this.animationFrames[this.state] || 1;
-          this.animationFrame = (this.animationFrame + 1) % frameCount;
+      // Only update animation timer and frame during spawn
+      this.animationTimer += dt;
+      if (this.animationTimer >= this.spawnAnimationSpeed) { 
+        this.animationTimer = 0;
+        this.animationFrame++;
+        // Check if spawn animation is complete
+        if (this.animationFrame >= this.animationFrames['spawn']) {
+          this.spawnComplete = true;
+          this.isSpawning = false;
+          this.state = 'idle';
+          this.animationFrame = 0; // Reset for idle state
         }
-        return;
       }
+      return;
+    }
 
       // Store previous position for collision resolution
       const prevX = this.x;
@@ -204,15 +210,7 @@ export class Player {
       if (!groundCollision) this.onGround = false; // Update onGround status
 
       // Handle spawn animation first
-      if (this.isSpawning && !this.spawnComplete) {
-        this.state = 'spawn';
-        // Check if spawn animation is complete
-        if (this.animationFrame >= this.animationFrames['spawn'] - 1) {
-          this.spawnComplete = true;
-          this.isSpawning = false;
-          this.state = 'idle';
-        }
-      } else if (!this.isDashing && this.onGround) {
+      if (!this.isDashing && this.onGround) {
         this.jumpCount = 0;
         this.usedDoubleJump = false;
         this.state = this.vx !== 0 ? 'run' : 'idle';

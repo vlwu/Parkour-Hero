@@ -12,11 +12,9 @@ if (!canvas || !ctx) {
   throw new Error('Canvas not available');
 }
 
-// Desired base resolution
 const BASE_WIDTH = 1280;
 const BASE_HEIGHT = 720;
 
-// Set canvas internal resolution
 canvas.width = BASE_WIDTH;
 canvas.height = BASE_HEIGHT;
 
@@ -88,7 +86,6 @@ function showLoadingIndicator() {
 // Show initial loading screen
 showLoadingIndicator();
 
-// --- Settings and Keybinds Logic ---
 const settingsButton = document.getElementById('settingsButton');
 const settingsModal = document.getElementById('settingsModal');
 const closeModalButton = document.getElementById('closeModalButton');
@@ -99,7 +96,7 @@ let keybinds = {
   moveLeft: 'a',
   moveRight: 'd',
   jump: 'w',
-  dash: ' ', // Spacebar
+  dash: ' ', 
 };
 
 let activeKeybindInput = null; // To track which input is currently being rebound
@@ -146,12 +143,11 @@ function toggleSettingsModal() {
   settingsModal.classList.toggle('hidden');
   
   if (!settingsModal.classList.contains('hidden')) {
-    // When modal opens, update display and pause game
     updateKeybindDisplay();
     updateSoundSettingsDisplay();
     
     if (typeof engine !== 'undefined') {
-      engine.pauseForSettings = true; // Add a specific flag
+      engine.pauseForSettings = true; 
       if (engine.isRunning) {
         engine.pause();
       }
@@ -159,7 +155,7 @@ function toggleSettingsModal() {
   } else {
     // When modal closes, resume game
     if (typeof engine !== 'undefined') {
-      engine.pauseForSettings = false; // Clear the flag
+      engine.pauseForSettings = false; 
       if (!engine.isRunning) {
         engine.resume();
       }
@@ -257,25 +253,6 @@ window.addEventListener('keydown', (e) => {
     }
   }
 });
-
-// Function to convert display coordinates to canvas coordinates
-function getCanvasCoordinates(clientX, clientY) {
-  const rect = canvas.getBoundingClientRect();
-  
-  // Get the display size of the canvas
-  const displayWidth = rect.width;
-  const displayHeight = rect.height;
-  
-  // Calculate the position relative to the canvas display area
-  const x = clientX - rect.left;
-  const y = clientY - rect.top;
-  
-  // Scale from display coordinates to internal canvas coordinates
-  const canvasX = (x / displayWidth) * canvas.width;
-  const canvasY = (y / displayHeight) * canvas.height;
-  
-  return { x: canvasX, y: canvasY };
-}
 
 // Add click handler for level complete screen
 canvas.addEventListener('click', (e) => {
