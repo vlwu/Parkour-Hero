@@ -170,15 +170,79 @@ export class HUD {
     ctx.restore();
   }
 
-  // Handle clicks on level complete screen
-  handleLevelCompleteClick(event, hasNextLevel, hasPreviousLevel) {
-    const rect = this.canvas.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
-    
+  drawPauseScreen(ctx) {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    // Overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Panel
+    const panelWidth = 400;
+    const panelHeight = 300;
+    const panelX = (this.canvas.width - panelWidth) / 2;
+    const panelY = (this.canvas.height - panelHeight) / 2;
+
+    ctx.fillStyle = 'rgba(50, 50, 50, 0.75)';
+    ctx.beginPath();
+    ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
+    ctx.fill();
+    ctx.strokeStyle = '#4d4d4dff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Title
+    ctx.fillStyle = '#FFA500';
+    ctx.font = 'bold 32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Paused', this.canvas.width / 2, panelY + 70);
+
+    // Instructions
+    ctx.fillStyle = '#fff';
+    ctx.font = '18px sans-serif';
+    ctx.fillText('Click the button or press ESC to resume', this.canvas.width / 2, panelY + 120);
+
+    // Resume button (example)
+    const buttonWidth = 200;
+    const buttonHeight = 50;
+    const buttonX = (this.canvas.width - buttonWidth) / 2;
+    const buttonY = panelY + 180;
+
+    ctx.fillStyle = '#4CAF50';
+    ctx.beginPath();
+    ctx.roundRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+    ctx.fill();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Resume', this.canvas.width / 2, buttonY + buttonHeight / 2);
+
+    ctx.restore();
+  }
+
+  handlePauseScreenClick(x, y) {
     const panelHeight = 300;
     const panelY = (this.canvas.height - panelHeight) / 2;
-    
+    const buttonWidth = 200;
+    const buttonHeight = 50;
+    const buttonX = (this.canvas.width - buttonWidth) / 2;
+    const buttonY = panelY + 180;
+
+    if (x >= buttonX && x <= buttonX + buttonWidth &&
+        y >= buttonY && y <= buttonY + buttonHeight) {
+      return 'resume';
+    }
+    return null;
+  }
+
+  // Handle clicks on level complete screen
+  handleLevelCompleteClick(x, y, hasNextLevel, hasPreviousLevel) {
+    const panelHeight = 300;
+    const panelY = (this.canvas.height - panelHeight) / 2;
+
     const buttonWidth = 32;
     const buttonHeight = 32;
     const buttonY = panelY + 200;
@@ -196,9 +260,8 @@ export class HUD {
 
     // Check Previous Level button
     if (hasPreviousLevel) {
-      if (clickX >= currentX && clickX <= currentX + buttonWidth &&
-          clickY >= buttonY && clickY <= buttonY + buttonHeight) {
-        event.stopPropagation();
+      if (x >= currentX && x <= currentX + buttonWidth &&
+          y >= buttonY && y <= buttonY + buttonHeight) {
         return 'previous';
       }
       currentX += buttonWidth + 10;
@@ -206,18 +269,16 @@ export class HUD {
 
     // Check Next Level button  
     if (hasNextLevel) {
-      if (clickX >= currentX && clickX <= currentX + buttonWidth &&
-          clickY >= buttonY && clickY <= buttonY + buttonHeight) {
-        event.stopPropagation();
+      if (x >= currentX && x <= currentX + buttonWidth &&
+          y >= buttonY && y <= buttonY + buttonHeight) {
         return 'next';
       }
       currentX += buttonWidth + 10;
     }
 
     // Check Restart button
-    if (clickX >= currentX && clickX <= currentX + buttonWidth &&
-        clickY >= buttonY && clickY <= buttonY + buttonHeight) {
-      event.stopPropagation();
+    if (x >= currentX && x <= currentX + buttonWidth &&
+        y >= buttonY && y <= buttonY + buttonHeight) {
       return 'restart';
     }
     

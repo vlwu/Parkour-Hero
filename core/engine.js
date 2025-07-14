@@ -106,10 +106,14 @@ export class Engine {
       if (this.player) {
         this.player.needsRespawn = false;
       }
+      
+      // Manually trigger a render to show the new paused state immediately
+      this.render(); 
   }
 
   // Resume the game
   resume() {
+    // Do not resume if the settings modal is the reason we're paused
     if (this.pauseForSettings) return; 
 
     if (!this.isRunning) {
@@ -320,9 +324,9 @@ export class Engine {
         );
       }
 
-      // Draw pause indicator
-      if (!this.isRunning && !this.gameState.showingLevelComplete) {
-        this.hud.drawPauseIndicator(ctx);
+      // Draw pause screen if game is paused for gameplay, not settings
+      if (!this.isRunning && !this.gameState.showingLevelComplete && !this.pauseForSettings) {
+        this.hud.drawPauseScreen(ctx);
       }
 
     } catch (error) {
@@ -450,7 +454,15 @@ export class Engine {
 
   handleCanvasClick(x, y) {
       if (this.gameState.showingLevelComplete) {
-          this.gameState.handleLevelCompleteClick(x, y);
+          const action = this.hud.handleLevelCompleteClick(x, y, this.gameState.hasNextLevel(), this.gameState.hasPreviousLevel());
+          if (action) {
+              this.gameState.handleLevelCompleteAction(action);
+          }
+      } else if (!this.isRunning) {
+          const action = this.hud.handlePauseScreenClick(x, y);
+          if (action === 'resume') {
+              this.resume();
+          }
       }
   }
 

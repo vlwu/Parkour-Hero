@@ -90,6 +90,7 @@ const settingsButton = document.getElementById('settingsButton');
 const settingsModal = document.getElementById('settingsModal');
 const closeModalButton = document.getElementById('closeModalButton');
 const keybindInputs = document.querySelectorAll('.keybind-item input');
+const pauseButton = document.getElementById('pauseButton');
 
 // Default keybinds
 let keybinds = {
@@ -100,6 +101,19 @@ let keybinds = {
 };
 
 let activeKeybindInput = null; // To track which input is currently being rebound
+
+// Function to update the pause button icon based on the engine's state
+function updatePauseButtonIcon() {
+  if (typeof engine === 'undefined') return;
+
+  if (engine.isRunning) {
+    pauseButton.classList.remove('is-paused');
+    pauseButton.setAttribute('aria-label', 'Pause');
+  } else {
+    pauseButton.classList.add('is-paused');
+    pauseButton.setAttribute('aria-label', 'Resume');
+  }
+}
 
 // Function to update the displayed keybinds in the modal
 function updateKeybindDisplay() {
@@ -151,6 +165,7 @@ function toggleSettingsModal() {
       if (engine.isRunning) {
         engine.pause();
       }
+      updatePauseButtonIcon(); // Update icon when modal opens
     }
   } else {
     // When modal closes, resume game
@@ -159,6 +174,7 @@ function toggleSettingsModal() {
       if (!engine.isRunning) {
         engine.resume();
       }
+      updatePauseButtonIcon(); // Update icon when modal closes
     }
   }
 }
@@ -208,7 +224,6 @@ function setupSoundSettings() {
 settingsButton.addEventListener('click', toggleSettingsModal);
 
 // Pause button functionality
-const pauseButton = document.getElementById('pauseButton');
 pauseButton.addEventListener('click', () => {
   if (typeof engine !== 'undefined') {
     if (engine.isRunning) {
@@ -218,6 +233,7 @@ pauseButton.addEventListener('click', () => {
       engine.resume();
       console.log('Game resumed');
     }
+    updatePauseButtonIcon(); // Update icon on click
   }
 });
 
@@ -244,67 +260,6 @@ mainMenuButton.addEventListener('click', () => {
     // Temporary main menu - just restart the current level
     engine.gameState.handleLevelCompleteAction('restart');
     console.log('Main menu clicked - restarting level (temporary)');
-  }
-});
-
-// Add click handler for level complete screen
-canvas.addEventListener('click', (e) => {
-  if (typeof engine !== 'undefined' && engine.gameState.showingLevelComplete) {
-    const rect = canvas.getBoundingClientRect();
-    
-    // Convert to canvas coordinates (matching the display scaling)
-    const displayWidth = rect.width;
-    const displayHeight = rect.height;
-    const x = (e.clientX - rect.left) / displayWidth * canvas.width;
-    const y = (e.clientY - rect.top) / displayHeight * canvas.height;
-    
-    // Button dimensions and positions (matching HUD.js exactly)
-    const buttonWidth = 32;
-    const buttonHeight = 32;
-    const panelHeight = 300;
-    const panelY = (canvas.height - panelHeight) / 2;
-    const buttonY = panelY + 200;
-
-    // Calculate button positions based on available buttons (matching HUD.js)
-    const availableButtons = [];
-    if (engine.gameState.hasPreviousLevel()) availableButtons.push('previous');
-    if (engine.gameState.hasNextLevel()) availableButtons.push('next');
-    availableButtons.push('restart');
-
-    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 10;
-    const startX = (canvas.width - totalButtonWidth) / 2;
-
-    let currentX = startX;
-
-    // Check if click is within button area vertically
-    if (y >= buttonY && y <= buttonY + buttonHeight) {
-      // Check Previous Level button
-      if (engine.gameState.hasPreviousLevel()) {
-        if (x >= currentX && x <= currentX + buttonWidth) {
-          console.log('Previous Level button clicked');
-          engine.gameState.handleLevelCompleteAction('previous');
-          return;
-        }
-        currentX += buttonWidth + 10;
-      }
-
-      // Check Next Level button
-      if (engine.gameState.hasNextLevel()) {
-        if (x >= currentX && x <= currentX + buttonWidth) {
-          console.log('Next Level button clicked');
-          engine.gameState.handleLevelCompleteAction('next');
-          return;
-        }
-        currentX += buttonWidth + 10;
-      }
-      
-      // Check Restart button
-      if (x >= currentX && x <= currentX + buttonWidth) {
-        console.log('Restart button clicked');
-        engine.gameState.handleLevelCompleteAction('restart');
-        return;
-      }
-    }
   }
 });
 
@@ -360,6 +315,10 @@ window.addEventListener('keydown', (e) => {
   
   // Handle global pause/resume key
   if (key === 'escape') {
+    // Do not toggle pause if settings modal is open
+    if (!settingsModal.classList.contains('hidden')) {
+      return;
+    }
     e.preventDefault();
     if (engine.isRunning) {
       engine.pause();
@@ -368,6 +327,7 @@ window.addEventListener('keydown', (e) => {
       engine.resume();
       console.log('Game resumed (keyboard)');
     }
+    updatePauseButtonIcon(); // Update icon on keypress
     return;
   }
 
@@ -383,7 +343,7 @@ window.addEventListener('keyup', (e) => {
 });
 
 canvas.addEventListener('click', (e) => {
-  if (typeof engine !== 'undefined' && engine.gameState.showingLevelComplete) {
+  if (typeof engine !== 'undefined') {
     const rect = canvas.getBoundingClientRect();
     const displayWidth = rect.width;
     const displayHeight = rect.height;
@@ -443,6 +403,7 @@ loadAssets().then((assets) => {
     
     // Set up sound settings after engine is initialized
     setupSoundSettings();
+    updatePauseButtonIcon(); // Set initial icon state
     
     // Enable audio context on first user interaction
     enableAudioOnFirstInteraction();

@@ -40,7 +40,7 @@ canvas {
   right: 20px;
   width: 48px;
   height: 48px;
-  background-image: url('assets/Menu/Buttons/Pause.png'); /* Replace with your actual pause icon path */
+  background-image: url('assets/Menu/Buttons/Pause.png'); /* Default state is Pause icon */
   background-size: cover;
   background-color: transparent;
   border: none;
@@ -48,10 +48,15 @@ canvas {
   z-index: 100;
   border-radius: 10%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease-in-out;
+  transition: transform 0.2s ease-in-out, background-image 0.1s linear; /* Added transition for image swap */
 }
 .pause-button:hover {
   transform: scale(1.1);
+}
+
+/* When paused, switch to the Resume icon */
+.pause-button.is-paused {
+  background-image: url('assets/Menu/Buttons/Play.png'); /* Paused state is Resume icon */
 }
 
 /* Main Menu Button */
