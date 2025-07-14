@@ -102,6 +102,7 @@ let keybinds = {
 let activeKeybindInput = null; // To track which input is currently being rebound
 
 let gamePaused = false;
+let showingPauseScreen = false; // Track if we're showing the enhanced pause screen
 
 // Function to update the displayed keybinds in the modal
 function updateKeybindDisplay() {
@@ -152,18 +153,73 @@ function toggleSettingsModal() {
       engine.pauseForSettings = true; 
       if (engine.isRunning) {
         engine.pause();
-        gamePaused = true; // Update pause state
+        gamePaused = true;
+        showingPauseScreen = false; // We're showing settings, not pause screen
       }
     }
   } else {
-    // When modal closes, resume game
+    // When modal closes, resume game if it was paused for settings
     if (typeof engine !== 'undefined') {
       engine.pauseForSettings = false; 
-      if (!engine.isRunning) {
+      if (!engine.isRunning && !showingPauseScreen) {
         engine.resume();
-        gamePaused = false; // Update pause state
+        gamePaused = false;
       }
     }
+  }
+}
+
+// Enhanced pause functionality
+function togglePause() {
+  if (typeof engine !== 'undefined') {
+    if (gamePaused && showingPauseScreen) {
+      // Resume from pause screen
+      engine.resume();
+      gamePaused = false;
+      showingPauseScreen = false;
+      console.log('Game resumed from pause screen');
+    } else if (!gamePaused && settingsModal.classList.contains('hidden')) {
+      // Pause and show pause screen
+      engine.pause();
+      gamePaused = true;
+      showingPauseScreen = true;
+      console.log('Game paused - showing pause screen');
+    }
+  }
+}
+
+// Handle pause screen actions
+function handlePauseScreenAction(action) {
+  if (!showingPauseScreen) return;
+  
+  switch(action) {
+    case 'resume':
+      engine.resume();
+      gamePaused = false;
+      showingPauseScreen = false;
+      console.log('Resumed from pause screen');
+      break;
+      
+    case 'restart':
+      engine.gameState.handleLevelCompleteAction('restart');
+      gamePaused = false;
+      showingPauseScreen = false;
+      console.log('Restarting level from pause screen');
+      break;
+      
+    case 'settings':
+      showingPauseScreen = false; // Hide pause screen
+      toggleSettingsModal(); // Show settings
+      console.log('Opening settings from pause screen');
+      break;
+      
+    case 'mainmenu':
+      // For now, just restart the level (you can implement proper main menu later)
+      engine.gameState.handleLevelCompleteAction('restart');
+      gamePaused = false;
+      showingPauseScreen = false;
+      console.log('Main menu from pause screen (restarting level)');
+      break;
   }
 }
 
@@ -211,21 +267,9 @@ function setupSoundSettings() {
 // Event listener for settings button
 settingsButton.addEventListener('click', toggleSettingsModal);
 
-// Pause button functionality
+// Updated pause button functionality
 const pauseButton = document.getElementById('pauseButton');
-pauseButton.addEventListener('click', () => {
-  if (typeof engine !== 'undefined') {
-    if (gamePaused) {
-      engine.resume();
-      gamePaused = false;
-      console.log('Game resumed');
-    } else {
-      engine.pause();
-      gamePaused = true;
-      console.log('Game paused');
-    }
-  }
-});
+pauseButton.addEventListener('click', togglePause);
 
 // Event listener for close modal button
 closeModalButton.addEventListener('click', toggleSettingsModal);
@@ -253,7 +297,80 @@ mainMenuButton.addEventListener('click', () => {
   }
 });
 
-// Global keydown listener for remapping keybinds
+// Enhanced canvas click handler
+canvas.addEventListener('click', (e) => {
+  if (typeof engine !== 'undefined') {
+    // Handle pause screen clicks
+    if (showingPauseScreen && engine.hud) {
+      const action = engine.hud.handlePauseScreenClick(e);
+      if (action) {
+        handlePauseScreenAction(action);
+        return;
+      }
+    }
+    
+    // Handle level complete screen clicks
+    if (engine.gameState.showingLevelComplete) {
+      const rect = canvas.getBoundingClientRect();
+      
+      // Convert to canvas coordinates (matching the display scaling)
+      const displayWidth = rect.width;
+      const displayHeight = rect.height;
+      const x = (e.clientX - rect.left) / displayWidth * canvas.width;
+      const y = (e.clientY - rect.top) / displayHeight * canvas.height;
+      
+      // Button dimensions and positions (matching HUD.js exactly)
+      const buttonWidth = 32;
+      const buttonHeight = 32;
+      const panelHeight = 300;
+      const panelY = (canvas.height - panelHeight) / 2;
+      const buttonY = panelY + 200;
+
+      // Calculate button positions based on available buttons (matching HUD.js)
+      const availableButtons = [];
+      if (engine.gameState.hasPreviousLevel()) availableButtons.push('previous');
+      if (engine.gameState.hasNextLevel()) availableButtons.push('next');
+      availableButtons.push('restart');
+
+      const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 10;
+      const startX = (canvas.width - totalButtonWidth) / 2;
+
+      let currentX = startX;
+
+      // Check if click is within button area vertically
+      if (y >= buttonY && y <= buttonY + buttonHeight) {
+        // Check Previous Level button
+        if (engine.gameState.hasPreviousLevel()) {
+          if (x >= currentX && x <= currentX + buttonWidth) {
+            console.log('Previous Level button clicked');
+            engine.gameState.handleLevelCompleteAction('previous');
+            return;
+          }
+          currentX += buttonWidth + 10;
+        }
+
+        // Check Next Level button
+        if (engine.gameState.hasNextLevel()) {
+          if (x >= currentX && x <= currentX + buttonWidth) {
+            console.log('Next Level button clicked');
+            engine.gameState.handleLevelCompleteAction('next');
+            return;
+          }
+          currentX += buttonWidth + 10;
+        }
+        
+        // Check Restart button
+        if (x >= currentX && x <= currentX + buttonWidth) {
+          console.log('Restart button clicked');
+          engine.gameState.handleLevelCompleteAction('restart');
+          return;
+        }
+      }
+    }
+  }
+});
+
+// Enhanced global keydown listener
 window.addEventListener('keydown', (e) => {
   // Only handle keybind remapping when settings modal is open AND actively remapping
   if (activeKeybindInput && !settingsModal.classList.contains('hidden')) {
@@ -281,94 +398,32 @@ window.addEventListener('keydown', (e) => {
       activeKeybindInput.classList.remove('active-rebind');
       activeKeybindInput = null;
     }
+    return;
   }
 
-  // Handle pause key (Escape) when not in settings
-  if (e.key === 'Escape' && settingsModal.classList.contains('hidden')) {
-    if (typeof engine !== 'undefined') {
-      if (gamePaused) {
-        engine.resume();
-        gamePaused = false;
-        console.log('Game resumed (keyboard)');
-      } else {
-        engine.pause();
-        gamePaused = true;
-        console.log('Game paused (keyboard)');
-      }
+  // Handle pause screen keyboard input
+  if (showingPauseScreen && engine && engine.hud) {
+    const action = engine.hud.handlePauseScreenKeyboard(e);
+    if (action) {
+      handlePauseScreenAction(action);
+      e.preventDefault();
+      return;
     }
+  }
+
+  // Handle pause key (Escape) when not in settings and not actively remapping
+  if (e.key === 'Escape' && settingsModal.classList.contains('hidden') && !activeKeybindInput) {
+    togglePause();
     e.preventDefault();
     return;
   }
-});
 
-// Add click handler for level complete screen
-canvas.addEventListener('click', (e) => {
-  if (typeof engine !== 'undefined' && engine.gameState.showingLevelComplete) {
-    const rect = canvas.getBoundingClientRect();
-    
-    // Convert to canvas coordinates (matching the display scaling)
-    const displayWidth = rect.width;
-    const displayHeight = rect.height;
-    const x = (e.clientX - rect.left) / displayWidth * canvas.width;
-    const y = (e.clientY - rect.top) / displayHeight * canvas.height;
-    
-    // Button dimensions and positions (matching HUD.js exactly)
-    const buttonWidth = 32;
-    const buttonHeight = 32;
-    const panelHeight = 300;
-    const panelY = (canvas.height - panelHeight) / 2;
-    const buttonY = panelY + 200;
-
-    // Calculate button positions based on available buttons (matching HUD.js)
-    const availableButtons = [];
-    if (engine.gameState.hasPreviousLevel()) availableButtons.push('previous');
-    if (engine.gameState.hasNextLevel()) availableButtons.push('next');
-    availableButtons.push('restart');
-
-    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 10;
-    const startX = (canvas.width - totalButtonWidth) / 2;
-
-    let currentX = startX;
-
-    // Check if click is within button area vertically
-    if (y >= buttonY && y <= buttonY + buttonHeight) {
-      // Check Previous Level button
-      if (engine.gameState.hasPreviousLevel()) {
-        if (x >= currentX && x <= currentX + buttonWidth) {
-          console.log('Previous Level button clicked');
-          engine.gameState.handleLevelCompleteAction('previous');
-          return;
-        }
-        currentX += buttonWidth + 10;
-      }
-
-      // Check Next Level button
-      if (engine.gameState.hasNextLevel()) {
-        if (x >= currentX && x <= currentX + buttonWidth) {
-          console.log('Next Level button clicked');
-          engine.gameState.handleLevelCompleteAction('next');
-          return;
-        }
-        currentX += buttonWidth + 10;
-      }
-      
-      // Check Restart button
-      if (x >= currentX && x <= currentX + buttonWidth) {
-        console.log('Restart button clicked');
-        engine.gameState.handleLevelCompleteAction('restart');
-        return;
-      }
-    }
-  }
-});
-
-// Add keyboard support for level complete screen
-window.addEventListener('keydown', (e) => {
-  // Only handle level complete keys when not in settings and level is complete
+  // Handle level complete screen keyboard input
   if (typeof engine !== 'undefined' && 
       engine.gameState.showingLevelComplete && 
       !activeKeybindInput && 
-      settingsModal.classList.contains('hidden')) {
+      settingsModal.classList.contains('hidden') &&
+      !showingPauseScreen) {
     
     switch(e.key.toLowerCase()) {
       case 'enter':
@@ -443,6 +498,19 @@ loadAssets().then((assets) => {
   try {
     // Initialize and start the game engine, passing keybinds
     engine = new Engine(ctx, canvas, assets, keybinds);
+    
+    // Set up a custom render callback to handle pause screen
+    const originalRender = engine.render.bind(engine);
+    engine.render = function() {
+      // Call the original render method
+      originalRender();
+      
+      // If we're showing the pause screen, render it on top
+      if (showingPauseScreen && this.hud) {
+        this.hud.drawPauseScreen(ctx, assets, this.currentLevel, this.player, this.soundManager);
+      }
+    };
+    
     engine.start();
     
     // Set up sound settings after engine is initialized
