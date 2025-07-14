@@ -130,8 +130,6 @@ export class Player {
           this.vx = 0;
           this.dashCooldownTimer = this.dashCooldown; // Start cooldown
 
-          // Restore state fast (no branching)
-          this.state = this.onGround ? 'idle' : (this.vy > 0 ? 'fall' : 'jump');
         }
       }
 
@@ -187,11 +185,11 @@ export class Player {
       if (!groundCollision) this.onGround = false;
 
       // Fast state update: skip if dashing
-      if (this.onGround) {
+      if (!this.isDashing && this.onGround) {
           this.jumpCount = 0;
           this.usedDoubleJump = false;
           this.state = this.vx !== 0 ? 'run' : 'idle';
-      } else if (this.state !== 'cling') {
+      } else if (!this.isDashing && this.state !== 'cling') {
           // Airborne states
           if (this.vy > 0) {
               this.state = 'fall';

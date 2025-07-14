@@ -85,7 +85,7 @@ export class Engine {
           return { type: 'first' };
       }
       // Double jump sound
-      else if (this.player.hasDoubleJump && !this.player.usedDoubleJump) {
+      else if (this.player.jumpCount === 1 && !this.player.onGround) {
           this.lastJumpTime = now;
           return { type: 'second' };
       }
