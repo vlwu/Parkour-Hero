@@ -136,6 +136,7 @@ export class Engine {
 
     if (this.player) {
       this.player.needsRespawn = false;
+      this.player.onGround = true; 
     }
   }
 
