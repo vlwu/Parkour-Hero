@@ -101,7 +101,7 @@ export class Level {
     return platform;
   }
 
-  // Add a fruit to the level (minimal allocation, direct push)
+  // Add a fruit to the level
   addFruit(x, y, fruitType) {
     this.fruits.push({
       x, y,
@@ -130,7 +130,7 @@ export class Level {
     };
   }
 
-  // Efficiently update fruit animations (single loop, minimal allocation)
+  // Efficiently update fruit animations 
   updateFruits(dt) {
     for (let i = 0, len = this.fruits.length; i < len; ++i) {
       const fruit = this.fruits[i];
@@ -144,7 +144,7 @@ export class Level {
     }
   }
 
-  // Return array of uncollected fruits (no allocation if all collected)
+  // Return array of uncollected fruits
   getActiveFruits() {
     if (!this.fruits.length) return [];
     const result = [];
@@ -173,7 +173,7 @@ export class Level {
     return true;
   }
 
-  // Fast collision check: returns first platform colliding with player, or null
+  // Returns first platform colliding with player, or null
   checkCollisionWithPlatforms(player) {
     const px = player.x, py = player.y, pw = player.width, ph = player.height;
     for (let i = 0, len = this.platforms.length; i < len; ++i) {
@@ -196,7 +196,6 @@ export class Level {
 
   // Efficiently render platforms and trophy; optimized for performance
   render(ctx, assets, camera) {
-    // Render platforms (no allocation, direct loop)
     for (let i = 0, len = this.platforms.length; i < len; ++i) {
       this.platforms[i].render(ctx, assets);
     }

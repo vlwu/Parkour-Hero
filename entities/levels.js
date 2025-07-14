@@ -1,6 +1,6 @@
 // Level configurations organized in sections for easy access and iteration
-
 // Each section is an array of levels; each level is a plain object
+
 export const levelSections = [
   // Section 1: Basic Mechanics
   [
@@ -242,5 +242,3 @@ export const levelSections = [
   ],
   // Section 2: Cloud 9 and Beyond
 ];
-
-// Data is structured for fast access and iteration; no unnecessary nesting or computation.

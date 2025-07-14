@@ -39,6 +39,8 @@ export class Player {
       fall: 1,
       dash: 1,
       cling: 5,
+      spawn: 7, 
+      despawn: 7,
     };
     
     // Physics constants
@@ -259,23 +261,21 @@ export class Player {
       const fromRight = prevX >= platform.x + platform.width;
 
       if (fromLeft) {
-        // Collided from left side
         this.x = platform.x - pw;
         this.vx = 0;
       } else if (fromRight) {
-        // Collided from right side
         this.x = platform.x + platform.width;
         this.vx = 0;
       }
 
       // Wall cling: only if airborne and falling
-      if (!this.onGround && this.vy > 0 && (fromLeft || fromRight)) {
+      if (!this.onGround && this.vy >= 0 && (fromLeft || fromRight)) {
         this.state = 'cling';
-        this.vy = 30;        // Slow fall while clinging
-        this.jumpCount = 1;  // Allow double jump off wall
+        this.vy = 30;        
+        this.jumpCount = 1;  
       }
 
-      break; // Only handle first collision for performance
+      break;
     }
   }
 
@@ -293,15 +293,14 @@ export class Player {
       const hitFromBelow = prevY >= platform.y + platform.height && this.vy < 0;
 
       if (hitFromAbove) {
-        // Land on platform
         this.y = platform.y - this.height;
         this.vy = 0;
         this.jumpCount = 0;
         this.onGround = true;
         groundCollision = true;
-        break; // Only handle first collision for performance
+        break; 
+
       } else if (hitFromBelow) {
-        // Hit underside of platform
         this.y = platform.y + platform.height;
         this.vy = 0;
         break;
@@ -312,11 +311,10 @@ export class Player {
   }
 
   isCollidingWith(platform) {
-    // Use local variables to minimize property lookups
     const px = platform.x, py = platform.y, pw = platform.width, ph = platform.height;
     const x = this.x, y = this.y, w = this.width, h = this.height;
-    // Early exit for non-overlapping cases
-    if (x + w <= px || x >= px + pw || y + h <= py || y >= py + ph) return false;
+    
+    if (x + w <= px || x >= px + pw || y + h <= py || y >= py + ph) return false; // Early exit for non-overlapping cases
     return true;
   }
 
@@ -342,7 +340,6 @@ export class Player {
       const srcX = frameWidth * this.animationFrame;
       const srcY = 0;
 
-      // Save context for transformations
       ctx.save();
 
       // Flip sprite horizontally if facing left
@@ -353,19 +350,19 @@ export class Player {
         ctx.translate(this.x, this.y);
       }
 
-      // Draw the specific frame from the sprite sheet
+      // Make it look like the player is touching the wall when clinging
       let drawOffsetX = 0;
-      const clingOffset = 7; // adjust as needed
+      const clingOffset = 7; 
       if (this.state === 'cling') {
-        drawOffsetX = this.direction === 'right' ? clingOffset : clingOffset;
+        drawOffsetX = clingOffset;
       }
 
       ctx.drawImage(
-        sprite,                    // source image
-        srcX, srcY,               // source x, y (frame position)
-        frameWidth, frameHeight,   // source width, height
-        drawOffsetX, 0,                     // destination x, y (relative to translation)
-        this.width, this.height   // destination width, height
+        sprite,                    
+        srcX, srcY,               
+        frameWidth, frameHeight, 
+        drawOffsetX, 0,                    
+        this.width, this.height  
       );
 
       // Restore context
@@ -386,7 +383,9 @@ export class Player {
       run: 'playerRun',
       dash: 'playerDash',
       cling: 'playerCling',
-      idle: 'playerIdle'
+      idle: 'playerIdle',
+      spawn: 'playerAppear',
+      despawn: 'playerDisappear',
     };
     return spriteMap[this.state] || 'playerIdle';
   }
@@ -398,9 +397,7 @@ export class Player {
     
     // Draw a simple face
     ctx.fillStyle = 'white';
-    ctx.fillRect(this.x + 8, this.y + 8, 4, 4);   // Left eye
-    ctx.fillRect(this.x + 20, this.y + 8, 4, 4);  // Right eye
-    ctx.fillRect(this.x + 12, this.y + 20, 8, 2); // Mouth
+    ctx.fillRect(this.x, this.y, 4, 4); 
     
     // Draw direction indicator
     ctx.fillStyle = 'red';

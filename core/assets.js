@@ -152,10 +152,8 @@ export async function loadAssets() {
   });
 
   try {
-    // Wait for all assets to load
     await Promise.all([...imagePromises, ...soundPromises]);
     
-    // Combine images and sounds into a single assets object
     const assets = { ...images, ...sounds };
     
     console.log('All assets loaded successfully!');
@@ -195,7 +193,6 @@ export function createFallbackImage(width = 64, height = 64, color = '#808080') 
   ctx.fillStyle = color;
   ctx.fillRect(0, 0, width, height);
   
-  // Add a simple pattern
   ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
   ctx.fillRect(0, 0, width/2, height/2);
   ctx.fillRect(width/2, height/2, width/2, height/2);
