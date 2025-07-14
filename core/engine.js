@@ -4,6 +4,7 @@ import { levelSections } from '../entities/levels.js';
 import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
 import { HUD } from '../ui/hud.js';
+import { GameState } from './game-state.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) {
@@ -27,12 +28,9 @@ export class Engine {
     this.setupAudioUnlock();
     
     // Level progression system
-    this.currentSection = 0;
-    this.currentLevelIndex = 0;
-    this.levelProgress = this.loadProgress();
-    this.showingLevelComplete = false;
-    
-    this.loadLevel(this.currentSection, this.currentLevelIndex);
+    this.gameState = new GameState(levelSections);
+
+    this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
     this.camera.snapToPlayer(this.player);
 
     this.initInput();
@@ -97,116 +95,6 @@ export class Engine {
       }
 
       return null;
-  }
-
-  // Load game progress
-  loadProgress() {
-    if (this.gameProgress) {
-      return this.gameProgress;
-    }
-    
-    this.gameProgress = {
-      unlockedSections: 1,
-      unlockedLevels: [1],
-      completedLevels: []
-    };
-    
-    return this.gameProgress;
-  }
-
-  // Save game progress
-  saveProgress() {
-    this.gameProgress = {
-      unlockedSections: this.levelProgress.unlockedSections,
-      unlockedLevels: this.levelProgress.unlockedLevels,
-      completedLevels: this.levelProgress.completedLevels
-    };
-  }
-
-  // Advance to next level
-  advanceLevel() {
-    const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
-    if (!this.levelProgress.completedLevels.includes(levelId)) {
-      this.levelProgress.completedLevels.push(levelId);
-    }
-
-    this.soundManager.play('level_complete', 1.0);
-    this.showingLevelComplete = true;
-    this.pause();
-  }
-
-  // Handle level complete screen actions
-  handleLevelCompleteAction(action) {
-    this.showingLevelComplete = false;
-
-    if (this.player) {
-      this.player.needsRespawn = false;
-    }
-
-    // Reset timer when transitioning to next level
-    if (action === 'next' || action === 'restart') {
-      this.levelStartTime = performance.now();
-      this.levelTime = 0;
-    }
-    
-    if (action === 'next') {
-      if (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) {
-        this.currentLevelIndex++;
-        this.loadLevel(this.currentSection, this.currentLevelIndex);
-      } else {
-        if (this.currentSection + 1 < levelSections.length) {
-          this.currentSection++;
-          this.currentLevelIndex = 0;
-          this.loadLevel(this.currentSection, this.currentLevelIndex);
-          
-          if (this.currentSection >= this.levelProgress.unlockedSections) {
-            this.levelProgress.unlockedSections = this.currentSection + 1;
-          }
-        } else {
-          console.log('Game completed!');
-          return;
-        }
-      }
-
-    } else if (action === 'restart') {
-      this.restartLevel();
-
-    } else if (action === 'previous') {
-      if (this.currentLevelIndex > 0) {
-        this.currentLevelIndex--;
-        this.loadLevel(this.currentSection, this.currentLevelIndex);
-      }
-    }
-    
-    this.resume();
-  }
-
-  handleLevelCompleteClick(event) {
-    if (!this.showingLevelComplete) return false;
-    
-    const action = this.hud.handleLevelCompleteClick(
-      event, 
-      this.hasNextLevel(),
-      this.hasPreviousLevel()
-    );
-    
-    if (action) {
-      this.handleLevelCompleteAction(action);
-      return true;
-    }
-    
-    return false;
-  }
-
-  // Check if there's a next level available
-  hasNextLevel() {
-    return (this.currentLevelIndex + 1 < levelSections[this.currentSection].length) ||
-          (this.currentSection + 1 < levelSections.length);
-  }
-
-  // Check if there's a previous level available
-  hasPreviousLevel() {
-    return this.currentLevelIndex > 0;
   }
 
   // Update keybinds
@@ -284,7 +172,7 @@ export class Engine {
     });
 
     window.addEventListener('click', (e) => {
-      if (this.handleLevelCompleteClick(e)) {
+      if (this.gameState.handleLevelCompleteClick(e)) {
         return;
       }
       
@@ -301,8 +189,8 @@ export class Engine {
       return;
     }
 
-    this.currentSection = sectionIndex;
-    this.currentLevelIndex = levelIndex;
+    this.gameState.currentSection = sectionIndex;
+    this.gameState.currentLevelIndex = levelIndex;
     this.currentLevel = createLevel(levelSections[sectionIndex][levelIndex]);
     this.fruits = this.currentLevel.fruits;
     this.fruitCount = 0;
@@ -317,15 +205,31 @@ export class Engine {
 
     this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
     this.camera.snapToPlayer(this.player);
-    
-    console.log(`Loaded: ${this.currentLevel.name}`);
-  }
+
+    // === BIND gameState dependencies AFTER player/hud are ready ===
+    this.levelStartTimeRef = { value: this.levelStartTime };
+    this.levelTimeRef = { value: this.levelTime };
+
+    this.gameState.bindDependencies({
+      player: this.player,
+      soundManager: this.soundManager,
+      hud: this.hud,
+      pause: this.pause.bind(this),
+      resume: this.resume.bind(this),
+      loadLevel: this.loadLevel.bind(this),
+      getLevelStartTimeRef: () => this.levelStartTimeRef,
+      getLevelTimeRef: () => this.levelTimeRef
+    });
+
+console.log(`Loaded: ${this.currentLevel.name}`);
+}
 
   update(dt) {
     try {
       // Update level timer
-      if (this.isRunning && !this.showingLevelComplete) {
-        this.levelTime = (performance.now() - this.levelStartTime) / 1000;
+      if (this.isRunning && !this.gameState.showingLevelComplete) {
+        this.levelTimeRef.value = (performance.now() - this.levelStartTimeRef.value) / 1000;
+        this.levelTime = this.levelTimeRef.value; // optional; only needed if you reference this.levelTime elsewhere
       }
 
       // Create input actions object
@@ -362,7 +266,7 @@ export class Engine {
       this.camera.update(this.player, dt);
 
       // Check if player needs to respawn
-      if (this.player.needsRespawn && !this.showingLevelComplete && this.isRunning) { 
+      if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) { 
         this.currentLevel.reset();
         this.player.respawn(this.currentLevel.startPosition);
         this.camera.shake(15, 0.5);
@@ -430,14 +334,14 @@ export class Engine {
       }
 
       // Skip other updates if showing level complete screen
-      if (this.showingLevelComplete) {
+      if (this.gameState.showingLevelComplete) {
         return;
       }
 
       // Check level completion
       if (this.currentLevel.isCompleted()) {
-        this.saveProgress();
-        this.advanceLevel();
+        this.gameState.saveProgress();
+        this.gameState.advanceLevel();
       }
 
     } catch (error) {
@@ -464,15 +368,15 @@ export class Engine {
       // Use HUD class for rendering
       this.hud.drawGameHUD(ctx, this.currentLevel, this.player, this.soundManager);
 
-      if (this.showingLevelComplete) {
+      if (this.gameState.showingLevelComplete) {
         this.hud.levelTime = this.levelTime; // Pass level time to HUD
         this.hud.drawLevelCompleteScreen(
           ctx, 
           this.currentLevel, 
           this.player, 
           this.assets, 
-          this.hasNextLevel(),
-          this.hasPreviousLevel(),
+          this.gameState.hasNextLevel(),
+          this.gameState.hasPreviousLevel(),
         );
       }
 
@@ -607,10 +511,5 @@ export class Engine {
   // Manual screen shake
   shakeScreen(intensity = 10, duration = 0.2) {
     this.camera.shake(intensity, duration);
-  }
-
-  // Restart current level
-  restartLevel() {
-    this.loadLevel(this.currentSection, this.currentLevelIndex);
   }
 }

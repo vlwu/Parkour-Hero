@@ -279,7 +279,7 @@ function getCanvasCoordinates(clientX, clientY) {
 
 // Add click handler for level complete screen
 canvas.addEventListener('click', (e) => {
-  if (typeof engine !== 'undefined' && engine.showingLevelComplete) {
+  if (typeof engine !== 'undefined' && engine.gameState.showingLevelComplete) {
     const rect = canvas.getBoundingClientRect();
     
     // Convert to canvas coordinates (matching the display scaling)
@@ -297,8 +297,8 @@ canvas.addEventListener('click', (e) => {
 
     // Calculate button positions based on available buttons (matching HUD.js)
     const availableButtons = [];
-    if (engine.hasPreviousLevel()) availableButtons.push('previous');
-    if (engine.hasNextLevel()) availableButtons.push('next');
+    if (engine.gameState.hasPreviousLevel()) availableButtons.push('previous');
+    if (engine.gameState.hasNextLevel()) availableButtons.push('next');
     availableButtons.push('restart');
 
     const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 10;
@@ -309,20 +309,20 @@ canvas.addEventListener('click', (e) => {
     // Check if click is within button area vertically
     if (y >= buttonY && y <= buttonY + buttonHeight) {
       // Check Previous Level button
-      if (engine.hasPreviousLevel()) {
+      if (engine.gameState.hasPreviousLevel()) {
         if (x >= currentX && x <= currentX + buttonWidth) {
           console.log('Previous Level button clicked');
-          engine.handleLevelCompleteAction('previous');
+          engine.gameState.handleLevelCompleteAction('previous');
           return;
         }
         currentX += buttonWidth + 10;
       }
 
       // Check Next Level button
-      if (engine.hasNextLevel()) {
+      if (engine.gameState.hasNextLevel()) {
         if (x >= currentX && x <= currentX + buttonWidth) {
           console.log('Next Level button clicked');
-          engine.handleLevelCompleteAction('next');
+          engine.gameState.handleLevelCompleteAction('next');
           return;
         }
         currentX += buttonWidth + 10;
@@ -331,7 +331,7 @@ canvas.addEventListener('click', (e) => {
       // Check Restart button
       if (x >= currentX && x <= currentX + buttonWidth) {
         console.log('Restart button clicked');
-        engine.handleLevelCompleteAction('restart');
+        engine.gameState.handleLevelCompleteAction('restart');
         return;
       }
     }
@@ -342,7 +342,7 @@ canvas.addEventListener('click', (e) => {
 window.addEventListener('keydown', (e) => {
   // Only handle level complete keys when not in settings and level is complete
   if (typeof engine !== 'undefined' && 
-      engine.showingLevelComplete && 
+      engine.gameState.showingLevelComplete && 
       !activeKeybindInput && 
       settingsModal.classList.contains('hidden')) {
     
@@ -350,26 +350,26 @@ window.addEventListener('keydown', (e) => {
       case 'enter':
       case ' ':
         // Space or Enter goes to next level if available, otherwise restart
-        if (engine.hasNextLevel()) {
+        if (engine.gameState.hasNextLevel()) {
           console.log('Next Level (keyboard)');
-          engine.handleLevelCompleteAction('next');
+          engine.gameState.handleLevelCompleteAction('next');
         } else {
           console.log('Restart (keyboard)');
-          engine.handleLevelCompleteAction('restart');
+          engine.gameState.handleLevelCompleteAction('restart');
         }
         e.preventDefault();
         break;
       case 'r':
         // R always restarts
         console.log('Restart (keyboard)');
-        engine.handleLevelCompleteAction('restart');
+        engine.gameState.handleLevelCompleteAction('restart');
         e.preventDefault();
         break;
       case 'n':
         // N goes to next level if available
-        if (engine.hasNextLevel()) {
+        if (engine.gameState.hasNextLevel()) {
           console.log('Next Level (keyboard)');
-          engine.handleLevelCompleteAction('next');
+          engine.gameState.handleLevelCompleteAction('next');
         }
         e.preventDefault();
         break;
