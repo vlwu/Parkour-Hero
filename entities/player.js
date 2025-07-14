@@ -315,7 +315,8 @@ export class Player {
       if (!this.isCollidingWith(platform)) continue;
 
       // Check if player is falling and hits the top of the platform
-      const hitFromAbove = prevY + this.height <= platform.y && this.vy > 0;
+      const groundTolerance = 1; // 1 pixel tolerance
+      const hitFromAbove = prevY + this.height <= platform.y + groundTolerance && this.vy >= 0;
       // Check if player is jumping and hits the bottom of the platform
       const hitFromBelow = prevY >= platform.y + platform.height && this.vy < 0;
 

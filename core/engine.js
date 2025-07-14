@@ -100,7 +100,6 @@ export class Engine {
 
   // Pause the game
   pause() {
-      if (this.pauseForSettings) return; // Don't pause if modal is opening
       this.isRunning = false;
       this.soundManager.stopAll();
 
@@ -111,16 +110,17 @@ export class Engine {
 
   // Resume the game
   resume() {
-      if (this.pauseForSettings) return; // Don't resume if modal is open
-      if (!this.isRunning) {
-        this.isRunning = true;
-        this.lastFrameTime = performance.now();
-        this.gameLoop();
-      }
+    if (this.pauseForSettings) return; 
 
-      if (this.player) {
-        this.player.needsRespawn = false;
-      }
+    if (!this.isRunning) {
+      this.isRunning = true;
+      this.lastFrameTime = performance.now();
+      this.gameLoop();
+    }
+
+    if (this.player) {
+      this.player.needsRespawn = false;
+    }
   }
 
   // Main game loop
