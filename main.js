@@ -157,6 +157,10 @@ function toggleSettingsModal() {
     if (typeof engine !== 'undefined') {
       engine.pauseForSettings = false; 
       if (!engine.isRunning) {
+        // Reset player position to prevent fall-through
+        if (engine.player) {
+          engine.player.vy = 0; // Stop any falling velocity
+        }
         engine.resume();
       }
     }

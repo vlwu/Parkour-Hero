@@ -57,11 +57,11 @@ canvas {
 /* Main Menu Button */
 .main-menu-button {
   position: absolute;
-  top: 136px; /* Directly below the settings button (48px height + 10px gap + margin) */
+  top: 136px; 
   right: 20px;
   width: 48px;
   height: 48px;
-  background-image: url('assets/Menu/Buttons/Levels.png'); /* Replace with your actual pause icon path */
+  background-image: url('assets/Menu/Buttons/Levels.png'); 
   background-size: cover;
   background-color: transparent;
   border: none;
@@ -82,11 +82,11 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black overlay */
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 200; /* Above the settings button */
+  z-index: 200; 
 }
 
 .modal-overlay.hidden {
@@ -283,8 +283,8 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #555; /* Slightly lighter background for items */
-  padding: 12px 15px; /* Slightly more padding */
+  background-color: #555; 
+  padding: 12px 15px; 
   border-radius: 8px;
 }
 
@@ -292,25 +292,25 @@ canvas {
   font-size: 1.1em;
   font-weight: bold;
   margin-right: 15px;
-  flex-grow: 1; /* Allow label to take available space */
+  flex-grow: 1; 
   text-align: left;
-  min-width: 120px; /* Ensure consistent label width */
+  min-width: 120px; 
 }
 
 .keybind-item input[type="text"] {
   background-color: #666;
   color: #fff;
   border: 1px solid #777;
-  padding: 10px 15px; /* Increased padding for better appearance */
+  padding: 10px 15px; 
   border-radius: 6px;
   font-size: 1.1em;
   text-align: center;
-  width: 120px; /* Increased from 80px to 120px */
-  min-width: 120px; /* Ensure minimum width */
+  width: 120px; 
+  min-width: 120px; 
   cursor: pointer;
   outline: none;
   transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
-  font-family: 'Courier New', monospace; /* Monospace font for better key display */
+  font-family: 'Courier New', monospace; 
 }
 
 .keybind-item input[type="text"]:hover {
@@ -319,7 +319,7 @@ canvas {
 }
 
 .keybind-item input[type="text"]:focus {
-  border-color: #007bff; /* Highlight on focus */
+  border-color: #007bff; 
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
@@ -350,7 +350,7 @@ canvas {
   }
 
   .keybind-item input[type="text"] {
-    width: 100%; /* Full width for input on small screens */
+    width: 100%; 
     text-align: center;
     min-width: auto;
   }
