@@ -213,7 +213,7 @@ export class Player {
           }
       }
 
-      // Wall boundaries (optimized, with concise comments)
+      // Wall boundaries 
       // Clamp player X position within [0, 1280 - width]
       if (this.x < 0) {
         this.x = 0;
@@ -238,7 +238,7 @@ export class Player {
     }
   }
 
-  // Fast respawn: reset position, velocity, state, timers
+  // reset position, velocity, state, timers
   respawn(startPosition) {
     this.x = startPosition.x;
     this.y = startPosition.y;
@@ -286,6 +286,8 @@ export class Player {
         this.state = 'cling';
         this.vy = 30;        // Slow fall while clinging
         this.jumpCount = 1;  // Allow double jump off wall
+        this.hasDoubleJump = true;
+        this.usedDoubleJump = false;
       }
 
       break; // Only handle first collision for performance
