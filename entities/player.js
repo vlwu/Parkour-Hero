@@ -264,7 +264,7 @@ export class Player {
     this.onGround = false;
     this.isDashing = false;
     this.dashTimer = this.dashCooldownTimer = 0;
-    this.state = 'idle';
+    this.state = 'spawn';
     this.animationFrame = this.animationTimer = 0;
     this.needsRespawn = false;
     this.isSpawning = true;
@@ -444,11 +444,6 @@ export class Player {
   }
 
   // Helper method to get player center point
-  getCenterX() {
-    return this.x + this.width / 2;
-  }
-
-  getCenterY() {
-    return this.y + this.height / 2;
-  }
+  getCenterX() { return this.x + this.width / 2; }
+  getCenterY() { return this.y + this.height / 2; }
 }

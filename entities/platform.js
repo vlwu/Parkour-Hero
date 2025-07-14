@@ -58,9 +58,9 @@ export class Platform {
         ctx.drawImage(
           terrainSprite,
           config.srcX, config.srcY,
-          this.tileSize, this.tileSize, // Source tile is always full
+          this.tileSize, this.tileSize, 
           tileX, this.y,
-          this.tileSize, this.tileSize  // Draw full tile
+          this.tileSize, this.tileSize 
         );
       }
 
@@ -117,16 +117,15 @@ export class Level {
 
   setTrophy(x, y) {
     this.trophy = {
-      x: x,
-      y: y,
+      x, y,
       size: 32,
       frameCount: 8,
       animationFrame: 0,
       animationTimer: 0,
-      animationSpeed: 0.35, // seconds between frames
+      animationSpeed: 0.35,
       acquired: false,
-      inactive: true, 
-      contactMade: false, // Add contact tracking
+      inactive: true,
+      contactMade: false,
     };
   }
 
