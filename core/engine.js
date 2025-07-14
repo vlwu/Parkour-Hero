@@ -39,15 +39,12 @@ export class Engine {
     this.wasJumpPressed = false;
     this.lastJumpTime = 0;
     this.jumpCooldown = 100; // ms
-    this.isFirstJump = true; 
 
     this.wasDashPressed = false;
 
     // Level timer
     this.levelStartTime = 0;
     this.levelTime = 0;
-
-    console.log('Engine initialized successfully');
   }
 
   // Audio unlock system
@@ -220,8 +217,6 @@ export class Engine {
       getLevelStartTimeRef: () => this.levelStartTimeRef,
       getLevelTimeRef: () => this.levelTimeRef
     });
-
-console.log(`Loaded: ${this.currentLevel.name}`);
 }
 
   update(dt) {
