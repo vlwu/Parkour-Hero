@@ -4,6 +4,9 @@ export class Player {
     this.y = y;
     this.width = 32;  // 32x32 sprite size
     this.height = 32;
+    this.spawnWidth = 96;   // Spawn animation size
+    this.spawnHeight = 96;
+
     this.vx = 0; // x and y velocity
     this.vy = 0; 
     this.needsRespawn = false;
@@ -381,12 +384,20 @@ export class Player {
         drawOffsetX = clingOffset;
       }
 
+      // Use spawn size during spawn animation, normal size otherwise
+      const renderWidth = (this.state === 'spawn') ? this.spawnWidth : this.width;
+      const renderHeight = (this.state === 'spawn') ? this.spawnHeight : this.height;
+
+      // Adjust position to center the larger spawn sprite
+      const renderX = (this.state === 'spawn') ? -(this.spawnWidth - this.width) / 2 : 0;
+      const renderY = (this.state === 'spawn') ? -(this.spawnHeight - this.height) / 2 : 0;
+
       ctx.drawImage(
         sprite,                    
         srcX, srcY,               
         frameWidth, frameHeight, 
-        drawOffsetX, 0,                    
-        this.width, this.height  
+        drawOffsetX + renderX, renderY,                    
+        renderWidth, renderHeight  
       );
 
       // Restore context
