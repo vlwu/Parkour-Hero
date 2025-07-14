@@ -101,6 +101,8 @@ let keybinds = {
 
 let activeKeybindInput = null; // To track which input is currently being rebound
 
+let gamePaused = false;
+
 // Function to update the displayed keybinds in the modal
 function updateKeybindDisplay() {
   keybindInputs.forEach(input => {
@@ -150,6 +152,7 @@ function toggleSettingsModal() {
       engine.pauseForSettings = true; 
       if (engine.isRunning) {
         engine.pause();
+        gamePaused = true; // Update pause state
       }
     }
   } else {
@@ -158,6 +161,7 @@ function toggleSettingsModal() {
       engine.pauseForSettings = false; 
       if (!engine.isRunning) {
         engine.resume();
+        gamePaused = false; // Update pause state
       }
     }
   }
@@ -207,6 +211,22 @@ function setupSoundSettings() {
 // Event listener for settings button
 settingsButton.addEventListener('click', toggleSettingsModal);
 
+// Pause button functionality
+const pauseButton = document.getElementById('pauseButton');
+pauseButton.addEventListener('click', () => {
+  if (typeof engine !== 'undefined') {
+    if (gamePaused) {
+      engine.resume();
+      gamePaused = false;
+      console.log('Game resumed');
+    } else {
+      engine.pause();
+      gamePaused = true;
+      console.log('Game paused');
+    }
+  }
+});
+
 // Event listener for close modal button
 closeModalButton.addEventListener('click', toggleSettingsModal);
 
@@ -221,6 +241,16 @@ keybindInputs.forEach(input => {
     input.value = 'Press a key...';
     input.classList.add('active-rebind');
   });
+});
+
+// Main menu button functionality (temporary)
+const mainMenuButton = document.getElementById('mainMenuButton');
+mainMenuButton.addEventListener('click', () => {
+  if (typeof engine !== 'undefined') {
+    // Temporary main menu - just restart the current level
+    engine.gameState.handleLevelCompleteAction('restart');
+    console.log('Main menu clicked - restarting level (temporary)');
+  }
 });
 
 // Global keydown listener for remapping keybinds
@@ -251,6 +281,23 @@ window.addEventListener('keydown', (e) => {
       activeKeybindInput.classList.remove('active-rebind');
       activeKeybindInput = null;
     }
+  }
+
+  // Handle pause key (Escape) when not in settings
+  if (e.key === 'Escape' && settingsModal.classList.contains('hidden')) {
+    if (typeof engine !== 'undefined') {
+      if (gamePaused) {
+        engine.resume();
+        gamePaused = false;
+        console.log('Game resumed (keyboard)');
+      } else {
+        engine.pause();
+        gamePaused = true;
+        console.log('Game paused (keyboard)');
+      }
+    }
+    e.preventDefault();
+    return;
   }
 });
 

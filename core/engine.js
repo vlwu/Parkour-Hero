@@ -382,6 +382,11 @@ export class Engine {
         );
       }
 
+      // Draw pause indicator
+      if (!this.isRunning && !this.gameState.showingLevelComplete) {
+        this.hud.drawPauseIndicator(ctx);
+      }
+
     } catch (error) {
       console.error('Error in render loop:', error);
       ctx.fillStyle = 'red';

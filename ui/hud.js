@@ -296,4 +296,20 @@ export class HUD {
     
     return `${minutes.toString().padStart(2, '0')}:${wholeSeconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
   }
+
+  drawPauseIndicator(ctx) {
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Pause text
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
+    
+    // Instructions
+    ctx.font = '20px Arial';
+    ctx.fillText('Press ESC or Pause button to resume', this.canvas.width / 2, this.canvas.height / 2 + 60);
+  }
 }
