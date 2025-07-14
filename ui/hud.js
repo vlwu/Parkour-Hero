@@ -1,4 +1,3 @@
-// Enhanced HUD.js with improved pause screen GUI
 export class HUD {
   constructor(canvas) {
     this.canvas = canvas;
@@ -63,197 +62,6 @@ export class HUD {
     } catch (error) {
       console.warn('Error drawing HUD:', error);
     }
-  }
-
-  // Enhanced pause screen with interactive menu
-  drawPauseScreen(ctx, assets, level, player, soundManager) {
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    
-    // Semi-transparent overlay with blur effect
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Main pause panel
-    const panelWidth = 450;
-    const panelHeight = 500;
-    const panelX = (this.canvas.width - panelWidth) / 2;
-    const panelY = (this.canvas.height - panelHeight) / 2;
-    
-    // Panel background with gradient
-    const gradient = ctx.createLinearGradient(panelX, panelY, panelX, panelY + panelHeight);
-    gradient.addColorStop(0, 'rgba(60, 70, 80, 0.95)');
-    gradient.addColorStop(1, 'rgba(40, 50, 60, 0.95)');
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
-    ctx.fill();
-    
-    // Panel border
-    ctx.strokeStyle = '#4d4d4dff';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    // Title
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 36px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.lineWidth = 2;
-    ctx.strokeText('GAME PAUSED', this.canvas.width / 2, panelY + 60);
-    ctx.fillText('GAME PAUSED', this.canvas.width / 2, panelY + 60);
-    
-    // Current level info
-    ctx.fillStyle = '#FFF';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.fillText(`Level: ${level.name}`, this.canvas.width / 2, panelY + 100);
-    
-    // Game stats
-    const totalFruits = level.getTotalFruitCount();
-    const collectedFruits = level.getFruitCount();
-    const deaths = player.deathCount || 0;
-    const timeText = this.formatTime(this.getCurrentLevelTime());
-    const soundSettings = soundManager.getSettings();
-    
-    ctx.font = '16px sans-serif';
-    ctx.fillStyle = '#CCC';
-    const statsY = panelY + 130;
-    const statsSpacing = 25;
-    
-    ctx.fillText(`Fruits Collected: ${collectedFruits} / ${totalFruits}`, this.canvas.width / 2, statsY);
-    ctx.fillText(`Deaths: ${deaths}`, this.canvas.width / 2, statsY + statsSpacing);
-    ctx.fillText(`Time: ${timeText}`, this.canvas.width / 2, statsY + statsSpacing * 2);
-    ctx.fillText(`Sound: ${soundSettings.enabled ? 'Enabled' : 'Disabled'} (${Math.round(soundSettings.volume * 100)}%)`, this.canvas.width / 2, statsY + statsSpacing * 3);
-    
-    // Menu buttons
-    const buttonWidth = 200;
-    const buttonHeight = 45;
-    const buttonSpacing = 15;
-    const buttonsStartY = panelY + 280;
-    
-    const buttons = [
-      { text: 'Resume Game', action: 'resume', color: '#4CAF50', hotkey: 'ESC' },
-      { text: 'Restart Level', action: 'restart', color: '#FF6B6B', hotkey: 'R' },
-      { text: 'Settings', action: 'settings', color: '#2196F3', hotkey: 'S' },
-      { text: 'Main Menu', action: 'mainmenu', color: '#9C27B0', hotkey: 'M' }
-    ];
-    
-    buttons.forEach((button, index) => {
-      const buttonX = (this.canvas.width - buttonWidth) / 2;
-      const buttonY = buttonsStartY + index * (buttonHeight + buttonSpacing);
-      
-      // Button background with gradient
-      const buttonGradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + buttonHeight);
-      buttonGradient.addColorStop(0, button.color);
-      buttonGradient.addColorStop(1, this.darkenColor(button.color, 0.2));
-      ctx.fillStyle = buttonGradient;
-      
-      ctx.beginPath();
-      ctx.roundRect(buttonX, buttonY, buttonWidth, buttonHeight, 8);
-      ctx.fill();
-      
-      // Button border
-      ctx.strokeStyle = this.darkenColor(button.color, 0.3);
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      
-      // Button text
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 18px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.lineWidth = 1;
-      ctx.strokeText(button.text, this.canvas.width / 2, buttonY + 28);
-      ctx.fillText(button.text, this.canvas.width / 2, buttonY + 28);
-      
-      // Hotkey indicator
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.font = '12px sans-serif';
-      ctx.fillText(`[${button.hotkey}]`, this.canvas.width / 2, buttonY + 42);
-    });
-    
-    // Instructions at bottom
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '14px sans-serif';
-    ctx.fillText('Click buttons or use hotkeys to navigate', this.canvas.width / 2, panelY + panelHeight - 20);
-    
-    ctx.restore();
-  }
-
-  // Handle clicks on pause screen
-  handlePauseScreenClick(event) {
-    const rect = this.canvas.getBoundingClientRect();
-    
-    // Convert to canvas coordinates (matching the display scaling)
-    const displayWidth = rect.width;
-    const displayHeight = rect.height;
-    const clickX = (event.clientX - rect.left) / displayWidth * this.canvas.width;
-    const clickY = (event.clientY - rect.top) / displayHeight * this.canvas.height;
-    
-    // Pause panel dimensions
-    const panelWidth = 450;
-    const panelHeight = 500;
-    const panelX = (this.canvas.width - panelWidth) / 2;
-    const panelY = (this.canvas.height - panelHeight) / 2;
-    
-    // Button dimensions
-    const buttonWidth = 200;
-    const buttonHeight = 45;
-    const buttonSpacing = 15;
-    const buttonsStartY = panelY + 280;
-    const buttonX = (this.canvas.width - buttonWidth) / 2;
-    
-    // Check which button was clicked
-    const buttons = ['resume', 'restart', 'settings', 'mainmenu'];
-    
-    for (let i = 0; i < buttons.length; i++) {
-      const buttonY = buttonsStartY + i * (buttonHeight + buttonSpacing);
-      
-      if (clickX >= buttonX && clickX <= buttonX + buttonWidth &&
-          clickY >= buttonY && clickY <= buttonY + buttonHeight) {
-        return buttons[i];
-      }
-    }
-    
-    return null; // No button clicked
-  }
-
-  // Handle keyboard input on pause screen
-  handlePauseScreenKeyboard(event) {
-    const key = event.key.toLowerCase();
-    
-    switch(key) {
-      case 'escape':
-        return 'resume';
-      case 'r':
-        return 'restart';
-      case 's':
-        return 'settings';
-      case 'm':
-        return 'mainmenu';
-      default:
-        return null;
-    }
-  }
-
-  // Utility function to darken colors
-  darkenColor(color, amount) {
-    // Simple color darkening - works with hex colors
-    if (color.startsWith('#')) {
-      const hex = color.slice(1);
-      const r = parseInt(hex.slice(0, 2), 16);
-      const g = parseInt(hex.slice(2, 4), 16);
-      const b = parseInt(hex.slice(4, 6), 16);
-      
-      const newR = Math.max(0, Math.floor(r * (1 - amount)));
-      const newG = Math.max(0, Math.floor(g * (1 - amount)));
-      const newB = Math.max(0, Math.floor(b * (1 - amount)));
-      
-      return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
-    }
-    
-    // For other color formats, return the original
-    return color;
   }
 
   // Draw level complete screen
@@ -416,6 +224,27 @@ export class HUD {
     return null; // No button clicked
   }
 
+  // Draw pause screen (for future use)
+  drawPauseScreen(ctx) {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Pause text
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 48px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 4;
+    ctx.strokeText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
+    ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
+    
+    ctx.restore();
+  }
+
   // Draw loading screen (for future use)
   drawLoadingScreen(ctx, progress = 0) {
     ctx.save();
@@ -468,7 +297,6 @@ export class HUD {
     return `${minutes.toString().padStart(2, '0')}:${wholeSeconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
   }
 
-  // Simple pause indicator (if you want to keep the old one too)
   drawPauseIndicator(ctx) {
     // Semi-transparent overlay
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
