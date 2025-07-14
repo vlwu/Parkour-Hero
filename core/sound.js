@@ -104,22 +104,21 @@ export class SoundManager {
       
       const playPromise = audioClone.play();
       
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          console.log(`✓ Successfully played sound: ${soundKey}`);
-        }).catch(error => {
-          console.error(`✗ Failed to play sound ${soundKey}:`, error);
-          
-          // Fallback to original audio element
-          try {
-            sound.currentTime = 0;
-            sound.volume = Math.min(this.volume * volumeMultiplier, 1.0);
-            sound.play();
-          } catch (fallbackError) {
-            console.error(`Fallback play failed for ${soundKey}:`, fallbackError);
-          }
-        });
-      }
+    if (playPromise !== undefined) {
+      playPromise.catch(error => {
+        console.error(`✗ Failed to play sound ${soundKey}:`, error);
+
+        // Fallback to original audio element
+        try {
+          sound.currentTime = 0;
+          sound.volume = Math.min(this.volume * volumeMultiplier, 1.0);
+          sound.play();
+        } catch (fallbackError) {
+          console.error(`Fallback play failed for ${soundKey}:`, fallbackError);
+        }
+      });
+    }
+
     } catch (error) {
       console.error(`Exception playing sound ${soundKey}:`, error);
     }
