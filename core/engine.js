@@ -406,7 +406,10 @@ export class Engine {
         this.hud.drawPauseIndicator(ctx);
       }
 
-      // Note: The enhanced pause screen is now rendered in main.js through the custom render callback
+      // Draw enhanced pause screen if showing
+      if (this.showingPauseScreen) {
+        this.hud.drawPauseScreen(ctx, this.assets, this.currentLevel, this.player, this.soundManager);
+      }
 
     } catch (error) {
       console.error('Error in render loop:', error);
