@@ -269,7 +269,7 @@ export class Engine {
         this.currentLevel.reset();
         this.player.respawn(this.currentLevel.startPosition);
         this.camera.shake(15, 0.5);
-        this.soundManager.play('death_sound');
+        this.soundManager.play('death_sound', 0.3);
         this.player.needsRespawn = false;
       }
 
