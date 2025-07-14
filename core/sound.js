@@ -1,4 +1,3 @@
-// Enhanced Sound Manager with settings integration
 export class SoundManager {
   constructor() {
     this.sounds = {};
@@ -6,6 +5,7 @@ export class SoundManager {
     this.volume = 0.8;
     this.audioContext = null;
     this.audioEnabled = false;
+    this.audioUnlocked = false; // Track if audio has been unlocked
     
     // In-memory settings storage (localStorage not supported in artifacts)
     this.settings = {
@@ -18,7 +18,6 @@ export class SoundManager {
 
   // Use in-memory storage instead of localStorage
   loadSettings() {
-    // Settings are now stored in memory only
     this.enabled = this.settings.enabled;
     this.volume = this.settings.volume;
     console.log('Sound settings loaded from memory:', { enabled: this.enabled, volume: this.volume });
@@ -76,7 +75,7 @@ export class SoundManager {
     console.log('Sounds registered:', Object.keys(this.sounds));
   }
 
-  // Simplified and more reliable play method
+  // Fixed play method with proper audio context handling
   play(soundKey, volumeMultiplier = 1.0) {
     if (!this.enabled) {
       console.log(`Sound disabled, not playing: ${soundKey}`);
@@ -86,6 +85,11 @@ export class SoundManager {
     if (!this.sounds[soundKey]) {
       console.warn(`Sound not found: ${soundKey}`);
       return;
+    }
+
+    // If audio hasn't been unlocked yet, unlock it first
+    if (!this.audioUnlocked) {
+      this.unlockAudio();
     }
 
     try {
@@ -161,56 +165,92 @@ export class SoundManager {
     }, 500);
   }
 
-  // Streamlined audio context initialization
+  // FIXED: Only create/resume AudioContext after user interaction
   enableAudioContext() {
     console.log('Enabling audio context...');
     
     try {
-      // Try to create and resume audio context
+      // Only create AudioContext if we don't have one
       if (!this.audioContext) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) {
           this.audioContext = new AudioContext();
+          console.log('AudioContext created, state:', this.audioContext.state);
         }
       }
       
+      // Only resume if suspended (this should now be called after user interaction)
       if (this.audioContext && this.audioContext.state === 'suspended') {
         this.audioContext.resume().then(() => {
-          console.log('Audio context resumed');
+          console.log('Audio context resumed successfully');
           this.audioEnabled = true;
+          this.audioUnlocked = true;
+        }).catch(error => {
+          console.warn('Failed to resume audio context:', error);
         });
-      } else {
+      } else if (this.audioContext && this.audioContext.state === 'running') {
+        console.log('Audio context already running');
         this.audioEnabled = true;
+        this.audioUnlocked = true;
       }
-      
-      // Simple audio unlock - play all sounds at zero volume
-      this.unlockAudio();
       
     } catch (error) {
       console.warn('Audio context setup error:', error);
     }
   }
 
-  // Simple audio unlock method
+  // FIXED: Improved audio unlock method
   unlockAudio() {
+    if (this.audioUnlocked) {
+      console.log('Audio already unlocked');
+      return;
+    }
+    
     console.log('Unlocking audio...');
     
-    Object.values(this.sounds).forEach(sound => {
+    // First, try to enable audio context
+    this.enableAudioContext();
+    
+    // Then unlock individual sounds
+    const unlockPromises = Object.entries(this.sounds).map(([key, sound]) => {
       if (sound) {
-        try {
-          const originalVolume = sound.volume;
-          sound.volume = 0;
-          sound.play().then(() => {
-            sound.pause();
-            sound.currentTime = 0;
-            sound.volume = originalVolume;
-          }).catch(() => {
-            // Ignore unlock errors
-          });
-        } catch (error) {
-          // Ignore unlock errors
-        }
+        return new Promise((resolve) => {
+          try {
+            const originalVolume = sound.volume;
+            sound.volume = 0;
+            
+            const playPromise = sound.play();
+            
+            if (playPromise !== undefined) {
+              playPromise.then(() => {
+                sound.pause();
+                sound.currentTime = 0;
+                sound.volume = originalVolume;
+                console.log(`✓ Unlocked sound: ${key}`);
+                resolve();
+              }).catch((error) => {
+                console.log(`✗ Failed to unlock sound ${key}:`, error);
+                sound.volume = originalVolume;
+                resolve();
+              });
+            } else {
+              sound.pause();
+              sound.currentTime = 0;
+              sound.volume = originalVolume;
+              resolve();
+            }
+          } catch (error) {
+            console.log(`✗ Exception unlocking sound ${key}:`, error);
+            resolve();
+          }
+        });
       }
+      return Promise.resolve();
+    });
+    
+    Promise.all(unlockPromises).then(() => {
+      this.audioUnlocked = true;
+      console.log('Audio unlock complete');
     });
   }
 
@@ -278,7 +318,8 @@ export class SoundManager {
     return {
       enabled: this.enabled,
       volume: this.volume,
-      audioEnabled: this.audioEnabled
+      audioEnabled: this.audioEnabled,
+      audioUnlocked: this.audioUnlocked
     };
   }
 
@@ -287,6 +328,11 @@ export class SoundManager {
     if (!this.sounds[soundKey]) {
       console.warn(`Sound not found for force play: ${soundKey}`);
       return;
+    }
+
+    // Ensure audio is unlocked for force play
+    if (!this.audioUnlocked) {
+      this.unlockAudio();
     }
 
     try {
@@ -320,6 +366,7 @@ export class SoundManager {
       enabled: this.enabled,
       volume: this.volume,
       audioEnabled: this.audioEnabled,
+      audioUnlocked: this.audioUnlocked,
       audioContext: this.audioContext?.state,
       soundCount: Object.keys(this.sounds).length,
       sounds: Object.keys(this.sounds).map(key => ({
@@ -335,6 +382,13 @@ export class SoundManager {
   // Quick sound test method
   quickTest() {
     console.log('=== QUICK SOUND TEST ===');
+    
+    // Ensure audio is unlocked first
+    if (!this.audioUnlocked) {
+      console.log('Audio not unlocked yet, unlocking...');
+      this.unlockAudio();
+    }
+    
     const testOrder = ['jump', 'collect', 'level_complete'];
     
     testOrder.forEach((soundKey, index) => {
