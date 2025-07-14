@@ -174,6 +174,7 @@ function togglePause() {
   if (typeof engine !== 'undefined') {
     if (gamePaused && showingPauseScreen) {
       // Resume from pause screen
+      engine.setPauseScreenState(false);
       engine.resume();
       gamePaused = false;
       showingPauseScreen = false;
@@ -181,6 +182,7 @@ function togglePause() {
     } else if (!gamePaused && settingsModal.classList.contains('hidden')) {
       // Pause and show pause screen
       engine.pause();
+      engine.setPauseScreenState(true);
       gamePaused = true;
       showingPauseScreen = true;
       console.log('Game paused - showing pause screen');
@@ -194,6 +196,7 @@ function handlePauseScreenAction(action) {
   
   switch(action) {
     case 'resume':
+      engine.setPauseScreenState(false);
       engine.resume();
       gamePaused = false;
       showingPauseScreen = false;
@@ -201,6 +204,7 @@ function handlePauseScreenAction(action) {
       break;
       
     case 'restart':
+      engine.setPauseScreenState(false);
       engine.gameState.handleLevelCompleteAction('restart');
       gamePaused = false;
       showingPauseScreen = false;
@@ -208,12 +212,14 @@ function handlePauseScreenAction(action) {
       break;
       
     case 'settings':
+      engine.setPauseScreenState(false);
       showingPauseScreen = false; // Hide pause screen
       toggleSettingsModal(); // Show settings
       console.log('Opening settings from pause screen');
       break;
       
     case 'mainmenu':
+      engine.setPauseScreenState(false);
       // For now, just restart the level (you can implement proper main menu later)
       engine.gameState.handleLevelCompleteAction('restart');
       gamePaused = false;

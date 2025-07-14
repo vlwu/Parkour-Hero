@@ -149,6 +149,11 @@ export class Engine {
     return !this.isRunning || this.pauseForSettings || this.showingPauseScreen;
   }
 
+  // Set pause screen state
+  setPauseScreenState(showing) {
+    this.showingPauseScreen = showing;
+  }
+
   // Main game loop
   gameLoop(currentTime = performance.now()) {
     if (!this.isRunning) return;
