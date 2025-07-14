@@ -136,37 +136,34 @@ export class Player {
       if (this.isDashing) {
         this.state = 'dash';
         this.dashTimer -= dt;
+        
+        this.x += this.vx * dt; // Apply dash movement
+        
         if (this.dashTimer <= 0) {
           this.isDashing = false;
           this.vx = 0;
-          this.dashCooldownTimer = this.dashCooldown; // Start cooldown
-
-          // Restore state fast (no branching)
+          this.dashCooldownTimer = this.dashCooldown;
           this.state = this.onGround ? 'idle' : (this.vy > 0 ? 'fall' : 'jump');
         }
+        
+        this.updateAnimation(dt); // Update animation
       }
 
-      // Apply gravity only when not dashing (dash is perfectly horizontal)
-      if (!this.isDashing) this.vy += this.gravity * dt;
-      
-      // Cap falling speed to prevent going too fast
-      if (this.vy > this.maxFallSpeed) this.vy = this.maxFallSpeed;
+      if (!this.isDashing) this.vy += this.gravity * dt; // Apply gravity only when not dashing (dash is perfectly horizontal)
+       
+      if (this.vy > this.maxFallSpeed) this.vy = this.maxFallSpeed; // Cap falling speed to prevent going too fast
 
-      // Update horizontal position
-      this.x += this.vx * dt;
+      this.x += this.vx * dt; // Update horizontal position
       
-      // Handle horizontal collision with platforms
-      if (level) this.handleHorizontalCollision(level, prevX);
+      if (level) this.handleHorizontalCollision(level, prevX); // Handle horizontal collision with platforms
 
-      // Update vertical position
-      this.y += this.vy * dt;
+      this.y += this.vy * dt; // Update vertical position
       
       // Handle vertical collision with platforms
       let groundCollision = false;
       if (level) groundCollision = this.handleVerticalCollision(level, prevY);
 
       // If clinging but no longer touching a wall, exit cling
-      // Fast wall cling exit: check if still touching wall
       if (this.state === 'cling') {
         let touchingWall = false;
         for (let i = 0, len = level.platforms.length; i < len; i++) {
@@ -281,11 +278,13 @@ export class Player {
         this.vx = 0;
       }
 
-      // Wall cling: only if airborne and falling
-      if (!this.onGround && this.vy > 0) {
+      // Wall cling
+      if (!this.onGround && this.vy >= 0) {
         this.state = 'cling';
         this.vy = 30;        // Slow fall while clinging
-        this.jumpCount = 1;  // Allow double jump off wall
+
+        // Allow double jump off wall
+        this.jumpCount = 1;  
         this.hasDoubleJump = true;
         this.usedDoubleJump = false;
       }
