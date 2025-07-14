@@ -269,7 +269,7 @@ export class Player {
       }
 
       // Wall cling: only if airborne and falling
-      if (!this.onGround && this.vy > 0) {
+      if (!this.onGround && this.vy > 0 && (fromLeft || fromRight)) {
         this.state = 'cling';
         this.vy = 30;        // Slow fall while clinging
         this.jumpCount = 1;  // Allow double jump off wall

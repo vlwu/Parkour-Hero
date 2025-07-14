@@ -80,7 +80,7 @@ export class Engine {
       }
 
       // Ground jump sound
-      if (this.player.onGround) {
+      if (this.player.onGround || this.player.jumpCount === 0) {
           this.lastJumpTime = now;
           return { type: 'first' };
       }
