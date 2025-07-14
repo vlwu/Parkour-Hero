@@ -43,6 +43,8 @@ export class Engine {
     this.jumpCooldown = 100; // ms
     this.isFirstJump = true; 
 
+    this.wasDashPressed = false;
+
     console.log('Engine initialized successfully');
   }
 
@@ -317,7 +319,10 @@ export class Engine {
       }
 
       // Play dash sound effect 
-      if (inputActions.dash && !this.player.isDashing && this.player.dashCooldownTimer <= 0) {
+      const dashJustPressed = inputActions.dash && !this.wasDashPressed;
+      this.wasDashPressed = inputActions.dash;
+
+      if (dashJustPressed && !this.player.isDashing && this.player.dashCooldownTimer <= 0) {
         this.soundManager.play('dash', 0.7);
       }
 
