@@ -217,6 +217,10 @@ export class Engine {
       getLevelStartTimeRef: () => this.levelStartTimeRef,
       getLevelTimeRef: () => this.levelTimeRef
     });
+
+    // Actually initialize the start time here
+    this.levelStartTime = performance.now();
+    this.levelStartTimeRef.value = this.levelStartTime;
 }
 
   update(dt) {
