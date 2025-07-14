@@ -1,0 +1,1 @@
+// Input manager for handling user input events (currently empty, code will be added later from engine.js)

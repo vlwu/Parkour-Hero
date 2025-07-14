@@ -12,58 +12,40 @@ export class Engine {
     this.canvas = canvas;
     this.assets = assets;
     this.lastFrameTime = 0;
-    this.keys = {};
+    this.keys = {}; // Still used to track keys from main.js
     this.keybinds = initialKeybinds;
     this.isRunning = false;
-    
+    this.pauseForSettings = false; // New property
+
     this.camera = new Camera(canvas.width, canvas.height);
-    this.hud = new HUD(canvas); // Initialize HUD
-    
-    // Initialize sound manager
+    this.hud = new HUD(canvas);
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
-    
-    // Audio context setup
-    this.audioUnlocked = false;
-    this.setupAudioUnlock();
-    
-    // Level progression system
-    this.gameState = new GameState(levelSections);
 
+    // Level timer properties now live directly in the engine
+    this.levelStartTime = 0;
+    this.levelTime = 0;
+
+    // GameState is now initialized *with* its dependencies.
+    this.gameState = new GameState(levelSections, {
+      loadLevel: this.loadLevel.bind(this),
+      pause: this.pause.bind(this),
+      resume: this.resume.bind(this),
+      getEngineState: () => ({
+        player: this.player,
+        soundManager: this.soundManager,
+        hud: this.hud,
+        levelTime: this.levelTime
+      })
+    });
+    
     this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
     this.camera.snapToPlayer(this.player);
 
-    this.initInput();
-    
-    // Simplified jump tracking
     this.wasJumpPressed = false;
     this.lastJumpTime = 0;
     this.jumpCooldown = 100; // ms
-
     this.wasDashPressed = false;
-
-    // Level timer
-    this.levelStartTime = 0;
-    this.levelTime = 0;
-  }
-
-  // Audio unlock system
-  setupAudioUnlock() {
-    const unlockAudio = () => {
-      if (this.audioUnlocked) return;
-      
-      this.soundManager.enableAudioContext();
-      this.audioUnlocked = true;
-      
-      // Remove event listeners after first unlock
-      document.removeEventListener('keydown', unlockAudio);
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
-    };
-
-    document.addEventListener('keydown', unlockAudio);
-    document.addEventListener('click', unlockAudio);
-    document.addEventListener('touchstart', unlockAudio);
   }
 
   // Simplified jump detection
@@ -118,26 +100,27 @@ export class Engine {
 
   // Pause the game
   pause() {
-    this.isRunning = false;
-    this.soundManager.stopAll();
+      if (this.pauseForSettings) return; // Don't pause if modal is opening
+      this.isRunning = false;
+      this.soundManager.stopAll();
 
-    if (this.player) {
-      this.player.needsRespawn = false;
-    }
+      if (this.player) {
+        this.player.needsRespawn = false;
+      }
   }
 
   // Resume the game
   resume() {
-    if (!this.isRunning) {
-      this.isRunning = true;
-      this.lastFrameTime = performance.now();
-      this.gameLoop();
-    }
+      if (this.pauseForSettings) return; // Don't resume if modal is open
+      if (!this.isRunning) {
+        this.isRunning = true;
+        this.lastFrameTime = performance.now();
+        this.gameLoop();
+      }
 
-    if (this.player) {
-      this.player.needsRespawn = false;
-      this.player.onGround = true; 
-    }
+      if (this.player) {
+        this.player.needsRespawn = false;
+      }
   }
 
   // Main game loop
@@ -151,33 +134,6 @@ export class Engine {
     this.render();
 
     requestAnimationFrame((time) => this.gameLoop(time));
-  }
-
-  // Initialize input handling
-  initInput() {
-    window.addEventListener('keydown', (e) => {
-      this.keys[e.key] = true;
-      this.keys[e.key.toLowerCase()] = true;
-      
-      if (!this.audioUnlocked) {
-        this.setupAudioUnlock();
-      }
-    });
-
-    window.addEventListener('keyup', (e) => {
-      this.keys[e.key] = false;
-      this.keys[e.key.toLowerCase()] = false;
-    });
-
-    window.addEventListener('click', (e) => {
-      if (this.gameState.handleLevelCompleteClick(e)) {
-        return;
-      }
-      
-      if (!this.audioUnlocked) {
-        this.setupAudioUnlock();
-      }
-    });
   }
 
   loadLevel(sectionIndex, levelIndex) {
@@ -207,32 +163,14 @@ export class Engine {
     this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
     this.camera.snapToPlayer(this.player);
 
-    // === BIND gameState dependencies AFTER player/hud are ready ===
-    this.levelStartTimeRef = { value: this.levelStartTime };
-    this.levelTimeRef = { value: this.levelTime };
-
-    this.gameState.bindDependencies({
-      player: this.player,
-      soundManager: this.soundManager,
-      hud: this.hud,
-      pause: this.pause.bind(this),
-      resume: this.resume.bind(this),
-      loadLevel: this.loadLevel.bind(this),
-      getLevelStartTimeRef: () => this.levelStartTimeRef,
-      getLevelTimeRef: () => this.levelTimeRef
-    });
-
-    // Actually initialize the start time here
     this.levelStartTime = performance.now();
-    this.levelStartTimeRef.value = this.levelStartTime;
 }
 
   update(dt) {
     try {
       // Update level timer
       if (this.isRunning && !this.gameState.showingLevelComplete) {
-        this.levelTimeRef.value = (performance.now() - this.levelStartTimeRef.value) / 1000;
-        this.levelTime = this.levelTimeRef.value; // optional; only needed if you reference this.levelTime elsewhere
+        this.levelTime = (performance.now() - this.levelStartTime) / 1000;
       }
 
       // Create input actions object
@@ -508,6 +446,16 @@ export class Engine {
         collected.size, collected.size
       );
     }
+  }
+
+  handleCanvasClick(x, y) {
+      if (this.gameState.showingLevelComplete) {
+          this.gameState.handleLevelCompleteClick(x, y);
+      }
+  }
+
+  handleKeyEvent(key, isDown) {
+      this.keys[key] = isDown;
   }
 
   // Get camera for external access

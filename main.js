@@ -101,8 +101,6 @@ let keybinds = {
 
 let activeKeybindInput = null; // To track which input is currently being rebound
 
-let gamePaused = false;
-
 // Function to update the displayed keybinds in the modal
 function updateKeybindDisplay() {
   keybindInputs.forEach(input => {
@@ -152,7 +150,6 @@ function toggleSettingsModal() {
       engine.pauseForSettings = true; 
       if (engine.isRunning) {
         engine.pause();
-        gamePaused = true; // Update pause state
       }
     }
   } else {
@@ -161,7 +158,6 @@ function toggleSettingsModal() {
       engine.pauseForSettings = false; 
       if (!engine.isRunning) {
         engine.resume();
-        gamePaused = false; // Update pause state
       }
     }
   }
@@ -215,14 +211,12 @@ settingsButton.addEventListener('click', toggleSettingsModal);
 const pauseButton = document.getElementById('pauseButton');
 pauseButton.addEventListener('click', () => {
   if (typeof engine !== 'undefined') {
-    if (gamePaused) {
-      engine.resume();
-      gamePaused = false;
-      console.log('Game resumed');
-    } else {
+    if (engine.isRunning) {
       engine.pause();
-      gamePaused = true;
       console.log('Game paused');
+    } else {
+      engine.resume();
+      console.log('Game resumed');
     }
   }
 });
@@ -250,54 +244,6 @@ mainMenuButton.addEventListener('click', () => {
     // Temporary main menu - just restart the current level
     engine.gameState.handleLevelCompleteAction('restart');
     console.log('Main menu clicked - restarting level (temporary)');
-  }
-});
-
-// Global keydown listener for remapping keybinds
-window.addEventListener('keydown', (e) => {
-  // Only handle keybind remapping when settings modal is open AND actively remapping
-  if (activeKeybindInput && !settingsModal.classList.contains('hidden')) {
-    e.preventDefault();
-    e.stopPropagation(); // Prevent event from reaching game
-    
-    const action = activeKeybindInput.dataset.action;
-    const newKey = e.key.toLowerCase();
-
-    if (
-      newKey &&
-      ((newKey.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ||
-      ['arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(newKey))
-    ) {
-      keybinds[action] = newKey;
-      updateKeybindDisplay();
-      activeKeybindInput.classList.remove('active-rebind');
-      activeKeybindInput = null;
-
-      if (typeof engine !== 'undefined') {
-        engine.updateKeybinds(keybinds);
-      }
-    } else {
-      activeKeybindInput.value = keybinds[action] === ' ' ? 'Space' : keybinds[action].toUpperCase();
-      activeKeybindInput.classList.remove('active-rebind');
-      activeKeybindInput = null;
-    }
-  }
-
-    // Handle pause key (Escape) when not in settings
-  if (e.key === 'Escape' && settingsModal.classList.contains('hidden')) {
-    if (typeof engine !== 'undefined') {
-      if (gamePaused) {
-        engine.resume();
-        gamePaused = false;
-        console.log('Game resumed (keyboard)');
-      } else {
-        engine.pause();
-        gamePaused = true;
-        console.log('Game paused (keyboard)');
-      }
-    }
-    e.preventDefault();
-    return;
   }
 });
 
@@ -362,42 +308,92 @@ canvas.addEventListener('click', (e) => {
   }
 });
 
-// Add keyboard support for level complete screen
 window.addEventListener('keydown', (e) => {
-  // Only handle level complete keys when not in settings and level is complete
-  if (typeof engine !== 'undefined' && 
-      engine.gameState.showingLevelComplete && 
-      !activeKeybindInput && 
-      settingsModal.classList.contains('hidden')) {
+  if (!engine) return;
+
+  const key = e.key.toLowerCase();
+
+  // Handle keybind remapping (highest priority)
+  if (activeKeybindInput && !settingsModal.classList.contains('hidden')) {
+    e.preventDefault();
+    e.stopPropagation();
     
-    switch(e.key.toLowerCase()) {
+    const action = activeKeybindInput.dataset.action;
+    if ((key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) || ['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(key)) {
+      keybinds[action] = key;
+      updateKeybindDisplay();
+      activeKeybindInput.classList.remove('active-rebind');
+      activeKeybindInput = null;
+      engine.updateKeybinds(keybinds);
+    } else {
+      updateKeybindDisplay(); // Restore previous value on invalid key
+      activeKeybindInput.classList.remove('active-rebind');
+      activeKeybindInput = null;
+    }
+    return; // Stop further processing
+  }
+
+  // Handle level complete screen keyboard input
+  if (engine.gameState.showingLevelComplete) {
+    let action = null;
+    switch(key) {
       case 'enter':
       case ' ':
-        // Space or Enter goes to next level if available, otherwise restart
-        if (engine.gameState.hasNextLevel()) {
-          console.log('Next Level (keyboard)');
-          engine.gameState.handleLevelCompleteAction('next');
-        } else {
-          console.log('Restart (keyboard)');
-          engine.gameState.handleLevelCompleteAction('restart');
-        }
-        e.preventDefault();
+        action = engine.gameState.hasNextLevel() ? 'next' : 'restart';
         break;
       case 'r':
-        // R always restarts
-        console.log('Restart (keyboard)');
-        engine.gameState.handleLevelCompleteAction('restart');
-        e.preventDefault();
+        action = 'restart';
         break;
       case 'n':
-        // N goes to next level if available
-        if (engine.gameState.hasNextLevel()) {
-          console.log('Next Level (keyboard)');
-          engine.gameState.handleLevelCompleteAction('next');
-        }
-        e.preventDefault();
+        if (engine.gameState.hasNextLevel()) action = 'next';
+        break;
+      case 'p': // Added for consistency
+        if (engine.gameState.hasPreviousLevel()) action = 'previous';
         break;
     }
+    if (action) {
+      e.preventDefault();
+      engine.gameState.handleLevelCompleteAction(action);
+    }
+    return; // Stop further processing
+  }
+  
+  // Handle global pause/resume key
+  if (key === 'escape') {
+    e.preventDefault();
+    if (engine.isRunning) {
+      engine.pause();
+      console.log('Game paused (keyboard)');
+    } else {
+      engine.resume();
+      console.log('Game resumed (keyboard)');
+    }
+    return;
+  }
+
+    if (!e.defaultPrevented) {
+      engine.handleKeyEvent(e.key.toLowerCase(), true);
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (engine) {
+    engine.handleKeyEvent(e.key.toLowerCase(), false);
+  }
+});
+
+canvas.addEventListener('click', (e) => {
+  if (typeof engine !== 'undefined' && engine.gameState.showingLevelComplete) {
+    const rect = canvas.getBoundingClientRect();
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    
+    // Convert click to canvas coordinates
+    const x = (e.clientX - rect.left) / displayWidth * canvas.width;
+    const y = (e.clientY - rect.top) / displayHeight * canvas.height;
+    
+    // Delegate the click handling to the engine
+    engine.handleCanvasClick(x, y);
   }
 });
 
