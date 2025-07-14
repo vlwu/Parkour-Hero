@@ -17,7 +17,7 @@ canvas {
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 48px; /* Size of the settings button image */
+  width: 48px;
   height: 48px;
   background-image: url('assets/Menu/Buttons/Settings.png'); /* Path to your settings button asset */
   background-size: cover;
@@ -25,7 +25,7 @@ canvas {
   border: none;
   cursor: pointer;
   z-index: 100; /* Ensure it's above the canvas */
-  border-radius: 50%; /* Make it round */
+  border-radius: 10%; 
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Subtle shadow */
   transition: transform 0.2s ease-in-out;
 }
@@ -46,11 +46,32 @@ canvas {
   border: none;
   cursor: pointer;
   z-index: 100;
-  border-radius: 50%;
+  border-radius: 10%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease-in-out;
 }
 .pause-button:hover {
+  transform: scale(1.1);
+}
+
+/* Main Menu Button */
+.main-menu-button {
+  position: absolute;
+  top: 136px; /* Directly below the settings button (48px height + 10px gap + margin) */
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background-image: url('assets/Menu/Buttons/Levels.png'); /* Replace with your actual pause icon path */
+  background-size: cover;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 100;
+  border-radius: 10%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease-in-out;
+}
+.main-menu-button:hover {
   transform: scale(1.1);
 }
 
@@ -74,18 +95,18 @@ canvas {
 
 /* Modal Content */
 .modal-content {
-  background-color: #333; /* Darker background for the modal */
+  background-color: #333; 
   padding: 30px;
-  border-radius: 12px; /* Rounded corners */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); /* Stronger shadow */
-  color: #eee; /* Light text color */
+  border-radius: 12px; 
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); 
+  color: #eee; 
   text-align: center;
   position: relative;
   width: 90%;
-  max-width: 600px; /* Increased from 500px to 600px */
-  max-height: 80vh; /* Limit height for scroll */
-  overflow-y: auto; /* Enable scroll if needed */
-  box-sizing: border-box; /* Include padding in width */
+  max-width: 600px; 
+  max-height: 80vh; 
+  overflow-y: auto; 
+  box-sizing: border-box; 
 }
 
 .modal-content h2 {
@@ -100,9 +121,9 @@ canvas {
   position: absolute;
   top: 15px;
   right: 15px;
-  width: 32px; /* Size of the close button image */
+  width: 32px; 
   height: 32px;
-  background-image: url('assets/Menu/Buttons/Close.png'); /* Path to your close button asset */
+  background-image: url('assets/Menu/Buttons/Close.png'); 
   background-size: cover;
   background-color: transparent;
   border: none;
