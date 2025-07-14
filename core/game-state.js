@@ -20,7 +20,6 @@ export class GameState {
     this.getLevelTimeRef = getLevelTimeRef;
   }
 
-  // Load game progress
   loadProgress() {
     if (this.gameProgress) {
       return this.gameProgress;
@@ -33,7 +32,6 @@ export class GameState {
     return this.gameProgress;
   }
 
-  // Save game progress
   saveProgress() {
     this.gameProgress = {
       unlockedSections: this.levelProgress.unlockedSections,
@@ -42,7 +40,6 @@ export class GameState {
     };
   }
 
-  // Advance to next level
   advanceLevel() {
     const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
     if (!this.levelProgress.completedLevels.includes(levelId)) {
@@ -54,18 +51,15 @@ export class GameState {
     this.pause();
   }
 
-  // Check if there's a next level available
   hasNextLevel() {
     return (this.currentLevelIndex + 1 < this.levelSections[this.currentSection].length) ||
           (this.currentSection + 1 < this.levelSections.length);
   }
 
-  // Check if there's a previous level available
   hasPreviousLevel() {
     return this.currentLevelIndex > 0;
   }
 
-  // Handle level complete screen actions
   handleLevelCompleteAction(action) {
     this.showingLevelComplete = false;
 
@@ -128,7 +122,6 @@ export class GameState {
     return false;
   }
 
-  // Restart current level
   restartLevel() {
     this.loadLevel(this.currentSection, this.currentLevelIndex);
   }

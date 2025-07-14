@@ -337,7 +337,6 @@ export class Engine {
         return;
       }
 
-      // Check level completion
       if (this.currentLevel.isCompleted()) {
         this.gameState.saveProgress();
         this.gameState.advanceLevel();

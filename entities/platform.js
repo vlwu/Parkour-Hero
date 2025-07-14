@@ -154,7 +154,6 @@ export class Level {
     return result;
   }
 
-  // Count collected fruits (single loop, no filter allocation)
   getFruitCount() {
     let count = 0;
     for (let i = 0, len = this.fruits.length; i < len; ++i) {
@@ -163,12 +162,10 @@ export class Level {
     return count;
   }
 
-  // Get total fruit count
   getTotalFruitCount() {
     return this.fruits.length;
   }
 
-  // Fast check if all fruits are collected (early exit)
   allFruitsCollected() {
     for (let i = 0, len = this.fruits.length; i < len; ++i) {
       if (!this.fruits[i].collected) return false;
@@ -240,7 +237,7 @@ export class Level {
 
     // Apply transparency if trophy is inactive
     if (trophy.inactive) {
-      ctx.globalAlpha = 0.5; // Make trophy semi-transparent
+      ctx.globalAlpha = 0.5; 
     }
 
     ctx.drawImage(
@@ -259,7 +256,6 @@ export class Level {
     const trophy = this.trophy;
     if (!trophy) return;
 
-    // Trophy is inactive until all fruits are collected
     trophy.inactive = !this.allFruitsCollected();
 
     // Animate only if active and not acquired
@@ -274,15 +270,12 @@ export class Level {
 
   // Fast check for level completion (all fruits + trophy acquired)
   isCompleted() {
-    // Avoid function call if no fruits
     if (this.fruits.length && !this.fruits.every(f => f.collected)) return false;
-    // Trophy must be acquired if present
     return !this.trophy || this.trophy.acquired;
   }
 
   // Reset level state for replay; optimized for performance
   reset() {
-    // Reset fruits in a single loop
     for (let i = 0, len = this.fruits.length; i < len; ++i) {
       const fruit = this.fruits[i];
       fruit.collected = false;

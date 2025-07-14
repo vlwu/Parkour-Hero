@@ -13,6 +13,10 @@ export async function loadAssets() {
     playerDash: 'assets/MainCharacters/PinkMan/dash.png',
     playerCling: 'assets/MainCharacters/PinkMan/wall_jump.png',
 
+    // 96 x 96
+    playerAppear: 'assets/MainCharacters/Appearing.png',
+    playerDisappear: 'assets/MainCharacters/Disappearing.png',
+
     // Fruit spritesheets (animated)
     fruit_apple: 'assets/Items/Fruits/Apple.png',
     fruit_bananas: 'assets/Items/Fruits/Bananas.png',

@@ -9,7 +9,6 @@ export class HUD {
     this.isVisible = visible;
   }
 
-  // Draw the main game HUD
   drawGameHUD(ctx, level, player, soundManager) {
     if (!this.isVisible) return;
 
@@ -40,7 +39,6 @@ export class HUD {
         `Sound: ${soundSettings.enabled ? 'On' : 'Off'} (${Math.round(soundSettings.volume * 100)}%)`
       ];
 
-      // Text styling
       ctx.font = '16px sans-serif';
       ctx.strokeStyle = 'black';
       ctx.lineWidth = 2;
@@ -286,7 +284,6 @@ export class HUD {
 
   // Get current level time from engine
   getCurrentLevelTime() {
-    // This will be passed from the engine
     return this.levelTime || 0;
   }
 
