@@ -81,13 +81,13 @@ export class HUD {
     const panelX = (this.canvas.width - panelWidth) / 2;
     const panelY = (this.canvas.height - panelHeight) / 2;
     
-    ctx.fillStyle = 'rgba(50, 50, 50, 0.95)';
+    ctx.fillStyle = 'rgba(50, 50, 50, 0.75)';
     ctx.beginPath();
     ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
     ctx.fill();
     
     ctx.strokeStyle = '#4d4d4dff';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     ctx.stroke();
     
     // Title
@@ -97,13 +97,12 @@ export class HUD {
     ctx.fillText(`Level Complete!`, this.canvas.width / 2, panelY + 60);
     
     // Stats
-    const totalFruits = level.getTotalFruitCount();
-    const collectedFruits = level.getFruitCount();
     const deaths = player.deathCount || 0;
+    const timeText = this.formatTime(this.getCurrentLevelTime());
     
     ctx.fillStyle = '#fff';
     ctx.font = '18px sans-serif';
-    ctx.fillText(`Time Taken: placeholder`, this.canvas.width / 2, panelY + 120);
+    ctx.fillText(`Time Taken: ${timeText}`, this.canvas.width / 2, panelY + 120);
     ctx.fillText(`Deaths: ${deaths}`, this.canvas.width / 2, panelY + 150);
     
     // Buttons
@@ -238,5 +237,21 @@ export class HUD {
     ctx.fillText(`${Math.round(progress * 100)}%`, this.canvas.width / 2, barY + 40);
     
     ctx.restore();
+  }
+
+  // Get current level time from engine
+  getCurrentLevelTime() {
+    // This will be passed from the engine
+    return this.levelTime || 0;
+  }
+
+  // Format time as MM:SS.mmm
+  formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    const wholeSeconds = Math.floor(remainingSeconds);
+    const milliseconds = Math.floor((remainingSeconds - wholeSeconds) * 1000);
+    
+    return `${minutes.toString().padStart(2, '0')}:${wholeSeconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
   }
 }

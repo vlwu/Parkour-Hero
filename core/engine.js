@@ -45,6 +45,10 @@ export class Engine {
 
     this.wasDashPressed = false;
 
+    // Level timer
+    this.levelStartTime = 0;
+    this.levelTime = 0;
+
     console.log('Engine initialized successfully');
   }
 
@@ -137,6 +141,12 @@ export class Engine {
 
     if (this.player) {
       this.player.needsRespawn = false;
+    }
+
+    // Reset timer when transitioning to next level
+    if (action === 'next' || action === 'restart') {
+      this.levelStartTime = performance.now();
+      this.levelTime = 0;
     }
     
     if (action === 'next') {
@@ -300,6 +310,11 @@ export class Engine {
 
   update(dt) {
     try {
+      // Update level timer
+      if (this.isRunning && !this.showingLevelComplete) {
+        this.levelTime = (performance.now() - this.levelStartTime) / 1000;
+      }
+
       // Create input actions object
       const inputActions = {
         moveLeft: this.keys[this.keybinds.moveLeft] || false,
@@ -437,6 +452,7 @@ export class Engine {
       this.hud.drawGameHUD(ctx, this.currentLevel, this.player, this.soundManager);
 
       if (this.showingLevelComplete) {
+        this.hud.levelTime = this.levelTime; // Pass level time to HUD
         this.hud.drawLevelCompleteScreen(
           ctx, 
           this.currentLevel, 
