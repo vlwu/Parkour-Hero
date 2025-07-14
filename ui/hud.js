@@ -208,7 +208,7 @@ export class HUD {
       currentX += buttonWidth + 10;
     }
 
-    // Check Next Level button
+    // Check Next Level button  
     if (hasNextLevel) {
       if (clickX >= currentX && clickX <= currentX + buttonWidth &&
           clickY >= buttonY && clickY <= buttonY + buttonHeight) {
@@ -217,7 +217,7 @@ export class HUD {
       }
       currentX += buttonWidth + 10;
     }
-    
+
     // Check Restart button
     if (clickX >= currentX && clickX <= currentX + buttonWidth &&
         clickY >= buttonY && clickY <= buttonY + buttonHeight) {
