@@ -30,6 +30,10 @@ export class Engine {
     // Level progression system
     this.gameState = new GameState(levelSections);
 
+    // Pause system flags
+    this.pauseForSettings = false; // Flag to track if paused for settings modal
+    this.showingPauseScreen = false; // Flag to track if showing pause screen
+
     this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
     this.camera.snapToPlayer(this.player);
 
@@ -116,7 +120,7 @@ export class Engine {
     this.soundManager.stopAll();
   }
 
-  // Pause the game
+  // Pause the game - enhanced to work with pause screen system
   pause() {
     this.isRunning = false;
     this.soundManager.stopAll();
@@ -126,7 +130,7 @@ export class Engine {
     }
   }
 
-  // Resume the game
+  // Resume the game - enhanced to work with pause screen system
   resume() {
     if (!this.isRunning) {
       this.isRunning = true;
@@ -138,6 +142,11 @@ export class Engine {
       this.player.needsRespawn = false;
       this.player.onGround = true; 
     }
+  }
+
+  // Check if the game is paused (including settings modal)
+  isPaused() {
+    return !this.isRunning || this.pauseForSettings || this.showingPauseScreen;
   }
 
   // Main game loop
@@ -229,10 +238,15 @@ export class Engine {
 
   update(dt) {
     try {
-      // Update level timer
-      if (this.isRunning && !this.gameState.showingLevelComplete) {
+      // Update level timer only if not paused and not showing level complete
+      if (this.isRunning && !this.gameState.showingLevelComplete && !this.showingPauseScreen) {
         this.levelTimeRef.value = (performance.now() - this.levelStartTimeRef.value) / 1000;
         this.levelTime = this.levelTimeRef.value; // optional; only needed if you reference this.levelTime elsewhere
+      }
+
+      // Skip game logic updates if paused (but still allow level complete screen updates)
+      if (this.showingPauseScreen) {
+        return;
       }
 
       // Create input actions object
@@ -382,10 +396,12 @@ export class Engine {
         );
       }
 
-      // Draw pause indicator
-      if (!this.isRunning && !this.gameState.showingLevelComplete) {
+      // Draw pause indicator only if paused but not showing enhanced pause screen
+      if (!this.isRunning && !this.gameState.showingLevelComplete && !this.showingPauseScreen) {
         this.hud.drawPauseIndicator(ctx);
       }
+
+      // Note: The enhanced pause screen is now rendered in main.js through the custom render callback
 
     } catch (error) {
       console.error('Error in render loop:', error);
