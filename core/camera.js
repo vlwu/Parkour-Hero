@@ -25,6 +25,8 @@ export class Camera {
     // Shake effect properties
     this.shakeTimer = 0;
     this.shakeIntensity = 0;
+    this.shakeInitialIntensity = 0;
+    this.shakeDuration = 0;
     this.shakeX = 0;
     this.shakeY = 0;
     
@@ -98,8 +100,9 @@ export class Camera {
       this.shakeX = (Math.random() - 0.5) * this.shakeIntensity;
       this.shakeY = (Math.random() - 0.5) * this.shakeIntensity;
       
-      // Gradually reduce shake intensity
-      this.shakeIntensity *= 0.8;
+      // Gradually reduce shake intensity based on time, not frame rate
+      const decayRate = this.shakeInitialIntensity / this.shakeDuration;
+      this.shakeIntensity = Math.max(0, this.shakeIntensity - decayRate * deltaTime);
       
       if (this.shakeTimer <= 0) {
         this.shakeX = 0;
@@ -112,7 +115,9 @@ export class Camera {
   // Start a screen shake effect
   shake(intensity = 10, duration = 0.3) {
     this.shakeTimer = duration;
+    this.shakeDuration = duration;
     this.shakeIntensity = intensity;
+    this.shakeInitialIntensity = intensity;
   }
 
   // Apply camera transformation to the rendering context

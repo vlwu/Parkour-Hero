@@ -46,28 +46,24 @@ export class Engine {
     this.camera.snapToPlayer(this.player);
 
     this.wasJumpPressed = false;
-    this.lastJumpTime = 0;
-    this.jumpCooldown = 100;
+    this.jumpSoundCooldownTimer = 0;
     this.wasDashPressed = false;
   }
   
   detectJumpSound(inputActions) {
-      const now = Date.now();
-      const jumpPressed = inputActions.jump;
-      
-      const jumpJustPressed = jumpPressed && !this.wasJumpPressed;
-      this.wasJumpPressed = jumpPressed;
+      const jumpJustPressed = inputActions.jump && !this.wasJumpPressed;
+      this.wasJumpPressed = inputActions.jump;
 
-      if (!jumpJustPressed || (now - this.lastJumpTime) < this.jumpCooldown) {
+      if (!jumpJustPressed || this.jumpSoundCooldownTimer > 0) {
           return null;
       }
 
       if (this.player.onGround || this.player.jumpCount === 0) {
-          this.lastJumpTime = now;
+          this.jumpSoundCooldownTimer = 0.1; // 100ms cooldown
           return { type: 'first' };
       }
       else if (this.player.jumpCount === 1 && !this.player.onGround) {
-          this.lastJumpTime = now;
+          this.jumpSoundCooldownTimer = 0.1; // 100ms cooldown
           return { type: 'second' };
       }
 
@@ -161,6 +157,11 @@ export class Engine {
     try {
       if (this.isRunning && !this.gameState.showingLevelComplete) {
         this.levelTime = (performance.now() - this.levelStartTime) / 1000;
+      }
+
+      // Update cooldown timers
+      if (this.jumpSoundCooldownTimer > 0) {
+        this.jumpSoundCooldownTimer -= dt;
       }
 
       const inputActions = {

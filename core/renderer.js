@@ -22,8 +22,8 @@ export class Renderer {
   drawBackground(camera) {
     const bg = this.assets.backgroundTile;
 
-    if (!bg) {
-      // Fallback solid color gradient if the asset is missing
+    if (!bg || !bg.complete || bg.naturalWidth === 0) {
+      // Fallback solid color gradient if the asset is missing or not loaded
       const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
       gradient.addColorStop(0, '#87CEEB');
       gradient.addColorStop(1, '#98FB98');
@@ -55,10 +55,8 @@ export class Renderer {
             tileSize, tileSize
           );
         } catch (error) {
-          // A single warning is better than spamming the console
-          if (i === startX && j === startY) {
-            console.warn('Failed to draw background tile:', error);
-          }
+          // This catch is for rare cases where a loaded image is corrupt.
+          console.warn('Failed to draw background tile, using fallback color.', error);
           this.ctx.fillStyle = '#87CEEB';
           this.ctx.fillRect(x, y, tileSize, tileSize);
         }

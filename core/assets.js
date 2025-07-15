@@ -21,29 +21,33 @@ function loadImage(src, key) {
   return new Promise((resolve) => {
     const img = new Image();
     const timeout = 10000;
-    
-    const timer = setTimeout(() => {
-      console.warn(`Timeout loading image: ${src}. Using fallback.`);
+
+    let fallbackUsed = false;
+
+    const createFallback = () => {
+      if (fallbackUsed) return;
+      fallbackUsed = true;
+      console.warn(`Failed or timed out loading image: ${src}. Using fallback.`);
       let color = '#808080'; // Default grey
       if (key.includes('player')) color = '#ff8c21';
       else if (key.includes('fruit')) color = '#FF6B6B';
       const fallbackCanvas = createFallbackCanvas(32, 32, color);
-      img.src = fallbackCanvas.toDataURL();
-    }, timeout);
+      const fallbackImage = new Image();
+      fallbackImage.src = fallbackCanvas.toDataURL();
+      fallbackImage.onload = () => resolve(fallbackImage); // Resolve with the new fallback image
+    };
+    
+    const timer = setTimeout(createFallback, timeout);
 
     img.onload = () => {
+      if (fallbackUsed) return;
       clearTimeout(timer);
       resolve(img);
     };
     
     img.onerror = () => {
       clearTimeout(timer);
-      console.error(`Failed to load image: ${src}. Using fallback.`);
-      let color = '#808080';
-      if (key.includes('player')) color = '#ff8c21';
-      else if (key.includes('fruit')) color = '#FF6B6B';
-      const fallbackCanvas = createFallbackCanvas(32, 32, color);
-      img.src = fallbackCanvas.toDataURL();
+      createFallback();
     };
 
     img.crossOrigin = 'anonymous';
@@ -57,25 +61,33 @@ function loadSound(src, key) {
     const audio = new Audio();
     const timeout = 10000;
     
-    const timer = setTimeout(() => {
-      console.warn(`Timeout loading sound: ${src}. Using silent fallback.`);
-      audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-    }, timeout);
+    let fallbackUsed = false;
+    
+    const useFallback = () => {
+        if (fallbackUsed) return;
+        fallbackUsed = true;
+        console.warn(`Failed or timed out loading sound: ${src}. Using silent fallback.`);
+        const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
+        resolve(silentAudio);
+    };
+
+    const timer = setTimeout(useFallback, timeout);
     
     audio.addEventListener('canplaythrough', () => {
+      if (fallbackUsed) return;
       clearTimeout(timer);
       resolve(audio);
     });
 
     audio.addEventListener('error', () => {
       clearTimeout(timer);
-      console.warn(`Failed to load sound: ${src}. Using silent fallback.`);
-      audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+      useFallback();
     });
 
     audio.crossOrigin = 'anonymous';
     audio.preload = 'auto';
     audio.src = src;
+    audio.load();
   });
 }
 
