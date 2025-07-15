@@ -10,10 +10,11 @@ export class Renderer {
     camera.apply(this.ctx);
 
     this.drawBackground(camera);
-    level.render(this.ctx, this.assets); 
-    this.drawFruits(level.fruits, camera); 
+    level.render(this.ctx, this.assets);
+    // MODIFIED: Pass only active fruits to the draw function
+    this.drawFruits(level.getActiveFruits(), camera);
     player.render(this.ctx);
-    this.drawCollectedFruits(collectedFruits, camera); 
+    this.drawCollectedFruits(collectedFruits, camera);
 
     camera.restore(this.ctx);
   }
@@ -32,7 +33,7 @@ export class Renderer {
     }
 
     const tileSize = 64;
-    const spriteSize = 64; 
+    const spriteSize = 64;
     const srcX = 0, srcY = 0;
 
     // Calculate which tiles are visible in the camera's viewport
@@ -65,10 +66,11 @@ export class Renderer {
     }
   }
 
+  // MODIFIED: The 'fruits' array is now pre-filtered to only contain active fruits.
   drawFruits(fruits, camera) {
     for (let i = 0, len = fruits.length; i < len; i++) {
       const fruit = fruits[i];
-      if (fruit.collected) continue;
+      // The check 'if (fruit.collected) continue;' is no longer necessary here.
 
       // Culling: Don't draw objects that are off-screen
       if (!camera.isVisible(fruit.x - fruit.size / 2, fruit.y - fruit.size / 2, fruit.size, fruit.size)) {
@@ -104,7 +106,7 @@ export class Renderer {
     }
   }
 
-  /**
+    /**
    * Draws the fruit collection particle effect.
    * @param {Array<object>} collectedArr The array of active collection animations.
    * @param {Camera} camera The game camera for visibility culling.

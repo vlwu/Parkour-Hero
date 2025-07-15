@@ -1,12 +1,12 @@
 import { Player } from '../entities/player.js';
-import { createLevel } from '../entities/platform.js';
+import { Level } from '../entities/platform.js'; // MODIFIED: Import Level instead of createLevel
 import { levelSections } from '../entities/levels.js';
 import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
 import { HUD } from '../ui/hud.js';
 import { GameState } from './game-state.js';
 import { CollisionSystem } from './collision-system.js';
-import { Renderer } from './renderer.js'; // Import the new renderer
+import { Renderer } from './renderer.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) {
@@ -24,7 +24,7 @@ export class Engine {
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
     this.collisionSystem = new CollisionSystem();
-    this.renderer = new Renderer(ctx, canvas, assets); // Instantiate the renderer
+    this.renderer = new Renderer(ctx, canvas, assets);
 
     this.levelStartTime = 0;
     this.levelTime = 0;
@@ -50,8 +50,9 @@ export class Engine {
     this.wasDashPressed = false;
   }
 
-  // ... (All methods from constructor to update remain unchanged) ...
-    detectJumpSound(inputActions) {
+  // ... (All methods from constructor to gameLoop remain unchanged) ...
+  
+  detectJumpSound(inputActions) {
       const now = Date.now();
       const jumpPressed = inputActions.jump;
       
@@ -138,9 +139,10 @@ export class Engine {
 
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
-    this.currentLevel = createLevel(levelSections[sectionIndex][levelIndex]);
-    this.fruits = this.currentLevel.fruits;
-    this.fruitCount = 0;
+    // MODIFIED: Use the Level constructor directly
+    this.currentLevel = new Level(levelSections[sectionIndex][levelIndex]);
+    
+    // MODIFIED: Removed redundant properties, they are accessed via this.currentLevel
     this.collectedFruits = [];
     
     this.player = new Player(
@@ -210,8 +212,13 @@ export class Engine {
         }
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
-
-      const collisionResults = this.collisionSystem.update(this.player, this.currentLevel);
+      
+      // MODIFIED: Call the decoupled collision system with specific, required data
+      const collisionResults = this.collisionSystem.update(
+        this.player,
+        this.currentLevel.getActiveFruits(),
+        this.currentLevel.trophy
+      );
 
       if (collisionResults.newlyCollectedFruits.length > 0) {
         for (const fruit of collisionResults.newlyCollectedFruits) {
@@ -244,8 +251,8 @@ export class Engine {
     }
   }
 
-
-  render() {
+  // ... (The rest of the file, render() and event handlers, remains unchanged) ...
+    render() {
     try {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 

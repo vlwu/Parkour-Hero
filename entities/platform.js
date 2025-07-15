@@ -58,9 +58,9 @@ export class Platform {
         ctx.drawImage(
           terrainSprite,
           config.srcX, config.srcY,
-          this.tileSize, this.tileSize, 
+          this.tileSize, this.tileSize,
           tileX, this.y,
-          this.tileSize, this.tileSize 
+          this.tileSize, this.tileSize
         );
       }
 
@@ -85,51 +85,49 @@ export class Platform {
 
 // Level class to manage collections of platforms and game objectives
 export class Level {
-  constructor(name, backgrounds = ['backgroundTile']) {
-    this.name = name;
-    this.platforms = [];
-    this.fruits = [];
-    this.trophy = null;
-    this.backgrounds = backgrounds;
+  /**
+   * Creates a Level object from a level configuration object.
+   * @param {object} levelConfig - The configuration object for the level.
+   */
+  constructor(levelConfig) {
+    this.name = levelConfig.name || 'Unnamed Level';
+    this.backgrounds = levelConfig.backgrounds || ['backgroundTile'];
     this.completed = false;
-    this.startPosition = { x: 100, y: 300 }; // Default player starting position
-  }
+    this.startPosition = levelConfig.startPosition ? { ...levelConfig.startPosition } : { x: 100, y: 300 };
 
-  addPlatform(x, y, width, height, terrainType = 'dirt') {
-    const platform = new Platform(x, y, width, height, terrainType);
-    this.platforms.push(platform);
-    return platform;
-  }
-
-  // Add a fruit to the level
-  addFruit(x, y, fruitType) {
-    this.fruits.push({
-      x, y,
+    // Directly map platform and fruit data to their respective objects
+    this.platforms = levelConfig.platforms?.map(p => new Platform(p.x, p.y, p.width, p.height, p.terrainType)) || [];
+    this.fruits = levelConfig.fruits?.map(f => ({
+      x: f.x,
+      y: f.y,
       size: 28,
-      spriteKey: fruitType,
+      spriteKey: f.fruitType,
       frame: 0,
       frameCount: 17,
       frameSpeed: 0.07,
       frameTimer: 0,
       collected: false
-    });
+    })) || [];
+
+    // Initialize the trophy if it exists in the config
+    this.trophy = null;
+    if (levelConfig.trophy) {
+      this.trophy = {
+        x: levelConfig.trophy.x,
+        y: levelConfig.trophy.y,
+        size: 32,
+        frameCount: 8,
+        animationFrame: 0,
+        animationTimer: 0,
+        animationSpeed: 0.35,
+        acquired: false,
+        inactive: true,
+        contactMade: false,
+      };
+    }
   }
 
-  setTrophy(x, y) {
-    this.trophy = {
-      x, y,
-      size: 32,
-      frameCount: 8,
-      animationFrame: 0,
-      animationTimer: 0,
-      animationSpeed: 0.35,
-      acquired: false,
-      inactive: true,
-      contactMade: false,
-    };
-  }
-
-  // Efficiently update fruit animations 
+  // Efficiently update fruit animations
   updateFruits(dt) {
     for (let i = 0, len = this.fruits.length; i < len; ++i) {
       const fruit = this.fruits[i];
@@ -235,7 +233,7 @@ export class Level {
 
     // Apply transparency if trophy is inactive
     if (trophy.inactive) {
-      ctx.globalAlpha = 0.5; 
+      ctx.globalAlpha = 0.5;
     }
 
     ctx.drawImage(
@@ -293,31 +291,4 @@ export class Level {
     // Reset completion flag
     this.completed = false;
   }
-}
-
-/**
- * Creates a Level object from a level configuration object.
- * @param {object} levelConfig - The configuration object for the level.
- * @returns {Level} The constructed Level object.
- */
-export function createLevel(levelConfig) {
-  const level = new Level(levelConfig.name, levelConfig.backgrounds);
-  level.startPosition = { ...levelConfig.startPosition }; // Deep copy start position
-
-  // Add platforms based on configuration
-  levelConfig.platforms?.forEach(p => {
-    level.addPlatform(p.x, p.y, p.width, p.height, p.terrainType);
-  });
-
-  // Add fruits based on configuration
-  levelConfig.fruits?.forEach(f => {
-    level.addFruit(f.x, f.y, f.fruitType);
-  });
-
-  // Set trophy based on configuration
-  if (levelConfig.trophy) {
-    level.setTrophy(levelConfig.trophy.x, levelConfig.trophy.y);
-  }
-
-  return level;
 }

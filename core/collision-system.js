@@ -8,12 +8,13 @@ export class CollisionSystem {
    * The main update loop for the collision system.
    * It checks all relevant collisions and returns a report.
    * @param {Player} player - The player object.
-   * @param {Level} level - The current level object, containing fruits and trophy.
+   * @param {Array<Fruit>} activeFruits - An array of uncollected fruits.
+   * @param {Trophy} trophy - The current level's trophy object.
    * @returns {object} A report of all collisions that occurred this frame.
    */
-  update(player, level) {
-    const newlyCollectedFruits = this.checkFruitCollisions(player, level.fruits);
-    const trophyCollision = this.checkTrophyCollision(player, level.trophy);
+  update(player, activeFruits, trophy) {
+    const newlyCollectedFruits = this.checkFruitCollisions(player, activeFruits);
+    const trophyCollision = this.checkTrophyCollision(player, trophy);
 
     return {
       newlyCollectedFruits,
@@ -22,25 +23,19 @@ export class CollisionSystem {
   }
 
   /**
-   * Checks for collisions between the player and an array of fruits.
+   * Checks for collisions between the player and an array of active fruits using AABB.
    * @param {Player} player
-   * @param {Array<Fruit>} fruits
+   * @param {Array<Fruit>} activeFruits - IMPORTANT: Should only contain uncollected fruits.
    * @returns {Array<Fruit>} An array of fruits the player has just collided with.
    */
-  checkFruitCollisions(player, fruits) {
+  checkFruitCollisions(player, activeFruits) {
     const collidedFruits = [];
-    const playerCenterX = player.x + player.width / 2;
-    const playerCenterY = player.y + player.height / 2;
+    const px = player.x, py = player.y, pw = player.width, ph = player.height;
 
-    for (const fruit of fruits) {
-      if (fruit.collected) continue;
-
-      const dx = fruit.x - playerCenterX;
-      const dy = fruit.y - playerCenterY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const collisionDistance = fruit.size / 2 + player.width / 2; // Simple circular approximation
-
-      if (distance < collisionDistance) {
+    for (const fruit of activeFruits) {
+      // AABB check is much faster than Math.sqrt
+      const fx = fruit.x - fruit.size / 2, fy = fruit.y - fruit.size / 2, fs = fruit.size;
+      if (px < fx + fs && px + pw > fx && py < fy + fs && py + ph > fy) {
         collidedFruits.push(fruit);
       }
     }
@@ -50,7 +45,7 @@ export class CollisionSystem {
   /**
    * Checks for collision between the player and the level's trophy.
    * @param {Player} player
-   *p   * @param {Trophy} trophy
+   * @param {Trophy} trophy
    * @returns {boolean} True if a collision occurred, otherwise false.
    */
   checkTrophyCollision(player, trophy) {
