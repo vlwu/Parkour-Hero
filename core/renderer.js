@@ -1,4 +1,4 @@
-// the renderer.js file is responsible for rendering the game world, including the player and other entities.
+// the renderer file is responsible for rendering the game world, including the player and other entities.
 export class Renderer {
   constructor(ctx, canvas, assets) {
     this.ctx = ctx;
