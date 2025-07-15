@@ -199,6 +199,7 @@ export class HUD {
     ctx.textAlign = 'center';
     ctx.fillText('Game Paused', this.canvas.width / 2, panelY + 60);
 
+    // Instructions
     ctx.fillStyle = '#3cff00ff';
     ctx.font = '18px sans-serif';
     ctx.fillText('Click the button or press ESC to resume', this.canvas.width / 2, panelY + 100);
@@ -245,7 +246,7 @@ export class HUD {
     ctx.restore();
   }
 
-  // <<< MODIFIED: Handle clicks for the new pause screen buttons
+  // Handle clicks for the new pause screen buttons
   handlePauseScreenClick(x, y) {
     const panelHeight = 300;
     const panelY = (this.canvas.height - panelHeight) / 2;
@@ -319,43 +320,6 @@ export class HUD {
     }
     
     return null; // No button clicked
-  }
-
-  // Draw loading screen (for future use)
-  drawLoadingScreen(ctx, progress = 0) {
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    
-    // Background
-    ctx.fillStyle = '#2C3E50';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Loading text
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 36px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Loading...', this.canvas.width / 2, this.canvas.height / 2 - 50);
-    
-    // Progress bar
-    const barWidth = 300;
-    const barHeight = 20;
-    const barX = (this.canvas.width - barWidth) / 2;
-    const barY = this.canvas.height / 2;
-    
-    // Progress bar background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.fillRect(barX, barY, barWidth, barHeight);
-    
-    // Progress bar fill
-    ctx.fillStyle = '#367338ff';
-    ctx.fillRect(barX, barY, barWidth * progress, barHeight);
-    
-    // Progress percentage
-    ctx.fillStyle = 'white';
-    ctx.font = '18px sans-serif';
-    ctx.fillText(`${Math.round(progress * 100)}%`, this.canvas.width / 2, barY + 40);
-    
-    ctx.restore();
   }
 
   // Get current level time from engine
