@@ -23,8 +23,6 @@ export class InputManager {
     this.ui.keybindInputs.forEach(input => {
       input.addEventListener('click', () => this.startKeybindRemap(input));
     });
-    // NOTE: The explicit audio-unlock-on-interaction logic has been removed.
-    // The new SoundManager handles this automatically on the first .play() call.
   }
 
   startKeybindRemap(inputElement) {
@@ -40,7 +38,9 @@ export class InputManager {
     if (!this.engine) return;
 
     const key = e.key.toLowerCase();
-    const isRemapping = this.activeKeybindInput && !this.ui.settingsModal.classList.contains('hidden');
+    const isSettingsOpen = !this.ui.settingsModal.classList.contains('hidden');
+    const isMainMenuOpen = !this.ui.mainMenuModal.classList.contains('hidden');
+    const isRemapping = this.activeKeybindInput && isSettingsOpen;
     const isLevelComplete = this.engine.gameState.showingLevelComplete;
 
     // 1. Handle keybind remapping (highest priority)
@@ -87,17 +87,19 @@ export class InputManager {
       return;
     }
 
-    // 3. Handle global pause/resume key
-    if (key === 'escape' && this.ui.settingsModal.classList.contains('hidden')) {
+    // 3. Handle global pause/resume key (only if no menus are open)
+    if (key === 'escape' && !isSettingsOpen && !isMainMenuOpen) {
       e.preventDefault();
       this.engine.isRunning ? this.engine.pause() : this.engine.resume();
       this.callbacks.updatePauseButtonIcon();
       return;
     }
 
-    // 4. Pass general key events to the engine
-    if (!e.defaultPrevented) {
-      this.engine.handleKeyEvent(key, true);
+    // 4. Pass general key events to the engine if game is running
+    if (this.engine.isRunning && !isSettingsOpen && !isMainMenuOpen) {
+      if (!e.defaultPrevented) {
+        this.engine.handleKeyEvent(key, true);
+      }
     }
   }
 

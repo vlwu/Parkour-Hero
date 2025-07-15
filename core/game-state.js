@@ -10,36 +10,50 @@ export class GameState {
   }
 
   loadProgress() {
-    if (this.gameProgress) {
-      return this.gameProgress;
-    }
-    this.gameProgress = {
-      unlockedSections: 1,
-      unlockedLevels: [1],
-      completedLevels: []
-    };
-    return this.gameProgress;
+      // For persistence, this could use localStorage
+      const savedProgress = {
+          unlockedLevels: [1], // Track total number of unlocked levels
+          completedLevels: [], // Track IDs of completed levels e.g., "0-0"
+      };
+      return savedProgress;
   }
 
   saveProgress() {
-    this.gameProgress = {
-      unlockedSections: this.levelProgress.unlockedSections,
-      unlockedLevels: this.levelProgress.unlockedLevels,
-      completedLevels: this.levelProgress.completedLevels
-    };
+      // For persistence, this could use localStorage.setItem
+      console.log("Progress saved:", this.levelProgress);
   }
 
-  advanceLevel() {
-    const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
-    if (!this.levelProgress.completedLevels.includes(levelId)) {
-      this.levelProgress.completedLevels.push(levelId);
-    }
+  onLevelComplete() {
+      const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
+      if (!this.levelProgress.completedLevels.includes(levelId)) {
+          this.levelProgress.completedLevels.push(levelId);
 
-    const { soundManager } = this.dependencies.getEngineState();
-    soundManager.play('level_complete', 1.0);
-    this.showingLevelComplete = true;
-    this.dependencies.pause();
+          // Unlock the next level if it exists
+          const nextLevelLinearIndex = (this.currentSection * this.levelSections[0].length) + this.currentLevelIndex + 2;
+          if (nextLevelLinearIndex > this.levelProgress.unlockedLevels[0]) {
+              this.levelProgress.unlockedLevels[0] = nextLevelLinearIndex;
+          }
+          this.saveProgress();
+      }
+
+      const { soundManager } = this.dependencies.getEngineState();
+      soundManager.play('level_complete', 1.0);
+      this.showingLevelComplete = true;
+      this.dependencies.pause();
   }
+
+  // Check if a level is available to be played
+  isLevelUnlocked(sectionIndex, levelIndex) {
+      const levelLinearIndex = (sectionIndex * this.levelSections[0].length) + levelIndex + 1;
+      return levelLinearIndex <= this.levelProgress.unlockedLevels[0];
+  }
+
+  // Check if a level has been successfully completed
+  isLevelCompleted(sectionIndex, levelIndex) {
+      const levelId = `${sectionIndex}-${levelIndex}`;
+      return this.levelProgress.completedLevels.includes(levelId);
+  }
+
 
   hasNextLevel() {
     return (this.currentLevelIndex + 1 < this.levelSections[this.currentSection].length) ||
@@ -47,7 +61,7 @@ export class GameState {
   }
 
   hasPreviousLevel() {
-    return this.currentLevelIndex > 0;
+    return this.currentLevelIndex > 0 || this.currentSection > 0;
   }
 
   handleLevelCompleteAction(action) {
@@ -63,21 +77,20 @@ export class GameState {
     if (action === 'next') {
       if (this.currentLevelIndex + 1 < this.levelSections[this.currentSection].length) {
         this.currentLevelIndex++;
-        loadLevel(this.currentSection, this.currentLevelIndex);
       } else if (this.currentSection + 1 < this.levelSections.length) {
         this.currentSection++;
         this.currentLevelIndex = 0;
-        loadLevel(this.currentSection, this.currentLevelIndex);
-        if (this.currentSection >= this.levelProgress.unlockedSections) {
-          this.levelProgress.unlockedSections = this.currentSection + 1;
-        }
-      } else {
-        console.log('Game completed!');
       }
+      loadLevel(this.currentSection, this.currentLevelIndex);
     } else if (action === 'restart') {
       loadLevel(this.currentSection, this.currentLevelIndex);
     } else if (action === 'previous' && this.hasPreviousLevel()) {
-      this.currentLevelIndex--;
+      if (this.currentLevelIndex > 0) {
+        this.currentLevelIndex--;
+      } else if (this.currentSection > 0) {
+        this.currentSection--;
+        this.currentLevelIndex = this.levelSections[this.currentSection].length - 1;
+      }
       loadLevel(this.currentSection, this.currentLevelIndex);
     }
     

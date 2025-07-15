@@ -17,7 +17,7 @@ export class Engine {
     this.keys = {};
     this.keybinds = initialKeybinds;
     this.isRunning = false;
-    this.pauseForSettings = false;
+    this.pauseForMenu = false; // Differentiates menu pause from user pause
 
     this.camera = new Camera(canvas.width, canvas.height);
     this.hud = new HUD(canvas);
@@ -103,7 +103,7 @@ export class Engine {
   }
 
   resume() {
-    if (this.pauseForSettings) return; 
+    if (this.pauseForMenu) return; // Don't resume if a menu is open
 
     if (!this.isRunning) {
       this.isRunning = true;
@@ -137,7 +137,6 @@ export class Engine {
 
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
-    // Use the Level constructor directly
     this.currentLevel = new Level(levelSections[sectionIndex][levelIndex]);
 
     this.collectedFruits = [];
@@ -210,7 +209,6 @@ export class Engine {
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
       
-      // MODIFIED: Call the decoupled collision system with specific, required data
       const collisionResults = this.collisionSystem.update(
         this.player,
         this.currentLevel.getActiveFruits(),
@@ -239,8 +237,7 @@ export class Engine {
       }
 
       if (this.currentLevel.isCompleted()) {
-        this.gameState.saveProgress();
-        this.gameState.advanceLevel();
+        this.gameState.onLevelComplete();
       }
 
     } catch (error) {
@@ -259,7 +256,6 @@ export class Engine {
         this.collectedFruits
       );
 
-      // UI rendering remains the responsibility of the engine/HUD
       this.hud.drawGameHUD(this.ctx, this.currentLevel, this.player, this.soundManager);
 
       if (this.gameState.showingLevelComplete) {
@@ -274,8 +270,7 @@ export class Engine {
         );
       }
 
-      if (!this.isRunning && !this.gameState.showingLevelComplete && !this.pauseForSettings) {
-        // <<< MODIFIED: Pass required data to the new pause screen
+      if (!this.isRunning && !this.gameState.showingLevelComplete && !this.pauseForMenu) {
         this.hud.drawPauseScreen(this.ctx, this.currentLevel, this.player, this.assets);
       }
 
@@ -295,7 +290,6 @@ export class Engine {
           }
       } else if (!this.isRunning) {
           const action = this.hud.handlePauseScreenClick(x, y);
-          // <<< MODIFIED: Handle the new 'restart' action from the pause menu
           if (action === 'resume') {
               this.resume();
           } else if (action === 'restart') {

@@ -86,6 +86,13 @@ const closeModalButton = document.getElementById('closeModalButton');
 const keybindInputs = document.querySelectorAll('.keybind-item input');
 const pauseButton = document.getElementById('pauseButton');
 
+// New Main Menu elements
+const mainMenuButton = document.getElementById('mainMenuButton');
+const mainMenuModal = document.getElementById('mainMenuModal');
+const closeMainMenuButton = document.getElementById('closeMainMenuButton');
+const levelSelectionContainer = document.getElementById('level-selection-container');
+
+
 // Default keybinds remain the source of truth here
 let keybinds = {
   moveLeft: 'a',
@@ -150,7 +157,7 @@ function toggleSettingsModal() {
     updateSoundSettingsDisplay();
     
     if (typeof engine !== 'undefined') {
-      engine.pauseForSettings = true; 
+      engine.pauseForMenu = true; 
       if (engine.isRunning) {
         engine.pause();
       }
@@ -158,13 +165,74 @@ function toggleSettingsModal() {
     }
   } else {
     if (typeof engine !== 'undefined') {
-      engine.pauseForSettings = false; 
+      engine.pauseForMenu = false; 
       if (!engine.isRunning) {
         engine.resume();
       }
       updatePauseButtonIcon();
     }
   }
+}
+
+// Function to populate the level selection grid
+function populateLevelMenu() {
+    if (!engine) return;
+    levelSelectionContainer.innerHTML = ''; // Clear previous buttons
+
+    const gameState = engine.gameState;
+    gameState.levelSections.forEach((section, sectionIndex) => {
+        section.forEach((level, levelIndex) => {
+            const button = document.createElement('button');
+            button.textContent = `${levelIndex + 1}`;
+            button.classList.add('level-button');
+
+            const isUnlocked = gameState.isLevelUnlocked(sectionIndex, levelIndex);
+            
+            if (isUnlocked) {
+                if (gameState.isLevelCompleted(sectionIndex, levelIndex)) {
+                    button.classList.add('completed');
+                }
+                if (gameState.currentSection === sectionIndex && gameState.currentLevelIndex === levelIndex) {
+                    button.classList.add('current');
+                }
+
+                button.addEventListener('click', () => {
+                    engine.loadLevel(sectionIndex, levelIndex);
+                    toggleMainMenuModal(); // Close menu after selection
+                });
+            } else {
+                button.classList.add('locked');
+                button.disabled = true;
+                button.innerHTML = '<img src="assets/Menu/Buttons/Lock.png" width="24" height="24" alt="Locked">';
+            }
+            levelSelectionContainer.appendChild(button);
+        });
+    });
+}
+
+
+// Function to toggle the main menu modal visibility
+function toggleMainMenuModal() {
+    mainMenuModal.classList.toggle('hidden');
+
+    if (!mainMenuModal.classList.contains('hidden')) {
+        populateLevelMenu(); // Refresh level buttons every time menu is opened
+        if (typeof engine !== 'undefined') {
+            engine.pauseForMenu = true;
+            if (engine.isRunning) {
+                engine.pause();
+            }
+            updatePauseButtonIcon();
+        }
+    } else {
+        if (typeof engine !== 'undefined') {
+            engine.pauseForMenu = false;
+            if (!engine.isRunning && !engine.gameState.showingLevelComplete) {
+                engine.resume();
+            }
+            updatePauseButtonIcon();
+        }
+    }
 }
 
 // Sound settings event handlers
@@ -205,6 +273,11 @@ function setupSoundSettings() {
 settingsButton.addEventListener('click', toggleSettingsModal);
 closeModalButton.addEventListener('click', toggleSettingsModal);
 
+// mainMenuButton now opens the main menu modal
+mainMenuButton.addEventListener('click', toggleMainMenuModal);
+closeMainMenuButton.addEventListener('click', toggleMainMenuModal);
+
+
 pauseButton.addEventListener('click', () => {
   if (typeof engine !== 'undefined') {
     if (engine.isRunning) {
@@ -216,12 +289,6 @@ pauseButton.addEventListener('click', () => {
   }
 });
 
-const mainMenuButton = document.getElementById('mainMenuButton');
-mainMenuButton.addEventListener('click', () => {
-  if (typeof engine !== 'undefined') {
-    engine.gameState.handleLevelCompleteAction('restart');
-  }
-});
 
 // Load assets and start the game
 let engine;
@@ -238,7 +305,7 @@ loadAssets().then((assets) => {
       engine,
       canvas,
       keybinds,
-      { settingsModal, keybindInputs },
+      { settingsModal, keybindInputs, mainMenuModal },
       { updateKeybindDisplay, updatePauseButtonIcon }
     );
     
