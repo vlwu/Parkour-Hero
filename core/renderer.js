@@ -141,31 +141,40 @@ export class Renderer {
       switch(cp.state) {
         case 'inactive':
           sprite = this.assets.checkpoint_inactive;
-          frameWidth = sprite.width;
+          if (sprite) {
+            frameWidth = sprite.width;
+          }
           break;
         case 'activating':
           sprite = this.assets.checkpoint_activation;
-          frameWidth = sprite.width / cp.frameCount;
-          srcX = cp.frame * frameWidth;
+          if (sprite) {
+            frameWidth = sprite.width / cp.frameCount;
+            srcX = cp.frame * frameWidth;
+          }
           break;
         case 'active':
           sprite = this.assets.checkpoint_active;
-          // Note: Assuming active state has its own animated sprite sheet
-          const activeFrameCount = 4; // Example idle animation frames
-          const activeFrameSpeed = 0.2;
-          const currentFrame = Math.floor((performance.now() / 1000 / activeFrameSpeed) % activeFrameCount);
-          frameWidth = sprite.width / activeFrameCount;
-          srcX = currentFrame * frameWidth;
+          if (sprite) {
+            const activeFrameCount = 4; // Idle animation for the active flag
+            const activeFrameSpeed = 0.2;
+            const currentFrame = Math.floor((performance.now() / 1000 / activeFrameSpeed) % activeFrameCount);
+            frameWidth = sprite.width / activeFrameCount;
+            srcX = currentFrame * frameWidth;
+          }
           break;
       }
 
-      if (sprite) {
+      if (sprite && frameWidth > 0) {
         this.ctx.drawImage(
           sprite,
           srcX, 0, frameWidth, sprite.height,
           cp.x - cp.size / 2, cp.y - cp.size / 2,
           cp.size, cp.size
         );
+      } else {
+        // Fallback rendering if sprite is missing
+        this.ctx.fillStyle = 'purple';
+        this.ctx.fillRect(cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size);
       }
     }
   }

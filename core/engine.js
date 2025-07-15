@@ -216,12 +216,14 @@ export class Engine {
       if (collisionResults.checkpointCollision) {
           const cp = collisionResults.checkpointCollision;
           cp.state = 'activating';
-          this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; // Respawn on top
-          this.soundManager.play('collect', 1.0); // Placeholder sound
-          // Deactivate other checkpoints if needed
+          this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; // Respawn on top of the checkpoint
+          this.soundManager.play('checkpoint_activated', 0.8); // Play the specific checkpoint sound
+
+          // Deactivate other checkpoints to ensure only one is active
           this.currentLevel.checkpoints.forEach(otherCp => {
               if (otherCp !== cp && otherCp.state === 'active') {
                   otherCp.state = 'inactive';
+                  otherCp.frame = 0; // Also reset its animation frame
               }
           });
       }

@@ -135,6 +135,7 @@ export async function loadAssets() {
     level_complete: 'assets/Sounds/Level Complete.mp3',
     death_sound: 'assets/Sounds/Death.mp3',
     dash: 'assets/Sounds/Whoosh.mp3',
+    checkpoint_activated: 'assets/Sounds/Checkpoint (Activation).mp3',
   };
 
   console.log('Starting asset loading...');

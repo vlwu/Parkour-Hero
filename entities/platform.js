@@ -110,7 +110,7 @@ export class Level {
     this.checkpoints = levelConfig.checkpoints?.map(cp => ({
       x: cp.x,
       y: cp.y,
-      size: 48, // Standard size
+      size: 64, // Standard size for 64x64 sprites
       state: 'inactive', // inactive, activating, active
       frame: 0,
       frameCount: 18, // For the activation animation
