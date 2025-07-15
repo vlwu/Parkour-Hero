@@ -48,6 +48,7 @@ export class Engine {
     this.camera.snapToPlayer(this.player);
 
     this.wasDashPressed = false;
+    this.particles = [];
   }
 
   updateKeybinds(newKeybinds) {
@@ -117,6 +118,7 @@ export class Engine {
     this.currentLevel = new Level(levelSections[sectionIndex].levels[levelIndex]);
 
     this.collectedFruits = [];
+    this.particles = []; // Clear particles on level load
 
     this.lastCheckpoint = null; // Reset the last checkpoint on level load
     
@@ -153,15 +155,18 @@ export class Engine {
       this.wasDashPressed = inputActions.dash;
       if (dashJustPressed && !this.player.isDashing && this.player.dashCooldownTimer <= 0) {
         this.soundManager.play('dash', 0.7);
+        this.createDustParticles(this.player.getCenterX(), this.player.getCenterY(), 'dash', this.player.direction);
       }
 
       this.player.handleInput(inputActions);
       this.player.update(dt, this.currentLevel);
+      this.updateParticles(dt);
 
       if (this.player.jumpedThisFrame === 1) {
         this.soundManager.play('jump', 0.8);
       } else if (this.player.jumpedThisFrame === 2) {
           this.soundManager.play('double_jump', 0.6);
+          this.createDustParticles(this.player.getCenterX(), this.player.y + this.player.height, 'double_jump');
       }
       this.player.jumpedThisFrame = 0; // Reset flag after checking
 
@@ -244,7 +249,50 @@ export class Engine {
     }
   }
 
-    render() {
+  createDustParticles(x, y, type, direction = 'right') {
+    const count = type === 'dash' ? 10 : 7;
+    const baseSpeed = type === 'dash' ? 150 : 100;
+
+    for (let i = 0; i < count; i++) {
+        // The angle determines the particle's direction.
+        // For double jump, we now create a downward-facing cone of particles.
+        const angle = (type === 'dash') 
+            ? (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2)
+            : (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3); // Centered at 90 deg (down), with a 60 deg spread.
+
+        const speed = baseSpeed + Math.random() * 50;
+        const particle = {
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 0.4 + Math.random() * 0.3, // 0.4 to 0.7 seconds
+            initialLife: 0,
+            size: 4 + Math.random() * 4,
+            alpha: 1.0
+        };
+        particle.initialLife = particle.life; // Store for fade calculation
+        this.particles.push(particle);
+    }
+  }
+
+  updateParticles(dt) {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i];
+        p.life -= dt;
+
+        if (p.life <= 0) {
+            this.particles.splice(i, 1);
+        } else {
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vy += 50 * dt; // A little gravity on particles
+            p.alpha = Math.max(0, p.life / p.initialLife); // Fade out
+        }
+    }
+  }
+
+  render() {
     try {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -252,7 +300,8 @@ export class Engine {
         this.camera,
         this.currentLevel,
         this.player,
-        this.collectedFruits
+        this.collectedFruits,
+        this.particles
       );
 
       this.hud.drawGameHUD(this.ctx, this.currentLevel, this.player, this.soundManager);

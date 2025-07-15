@@ -6,7 +6,7 @@ export class Renderer {
     this.assets = assets;
   }
 
-  renderScene(camera, level, player, collectedFruits) {
+  renderScene(camera, level, player, collectedFruits, particles) {
     camera.apply(this.ctx);
 
     this.drawBackground(camera, level.background);
@@ -14,6 +14,7 @@ export class Renderer {
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
     player.render(this.ctx);
+    this.drawParticles(particles, camera);
     this.drawCollectedFruits(collectedFruits, camera);
 
     camera.restore(this.ctx);
@@ -101,6 +102,30 @@ export class Renderer {
         this.ctx.fill();
       }
     }
+  }
+
+  drawParticles(particles, camera) {
+    const sprite = this.assets.dust_particle;
+    if (!sprite || particles.length === 0) return;
+
+    this.ctx.save();
+    for (let i = 0, len = particles.length; i < len; i++) {
+        const p = particles[i];
+
+        if (!camera.isVisible(p.x, p.y, p.size, p.size)) {
+            continue;
+        }
+
+        this.ctx.globalAlpha = p.alpha;
+        this.ctx.drawImage(
+            sprite,
+            p.x - p.size / 2,
+            p.y - p.size / 2,
+            p.size,
+            p.size
+        );
+    }
+    this.ctx.restore();
   }
 
   drawCollectedFruits(collectedArr, camera) {

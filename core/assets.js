@@ -93,6 +93,7 @@ function loadSound(src, key) {
 
 export async function loadAssets() {
   const imagePaths = {
+    // Canvas assets
     backgroundTile: 'assets/Background/Blue.png',
     block: 'assets/Terrain/Terrain.png',
     // Player sprites
@@ -126,6 +127,8 @@ export async function loadAssets() {
     level_menu_button: 'assets/Menu/Buttons/Levels.png',
     resume_button: 'assets/Menu/Buttons/Play.png',
     settings_button: 'assets/Menu/Buttons/Settings.png',
+    // Other assets
+    dust_particle: 'assets/Other/Dust Particle.png',
   };
 
   const soundPaths = {
