@@ -253,43 +253,18 @@ export const levelSections = [
   // Section 2: Cloud 9 and Beyond
   [
     {
-      name: "Level 11: Cloud 8",
-      width: 1280,  // Keep width standard, or even smaller
-      height: 2160, // Make the level 3 screens tall (720 * 3)
+      name: "Level 11: Cloud 7",
+      width: 1280,
+      height: 2160,
       startPosition: { x: 600, y: 2050 }, // Start near the bottom
       platforms: [
-        // Ground floor
         { x: 400, y: 2100, width: 480, height: 60, terrainType: 'stone' },
-
-        // The climb begins
-        { x: 700, y: 1950, width: 144, height: 48, terrainType: 'green_block' },
-        { x: 450, y: 1800, width: 144, height: 48, terrainType: 'green_block' },
-        { x: 200, y: 1650, width: 144, height: 48, terrainType: 'green_block' },
-        { x: 500, y: 1500, width: 288, height: 48, terrainType: 'pink_dirt' },
-        { x: 250, y: 1350, width: 96, height: 48, terrainType: 'pink_dirt' },
-        
-        // Mid-level section
-        { x: 550, y: 1200, width: 48, height: 48, terrainType: 'red_brick' },
-        { x: 750, y: 1100, width: 48, height: 48, terrainType: 'red_brick' },
-        { x: 950, y: 1000, width: 48, height: 48, terrainType: 'red_brick' },
-        
-        // Upper section
-        { x: 600, y: 800, width: 192, height: 48, terrainType: 'orange_dirt' },
-        { x: 200, y: 750, width: 192, height: 48, terrainType: 'orange_dirt' },
-        { x: 600, y: 580, width: 192, height: 48, terrainType: 'orange_dirt' },
-
-        // Summit
-        { x: 400, y: 200, width: 480, height: 60, terrainType: 'stone' }
       ],
       fruits: [
-        // Just a few to demonstrate
-        { x: 650, y: 2000, fruitType: 'fruit_apple' },
-        { x: 250, y: 1600, fruitType: 'fruit_cherries' },
-        { x: 850, y: 1050, fruitType: 'fruit_kiwi' },
-        { x: 500, y: 150, fruitType: 'fruit_melon' }
+        null
       ],
       // Trophy at the very top
-      trophy: { x: 640, y: 184 }
+      trophy: { x: null, y: null }
     }
   ]
 ];
