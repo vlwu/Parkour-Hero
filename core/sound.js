@@ -1,400 +1,140 @@
 export class SoundManager {
   constructor() {
     this.sounds = {};
-    this.enabled = true;
-    this.volume = 0.5;
     this.audioContext = null;
-    this.audioEnabled = false;
-    this.audioUnlocked = false; // Track if audio has been unlocked
-    
-    // In-memory settings storage (localStorage not supported in artifacts)
+    this.audioUnlocked = false;
     this.settings = {
       enabled: true,
-      volume: 0.5
+      volume: 0.5,
     };
-    
-    console.log('SoundManager initialized with volume:', this.volume);
+    this.onSettingsChange = null;
+    this.loadSettings();
   }
 
-  // Use in-memory storage instead of localStorage
   loadSettings() {
     this.enabled = this.settings.enabled;
     this.volume = this.settings.volume;
-    console.log('Sound settings loaded from memory:', { enabled: this.enabled, volume: this.volume });
   }
 
-  // Save to memory instead of localStorage
   saveSettings() {
     this.settings.enabled = this.enabled;
     this.settings.volume = this.volume;
-    console.log('Sound settings saved to memory:', this.settings);
-    
-    // Trigger UI update if callback is available
     if (this.onSettingsChange) {
       this.onSettingsChange(this.getSettings());
     }
   }
 
-  // Set callback for settings changes (for UI updates)
   setSettingsChangeCallback(callback) {
     this.onSettingsChange = callback;
   }
 
-  // Simplified sound loading using existing assets directly
   loadSounds(assets) {
-    console.log('Loading sounds...');
-    console.log('Available assets:', Object.keys(assets));
-    
     const soundKeys = ['jump', 'double_jump', 'collect', 'level_complete', 'death_sound', 'dash'];
-    
     soundKeys.forEach(key => {
       if (assets[key]) {
-        try {
-          // Use the assets directly instead of creating new Audio objects
-          const sound = assets[key];
-          
-          // Set initial volume
-          sound.volume = this.volume;
-          
-          // Add error handling for the existing audio element
-          sound.addEventListener('error', (error) => {
-            console.error(`Sound ${key} error:`, error);
-          });
-          
-          // Store reference to the asset
-          this.sounds[key] = sound;
-          console.log(`Registered sound: ${key} (duration: ${sound.duration})`);
-        } catch (error) {
-          console.warn(`Failed to register sound ${key}:`, error);
-        }
+        this.sounds[key] = assets[key];
+        this.sounds[key].volume = this.volume;
       } else {
         console.warn(`Sound asset ${key} not found in assets`);
       }
     });
-    
-    console.log('Sounds registered:', Object.keys(this.sounds));
   }
 
-  // Fixed play method with proper audio context handling
-  play(soundKey, volumeMultiplier = 1.0) {
-    if (!this.enabled) {
-      console.log(`Sound disabled, not playing: ${soundKey}`);
+  async play(soundKey, volumeMultiplier = 1.0) {
+    if (!this.enabled || !this.sounds[soundKey]) {
       return;
     }
 
-    if (!this.sounds[soundKey]) {
-      console.warn(`Sound not found: ${soundKey}`);
-      return;
-    }
-
-    // If audio hasn't been unlocked yet, unlock it first
     if (!this.audioUnlocked) {
-      this.unlockAudio();
+      await this.unlockAudio();
     }
 
     try {
-      const sound = this.sounds[soundKey];
-      
-      // Clone the audio for overlapping sounds
-      const audioClone = sound.cloneNode();
-      audioClone.volume = Math.min(this.volume * volumeMultiplier, 1.0);
-      
-      // Reset and play
+      const audioClone = this.sounds[soundKey].cloneNode(true);
+      audioClone.volume = Math.max(0, Math.min(1, this.volume * volumeMultiplier));
       audioClone.currentTime = 0;
-      
-      const playPromise = audioClone.play();
-      
-    if (playPromise !== undefined) {
-      playPromise.catch(error => {
-        console.error(`✗ Failed to play sound ${soundKey}:`, error);
-
-        // Fallback to original audio element
-        try {
-          sound.currentTime = 0;
-          sound.volume = Math.min(this.volume * volumeMultiplier, 1.0);
-          sound.play();
-        } catch (fallbackError) {
-          console.error(`Fallback play failed for ${soundKey}:`, fallbackError);
-        }
-      });
-    }
-
+      await audioClone.play();
     } catch (error) {
-      console.error(`Exception playing sound ${soundKey}:`, error);
+      console.error(`Failed to play sound ${soundKey}:`, error);
     }
   }
 
-  // Better test method with multiple fallbacks
-  testSound(soundKey) {
-    console.log(`\n=== TESTING SOUND: ${soundKey} ===`);
-    
-    if (!this.sounds[soundKey]) {
-      console.log(`Sound ${soundKey} not found`);
-      return;
-    }
-    
-    const sound = this.sounds[soundKey];
-    console.log(`Sound properties:`, {
-      readyState: sound.readyState,
-      duration: sound.duration,
-      volume: sound.volume,
-      paused: sound.paused,
-      src: sound.src?.substring(0, 50) + '...'
-    });
-    
-    // Test 1: Normal play method
-    console.log('Test 1: Using play() method...');
-    this.play(soundKey, 1.0);
-    
-    // Test 2: Direct audio play
-    setTimeout(() => {
-      console.log('Test 2: Direct audio element play...');
+  async unlockAudio() {
+    if (this.audioUnlocked) return;
+
+    if (!this.audioContext) {
       try {
-        const testAudio = sound.cloneNode();
-        testAudio.volume = 0.8;
-        testAudio.currentTime = 0;
-        testAudio.play().then(() => {
-          console.log('✓ Direct play successful');
-        }).catch(error => {
-          console.log('✗ Direct play failed:', error);
-        });
-      } catch (error) {
-        console.log('✗ Direct play exception:', error);
-      }
-    }, 500);
-  }
-
-  // FIXED: Only create/resume AudioContext after user interaction
-  enableAudioContext() {
-    console.log('Enabling audio context...');
-    
-    try {
-      // Only create AudioContext if we don't have one
-      if (!this.audioContext) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) {
           this.audioContext = new AudioContext();
-          console.log('AudioContext created, state:', this.audioContext.state);
         }
+      } catch (e) {
+        console.error("Failed to create AudioContext", e);
+        return; // Can't proceed
       }
-      
-      // Only resume if suspended (this should now be called after user interaction)
-      if (this.audioContext && this.audioContext.state === 'suspended') {
-        this.audioContext.resume().then(() => {
-          console.log('Audio context resumed successfully');
-          this.audioEnabled = true;
-          this.audioUnlocked = true;
-        }).catch(error => {
-          console.warn('Failed to resume audio context:', error);
-        });
-      } else if (this.audioContext && this.audioContext.state === 'running') {
-        console.log('Audio context already running');
-        this.audioEnabled = true;
+    }
+    
+    if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume().catch(e => console.error("Failed to resume AudioContext", e));
+    }
+
+    if (this.audioContext.state === 'running') {
         this.audioUnlocked = true;
-      }
-      
-    } catch (error) {
-      console.warn('Audio context setup error:', error);
     }
   }
 
-  // FIXED: Improved audio unlock method
-  unlockAudio() {
-    if (this.audioUnlocked) {
-      console.log('Audio already unlocked');
-      return;
-    }
-    
-    console.log('Unlocking audio...');
-    
-    // First, try to enable audio context
-    this.enableAudioContext();
-    
-    // Then unlock individual sounds
-    const unlockPromises = Object.entries(this.sounds).map(([key, sound]) => {
-      if (sound) {
-        return new Promise((resolve) => {
-          try {
-            const originalVolume = sound.volume;
-            sound.volume = 0;
-            
-            const playPromise = sound.play();
-            
-            if (playPromise !== undefined) {
-              playPromise.then(() => {
-                sound.pause();
-                sound.currentTime = 0;
-                sound.volume = originalVolume;
-                console.log(`✓ Unlocked sound: ${key}`);
-                resolve();
-              }).catch((error) => {
-                console.log(`✗ Failed to unlock sound ${key}:`, error);
-                sound.volume = originalVolume;
-                resolve();
-              });
-            } else {
-              sound.pause();
-              sound.currentTime = 0;
-              sound.volume = originalVolume;
-              resolve();
-            }
-          } catch (error) {
-            console.log(`✗ Exception unlocking sound ${key}:`, error);
-            resolve();
-          }
-        });
-      }
-      return Promise.resolve();
-    });
-    
-    Promise.all(unlockPromises).then(() => {
-      this.audioUnlocked = true;
-      console.log('Audio unlock complete');
-    });
-  }
-
-  // Better stop method
   stop(soundKey) {
     if (this.sounds[soundKey]) {
-      try {
-        const sound = this.sounds[soundKey];
-        sound.pause();
-        sound.currentTime = 0;
-        console.log(`Stopped sound: ${soundKey}`);
-      } catch (error) {
-        console.warn(`Error stopping sound ${soundKey}:`, error);
-      }
+      this.sounds[soundKey].pause();
+      this.sounds[soundKey].currentTime = 0;
     }
   }
 
-  // Stop all sounds
   stopAll() {
-    Object.keys(this.sounds).forEach(key => {
-      this.stop(key);
-    });
+    Object.keys(this.sounds).forEach(this.stop.bind(this));
   }
 
-  // Better volume control with immediate effect
   setVolume(volume) {
     this.volume = Math.max(0, Math.min(1, volume));
-    console.log(`Master volume set to: ${this.volume}`);
-    
-    // Update all loaded sounds immediately
     Object.values(this.sounds).forEach(sound => {
       if (sound) {
         sound.volume = this.volume;
       }
     });
-    
     this.saveSettings();
   }
 
-  // Toggle sound on/off
-  toggleSound() {
-    this.enabled = !this.enabled;
-    this.saveSettings();
-    
+  setEnabled(enabled) {
+    this.enabled = enabled;
     if (!this.enabled) {
       this.stopAll();
     }
-    
-    console.log(`Sound ${this.enabled ? 'enabled' : 'disabled'}`);
+    this.saveSettings();
+  }
+  
+  toggleSound() {
+    this.setEnabled(!this.enabled);
     return this.enabled;
   }
 
-  // Enable/disable sound
-  setEnabled(enabled) {
-    this.enabled = enabled;
-    this.saveSettings();
-    
-    if (!this.enabled) {
-      this.stopAll();
-    }
-  }
-
-  // Get current settings
   getSettings() {
     return {
       enabled: this.enabled,
       volume: this.volume,
-      audioEnabled: this.audioEnabled,
-      audioUnlocked: this.audioUnlocked
+      audioUnlocked: this.audioUnlocked,
     };
   }
 
-  // Force play method for testing (bypasses enabled check)
-  forcePlay(soundKey, volumeMultiplier = 1.0) {
-    if (!this.sounds[soundKey]) {
-      console.warn(`Sound not found for force play: ${soundKey}`);
-      return;
-    }
-
-    // Ensure audio is unlocked for force play
-    if (!this.audioUnlocked) {
-      this.unlockAudio();
-    }
-
-    try {
-      const sound = this.sounds[soundKey];
-      sound.volume = Math.min(this.volume * volumeMultiplier, 1.0);
-      sound.currentTime = 0;
-      
-      const playPromise = sound.play();
-      
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          console.log(`✓ Force played sound: ${soundKey}`);
-        }).catch(error => {
-          console.error(`✗ Force play failed for ${soundKey}:`, error);
-        });
-      }
-    } catch (error) {
-      console.error(`Exception in force play ${soundKey}:`, error);
-    }
-  }
-
-  // Check if sound is ready
-  isSoundReady(soundKey) {
-    const sound = this.sounds[soundKey];
-    return sound && sound.readyState >= 2; // HAVE_CURRENT_DATA
-  }
-
-  // Get comprehensive debug info
   getDebugInfo() {
     return {
-      enabled: this.enabled,
-      volume: this.volume,
-      audioEnabled: this.audioEnabled,
-      audioUnlocked: this.audioUnlocked,
-      audioContext: this.audioContext?.state,
+      ...this.getSettings(),
+      audioContextState: this.audioContext?.state,
       soundCount: Object.keys(this.sounds).length,
       sounds: Object.keys(this.sounds).map(key => ({
         key,
-        ready: this.isSoundReady(key),
+        ready: this.sounds[key]?.readyState >= 2,
         duration: this.sounds[key]?.duration,
-        volume: this.sounds[key]?.volume,
-        readyState: this.sounds[key]?.readyState
-      }))
+      })),
     };
-  }
-
-  // Quick sound test method
-  quickTest() {
-    console.log('=== QUICK SOUND TEST ===');
-    
-    // Ensure audio is unlocked first
-    if (!this.audioUnlocked) {
-      console.log('Audio not unlocked yet, unlocking...');
-      this.unlockAudio();
-    }
-    
-    const testOrder = ['jump', 'collect', 'level_complete'];
-    
-    testOrder.forEach((soundKey, index) => {
-      setTimeout(() => {
-        console.log(`Testing ${soundKey}...`);
-        this.forcePlay(soundKey, 0.5);
-      }, index * 1000);
-    });
   }
 }

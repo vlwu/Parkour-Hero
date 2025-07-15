@@ -5,9 +5,7 @@ export class InputManager {
     this.keybinds = keybindsRef;
     this.ui = uiElements;
     this.callbacks = callbacks;
-
     this.activeKeybindInput = null;
-    this.audioEnabled = false;
 
     this.init();
   }
@@ -25,9 +23,8 @@ export class InputManager {
     this.ui.keybindInputs.forEach(input => {
       input.addEventListener('click', () => this.startKeybindRemap(input));
     });
-
-    // Audio context enabling
-    this.enableAudioOnFirstInteraction();
+    // NOTE: The explicit audio-unlock-on-interaction logic has been removed.
+    // The new SoundManager handles this automatically on the first .play() call.
   }
 
   startKeybindRemap(inputElement) {
@@ -43,14 +40,18 @@ export class InputManager {
     if (!this.engine) return;
 
     const key = e.key.toLowerCase();
+    const isRemapping = this.activeKeybindInput && !this.ui.settingsModal.classList.contains('hidden');
+    const isLevelComplete = this.engine.gameState.showingLevelComplete;
 
     // 1. Handle keybind remapping (highest priority)
-    if (this.activeKeybindInput && !this.ui.settingsModal.classList.contains('hidden')) {
+    if (isRemapping) {
       e.preventDefault();
       e.stopPropagation();
 
       const action = this.activeKeybindInput.dataset.action;
-      if ((key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) || ['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(key)) {
+      const isValidKey = (key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) || ['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(key);
+
+      if (isValidKey) {
         this.keybinds[action] = key;
         this.engine.updateKeybinds(this.keybinds);
       }
@@ -62,7 +63,7 @@ export class InputManager {
     }
 
     // 2. Handle level complete screen keyboard input
-    if (this.engine.gameState.showingLevelComplete) {
+    if (isLevelComplete) {
       let action = null;
       switch (key) {
         case 'enter':
@@ -87,16 +88,10 @@ export class InputManager {
     }
 
     // 3. Handle global pause/resume key
-    if (key === 'escape') {
-      if (this.ui.settingsModal.classList.contains('hidden')) {
-        e.preventDefault();
-        if (this.engine.isRunning) {
-          this.engine.pause();
-        } else {
-          this.engine.resume();
-        }
-        this.callbacks.updatePauseButtonIcon();
-      }
+    if (key === 'escape' && this.ui.settingsModal.classList.contains('hidden')) {
+      e.preventDefault();
+      this.engine.isRunning ? this.engine.pause() : this.engine.resume();
+      this.callbacks.updatePauseButtonIcon();
       return;
     }
 
@@ -116,39 +111,9 @@ export class InputManager {
     if (!this.engine) return;
 
     const rect = this.canvas.getBoundingClientRect();
-    const displayWidth = rect.width;
-    const displayHeight = rect.height;
-
-    const x = (e.clientX - rect.left) / displayWidth * this.canvas.width;
-    const y = (e.clientY - rect.top) / displayHeight * this.canvas.height;
+    const x = (e.clientX - rect.left) / rect.width * this.canvas.width;
+    const y = (e.clientY - rect.top) / rect.height * this.canvas.height;
 
     this.engine.handleCanvasClick(x, y);
-  }
-
-  enableAudioOnFirstInteraction() {
-    const enableAudio = (event) => {
-      if (this.audioEnabled) return;
-      
-      const target = event.target;
-      if (target && target.closest('.menu-button, #settingsModal')) {
-        return;
-      }
-
-      if (this.engine && this.engine.soundManager) {
-        this.engine.soundManager.enableAudioContext();
-        console.log('Audio context enabled on user interaction');
-        this.audioEnabled = true;
-      }
-
-      if (this.audioEnabled) {
-        document.removeEventListener('click', enableAudio);
-        document.removeEventListener('keydown', enableAudio);
-        document.removeEventListener('touchstart', enableAudio);
-      }
-    };
-
-    document.addEventListener('click', enableAudio, false);
-    document.addEventListener('keydown', enableAudio, false);
-    document.addEventListener('touchstart', enableAudio, false);
   }
 }
