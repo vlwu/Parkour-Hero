@@ -217,7 +217,7 @@ export class Engine {
           const cp = collisionResults.checkpointCollision;
           cp.state = 'activating';
           this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; // Respawn on top of the checkpoint
-          this.soundManager.play('checkpoint_activated', 1); // Play the specific checkpoint sound
+          this.soundManager.play('checkpoint_activated', 1); 
 
           // Deactivate other checkpoints to ensure only one is active
           this.currentLevel.checkpoints.forEach(otherCp => {
@@ -236,7 +236,7 @@ export class Engine {
 
       if (this.player.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
         this.gameState.onLevelComplete();
-        this.player.despawnAnimationFinished = false; // Reset flag
+        this.player.despawnAnimationFinished = false; 
       }
 
     } catch (error) {
