@@ -239,7 +239,7 @@ export class Player {
       if (this.state === 'cling') {
         let touchingWall = false;
         for (let i = 0, len = nearbyPlatforms.length; i < len; i++) {
-          const p = level.platforms[i];
+          const p = nearbyPlatforms[i];
           // Check vertical overlap
           if (this.y + this.height > p.y && this.y < p.y + p.height) {
         // Check near left/right edge (within 2px)
@@ -341,7 +341,7 @@ export class Player {
   handleHorizontalCollision(platforms, prevX) {
     const px = this.x, py = this.y, pw = this.width, ph = this.height;
     for (let i = 0, len = platforms.length; i < len; i++) {
-      const platform = level.platforms[i];
+      const platform = platforms[i]; 
       // Early exit for non-overlapping cases (AABB)
       if (
         px + pw <= platform.x ||

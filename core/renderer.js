@@ -10,7 +10,7 @@ export class Renderer {
     camera.apply(this.ctx);
 
     this.drawBackground(camera, level.background);
-    level.render(this.ctx, this.assets); // This now culls platforms
+    level.render(this.ctx, this.assets, camera);
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
     player.render(this.ctx);
