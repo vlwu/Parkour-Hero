@@ -253,17 +253,117 @@ export const levelSections = [
   // Section 2: Cloud 9 and Beyond
   [
     {
-      name: "Level 11: Cloud 7",
+      name: "Level 11: Cloud Rise",
       width: 1280,
-      height: 2160,
-      startPosition: { x: 600, y: 2050 }, // Start near the bottom
+      height: 2200,
+      startPosition: { x: 100, y: 1950 }, // ~100px above the starting platform
       platforms: [
-        { x: 400, y: 2100, width: 480, height: 60, terrainType: 'stone' },
+        // Starting area
+        { x: 50, y: 2050, width: 192, height: 48, terrainType: 'stone' },
+        // Ascending platforms
+        { x: 300, y: 1900, width: 144, height: 48, terrainType: 'dirt' },
+        { x: 150, y: 1750, width: 96, height: 48, terrainType: 'wood' },
+        { x: 400, y: 1600, width: 192, height: 48, terrainType: 'stone' },
+        { x: 650, y: 1480, width: 48, height: 48, terrainType: 'green_block' },
+        { x: 800, y: 1350, width: 144, height: 48, terrainType: 'pink_dirt' },
+        { x: 600, y: 1200, width: 96, height: 48, terrainType: 'dirt' },
+        { x: 400, y: 1050, width: 144, height: 48, terrainType: 'red_brick' },
+        { x: 150, y: 900, width: 192, height: 48, terrainType: 'stone' },
+        // Upper section
+        { x: 300, y: 750, width: 48, height: 48, terrainType: 'orange_dirt' },
+        { x: 500, y: 600, width: 96, height: 48, terrainType: 'wood' },
+        { x: 750, y: 500, width: 144, height: 48, terrainType: 'dirt' },
+        // Final platform
+        { x: 1000, y: 350, width: 192, height: 48, terrainType: 'stone' }
       ],
       fruits: [
-        null
+        { x: 350, y: 1850, fruitType: 'fruit_apple' },
+        { x: 180, y: 1700, fruitType: 'fruit_bananas' },
+        { x: 450, y: 1550, fruitType: 'fruit_cherries' },
+        { x: 830, y: 1300, fruitType: 'fruit_kiwi' },
+        { x: 450, y: 1000, fruitType: 'fruit_melon' },
+        { x: 180, y: 850, fruitType: 'fruit_orange' },
+        { x: 530, y: 550, fruitType: 'fruit_pineapple' },
+        { x: 800, y: 450, fruitType: 'fruit_strawberry' }
       ],
-      trophy: { x: null, y: null }
+      trophy: { x: 1096, y: 334 } 
+    },
+    {
+      name: "Level 12: Stratosphere Hop",
+      width: 1280,
+      height: 2500,
+      startPosition: { x: 640, y: 2300 }, // ~100px above the starting platform
+      platforms: [
+        // Base
+        { x: 550, y: 2400, width: 180, height: 48, terrainType: 'red_brick' },
+        // Upward path
+        { x: 800, y: 2280, width: 96, height: 48, terrainType: 'wood' },
+        { x: 600, y: 2150, width: 144, height: 48, terrainType: 'green_block' },
+        { x: 350, y: 2000, width: 192, height: 48, terrainType: 'dirt' },
+        { x: 150, y: 1850, width: 96, height: 48, terrainType: 'pink_dirt' },
+        { x: 400, y: 1700, width: 48, height: 48, terrainType: 'stone' },
+        { x: 650, y: 1550, width: 144, height: 48, terrainType: 'orange_dirt' },
+        { x: 900, y: 1400, width: 96, height: 48, terrainType: 'dirt' },
+        // Mid-section
+        { x: 700, y: 1250, width: 144, height: 48, terrainType: 'stone' },
+        { x: 450, y: 1100, width: 96, height: 48, terrainType: 'wood' },
+        { x: 200, y: 950, width: 192, height: 48, terrainType: 'red_brick' },
+        // Final ascent
+        { x: 450, y: 775, width: 48, height: 48, terrainType: 'green_block' },
+        { x: 650, y: 650, width: 144, height: 48, terrainType: 'dirt' },
+        { x: 950, y: 475, width: 192, height: 48, terrainType: 'stone' }
+      ],
+      fruits: [
+        { x: 850, y: 2230, fruitType: 'fruit_apple' },
+        { x: 400, y: 1950, fruitType: 'fruit_bananas' },
+        { x: 180, y: 1800, fruitType: 'fruit_cherries' },
+        { x: 700, y: 1500, fruitType: 'fruit_kiwi' },
+        { x: 750, y: 1200, fruitType: 'fruit_melon' },
+        { x: 250, y: 900, fruitType: 'fruit_orange' },
+        { x: 700, y: 550, fruitType: 'fruit_pineapple' },
+        { x: 1050, y: 400, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 1046, y: 459 } // 16px above the platform y of 450
+    },
+    {
+      name: "Level 13: Celestial Ascent",
+      width: 1320,
+      height: 3000,
+      startPosition: { x: 100, y: 2800 }, // ~100px above the starting platform
+      platforms: [
+        // Ground floor
+        { x: 50, y: 2900, width: 144, height: 48, terrainType: 'stone' },
+        // First climb
+        { x: 300, y: 2750, width: 96, height: 48, terrainType: 'orange_dirt' },
+        { x: 500, y: 2600, width: 144, height: 48, terrainType: 'wood' },
+        { x: 300, y: 2450, width: 96, height: 48, terrainType: 'pink_dirt' },
+        { x: 100, y: 2300, width: 144, height: 48, terrainType: 'dirt' },
+        // Crossover
+        { x: 400, y: 2150, width: 48, height: 48, terrainType: 'red_brick' },
+        { x: 650, y: 2000, width: 96, height: 48, terrainType: 'green_block' },
+        { x: 900, y: 1850, width: 144, height: 48, terrainType: 'stone' },
+        // Vertical shaft
+        { x: 1100, y: 1700, width: 96, height: 48, terrainType: 'wood' },
+        { x: 900, y: 1550, width: 96, height: 48, terrainType: 'dirt' },
+        { x: 1100, y: 1400, width: 96, height: 48, terrainType: 'orange_dirt' },
+        { x: 850, y: 1250, width: 96, height: 48, terrainType: 'stone' },
+        // Peak
+        { x: 700, y: 1100, width: 144, height: 48, terrainType: 'pink_dirt' },
+        { x: 300, y: 950, width: 192, height: 48, terrainType: 'red_brick' },
+        { x: 50, y: 800, width: 144, height: 48, terrainType: 'green_block' },
+        { x: 300, y: 650, width: 192, height: 48, terrainType: 'stone' }
+      ],
+      fruits: [
+        { x: 350, y: 2700, fruitType: 'fruit_apple' },
+        { x: 150, y: 2250, fruitType: 'fruit_bananas' },
+        { x: 700, y: 1950, fruitType: 'fruit_cherries' },
+        { x: 950, y: 1800, fruitType: 'fruit_kiwi' },
+        { x: 1150, y: 1600, fruitType: 'fruit_melon' },
+        { x: 900, y: 1150, fruitType: 'fruit_orange' },
+        { x: 350, y: 750, fruitType: 'fruit_pineapple' },
+        { x: 100, y: 550, fruitType: 'fruit_strawberry' }
+      ],
+      trophy: { x: 396, y: 634 } // 16px above the platform y of 450
     }
   ]
 ];
