@@ -100,8 +100,8 @@ export class HUD {
     
     ctx.fillStyle = '#fff';
     ctx.font = '18px sans-serif';
-    ctx.fillText(`Time Taken: ${timeText}`, this.canvas.width / 2, panelY + 120);
-    ctx.fillText(`Deaths: ${deaths}`, this.canvas.width / 2, panelY + 150);
+    ctx.fillText(`Deaths: ${deaths}`, this.canvas.width / 2, panelY + 120);
+    ctx.fillText(`Time Taken: ${timeText}`, this.canvas.width / 2, panelY + 150);
     
     // Buttons
     const buttonWidth = 32;
@@ -170,8 +170,7 @@ export class HUD {
     ctx.restore();
   }
 
-  // <<< MODIFIED: Complete overhaul of the pause screen
-  drawPauseScreen(ctx, level, player, assets) {
+  drawPauseScreen(ctx, level, player, assets, levelTime = 0) {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -208,11 +207,13 @@ export class HUD {
     const collectedFruits = level.getFruitCount();
     const totalFruits = level.getTotalFruitCount();
     const deaths = player.deathCount || 0;
+    const timeText = this.formatTime(levelTime);
 
     ctx.fillStyle = '#fff';
     ctx.font = '18px sans-serif';
-    ctx.fillText(`Fruits: ${collectedFruits} / ${totalFruits}`, this.canvas.width / 2, panelY + 140);
+    ctx.fillText(`Fruits: ${collectedFruits} / ${totalFruits}`, this.canvas.width / 2, panelY + 135);
     ctx.fillText(`Deaths: ${deaths}`, this.canvas.width / 2, panelY + 160);
+    ctx.fillText(`Time Taken: ${timeText}`, this.canvas.width / 2, panelY + 185);
 
     // Buttons
     const buttonWidth = 32;

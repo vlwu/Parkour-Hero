@@ -271,7 +271,7 @@ export class Engine {
       }
 
       if (!this.isRunning && !this.gameState.showingLevelComplete && !this.pauseForMenu) {
-        this.hud.drawPauseScreen(this.ctx, this.currentLevel, this.player, this.assets);
+        this.hud.drawPauseScreen(this.ctx, this.currentLevel, this.player, this.assets, this.levelTime);
       }
 
     } catch (error) {
