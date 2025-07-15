@@ -29,7 +29,6 @@ function loadImage(src, key) {
       else if (key.includes('fruit')) color = '#FF6B6B';
       const fallbackCanvas = createFallbackCanvas(32, 32, color);
       img.src = fallbackCanvas.toDataURL();
-      // The onload event for the data URL will resolve the promise
     }, timeout);
 
     img.onload = () => {
@@ -45,7 +44,6 @@ function loadImage(src, key) {
       else if (key.includes('fruit')) color = '#FF6B6B';
       const fallbackCanvas = createFallbackCanvas(32, 32, color);
       img.src = fallbackCanvas.toDataURL();
-      // The onload for the data URL will trigger the onload above
     };
 
     img.crossOrigin = 'anonymous';
@@ -62,7 +60,6 @@ function loadSound(src, key) {
     const timer = setTimeout(() => {
       console.warn(`Timeout loading sound: ${src}. Using silent fallback.`);
       audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-      // The canplaythrough event for the data URL will resolve
     }, timeout);
     
     audio.addEventListener('canplaythrough', () => {
@@ -74,7 +71,6 @@ function loadSound(src, key) {
       clearTimeout(timer);
       console.warn(`Failed to load sound: ${src}. Using silent fallback.`);
       audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-      // The canplaythrough for the data URL will trigger the listener above
     });
 
     audio.crossOrigin = 'anonymous';
