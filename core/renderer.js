@@ -155,8 +155,8 @@ export class Renderer {
         case 'active':
           sprite = this.assets.checkpoint_active;
           if (sprite) {
-            const activeFrameCount = 4; // Idle animation for the active flag
-            const activeFrameSpeed = 0.2;
+            const activeFrameCount = 10; // Idle animation for the active flag
+            const activeFrameSpeed = 0.1;
             const currentFrame = Math.floor((performance.now() / 1000 / activeFrameSpeed) % activeFrameCount);
             frameWidth = sprite.width / activeFrameCount;
             srcX = currentFrame * frameWidth;

@@ -557,4 +557,37 @@ export const levelSections = [
       }
     ]
   },
+  {
+    name: "Jungle Journey",
+    levels: [
+      {
+        name: "Level 1: Save Point",
+        width: 1600, height: 720,
+        startPosition: { x: 100, y: 550 },
+        platforms: [
+          // Starting area
+          { x: 0, y: 600, width: 288, height: 48, terrainType: 'dirt' },
+          // A tricky jump section
+          { x: 450, y: 550, width: 96, height: 48, terrainType: 'wood' },
+          // Platform with the checkpoint
+          { x: 700, y: 500, width: 192, height: 48, terrainType: 'stone' },
+          // A gap that would be frustrating to repeat
+          { x: 1100, y: 600, width: 48, height: 48, terrainType: 'red_brick' },
+          { x: 1250, y: 550, width: 48, height: 48, terrainType: 'red_brick' },
+          // Final platform
+          { x: 1400, y: 500, width: 192, height: 48, terrainType: 'dirt' }
+        ],
+        fruits: [
+          { x: 200, y: 550, fruitType: 'fruit_apple' },
+          { x: 498, y: 500, fruitType: 'fruit_bananas' },
+          { x: 1124, y: 550, fruitType: 'fruit_cherries' },
+          { x: 1274, y: 500, fruitType: 'fruit_kiwi' },
+        ],
+        checkpoints: [
+          { x: 796, y: 468 } // The y-coordinate is the center of the 64x64 sprite
+        ],
+        trophy: { x: 1496, y: 484 }
+      }
+    ]
+  }
 ];
