@@ -238,7 +238,7 @@ export const levelSections = [
         { x: 1100, y: 200, width: 96, height: 48, terrainType: 'pink_dirt' } 
       ],
       fruits: [
-        { x: 40, y: 350, fruitType: 'fruit_apple' },
+        { x: 40, y: 300, fruitType: 'fruit_apple' },
         { x: 240, y: 450, fruitType: 'fruit_bananas' },
         { x: 380, y: 300, fruitType: 'fruit_cherries' },
         { x: 570, y: 100, fruitType: 'fruit_kiwi' },
@@ -253,7 +253,7 @@ export const levelSections = [
   // Section 2: Cloud 9 and Beyond
   [
     {
-      name: "Level 1: Cloud 9",
+      name: "Level 11: Cloud 8",
       width: 1280,  // Keep width standard, or even smaller
       height: 2160, // Make the level 3 screens tall (720 * 3)
       startPosition: { x: 600, y: 2050 }, // Start near the bottom
