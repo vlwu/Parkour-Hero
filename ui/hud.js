@@ -163,14 +163,14 @@ export class HUD {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.fillStyle = '#FFA500';
-    ctx.font = 'bold 32px sans-serif';
+    ctx.fillStyle = '#ffcc00ff';
+    ctx.font = 'bold 28px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Game Paused', this.canvas.width / 2, panelY + 60);
 
     ctx.fillStyle = '#3cff00ff';
     ctx.font = '18px sans-serif';
-    ctx.fillText('Click the button or press ESC to resume', this.canvas.width / 2, panelY + 100);
+    ctx.fillText('Click play or press ESC to resume', this.canvas.width / 2, panelY + 100);
 
     const collectedFruits = level.getFruitCount();
     const totalFruits = level.getTotalFruitCount();

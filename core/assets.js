@@ -81,7 +81,7 @@ function loadSound(src, key) {
 
 export async function loadAssets() {
   const imagePaths = {
-    backgroundTile: 'assets/Background/Brown.png',
+    backgroundTile: 'assets/Background/Blue.png',
     block: 'assets/Terrain/Terrain.png',
     // Player sprites
     playerJump: 'assets/MainCharacters/PinkMan/jump.png',
