@@ -229,12 +229,12 @@ export class Player {
       }
 
       // Wall boundaries
-      // Clamp player X position within [0, 1280 - width]
+      // Clamp player X position within [0, level.width - width]
       if (this.x < 0) {
         this.x = 0;
         this.vx = 0;
-      } else if (this.x + this.width > 1280) {
-        this.x = 1280 - this.width;
+      } else if (level && this.x + this.width > level.width) {
+        this.x = level.width - this.width;
         this.vx = 0;
       }
 

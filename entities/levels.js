@@ -6,6 +6,7 @@ export const levelSections = [
   [
     {
       name: "Level 1: It's Too Easy",
+      width: 1320, height: 720,
       startPosition: { x: 50, y: 300 },
       // Platforms: minimal structure, only essential properties
       platforms: [
@@ -30,6 +31,7 @@ export const levelSections = [
     },
     {
       name: "Level 2: Big Drop",
+      width: 1320, height: 720,
       startPosition: { x: 50, y: 350 },
       platforms: [
         { x: 0, y: 400, width: 192, height: 48, terrainType: 'dirt' },
@@ -52,6 +54,7 @@ export const levelSections = [
     },
     {
       name: "Level 3: Ups & Downs",
+      width: 1400, height: 720,
       startPosition: { x: 50, y: 350 },
       platforms: [
         { x: 0, y: 400, width: 144, height: 48, terrainType: 'dirt' },
@@ -75,6 +78,7 @@ export const levelSections = [
     },
     {
       name: "Level 4: Sky Climb",
+      width: 1280, height: 720,
       startPosition: { x: 50, y: 600 },
       platforms: [
         { x: 0, y: 650, width: 192, height: 48, terrainType: 'dirt' },
@@ -98,6 +102,7 @@ export const levelSections = [
     },
     {
       name: "Level 5: Colorful Blocks",
+      width: 1400, height: 720,
       startPosition: { x: 50, y: 350 },
       platforms: [
         { x: 0, y: 400, width: 144, height: 48, terrainType: 'green_block' },
@@ -120,6 +125,7 @@ export const levelSections = [
     },
     {
       name: "Level 6: Narrow Paths",
+      width: 1280, height: 720,
       startPosition: { x: 50, y: 350 },
       platforms: [
         { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
@@ -145,6 +151,7 @@ export const levelSections = [
     },
     {
       name: "Level 7: Stairway",
+      width: 1280, height: 720,
       startPosition: { x: 50, y: 600 },
       platforms: [
         { x: 0, y: 650, width: 144, height: 48, terrainType: 'dirt' },
@@ -168,6 +175,7 @@ export const levelSections = [
     },
     {
       name: "Level 8: Bottomless",
+      width: 1320, height: 720,
       startPosition: { x: 50, y: 300 },
       platforms: [
         { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
@@ -192,6 +200,7 @@ export const levelSections = [
     },
     {
       name: "Level 9: Aerial Mastery",
+      width: 1320, height: 720,
       startPosition: { x: 50, y: 250 },
       platforms: [
         { x: 0, y: 300, width: 96, height: 48, terrainType: 'dirt' },
@@ -217,6 +226,7 @@ export const levelSections = [
     },
     {
       name: "Level 10: Introduction Finale",
+      width: 1320, height: 720,
       startPosition: { x: 50, y: 350 },
       platforms: [
         { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },

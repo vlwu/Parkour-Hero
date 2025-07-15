@@ -1,13 +1,13 @@
 export class Camera {
-  constructor(canvasWidth, canvasHeight, levelWidth = 1280, levelHeight = 720) {
+  constructor(canvasWidth, canvasHeight) {
     this.x = 0;
     this.y = 0;
     this.width = canvasWidth;
     this.height = canvasHeight;
     
-    // Level boundaries
-    this.levelWidth = levelWidth;
-    this.levelHeight = levelHeight;
+    // Level boundaries - will be set by updateLevelBounds
+    this.levelWidth = canvasWidth;
+    this.levelHeight = canvasHeight;
     
     // Camera follow settings
     this.followSpeed = 5; // How fast camera catches up to player (higher = faster)
@@ -18,9 +18,9 @@ export class Camera {
     
     // Camera limits - prevent showing areas outside the level
     this.minX = 0;
-    this.maxX = Math.max(0, levelWidth - canvasWidth);
+    this.maxX = 0; // Will be calculated in updateLevelBounds
     this.minY = 0;
-    this.maxY = Math.max(0, levelHeight - canvasHeight);
+    this.maxY = 0; // Will be calculated in updateLevelBounds
     
     // Shake effect properties
     this.shakeTimer = 0;
@@ -33,9 +33,7 @@ export class Camera {
     this.targetY = 0;
     
     console.log('Camera initialized:', {
-      viewport: `${canvasWidth}x${canvasHeight}`,
-      level: `${levelWidth}x${levelHeight}`,
-      bounds: `X: ${this.minX}-${this.maxX}, Y: ${this.minY}-${this.maxY}`
+      viewport: `${canvasWidth}x${canvasHeight}`
     });
   }
 
