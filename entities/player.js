@@ -21,6 +21,8 @@ export class Player {
 
     this.isSpawning = true;
     this.spawnComplete = false;
+    this.isDespawning = false;
+    this.despawnAnimationFinished = false;
 
     // Dash properties
     this.isDashing = false;   
@@ -65,7 +67,7 @@ export class Player {
 
     // Skip input handling depending on state
     if (this.isSpawning && !this.spawnComplete) return;
-    if (this.isDashing) return; 
+    if (this.isDashing || this.isDespawning) return; 
     
     // Horizontal movement
     if (inputActions.moveLeft) {
@@ -139,6 +141,19 @@ export class Player {
       }
       return;
     }
+
+      if (this.isDespawning) {
+        this.animationTimer += dt;
+        if (this.animationTimer >= this.animationSpeed) {
+            this.animationTimer = 0;
+            this.animationFrame++;
+            if (this.animationFrame >= this.animationFrames.despawn) {
+                this.despawnAnimationFinished = true;
+                this.isDespawning = false; // Stop further updates
+            }
+        }
+        return; // No other logic while despawning
+      }
 
       // Store previous position for collision resolution
       const prevX = this.x;
@@ -256,6 +271,16 @@ export class Player {
     }
   }
 
+  startDespawn() {
+    this.isDespawning = true;
+    this.despawnAnimationFinished = false;
+    this.state = 'despawn';
+    this.animationFrame = 0;
+    this.animationTimer = 0;
+    this.vx = 0;
+    this.vy = 0;
+  }
+
   respawn(startPosition) {
     this.x = startPosition.x;
     this.y = startPosition.y;
@@ -270,6 +295,8 @@ export class Player {
     this.needsRespawn = false;
     this.isSpawning = true;
     this.spawnComplete = false;
+    this.isDespawning = false;
+    this.despawnAnimationFinished = false;
   }
 
   // Handles horizontal collision with platforms and wall cling logic
@@ -349,6 +376,8 @@ export class Player {
 
   render(ctx) {
     try {
+      if (this.despawnAnimationFinished) return; // Don't draw if despawn is fully complete
+      
       // Get the appropriate sprite based on current state
       const spriteKey = this.getSpriteKey();
       const sprite = this.assets[spriteKey];
@@ -386,13 +415,14 @@ export class Player {
         drawOffsetX = clingOffset;
       }
 
-      // Use spawn size during spawn animation, normal size otherwise
-      const renderWidth = (this.state === 'spawn') ? this.spawnWidth : this.width;
-      const renderHeight = (this.state === 'spawn') ? this.spawnHeight : this.height;
+      // Use spawn size during spawn/despawn animation, normal size otherwise
+      const isSpecialAnim = this.state === 'spawn' || this.state === 'despawn';
+      const renderWidth = isSpecialAnim ? this.spawnWidth : this.width;
+      const renderHeight = isSpecialAnim ? this.spawnHeight : this.height;
 
       // Adjust position to center the larger spawn sprite
-      const renderX = (this.state === 'spawn') ? -(this.spawnWidth - this.width) / 2 : 0;
-      const renderY = (this.state === 'spawn') ? -(this.spawnHeight - this.height) / 2 : 0;
+      const renderX = isSpecialAnim ? -(this.spawnWidth - this.width) / 2 : 0;
+      const renderY = isSpecialAnim ? -(this.spawnHeight - this.height) / 2 : 0;
 
       ctx.drawImage(
         sprite,                    

@@ -9,7 +9,7 @@ import { CollisionSystem } from './collision-system.js';
 import { Renderer } from './renderer.js';
 
 export class Engine {
-  constructor(ctx, canvas, assets, initialKeybinds) {
+  constructor(ctx, canvas, assets, initialKeybinds, callbacks = {}) {
     this.ctx = ctx;
     this.canvas = canvas;
     this.assets = assets;
@@ -18,6 +18,7 @@ export class Engine {
     this.keybinds = initialKeybinds;
     this.isRunning = false;
     this.pauseForMenu = false; // Differentiates menu pause from user pause
+    this.callbacks = callbacks;
 
     this.camera = new Camera(canvas.width, canvas.height);
     this.hud = new HUD(canvas);
@@ -227,17 +228,15 @@ export class Engine {
         }
       }
 
-      if (collisionResults.trophyCollision) {
+      if (collisionResults.trophyCollision && !this.player.isDespawning) {
         this.currentLevel.trophy.acquired = true;
         this.camera.shake(8, 0.3);
+        this.player.startDespawn();
       }
 
-      if (this.gameState.showingLevelComplete) {
-        return;
-      }
-
-      if (this.currentLevel.isCompleted()) {
+      if (this.player.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
         this.gameState.onLevelComplete();
+        this.player.despawnAnimationFinished = false; // Reset flag
       }
 
     } catch (error) {
@@ -295,6 +294,10 @@ export class Engine {
           } else if (action === 'restart') {
               this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
               this.resume();
+          } else if (action === 'main_menu') {
+              if (this.callbacks.onMainMenu) {
+                  this.callbacks.onMainMenu();
+              }
           }
       }
   }

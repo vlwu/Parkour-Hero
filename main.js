@@ -298,7 +298,9 @@ loadAssets().then((assets) => {
   console.log('Assets loaded successfully, starting game...');
   
   try {
-    engine = new Engine(ctx, canvas, assets, keybinds);
+    engine = new Engine(ctx, canvas, assets, keybinds, {
+      onMainMenu: toggleMainMenuModal,
+    });
 
     // Initialize the InputManager, passing all necessary dependencies
     inputManager = new InputManager(
@@ -313,6 +315,18 @@ loadAssets().then((assets) => {
     
     setupSoundSettings();
     updatePauseButtonIcon();
+    
+    // Expose the unlock function to the window for easy debugging
+    window.unlockAllLevels = () => {
+        if (engine && engine.gameState) {
+            engine.gameState.unlockAllLevels();
+            // If the main menu is open, refresh it to show the unlocked levels
+            if (!mainMenuModal.classList.contains('hidden')) {
+                populateLevelMenu();
+            }
+        }
+    };
+    console.log('Developer command available: Type `unlockAllLevels()` in the console to unlock all levels.');
     
     console.log('Game started successfully!');
   } catch (error) {

@@ -23,6 +23,13 @@ export class GameState {
       console.log("Progress saved:", this.levelProgress);
   }
 
+  unlockAllLevels() {
+      const totalLevels = this.levelSections.reduce((acc, section) => acc + section.length, 0);
+      this.levelProgress.unlockedLevels[0] = totalLevels;
+      console.log(`%cAll ${totalLevels} levels have been unlocked!`, 'color: lightgreen; font-weight: bold;');
+      this.saveProgress();
+  }
+
   onLevelComplete() {
       const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
       if (!this.levelProgress.completedLevels.includes(levelId)) {

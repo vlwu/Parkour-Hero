@@ -220,7 +220,7 @@ export class HUD {
     const buttonHeight = 32;
     const buttonY = panelY + 200;
     
-    const availableButtons = ['resume', 'restart'];
+    const availableButtons = ['resume', 'restart', 'main_menu'];
     const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 20;
     const startX = (this.canvas.width - totalButtonWidth) / 2;
     let currentX = startX;
@@ -243,6 +243,16 @@ export class HUD {
       ctx.fillStyle = '#FF6B6B';
       ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
     }
+    currentX += buttonWidth + 20;
+
+    // Main Menu button
+    const mainMenuButtonImage = assets.level_menu_button;
+    if (mainMenuButtonImage) {
+        ctx.drawImage(mainMenuButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
+    } else {
+        ctx.fillStyle = '#2196F3';
+        ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
+    }
 
     ctx.restore();
   }
@@ -255,7 +265,7 @@ export class HUD {
     const buttonHeight = 32;
     const buttonY = panelY + 200;
 
-    const availableButtons = ['resume', 'restart'];
+    const availableButtons = ['resume', 'restart', 'main_menu'];
     const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 20;
     const startX = (this.canvas.width - totalButtonWidth) / 2;
     let currentX = startX;
@@ -271,6 +281,13 @@ export class HUD {
     if (x >= currentX && x <= currentX + buttonWidth &&
         y >= buttonY && y <= buttonY + buttonHeight) {
       return 'restart';
+    }
+    currentX += buttonWidth + 20;
+
+    // Check Main Menu button
+    if (x >= currentX && x <= currentX + buttonWidth &&
+        y >= buttonY && y <= buttonY + buttonHeight) {
+      return 'main_menu';
     }
 
     return null;
