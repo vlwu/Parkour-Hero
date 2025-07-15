@@ -4,17 +4,17 @@ export class Platform {
     this.y = y;
     this.width = width;
     this.height = height;
-    this.terrainType = terrainType; // 'dirt', 'stone', 'wood'
+    this.terrainType = terrainType; 
 
     // Sprite sheet configuration for terrain tiles
     this.spriteConfig = {
-      dirt: { srcX: 96, srcY: 0 },      // Dirt tile at top-left
-      stone: { srcX: 0, srcY: 0 },    // Stone tile next to dirt
-      wood: { srcX: 0, srcY: 64 },     // Wood tile next to stone
-      green_block: { srcX: 0, srcY: 128 }, // Green block tile
-      orange_dirt: { srcX: 96, srcY: 64 }, // Oranges dirt tile
-      pink_dirt: { srcX: 96, srcY: 128 }, // Pink dirt tile
-      red_brick: { srcX: 272, srcY: 64 }, // Red brick tile
+      dirt: { srcX: 96, srcY: 0 },     
+      stone: { srcX: 0, srcY: 0 },    
+      wood: { srcX: 0, srcY: 64 },     
+      green_block: { srcX: 0, srcY: 128 }, 
+      orange_dirt: { srcX: 96, srcY: 64 }, 
+      pink_dirt: { srcX: 96, srcY: 128 }, 
+      red_brick: { srcX: 272, srcY: 64 }, 
     };
 
     this.tileSize = 48; // Size of each tile in the spritesheet
@@ -30,11 +30,10 @@ export class Platform {
 
   // Fast check: is player standing on top of this platform?
   isPlayerOnTop(player) {
-    const pb = player.y + player.height; // Player bottom
-    const pt = this.y; // Platform top
+    const pb = player.y + player.height; 
+    const pt = this.y; 
 
-    // Early exit if not horizontally aligned
-    if (player.x + player.width <= this.x || player.x >= this.x + this.width) return false;
+    if (player.x + player.width <= this.x || player.x >= this.x + this.width) return false; // Early exit if not horizontally aligned
 
     // Check vertical overlap with small tolerance (<= 10px)
     return pb >= pt && pb <= pt + 10;
@@ -45,7 +44,6 @@ export class Platform {
       const terrainSprite = assets.block;
 
       if (!terrainSprite) {
-        // Fallback rendering if sprite not available
         this.renderFallback(ctx);
         return;
       }
@@ -73,9 +71,9 @@ export class Platform {
   renderFallback(ctx) {
     // Simple colored rectangle fallback
     const colors = {
-      dirt: '#8B4513',    // Brown
-      stone: '#696969',   // Gray
-      wood: '#D2691E'     // Orange-brown
+      dirt: '#8B4513',    
+      stone: '#696969',   
+      wood: '#D2691E'    
     };
 
     ctx.fillStyle = colors[this.terrainType] || '#808080';
@@ -85,14 +83,10 @@ export class Platform {
 
 // Level class to manage collections of platforms and game objectives
 export class Level {
-  /**
-   * Creates a Level object from a level configuration object.
-   * @param {object} levelConfig - The configuration object for the level.
-   */
   constructor(levelConfig) {
     this.name = levelConfig.name || 'Unnamed Level';
-    this.width = levelConfig.width || 1280; // <<< FIX: Assign level width
-    this.height = levelConfig.height || 720; // <<< FIX: Assign level height
+    this.width = levelConfig.width || 1280;
+    this.height = levelConfig.height || 720;
     this.backgrounds = levelConfig.backgrounds || ['backgroundTile'];
     this.completed = false;
     this.startPosition = levelConfig.startPosition ? { ...levelConfig.startPosition } : { x: 100, y: 300 };
@@ -215,7 +209,7 @@ export class Level {
       // Fallback rendering
       ctx.fillStyle = trophy.acquired ? 'silver' : 'gold';
       if (trophy.inactive) {
-        ctx.fillStyle = 'gray'; // Show inactive trophy differently
+        ctx.fillStyle = 'gray'; 
       }
 
       ctx.beginPath();
@@ -290,7 +284,6 @@ export class Level {
       trophy.animationTimer = 0;
     }
 
-    // Reset completion flag
-    this.completed = false;
+    this.completed = false; // Reset completion flag
   }
 }
