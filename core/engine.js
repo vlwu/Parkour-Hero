@@ -45,29 +45,7 @@ export class Engine {
     this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
     this.camera.snapToPlayer(this.player);
 
-    this.wasJumpPressed = false;
-    this.jumpSoundCooldownTimer = 0;
     this.wasDashPressed = false;
-  }
-  
-  detectJumpSound(inputActions) {
-      const jumpJustPressed = inputActions.jump && !this.wasJumpPressed;
-      this.wasJumpPressed = inputActions.jump;
-
-      if (!jumpJustPressed || this.jumpSoundCooldownTimer > 0) {
-          return null;
-      }
-
-      if (this.player.onGround || this.player.jumpCount === 0) {
-          this.jumpSoundCooldownTimer = 0.1; // 100ms cooldown
-          return { type: 'first' };
-      }
-      else if (this.player.jumpCount === 1 && !this.player.onGround) {
-          this.jumpSoundCooldownTimer = 0.1; // 100ms cooldown
-          return { type: 'second' };
-      }
-
-      return null;
   }
 
   updateKeybinds(newKeybinds) {
@@ -160,22 +138,12 @@ export class Engine {
       }
 
       // Update cooldown timers
-      if (this.jumpSoundCooldownTimer > 0) {
-        this.jumpSoundCooldownTimer -= dt;
-      }
-
       const inputActions = {
         moveLeft: this.keys[this.keybinds.moveLeft] || false,
         moveRight: this.keys[this.keybinds.moveRight] || false,
         jump: this.keys[this.keybinds.jump] || false,
         dash: this.keys[this.keybinds.dash] || false,
       };
-
-      const jumpSoundInfo = this.detectJumpSound(inputActions);
-      if (jumpSoundInfo) {
-        if (jumpSoundInfo.type === 'first') this.soundManager.play('jump', 0.8);
-        else if (jumpSoundInfo.type === 'second') this.soundManager.play('double_jump', 0.8);
-      }
 
       const dashJustPressed = inputActions.dash && !this.wasDashPressed;
       this.wasDashPressed = inputActions.dash;
@@ -185,6 +153,14 @@ export class Engine {
 
       this.player.handleInput(inputActions);
       this.player.update(dt, this.currentLevel);
+
+      if (this.player.jumpedThisFrame === 1) {
+        this.soundManager.play('jump', 0.8);
+      } else if (this.player.jumpedThisFrame === 2) {
+          this.soundManager.play('double_jump', 0.6);
+      }
+      this.player.jumpedThisFrame = 0; // Reset flag after checking
+
       this.camera.update(this.player, dt);
 
       if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {

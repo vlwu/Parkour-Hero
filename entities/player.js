@@ -8,28 +8,36 @@ export class Player {
     this.spawnHeight = 96;
 
     this.vx = 0; // x and y velocity
-    this.vy = 0; 
+    this.vy = 0;
     this.needsRespawn = false;
     this.deathCount = 0; // Track number of deaths
 
-    this.jumpCount = 2; // 2 at the start to disable jumping immediately after spawning
-    this.jumpPressed = false; 
+    this.jumpCount = 0;
+    this.jumpPressed = false;
     this.direction = 'right';
     this.state = 'idle';
     this.assets = assets;
-    this.onGround = false;  
+    this.onGround = false;
 
     this.isSpawning = true;
     this.spawnComplete = false;
     this.isDespawning = false;
     this.despawnAnimationFinished = false;
 
+    this.jumpedThisFrame = 0; // 0: no, 1: first jump, 2: double jump
+
+    // Coyote time and jump buffer properties
+    this.coyoteTime = 0.1; // 100ms of coyote time
+    this.coyoteTimer = 0;
+    this.jumpBufferTime = 0.15; // 150ms buffer for jump input
+    this.jumpBufferTimer = 0;
+
     // Dash properties
-    this.isDashing = false;   
-    this.dashDuration = 0.2;   
+    this.isDashing = false;
+    this.dashDuration = 0.2;
     this.dashTimer = 0;        // Timer for how long dash has been going
     this.dashSpeed = 500;      // Dash velocity in px/s
-    this.dashCooldown = 0.5;     
+    this.dashCooldown = 0.5;
     this.dashCooldownTimer = 0;  // Timer tracking cooldown
     this.dashPressed = false;    // Prevent holding down dash key
     
@@ -48,7 +56,7 @@ export class Player {
       fall: 1,
       dash: 1,
       cling: 5,
-      spawn: 7, 
+      spawn: 7,
       despawn: 7,
     };
     
@@ -67,7 +75,7 @@ export class Player {
 
     // Skip input handling depending on state
     if (this.isSpawning && !this.spawnComplete) return;
-    if (this.isDashing || this.isDespawning) return; 
+    if (this.isDashing || this.isDespawning) return;
     
     // Horizontal movement
     if (inputActions.moveLeft) {
@@ -83,52 +91,58 @@ export class Player {
       if (this.onGround) this.state = 'idle';
     }
 
-    // Detect new jump press
-    const jumpKeyDown = inputActions.jump; // Use the action directly
+    const jumpKeyDown = inputActions.jump;
 
-    // Fast jump edge detection
-    if (jumpKeyDown && !this.jumpPressed) {
-      if (this.jumpCount < 2) { // Allow up to 2 jumps
-      this.vy = -this.jumpForce; // Apply jump velocity
-      this.jumpCount++;
-      this.state = this.jumpCount === 2 ? 'double_jump' : 'jump'; // Set state
-      this.onGround = false;
-      }
-      this.jumpPressed = true; // Mark jump as handled
+    // Buffer jump input. Allows for holding jump to execute on landing.
+    if (jumpKeyDown) {
+      this.jumpBufferTimer = this.jumpBufferTime;
     }
 
-    if (!jumpKeyDown) {
-      this.jumpPressed = false; // Reset when key is released
+    // Double jump requires a new, distinct press while airborne.
+    if (jumpKeyDown && !this.jumpPressed && this.jumpCount === 1 && !this.onGround) {
+        this.vy = -this.jumpForce;
+        this.jumpCount = 2;
+        this.state = 'double_jump';
+        this.animationFrame = 0; // Reset animation for double jump
+        this.jumpBufferTimer = 0; // Consume buffer on double jump
+        this.jumpedThisFrame = 2; // Mark as double jump
     }
 
-    const dashKeyDown = inputActions.dash;  // Dash input handling
+    this.jumpPressed = jumpKeyDown; 
 
-    // Dash: fast edge detection, cooldown, minimal branching
+    const dashKeyDown = inputActions.dash; 
+
+    // Dash logic
     if (dashKeyDown && !this.dashPressed && !this.isDashing && this.dashCooldownTimer <= 0) {
-      this.isDashing = true;                  // Start dash
-      this.dashTimer = this.dashDuration;     // Set dash timer
-      this.vx = this.direction === 'right' ? this.dashSpeed : -this.dashSpeed; // Set dash velocity
-      this.vy = 0;                            // No vertical movement during dash
-      this.state = 'dash';                    // Set state for animation
-      this.animationFrame = 0;                // Reset animation frame
+      this.isDashing = true;                 
+      this.dashTimer = this.dashDuration;     
+      this.vx = this.direction === 'right' ? this.dashSpeed : -this.dashSpeed; 
+      this.vy = 0;                            
+      this.state = 'dash';                    
+      this.animationFrame = 0;               
     }
 
     this.dashPressed = dashKeyDown; // Update flag for edge detection
 
-    // Fast animation reset on state change (minimize property writes)
+    // Fast animation reset on state change
     if (this.state !== prevState) {
-      this.animationFrame = 0;   // Reset frame
-      this.animationTimer = 0;   // Reset timer
+      this.animationFrame = 0;   
+      this.animationTimer = 0;   
     }
   }
 
-  // <<< FIX: Removed canvasHeight from the signature
   update(dt, level = null) {
     try {
+      // Update timers for coyote time and jump buffer
+      if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= dt;
+      if (!this.onGround && this.coyoteTimer > 0) {
+          this.coyoteTimer -= dt;
+      }
+
       if (this.isSpawning && !this.spawnComplete) {
       // Only update animation timer and frame during spawn
       this.animationTimer += dt;
-      if (this.animationTimer >= this.spawnAnimationSpeed) { 
+      if (this.animationTimer >= this.spawnAnimationSpeed) {
         this.animationTimer = 0;
         this.animationFrame++;
         // Check if spawn animation is complete
@@ -174,6 +188,20 @@ export class Player {
           this.vx = 0;
           this.dashCooldownTimer = this.dashCooldown; // Start cooldown
 
+        }
+      }
+
+      // Handle buffered jump execution (first jump only)
+      if (this.jumpBufferTimer > 0 && this.jumpCount === 0) {
+        // Check for ground or coyote time
+        if (this.onGround || this.coyoteTimer > 0) {
+            this.vy = -this.jumpForce;
+            this.jumpCount = 1;
+            this.state = 'jump';
+            this.onGround = false;
+            this.jumpBufferTimer = 0; 
+            this.coyoteTimer = 0; 
+            this.jumpedThisFrame = 1; // Mark as first jump
         }
       }
 
@@ -230,8 +258,8 @@ export class Player {
 
       // Handle spawn animation first
       if (!this.isDashing && this.onGround) {
-        this.jumpCount = 0;
-        this.usedDoubleJump = false;
+        this.jumpCount = 0; // Reset jump count when on ground
+        this.coyoteTimer = this.coyoteTime; // Reset coyote time when on ground
         this.state = this.vx !== 0 ? 'run' : 'idle';
       } else if (!this.isDashing && this.state !== 'cling') {
         // Airborne states
@@ -285,7 +313,7 @@ export class Player {
     this.x = startPosition.x;
     this.y = startPosition.y;
     this.vx = this.vy = 0;
-    this.jumpCount = 2;
+    this.jumpCount = 0;
     this.jumpPressed = false;
     this.onGround = false;
     this.isDashing = false;
@@ -326,8 +354,8 @@ export class Player {
       // Wall cling only if airborne and falling
       if (!this.onGround && this.vy >= 0 && (fromLeft || fromRight)) {
         this.state = 'cling';
-        this.vy = 30;        
-        this.jumpCount = 1;  
+        this.vy = 30;
+        this.jumpCount = 1;
       }
 
       break;
@@ -354,7 +382,7 @@ export class Player {
         this.jumpCount = 0;
         this.onGround = true;
         groundCollision = true;
-        break; 
+        break;
 
       } else if (hitFromBelow) {
         this.y = platform.y + platform.height;
@@ -410,7 +438,7 @@ export class Player {
 
       // Make it look like the player is touching the wall when clinging
       let drawOffsetX = 0;
-      const clingOffset = 7; 
+      const clingOffset = 7;
       if (this.state === 'cling') {
         drawOffsetX = clingOffset;
       }
@@ -425,11 +453,11 @@ export class Player {
       const renderY = isSpecialAnim ? -(this.spawnHeight - this.height) / 2 : 0;
 
       ctx.drawImage(
-        sprite,                    
-        srcX, srcY,               
-        frameWidth, frameHeight, 
-        drawOffsetX + renderX, renderY,                    
-        renderWidth, renderHeight  
+        sprite,
+        srcX, srcY,
+        frameWidth, frameHeight,
+        drawOffsetX + renderX, renderY,
+        renderWidth, renderHeight
       );
 
       // Restore context
@@ -464,7 +492,7 @@ export class Player {
     
     // Draw a simple face
     ctx.fillStyle = 'white';
-    ctx.fillRect(this.x, this.y, 4, 4); 
+    ctx.fillRect(this.x, this.y, 4, 4);
     
     // Draw direction indicator
     ctx.fillStyle = 'red';
