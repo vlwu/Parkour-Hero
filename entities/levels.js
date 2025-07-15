@@ -254,7 +254,7 @@ export const levelSections = [
     name: "Cloud 9 and Beyond",
     levels: [
       {
-        name: "Level 11: Cloud Rise",
+        name: "Level 1: Cloud Rise",
         width: 1280,
         height: 2200,
         startPosition: { x: 100, y: 1950 },
@@ -286,7 +286,7 @@ export const levelSections = [
         trophy: { x: 1096, y: 334 }
       },
       {
-        name: "Level 12: Stratosphere Hop",
+        name: "Level 2: Stratosphere Hop",
         width: 1280,
         height: 2500,
         startPosition: { x: 640, y: 2300 },
@@ -319,7 +319,7 @@ export const levelSections = [
         trophy: { x: 1046, y: 459 }
       },
       {
-        name: "Level 13: Celestial Ascent",
+        name: "Level 3: Celestial Ascent",
         width: 1320,
         height: 3000,
         startPosition: { x: 100, y: 2800 },
