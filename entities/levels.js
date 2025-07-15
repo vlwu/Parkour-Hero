@@ -41,11 +41,11 @@ export const levelSections = [
         ],
         fruits: [
           { x: 75, y: 250, fruitType: 'fruit_apple' },
-          { x: 300, y: 270, fruitType: 'fruit_bananas' },
+          { x: 340, y: 270, fruitType: 'fruit_bananas' },
           { x: 525, y: 190, fruitType: 'fruit_cherries' },
           { x: 800, y: 110, fruitType: 'fruit_kiwi' },
           { x: 1000, y: 100, fruitType: 'fruit_melon' },
-          { x: 250, y: 500, fruitType: 'fruit_orange' },
+          { x: 250, y: 300, fruitType: 'fruit_orange' },
           { x: 650, y: 110, fruitType: 'fruit_pineapple' },
           { x: 950, y: 190, fruitType: 'fruit_strawberry' }
         ],
