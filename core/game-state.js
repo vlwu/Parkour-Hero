@@ -1,7 +1,7 @@
 function getLinearIndex(sectionIndex, levelIndex, levelSections) {
     let linearIndex = 0;
     for (let i = 0; i < sectionIndex; i++) {
-        linearIndex += levelSections[i].length;
+        linearIndex += levelSections[i].levels.length;
     }
     linearIndex += levelIndex;
     return linearIndex;
@@ -31,7 +31,7 @@ export class GameState {
   }
 
   unlockAllLevels() {
-      const totalLevels = this.levelSections.reduce((acc, section) => acc + section.length, 0);
+      const totalLevels = this.levelSections.reduce((acc, section) => acc + section.levels.length, 0);
       this.levelProgress.unlockedLevels[0] = totalLevels;
       console.log(`%cAll ${totalLevels} levels have been unlocked!`, 'color: lightgreen; font-weight: bold;');
       this.saveProgress();
@@ -42,7 +42,7 @@ export class GameState {
       if (!this.levelProgress.completedLevels.includes(levelId)) {
           this.levelProgress.completedLevels.push(levelId);
           
-          const totalLevels = this.levelSections.reduce((acc, section) => acc + section.length, 0);
+          const totalLevels = this.levelSections.reduce((acc, section) => acc + section.levels.length, 0);
           const currentLinearIndex = getLinearIndex(this.currentSection, this.currentLevelIndex, this.levelSections);
           
           if (currentLinearIndex + 1 < totalLevels) {
@@ -72,7 +72,7 @@ export class GameState {
 
 
   hasNextLevel() {
-    const hasNextInSection = this.currentLevelIndex + 1 < this.levelSections[this.currentSection].length;
+    const hasNextInSection = this.currentLevelIndex + 1 < this.levelSections[this.currentSection].levels.length;
     const hasNextSection = this.currentSection + 1 < this.levelSections.length;
     return hasNextInSection || hasNextSection;
   }
@@ -92,7 +92,7 @@ export class GameState {
     const { loadLevel, resume } = this.dependencies;
 
     if (action === 'next') {
-      if (this.currentLevelIndex + 1 < this.levelSections[this.currentSection].length) {
+      if (this.currentLevelIndex + 1 < this.levelSections[this.currentSection].levels.length) {
         this.currentLevelIndex++;
       } else if (this.currentSection + 1 < this.levelSections.length) {
         this.currentSection++;
@@ -106,7 +106,7 @@ export class GameState {
         this.currentLevelIndex--;
       } else if (this.currentSection > 0) {
         this.currentSection--;
-        this.currentLevelIndex = this.levelSections[this.currentSection].length - 1;
+        this.currentLevelIndex = this.levelSections[this.currentSection].levels.length - 1;
       }
       loadLevel(this.currentSection, this.currentLevelIndex);
     }

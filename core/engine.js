@@ -1,5 +1,5 @@
 import { Player } from '../entities/player.js';
-import { Level } from '../entities/platform.js'; 
+import { Level } from '../entities/platform.js';
 import { levelSections } from '../entities/levels.js';
 import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
@@ -131,14 +131,14 @@ export class Engine {
 
   loadLevel(sectionIndex, levelIndex) {
     if (sectionIndex >= levelSections.length || 
-        levelIndex >= levelSections[sectionIndex].length) {
+        levelIndex >= levelSections[sectionIndex].levels.length) {
       console.error(`Invalid level: Section ${sectionIndex}, Level ${levelIndex}`);
       return;
     }
 
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
-    this.currentLevel = new Level(levelSections[sectionIndex][levelIndex]);
+    this.currentLevel = new Level(levelSections[sectionIndex].levels[levelIndex]);
 
     this.collectedFruits = [];
     
