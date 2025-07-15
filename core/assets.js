@@ -97,7 +97,7 @@ export async function loadAssets() {
     playerCling: 'assets/MainCharacters/PinkMan/wall_jump.png',
     playerAppear: 'assets/MainCharacters/Appearing.png',
     playerDisappear: 'assets/MainCharacters/Disappearing.png',
-    // Fruit and trophy sprites
+    // Interactive items
     fruit_apple: 'assets/Items/Fruits/Apple.png',
     fruit_bananas: 'assets/Items/Fruits/Bananas.png',
     fruit_cherries: 'assets/Items/Fruits/Cherries.png',
@@ -107,8 +107,10 @@ export async function loadAssets() {
     fruit_pineapple: 'assets/Items/Fruits/Pineapple.png',
     fruit_strawberry: 'assets/Items/Fruits/Strawberry.png',
     fruit_collected: 'assets/Items/Fruits/Collected.png',
+    checkpoint_inactive: 'assets/Items/Checkpoints/Checkpoint/Checkpoint (No Flag).png',
+    checkpoint_activation: 'assets/Items/Checkpoints/Checkpoint/Checkpoint (Flag Out).png',
+    checkpoint_active: 'assets/Items/Checkpoints/Checkpoint/Checkpoint (Flag Idle).png',
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
-    start: 'assets/Items/Checkpoints/Start/Start (Moving).png',
     // Menu assets
     next_level_button: 'assets/Menu/Buttons/Next.png',
     restart_level_button: 'assets/Menu/Buttons/Restart.png',

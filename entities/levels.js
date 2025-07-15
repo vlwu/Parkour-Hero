@@ -226,7 +226,7 @@ export const levelSections = [
     },
     {
       name: "Level 10: Introduction Finale",
-      width: 1320, height: 720,
+      width: 1320, height: 1000,
       startPosition: { x: 50, y: 350 },
       platforms: [
         { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
@@ -263,7 +263,6 @@ export const levelSections = [
       fruits: [
         null
       ],
-      // Trophy at the very top
       trophy: { x: null, y: null }
     }
   ]
