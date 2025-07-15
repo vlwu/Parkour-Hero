@@ -375,6 +375,10 @@ canvas {
   color: #777;
   cursor: not-allowed;
   border-color: #666;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* How to Play Section */

@@ -203,7 +203,7 @@ function populateLevelMenu() {
             } else {
                 button.classList.add('locked');
                 button.disabled = true;
-                button.innerHTML = '<img src="assets/Menu/Buttons/Lock.png" width="24" height="24" alt="Locked">';
+                button.innerHTML = '<img src="assets/Menu/Levels/Locked.png" alt="Locked">';
             }
             levelSelectionContainer.appendChild(button);
         });
