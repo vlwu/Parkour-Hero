@@ -1,5 +1,5 @@
 import { Player } from '../entities/player.js';
-import { Level } from '../entities/platform.js'; // MODIFIED: Import Level instead of createLevel
+import { Level } from '../entities/platform.js'; 
 import { levelSections } from '../entities/levels.js';
 import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
@@ -49,8 +49,6 @@ export class Engine {
     this.jumpCooldown = 100;
     this.wasDashPressed = false;
   }
-
-  // ... (All methods from constructor to gameLoop remain unchanged) ...
   
   detectJumpSound(inputActions) {
       const now = Date.now();
@@ -139,10 +137,9 @@ export class Engine {
 
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
-    // MODIFIED: Use the Level constructor directly
+    // Use the Level constructor directly
     this.currentLevel = new Level(levelSections[sectionIndex][levelIndex]);
-    
-    // MODIFIED: Removed redundant properties, they are accessed via this.currentLevel
+
     this.collectedFruits = [];
     
     this.player = new Player(
@@ -251,19 +248,16 @@ export class Engine {
     }
   }
 
-  // ... (The rest of the file, render() and event handlers, remains unchanged) ...
     render() {
     try {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      // --- DELEGATE ALL SCENE RENDERING ---
       this.renderer.renderScene(
         this.camera,
         this.currentLevel,
         this.player,
         this.collectedFruits
       );
-      // --- END OF SCENE RENDERING ---
 
       // UI rendering remains the responsibility of the engine/HUD
       this.hud.drawGameHUD(this.ctx, this.currentLevel, this.player, this.soundManager);
