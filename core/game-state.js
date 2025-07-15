@@ -1,3 +1,12 @@
+function getLinearIndex(sectionIndex, levelIndex, levelSections) {
+    let linearIndex = 0;
+    for (let i = 0; i < sectionIndex; i++) {
+        linearIndex += levelSections[i].length;
+    }
+    linearIndex += levelIndex;
+    return linearIndex;
+}
+
 export class GameState {
   constructor(levelSections, dependencies) {
       this.levelSections = levelSections;
@@ -10,16 +19,14 @@ export class GameState {
   }
 
   loadProgress() {
-      // For persistence, this could use localStorage
       const savedProgress = {
-          unlockedLevels: [1], // Track total number of unlocked levels
-          completedLevels: [], // Track IDs of completed levels e.g., "0-0"
+          unlockedLevels: [1], 
+          completedLevels: [], 
       };
       return savedProgress;
   }
 
   saveProgress() {
-      // For persistence, this could use localStorage.setItem
       console.log("Progress saved:", this.levelProgress);
   }
 
@@ -34,11 +41,15 @@ export class GameState {
       const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
       if (!this.levelProgress.completedLevels.includes(levelId)) {
           this.levelProgress.completedLevels.push(levelId);
-
-          // Unlock the next level if it exists
-          const nextLevelLinearIndex = (this.currentSection * this.levelSections[0].length) + this.currentLevelIndex + 2;
-          if (nextLevelLinearIndex > this.levelProgress.unlockedLevels[0]) {
-              this.levelProgress.unlockedLevels[0] = nextLevelLinearIndex;
+          
+          const totalLevels = this.levelSections.reduce((acc, section) => acc + section.length, 0);
+          const currentLinearIndex = getLinearIndex(this.currentSection, this.currentLevelIndex, this.levelSections);
+          
+          if (currentLinearIndex + 1 < totalLevels) {
+              const nextUnlockedCount = currentLinearIndex + 2;
+              if (nextUnlockedCount > this.levelProgress.unlockedLevels[0]) {
+                  this.levelProgress.unlockedLevels[0] = nextUnlockedCount;
+              }
           }
           this.saveProgress();
       }
@@ -49,13 +60,11 @@ export class GameState {
       this.dependencies.pause();
   }
 
-  // Check if a level is available to be played
   isLevelUnlocked(sectionIndex, levelIndex) {
-      const levelLinearIndex = (sectionIndex * this.levelSections[0].length) + levelIndex + 1;
-      return levelLinearIndex <= this.levelProgress.unlockedLevels[0];
+      const levelLinearIndex = getLinearIndex(sectionIndex, levelIndex, this.levelSections);
+      return levelLinearIndex < this.levelProgress.unlockedLevels[0];
   }
 
-  // Check if a level has been successfully completed
   isLevelCompleted(sectionIndex, levelIndex) {
       const levelId = `${sectionIndex}-${levelIndex}`;
       return this.levelProgress.completedLevels.includes(levelId);
@@ -63,8 +72,9 @@ export class GameState {
 
 
   hasNextLevel() {
-    return (this.currentLevelIndex + 1 < this.levelSections[this.currentSection].length) ||
-          (this.currentSection + 1 < this.levelSections.length);
+    const hasNextInSection = this.currentLevelIndex + 1 < this.levelSections[this.currentSection].length;
+    const hasNextSection = this.currentSection + 1 < this.levelSections.length;
+    return hasNextInSection || hasNextSection;
   }
 
   hasPreviousLevel() {

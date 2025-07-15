@@ -4,7 +4,42 @@ export class HUD {
     this.isVisible = true;
   }
 
-  // Toggle HUD visibility
+  _getButtonLayout(screenType, hasNextLevel, hasPreviousLevel) {
+    const buttonWidth = 32;
+    const buttonHeight = 32;
+    const buttons = [];
+    let gap;
+
+    const panelY = (this.canvas.height - 300) / 2;
+    const buttonY = panelY + 200;
+
+    if (screenType === 'levelComplete') {
+        gap = 10;
+        if (hasPreviousLevel) buttons.push({ name: 'previous', asset: 'previous_level_button' });
+        if (hasNextLevel) buttons.push({ name: 'next', asset: 'next_level_button' });
+        buttons.push({ name: 'restart', asset: 'restart_level_button' });
+    } else { // 'pause'
+        gap = 20;
+        buttons.push({ name: 'resume', asset: 'resume_button' });
+        buttons.push({ name: 'restart', asset: 'restart_level_button' });
+        buttons.push({ name: 'main_menu', asset: 'level_menu_button' });
+    }
+
+    const totalButtonWidth = buttons.length * buttonWidth + (buttons.length > 1 ? (buttons.length - 1) * gap : 0);
+    const startX = (this.canvas.width - totalButtonWidth) / 2;
+
+    let currentX = startX;
+    for (const button of buttons) {
+        button.x = currentX;
+        button.y = buttonY;
+        button.width = buttonWidth;
+        button.height = buttonHeight;
+        currentX += buttonWidth + gap;
+    }
+
+    return buttons;
+  }
+
   setVisible(visible) {
     this.isVisible = visible;
   }
@@ -21,13 +56,11 @@ export class HUD {
       const hudWidth = 280;
       const hudHeight = 100;
 
-      // HUD background
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
       ctx.roundRect(hudX, hudY, hudWidth, hudHeight, 10);
       ctx.fill();
 
-      // Get game stats
       const totalFruits = level.getTotalFruitCount();
       const collectedFruits = level.getFruitCount();
       const soundSettings = soundManager.getSettings();
@@ -50,7 +83,6 @@ export class HUD {
       const startY = hudY + (hudHeight - totalTextHeight) / 2 + lineHeight - 6;
       const textX = hudX + hudWidth / 2;
 
-      // Draw each line with stroke and fill
       lines.forEach((text, index) => {
         const y = startY + index * lineHeight;
         ctx.strokeText(text, textX, y);
@@ -64,16 +96,13 @@ export class HUD {
     }
   }
 
-  // Draw level complete screen
   drawLevelCompleteScreen(ctx, level, player, assets, hasNextLevel, hasPreviousLevel) {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     
-    // Semi-transparent overlay
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
-    // Main panel
     const panelWidth = 400;
     const panelHeight = 300;
     const panelX = (this.canvas.width - panelWidth) / 2;
@@ -83,18 +112,15 @@ export class HUD {
     ctx.beginPath();
     ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
     ctx.fill();
-    
     ctx.strokeStyle = '#4d4d4dff';
     ctx.lineWidth = 2;
     ctx.stroke();
     
-    // Title
     ctx.fillStyle = '#4CAF50';
     ctx.font = 'bold 32px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(`Level Complete!`, this.canvas.width / 2, panelY + 60);
     
-    // Stats
     const deaths = player.deathCount || 0;
     const timeText = this.formatTime(this.getCurrentLevelTime());
     
@@ -103,69 +129,16 @@ export class HUD {
     ctx.fillText(`Deaths: ${deaths}`, this.canvas.width / 2, panelY + 120);
     ctx.fillText(`Time Taken: ${timeText}`, this.canvas.width / 2, panelY + 150);
     
-    // Buttons
-    const buttonWidth = 32;
-    const buttonHeight = 32;
-    const buttonY = panelY + 200;
-
-    // Calculate button positions based on available buttons
-    const availableButtons = [];
-    if (hasPreviousLevel) availableButtons.push('previous');
-    if (hasNextLevel) availableButtons.push('next');
-    availableButtons.push('restart');
-
-    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 10;
-    const startX = (this.canvas.width - totalButtonWidth) / 2;
-
-    let currentX = startX;
-
-    // Previous Level button
-    if (hasPreviousLevel) {
-      const previousButtonImage = assets.previous_level_button;
-      if (previousButtonImage) {
-        ctx.drawImage(previousButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
-      } else {
-        // Fallback rectangle if image not loaded
-        ctx.fillStyle = '#2196F3';
-        ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
-        ctx.fillStyle = 'white';
-        ctx.font = '16px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Prev', currentX + buttonWidth/2, buttonY + 25);
-      }
-      currentX += buttonWidth + 10;
-    }
-
-    // Next Level button
-    if (hasNextLevel) {
-      const nextButtonImage = assets.next_level_button;
-      if (nextButtonImage) {
-        ctx.drawImage(nextButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
-      } else {
-        // Fallback rectangle if image not loaded
-        ctx.fillStyle = '#4CAF50';
-        ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
-        ctx.fillStyle = 'white';
-        ctx.font = '16px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Next', currentX + buttonWidth/2, buttonY + 25);
-      }
-      currentX += buttonWidth + 10;
-    }
-    
-    // Restart button
-    const restartButtonImage = assets.restart_level_button;
-    if (restartButtonImage) {
-      ctx.drawImage(restartButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
-    } else {
-      // Fallback rectangle if image not loaded
-      ctx.fillStyle = '#FF6B6B';
-      ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
-      ctx.fillStyle = 'white';
-      ctx.font = '16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Restart', currentX + buttonWidth/2, buttonY + 25);
-    }
+    const buttons = this._getButtonLayout('levelComplete', hasNextLevel, hasPreviousLevel);
+    buttons.forEach(button => {
+        const image = assets[button.asset];
+        if (image) {
+            ctx.drawImage(image, button.x, button.y, button.width, button.height);
+        } else {
+            ctx.fillStyle = '#888';
+            ctx.fillRect(button.x, button.y, button.width, button.height);
+        }
+    });
 
     ctx.restore();
   }
@@ -174,11 +147,9 @@ export class HUD {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // Overlay
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Panel
     const panelWidth = 400;
     const panelHeight = 300;
     const panelX = (this.canvas.width - panelWidth) / 2;
@@ -192,18 +163,15 @@ export class HUD {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Title
     ctx.fillStyle = '#FFA500';
     ctx.font = 'bold 32px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Game Paused', this.canvas.width / 2, panelY + 60);
 
-    // Instructions
     ctx.fillStyle = '#3cff00ff';
     ctx.font = '18px sans-serif';
     ctx.fillText('Click the button or press ESC to resume', this.canvas.width / 2, panelY + 100);
 
-    // Stats
     const collectedFruits = level.getFruitCount();
     const totalFruits = level.getTotalFruitCount();
     const deaths = player.deathCount || 0;
@@ -215,137 +183,46 @@ export class HUD {
     ctx.fillText(`Deaths: ${deaths}`, this.canvas.width / 2, panelY + 160);
     ctx.fillText(`Time Taken: ${timeText}`, this.canvas.width / 2, panelY + 185);
 
-    // Buttons
-    const buttonWidth = 32;
-    const buttonHeight = 32;
-    const buttonY = panelY + 200;
-    
-    const availableButtons = ['resume', 'restart', 'main_menu'];
-    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 20;
-    const startX = (this.canvas.width - totalButtonWidth) / 2;
-    let currentX = startX;
-
-    // Resume button
-    const resumeButtonImage = assets.resume_button;
-    if (resumeButtonImage) {
-      ctx.drawImage(resumeButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
-    } else {
-      ctx.fillStyle = '#4CAF50';
-      ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
-    }
-    currentX += buttonWidth + 20;
-
-    // Restart button
-    const restartButtonImage = assets.restart_level_button;
-    if (restartButtonImage) {
-      ctx.drawImage(restartButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
-    } else {
-      ctx.fillStyle = '#FF6B6B';
-      ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
-    }
-    currentX += buttonWidth + 20;
-
-    // Main Menu button
-    const mainMenuButtonImage = assets.level_menu_button;
-    if (mainMenuButtonImage) {
-        ctx.drawImage(mainMenuButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
-    } else {
-        ctx.fillStyle = '#2196F3';
-        ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
-    }
+    const buttons = this._getButtonLayout('pause');
+    buttons.forEach(button => {
+        const image = assets[button.asset];
+        if (image) {
+            ctx.drawImage(image, button.x, button.y, button.width, button.height);
+        } else {
+            ctx.fillStyle = '#888';
+            ctx.fillRect(button.x, button.y, button.width, button.height);
+        }
+    });
 
     ctx.restore();
   }
 
-  // Handle clicks for the new pause screen buttons
   handlePauseScreenClick(x, y) {
-    const panelHeight = 300;
-    const panelY = (this.canvas.height - panelHeight) / 2;
-    const buttonWidth = 32;
-    const buttonHeight = 32;
-    const buttonY = panelY + 200;
-
-    const availableButtons = ['resume', 'restart', 'main_menu'];
-    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 20;
-    const startX = (this.canvas.width - totalButtonWidth) / 2;
-    let currentX = startX;
-
-    // Check Resume button
-    if (x >= currentX && x <= currentX + buttonWidth &&
-        y >= buttonY && y <= buttonY + buttonHeight) {
-      return 'resume';
+    const buttons = this._getButtonLayout('pause');
+    for (const button of buttons) {
+        if (x >= button.x && x <= button.x + button.width &&
+            y >= button.y && y <= button.y + button.height) {
+            return button.name;
+        }
     }
-    currentX += buttonWidth + 20;
-
-    // Check Restart button
-    if (x >= currentX && x <= currentX + buttonWidth &&
-        y >= buttonY && y <= buttonY + buttonHeight) {
-      return 'restart';
-    }
-    currentX += buttonWidth + 20;
-
-    // Check Main Menu button
-    if (x >= currentX && x <= currentX + buttonWidth &&
-        y >= buttonY && y <= buttonY + buttonHeight) {
-      return 'main_menu';
-    }
-
     return null;
   }
 
-  // Handle clicks on level complete screen
   handleLevelCompleteClick(x, y, hasNextLevel, hasPreviousLevel) {
-    const panelHeight = 300;
-    const panelY = (this.canvas.height - panelHeight) / 2;
-
-    const buttonWidth = 32;
-    const buttonHeight = 32;
-    const buttonY = panelY + 200;
-
-    // Calculate button positions based on available buttons
-    const availableButtons = [];
-    if (hasPreviousLevel) availableButtons.push('previous');
-    if (hasNextLevel) availableButtons.push('next');
-    availableButtons.push('restart');
-
-    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 10;
-    const startX = (this.canvas.width - totalButtonWidth) / 2;
-
-    let currentX = startX;
-
-    // Check Previous Level button
-    if (hasPreviousLevel) {
-      if (x >= currentX && x <= currentX + buttonWidth &&
-          y >= buttonY && y <= buttonY + buttonHeight) {
-        return 'previous';
-      }
-      currentX += buttonWidth + 10;
+    const buttons = this._getButtonLayout('levelComplete', hasNextLevel, hasPreviousLevel);
+    for (const button of buttons) {
+        if (x >= button.x && x <= button.x + button.width &&
+            y >= button.y && y <= button.y + button.height) {
+            return button.name;
+        }
     }
-
-    // Check Next Level button  
-    if (hasNextLevel) {
-      if (x >= currentX && x <= currentX + buttonWidth &&
-          y >= buttonY && y <= buttonY + buttonHeight) {
-        return 'next';
-      }
-      currentX += buttonWidth + 10;
-    }
-
-    // Check Restart button
-    if (x >= currentX && x <= currentX + buttonWidth &&
-        y >= buttonY && y <= buttonY + buttonHeight) {
-      return 'restart';
-    }
-    
-    return null; // No button clicked
+    return null;
   }
 
-  // Get current level time from engine
   getCurrentLevelTime() {
     return this.levelTime || 0;
   }
 
-  // Format time as MM:SS.mmm
   formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
