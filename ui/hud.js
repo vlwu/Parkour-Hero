@@ -170,7 +170,8 @@ export class HUD {
     ctx.restore();
   }
 
-  drawPauseScreen(ctx) {
+  // <<< MODIFIED: Complete overhaul of the pause screen
+  drawPauseScreen(ctx, level, player, assets) {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -196,45 +197,80 @@ export class HUD {
     ctx.fillStyle = '#FFA500';
     ctx.font = 'bold 32px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Game Paused', this.canvas.width / 2, panelY + 70);
+    ctx.fillText('Game Paused', this.canvas.width / 2, panelY + 60);
 
-    // Instructions
+    ctx.fillStyle = '#3cff00ff';
+    ctx.font = '18px sans-serif';
+    ctx.fillText('Click the button or press ESC to resume', this.canvas.width / 2, panelY + 100);
+
+    // Stats
+    const collectedFruits = level.getFruitCount();
+    const totalFruits = level.getTotalFruitCount();
+    const deaths = player.deathCount || 0;
+
     ctx.fillStyle = '#fff';
     ctx.font = '18px sans-serif';
-    ctx.fillText('Click the button or press ESC to resume', this.canvas.width / 2, panelY + 120);
+    ctx.fillText(`Fruits: ${collectedFruits} / ${totalFruits}`, this.canvas.width / 2, panelY + 140);
+    ctx.fillText(`Deaths: ${deaths}`, this.canvas.width / 2, panelY + 160);
 
-    // Resume button (temporary, will replace with image)
-    const buttonWidth = 200;
-    const buttonHeight = 50;
-    const buttonX = (this.canvas.width - buttonWidth) / 2;
-    const buttonY = panelY + 180;
+    // Buttons
+    const buttonWidth = 32;
+    const buttonHeight = 32;
+    const buttonY = panelY + 200;
+    
+    const availableButtons = ['resume', 'restart'];
+    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 20;
+    const startX = (this.canvas.width - totalButtonWidth) / 2;
+    let currentX = startX;
 
-    ctx.fillStyle = '#55aa58ff';
-    ctx.beginPath();
-    ctx.roundRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
-    ctx.fill();
+    // Resume button
+    const resumeButtonImage = assets.resume_button;
+    if (resumeButtonImage) {
+      ctx.drawImage(resumeButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
+    } else {
+      ctx.fillStyle = '#4CAF50';
+      ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
+    }
+    currentX += buttonWidth + 20;
 
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Resume', this.canvas.width / 2, buttonY + buttonHeight / 2);
+    // Restart button
+    const restartButtonImage = assets.restart_level_button;
+    if (restartButtonImage) {
+      ctx.drawImage(restartButtonImage, currentX, buttonY, buttonWidth, buttonHeight);
+    } else {
+      ctx.fillStyle = '#FF6B6B';
+      ctx.fillRect(currentX, buttonY, buttonWidth, buttonHeight);
+    }
 
     ctx.restore();
   }
 
+  // <<< MODIFIED: Handle clicks for the new pause screen buttons
   handlePauseScreenClick(x, y) {
     const panelHeight = 300;
     const panelY = (this.canvas.height - panelHeight) / 2;
-    const buttonWidth = 200;
-    const buttonHeight = 50;
-    const buttonX = (this.canvas.width - buttonWidth) / 2;
-    const buttonY = panelY + 180;
+    const buttonWidth = 32;
+    const buttonHeight = 32;
+    const buttonY = panelY + 200;
 
-    if (x >= buttonX && x <= buttonX + buttonWidth &&
+    const availableButtons = ['resume', 'restart'];
+    const totalButtonWidth = availableButtons.length * buttonWidth + (availableButtons.length - 1) * 20;
+    const startX = (this.canvas.width - totalButtonWidth) / 2;
+    let currentX = startX;
+
+    // Check Resume button
+    if (x >= currentX && x <= currentX + buttonWidth &&
         y >= buttonY && y <= buttonY + buttonHeight) {
       return 'resume';
     }
+    currentX += buttonWidth + 20;
+
+    // Check Restart button
+    if (x >= currentX && x <= currentX + buttonWidth &&
+        y >= buttonY && y <= buttonY + buttonHeight) {
+      return 'restart';
+    }
+
     return null;
   }
 

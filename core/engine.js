@@ -183,7 +183,6 @@ export class Engine {
       }
 
       this.player.handleInput(inputActions);
-      // <<< FIX: Removed canvas.height from the call
       this.player.update(dt, this.currentLevel);
       this.camera.update(this.player, dt);
 
@@ -276,7 +275,8 @@ export class Engine {
       }
 
       if (!this.isRunning && !this.gameState.showingLevelComplete && !this.pauseForSettings) {
-        this.hud.drawPauseScreen(this.ctx);
+        // <<< MODIFIED: Pass required data to the new pause screen
+        this.hud.drawPauseScreen(this.ctx, this.currentLevel, this.player, this.assets);
       }
 
     } catch (error) {
@@ -295,7 +295,11 @@ export class Engine {
           }
       } else if (!this.isRunning) {
           const action = this.hud.handlePauseScreenClick(x, y);
+          // <<< MODIFIED: Handle the new 'restart' action from the pause menu
           if (action === 'resume') {
+              this.resume();
+          } else if (action === 'restart') {
+              this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
               this.resume();
           }
       }

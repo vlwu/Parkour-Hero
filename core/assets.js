@@ -87,6 +87,7 @@ export async function loadAssets() {
   const imagePaths = {
     backgroundTile: 'assets/Background/Brown.png',
     block: 'assets/Terrain/Terrain.png',
+    // Player sprites
     playerJump: 'assets/MainCharacters/PinkMan/jump.png',
     playerDoubleJump: 'assets/MainCharacters/PinkMan/double_jump.png',
     playerIdle: 'assets/MainCharacters/PinkMan/idle.png',
@@ -96,6 +97,7 @@ export async function loadAssets() {
     playerCling: 'assets/MainCharacters/PinkMan/wall_jump.png',
     playerAppear: 'assets/MainCharacters/Appearing.png',
     playerDisappear: 'assets/MainCharacters/Disappearing.png',
+    // Fruit and trophy sprites
     fruit_apple: 'assets/Items/Fruits/Apple.png',
     fruit_bananas: 'assets/Items/Fruits/Bananas.png',
     fruit_cherries: 'assets/Items/Fruits/Cherries.png',
@@ -107,10 +109,13 @@ export async function loadAssets() {
     fruit_collected: 'assets/Items/Fruits/Collected.png',
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
     start: 'assets/Items/Checkpoints/Start/Start (Moving).png',
+    // Menu assets
     next_level_button: 'assets/Menu/Buttons/Next.png',
     restart_level_button: 'assets/Menu/Buttons/Restart.png',
     previous_level_button: 'assets/Menu/Buttons/Previous.png',
     level_menu_button: 'assets/Menu/Buttons/Levels.png',
+    resume_button: 'assets/Menu/Buttons/Play.png',
+    settings_button: 'assets/Menu/Buttons/Settings.png',
   };
 
   const soundPaths = {
