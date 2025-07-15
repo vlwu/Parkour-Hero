@@ -35,8 +35,8 @@ export class Player {
     this.animationFrame = 0;
     this.animationTimer = 0;
     this.animationSpeed = 0.05; // in s
-    this.spawnAnimationSpeed = 0.12; 
-
+    this.spawnAnimationSpeed = 0.08;
+    
     // Animation frame counts for each state (1 for static images)
     this.animationFrames = {
       idle: 11,

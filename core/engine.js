@@ -1,5 +1,3 @@
-// core/engine.js
-
 import { Player } from '../entities/player.js';
 import { createLevel } from '../entities/platform.js';
 import { levelSections } from '../entities/levels.js';
@@ -7,7 +5,8 @@ import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
 import { HUD } from '../ui/hud.js';
 import { GameState } from './game-state.js';
-import { CollisionSystem } from './collision-system.js'; // Import the new system
+import { CollisionSystem } from './collision-system.js';
+import { Renderer } from './renderer.js'; // Import the new renderer
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) {
@@ -24,7 +23,8 @@ export class Engine {
     this.hud = new HUD(canvas);
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
-    this.collisionSystem = new CollisionSystem(); // Instantiate the new system
+    this.collisionSystem = new CollisionSystem();
+    this.renderer = new Renderer(ctx, canvas, assets); // Instantiate the renderer
 
     this.levelStartTime = 0;
     this.levelTime = 0;
@@ -50,9 +50,8 @@ export class Engine {
     this.wasDashPressed = false;
   }
 
-  // ... (detectJumpSound, updateKeybinds, getSoundManager, start, stop, pause, resume, gameLoop, loadLevel methods are unchanged) ...
-  // detectJumpSound
-  detectJumpSound(inputActions) {
+  // ... (All methods from constructor to update remain unchanged) ...
+    detectJumpSound(inputActions) {
       const now = Date.now();
       const jumpPressed = inputActions.jump;
       
@@ -75,29 +74,24 @@ export class Engine {
       return null;
   }
 
-  // Update keybinds
   updateKeybinds(newKeybinds) {
     this.keybinds = { ...newKeybinds };
   }
 
-  // Get sound manager
   getSoundManager() {
     return this.soundManager;
   }
 
-  // Start the game loop
   start() {
     this.isRunning = true;
     this.gameLoop();
   }
 
-  // Stop the game loop
   stop() {
     this.isRunning = false;
     this.soundManager.stopAll();
   }
 
-  // Pause the game
   pause() {
       this.isRunning = false;
       this.soundManager.stopAll();
@@ -109,7 +103,6 @@ export class Engine {
       this.render(); 
   }
 
-  // Resume the game
   resume() {
     if (this.pauseForSettings) return; 
 
@@ -124,7 +117,6 @@ export class Engine {
     }
   }
 
-  // Main game loop
   gameLoop(currentTime = performance.now()) {
     if (!this.isRunning) return;
 
@@ -166,8 +158,6 @@ export class Engine {
 
     this.levelStartTime = performance.now();
 }
-
-
   update(dt) {
     try {
       if (this.isRunning && !this.gameState.showingLevelComplete) {
@@ -208,7 +198,6 @@ export class Engine {
       this.currentLevel.updateFruits(dt);
       this.currentLevel.updateTrophyAnimation(dt);
       
-      // Update collected fruit animations
       this.collectedFruits = this.collectedFruits || [];
       for (const collected of this.collectedFruits) {
         collected.frameTimer += dt;
@@ -222,10 +211,8 @@ export class Engine {
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
 
-      // --- COLLISION LOGIC IS NOW DELEGATED ---
       const collisionResults = this.collisionSystem.update(this.player, this.currentLevel);
 
-      // Handle fruit collection consequences
       if (collisionResults.newlyCollectedFruits.length > 0) {
         for (const fruit of collisionResults.newlyCollectedFruits) {
           fruit.collected = true;
@@ -238,12 +225,10 @@ export class Engine {
         }
       }
 
-      // Handle trophy collision consequences
       if (collisionResults.trophyCollision) {
         this.currentLevel.trophy.acquired = true;
         this.camera.shake(8, 0.3);
       }
-      // --- END OF DELEGATED COLLISION LOGIC ---
 
       if (this.gameState.showingLevelComplete) {
         return;
@@ -259,29 +244,27 @@ export class Engine {
     }
   }
 
-  // ... (render and other methods are unchanged) ...
+
   render() {
     try {
-      const { ctx, canvas, assets } = this;
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // --- DELEGATE ALL SCENE RENDERING ---
+      this.renderer.renderScene(
+        this.camera,
+        this.currentLevel,
+        this.player,
+        this.collectedFruits
+      );
+      // --- END OF SCENE RENDERING ---
 
-      this.camera.apply(ctx);
-
-      this.drawBackground();
-      this.currentLevel.render(ctx, assets);
-      this.player.render(ctx);
-      this.drawFruits();
-      this.drawCollectedFruits();
-
-      this.camera.restore(ctx);
-      
-      this.hud.drawGameHUD(ctx, this.currentLevel, this.player, this.soundManager);
+      // UI rendering remains the responsibility of the engine/HUD
+      this.hud.drawGameHUD(this.ctx, this.currentLevel, this.player, this.soundManager);
 
       if (this.gameState.showingLevelComplete) {
         this.hud.levelTime = this.levelTime;
         this.hud.drawLevelCompleteScreen(
-          ctx, 
+          this.ctx, 
           this.currentLevel, 
           this.player, 
           this.assets, 
@@ -291,133 +274,18 @@ export class Engine {
       }
 
       if (!this.isRunning && !this.gameState.showingLevelComplete && !this.pauseForSettings) {
-        this.hud.drawPauseScreen(ctx);
+        this.hud.drawPauseScreen(this.ctx);
       }
 
     } catch (error) {
       console.error('Error in render loop:', error);
-      ctx.fillStyle = 'red';
-      ctx.font = '20px sans-serif';
-      ctx.fillText('Rendering Error - Check Console', 10, 30);
+      this.ctx.fillStyle = 'red';
+      this.ctx.font = '20px sans-serif';
+      this.ctx.fillText('Rendering Error - Check Console', 10, 30);
     }
   }
 
-  drawBackground() {
-    const { ctx, canvas, assets } = this;
-    const bg = assets.backgroundTile;
-
-    if (!bg) {
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, '#87CEEB');
-      gradient.addColorStop(1, '#98FB98');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(this.camera.x, this.camera.y, canvas.width, canvas.height);
-      return;
-    }
-
-    const spriteSize = 64;
-    const tileSize = 64;
-    const srcX = 0;
-    const srcY = 0;
-
-    const startX = Math.floor(this.camera.x / tileSize);
-    const startY = Math.floor(this.camera.y / tileSize);
-    const endX = Math.ceil((this.camera.x + canvas.width) / tileSize);
-    const endY = Math.ceil((this.camera.y + canvas.height) / tileSize);
-
-    for (let i = startX; i <= endX; i++) {
-      const x = i * tileSize;
-      for (let j = startY; j <= endY; j++) {
-        const y = j * tileSize;
-        try {
-          ctx.drawImage(
-            bg,
-            srcX, srcY,
-            spriteSize, spriteSize,
-            x, y,
-            tileSize, tileSize
-          );
-        } catch (error) {
-          if (i === startX && j === startY) {
-            console.warn('Failed to draw background tile:', error);
-          }
-          ctx.fillStyle = '#87CEEB';
-          ctx.fillRect(x, y, tileSize, tileSize);
-        }
-      }
-    }
-  }
-
-  drawFruits() {
-    const { ctx, assets } = this;
-    const fruits = this.currentLevel.fruits;
-    
-    for (let i = 0, len = fruits.length; i < len; i++) {
-      const fruit = fruits[i];
-      if (fruit.collected) continue;
-
-      if (!this.camera.isVisible(fruit.x - fruit.size/2, fruit.y - fruit.size/2, fruit.size, fruit.size)) {
-        continue;
-      }
-
-      try {
-        const img = assets[fruit.spriteKey];
-        if (!img) {
-          ctx.fillStyle = '#FF6B6B';
-          ctx.beginPath();
-          ctx.arc(fruit.x, fruit.y, fruit.size / 2, 0, Math.PI * 2);
-          ctx.fill();
-          continue;
-        }
-
-        const frameWidth = img.width / fruit.frameCount;
-        const srcX = frameWidth * fruit.frame;
-
-        ctx.drawImage(
-          img,
-          srcX, 0, frameWidth, img.height,
-          fruit.x - fruit.size / 2, fruit.y - fruit.size / 2,
-          fruit.size, fruit.size
-        );
-
-      } catch (error) {
-        ctx.fillStyle = '#FF6B6B';
-        ctx.beginPath();
-        ctx.arc(fruit.x, fruit.y, fruit.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
-
-  drawCollectedFruits() {
-    const { ctx, assets } = this;
-    const collectedArr = this.collectedFruits;
-    const sprite = assets['fruit_collected'];
-    
-    if (!sprite) return;
-
-    const frameWidth = sprite.width / 6;
-    const frameHeight = sprite.height;
-    
-    for (let i = 0, len = collectedArr.length; i < len; i++) {
-      const collected = collectedArr[i];
-      
-      if (!this.camera.isVisible(collected.x - collected.size/2, collected.y - collected.size/2, collected.size, collected.size)) {
-        continue;
-      }
-      
-      const srcX = collected.frame * frameWidth;
-      ctx.drawImage(
-        sprite,
-        srcX, 0,
-        frameWidth, frameHeight,
-        collected.x - collected.size / 2, collected.y - collected.size / 2,
-        collected.size, collected.size
-      );
-    }
-  }
-
-  handleCanvasClick(x, y) {
+    handleCanvasClick(x, y) {
       if (this.gameState.showingLevelComplete) {
           const action = this.hud.handleLevelCompleteClick(x, y, this.gameState.hasNextLevel(), this.gameState.hasPreviousLevel());
           if (action) {
