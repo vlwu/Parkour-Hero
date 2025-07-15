@@ -279,7 +279,6 @@ function setupSoundSettings() {
   if (testSoundButton) {
     testSoundButton.addEventListener('click', () => {
       if (typeof engine !== 'undefined' && engine.soundManager) {
-        engine.soundManager.enableAudioContext();
         engine.soundManager.play('jump', 0.8);
       }
     });

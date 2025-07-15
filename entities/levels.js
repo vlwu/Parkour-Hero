@@ -52,7 +52,7 @@ export const levelSections = [
         trophy: { x: 1120, y: 584 }
       },
       {
-        name: "Level 3: Ups & Downs",
+        name: "Level 3: Downs & Ups",
         width: 1400, height: 720,
         startPosition: { x: 50, y: 350 },
         platforms: [
@@ -354,5 +354,5 @@ export const levelSections = [
         trophy: { x: 396, y: 634 }
       }
     ]
-  }
+  },
 ];
