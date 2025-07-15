@@ -183,7 +183,8 @@ export class Engine {
       }
 
       this.player.handleInput(inputActions);
-      this.player.update(dt, this.canvas.height, this.currentLevel);
+      // <<< FIX: Removed canvas.height from the call
+      this.player.update(dt, this.currentLevel);
       this.camera.update(this.player, dt);
 
       if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {

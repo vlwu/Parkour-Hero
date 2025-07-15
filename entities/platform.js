@@ -91,6 +91,8 @@ export class Level {
    */
   constructor(levelConfig) {
     this.name = levelConfig.name || 'Unnamed Level';
+    this.width = levelConfig.width || 1280; // <<< FIX: Assign level width
+    this.height = levelConfig.height || 720; // <<< FIX: Assign level height
     this.backgrounds = levelConfig.backgrounds || ['backgroundTile'];
     this.completed = false;
     this.startPosition = levelConfig.startPosition ? { ...levelConfig.startPosition } : { x: 100, y: 300 };

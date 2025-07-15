@@ -120,7 +120,8 @@ export class Player {
     }
   }
 
-  update(dt, canvasHeight, level = null) {
+  // <<< FIX: Removed canvasHeight from the signature
+  update(dt, level = null) {
     try {
       if (this.isSpawning && !this.spawnComplete) {
       // Only update animation timer and frame during spawn
@@ -201,9 +202,9 @@ export class Player {
         if (!touchingWall) this.state = 'fall'; // Exit cling if not touching wall
       }
 
-      // Fallback ground collision with canvas bottom
-      if (this.y > canvasHeight + 100) {
-        if (level?.startPosition && !this.needsRespawn) {
+      // Check for falling out of the level boundaries
+      if (level && this.y > level.height + 50) {
+        if (!this.needsRespawn) {
           this.deathCount++;
           this.needsRespawn = true;
           return;
