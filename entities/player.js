@@ -172,6 +172,16 @@ export class Player {
       // Store previous position for collision resolution
       const prevX = this.x;
       const prevY = this.y;
+
+      // Get a filtered list of platforms that are close to the player
+      let nearbyPlatforms = level.platforms;
+      if (level) {
+          const checkRadius = 200; // Check for platforms within 200px
+          nearbyPlatforms = level.platforms.filter(p =>
+              Math.abs(p.x - this.x) < checkRadius + p.width &&
+              Math.abs(p.y - this.y) < checkRadius + p.height
+          );
+      }
       
       // Dash cooldown timer (fast, single branch)
       if (this.dashCooldownTimer > 0) {
@@ -215,20 +225,20 @@ export class Player {
       this.x += this.vx * dt;
       
       // Handle horizontal collision with platforms
-      if (level) this.handleHorizontalCollision(level, prevX);
+      if (level) this.handleHorizontalCollision(nearbyPlatforms, prevX);
 
       // Update vertical position
       this.y += this.vy * dt;
       
       // Handle vertical collision with platforms
       let groundCollision = false;
-      if (level) groundCollision = this.handleVerticalCollision(level, prevY);
+      if (level) groundCollision = this.handleVerticalCollision(nearbyPlatforms, prevY);
 
       // If clinging but no longer touching a wall, exit cling
       // Fast wall cling exit: check if still touching wall
       if (this.state === 'cling') {
         let touchingWall = false;
-        for (let i = 0, len = level.platforms.length; i < len; i++) {
+        for (let i = 0, len = nearbyPlatforms.length; i < len; i++) {
           const p = level.platforms[i];
           // Check vertical overlap
           if (this.y + this.height > p.y && this.y < p.y + p.height) {
@@ -328,9 +338,9 @@ export class Player {
   }
 
   // Handles horizontal collision with platforms and wall cling logic
-  handleHorizontalCollision(level, prevX) {
+  handleHorizontalCollision(platforms, prevX) {
     const px = this.x, py = this.y, pw = this.width, ph = this.height;
-    for (let i = 0, len = level.platforms.length; i < len; i++) {
+    for (let i = 0, len = platforms.length; i < len; i++) {
       const platform = level.platforms[i];
       // Early exit for non-overlapping cases (AABB)
       if (
@@ -363,11 +373,11 @@ export class Player {
   }
 
   // Handles vertical collision with platforms and updates ground status
-  handleVerticalCollision(level, prevY) {
+  handleVerticalCollision(platforms, prevY) {
     let groundCollision = false;
 
     // Iterate platforms for collision detection
-    for (const platform of level.platforms) {
+    for (const platform of platforms) {
       if (!this.isCollidingWith(platform)) continue;
 
       // Check if player is falling and hits the top of the platform

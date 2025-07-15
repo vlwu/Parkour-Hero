@@ -87,7 +87,8 @@ export class Level {
     this.name = levelConfig.name || 'Unnamed Level';
     this.width = levelConfig.width || 1280;
     this.height = levelConfig.height || 720;
-    this.backgrounds = levelConfig.backgrounds || ['backgroundTile'];
+    // Use the background from the config, with a fallback
+    this.background = levelConfig.background || 'backgroundTile';
     this.completed = false;
     this.startPosition = levelConfig.startPosition ? { ...levelConfig.startPosition } : { x: 100, y: 300 };
 
@@ -103,6 +104,18 @@ export class Level {
       frameSpeed: 0.07,
       frameTimer: 0,
       collected: false
+    })) || [];
+
+    // Initialize checkpoints
+    this.checkpoints = levelConfig.checkpoints?.map(cp => ({
+      x: cp.x,
+      y: cp.y,
+      size: 48, // Standard size
+      state: 'inactive', // inactive, activating, active
+      frame: 0,
+      frameCount: 18, // For the activation animation
+      frameSpeed: 0.05,
+      frameTimer: 0,
     })) || [];
 
     // Initialize the trophy if it exists in the config
@@ -121,6 +134,29 @@ export class Level {
         contactMade: false,
       };
     }
+  }
+
+  // New method to update checkpoint animations
+  updateCheckpoints(dt) {
+    for (const cp of this.checkpoints) {
+      if (cp.state === 'activating') {
+        cp.frameTimer += dt;
+        if (cp.frameTimer >= cp.frameSpeed) {
+          cp.frameTimer -= cp.frameSpeed;
+          cp.frame++;
+          if (cp.frame >= cp.frameCount) {
+            cp.frame = 0; // Or last frame of idle animation
+            cp.state = 'active';
+          }
+        }
+      }
+    }
+  }
+  
+  // Returns array of inactive checkpoints for collision detection
+  getInactiveCheckpoints() {
+    if (!this.checkpoints.length) return [];
+    return this.checkpoints.filter(cp => cp.state === 'inactive');
   }
 
   // Efficiently update fruit animations
@@ -187,10 +223,14 @@ export class Level {
     return null;
   }
 
-  // Efficiently render platforms and trophy; optimized for performance
+  // MODIFIED: Efficiently render platforms; optimized with viewport culling
   render(ctx, assets, camera) {
     for (let i = 0, len = this.platforms.length; i < len; ++i) {
-      this.platforms[i].render(ctx, assets);
+      const plat = this.platforms[i];
+      // Culling: Only render platforms visible to the camera
+      if (camera.isRectVisible(plat)) {
+        plat.render(ctx, assets);
+      }
     }
 
     // Trophy: update animation and render if present
@@ -266,13 +306,20 @@ export class Level {
     return !this.trophy || this.trophy.acquired;
   }
 
-  // Reset level state for replay; optimized for performance
+  // MODIFIED: Reset level state for replay; optimized for performance and checkpoints
   reset() {
     for (let i = 0, len = this.fruits.length; i < len; ++i) {
       const fruit = this.fruits[i];
       fruit.collected = false;
       fruit.frame = 0;
       fruit.frameTimer = 0;
+    }
+
+    // Reset checkpoints
+    for (const cp of this.checkpoints) {
+        cp.state = 'inactive';
+        cp.frame = 0;
+        cp.frameTimer = 0;
     }
 
     // Reset trophy if present

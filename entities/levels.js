@@ -257,6 +257,7 @@ export const levelSections = [
         name: "Level 1: Cloud Rise",
         width: 1280,
         height: 2200,
+        background: 'backgroundTile', // Explicitly define the background asset
         startPosition: { x: 100, y: 1950 },
         platforms: [
           { x: 50, y: 2050, width: 192, height: 48, terrainType: 'stone' },
@@ -272,6 +273,12 @@ export const levelSections = [
           { x: 500, y: 600, width: 96, height: 48, terrainType: 'wood' },
           { x: 750, y: 500, width: 144, height: 48, terrainType: 'dirt' },
           { x: 1000, y: 350, width: 192, height: 48, terrainType: 'stone' }
+        ],
+        // Add checkpoints for this large level
+        checkpoints: [
+          { x: 450, y: 1584 },
+          { x: 200, y: 884 },
+          { x: 800, y: 484 }
         ],
         fruits: [
           { x: 350, y: 1850, fruitType: 'fruit_apple' },

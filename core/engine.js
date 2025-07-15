@@ -20,6 +20,8 @@ export class Engine {
     this.pauseForMenu = false; // Differentiates menu pause from user pause
     this.callbacks = callbacks;
 
+    this.lastCheckpoint = null; 
+
     this.camera = new Camera(canvas.width, canvas.height);
     this.hud = new HUD(canvas);
     this.soundManager = new SoundManager();
@@ -115,6 +117,8 @@ export class Engine {
     this.currentLevel = new Level(levelSections[sectionIndex].levels[levelIndex]);
 
     this.collectedFruits = [];
+
+    this.lastCheckpoint = null; // Reset the last checkpoint on level load
     
     this.player = new Player(
       this.currentLevel.startPosition.x,
@@ -164,8 +168,10 @@ export class Engine {
       this.camera.update(this.player, dt);
 
       if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
-        this.currentLevel.reset();
-        this.player.respawn(this.currentLevel.startPosition);
+        const respawnPosition = this.lastCheckpoint || this.currentLevel.startPosition;
+        // Don't reset the whole level, just the player and fruits
+        this.currentLevel.fruits.forEach(f => f.collected = false);
+        this.player.respawn(respawnPosition);
         this.camera.shake(15, 0.5);
         this.soundManager.play('death_sound', 0.3);
         this.player.needsRespawn = false;
@@ -173,6 +179,7 @@ export class Engine {
 
       this.currentLevel.updateFruits(dt);
       this.currentLevel.updateTrophyAnimation(dt);
+      this.currentLevel.updateCheckpoints(dt);
       
       this.collectedFruits = this.collectedFruits || [];
       for (const collected of this.collectedFruits) {
@@ -190,7 +197,8 @@ export class Engine {
       const collisionResults = this.collisionSystem.update(
         this.player,
         this.currentLevel.getActiveFruits(),
-        this.currentLevel.trophy
+        this.currentLevel.trophy,
+        this.currentLevel.getInactiveCheckpoints()
       );
 
       if (collisionResults.newlyCollectedFruits.length > 0) {
@@ -203,6 +211,19 @@ export class Engine {
             frameSpeed: 0.1, frameTimer: 0, collectedFrameCount: 6
           });
         }
+      }
+
+      if (collisionResults.checkpointCollision) {
+          const cp = collisionResults.checkpointCollision;
+          cp.state = 'activating';
+          this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; // Respawn on top
+          this.soundManager.play('collect', 1.0); // Placeholder sound
+          // Deactivate other checkpoints if needed
+          this.currentLevel.checkpoints.forEach(otherCp => {
+              if (otherCp !== cp && otherCp.state === 'active') {
+                  otherCp.state = 'inactive';
+              }
+          });
       }
 
       if (collisionResults.trophyCollision && !this.player.isDespawning) {

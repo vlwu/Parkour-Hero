@@ -9,18 +9,18 @@ export class Renderer {
   renderScene(camera, level, player, collectedFruits) {
     camera.apply(this.ctx);
 
-    this.drawBackground(camera);
-    level.render(this.ctx, this.assets);
-    // Pass only active fruits to the draw function
+    this.drawBackground(camera, level.background);
+    level.render(this.ctx, this.assets); // This now culls platforms
     this.drawFruits(level.getActiveFruits(), camera);
+    this.drawCheckpoints(level.checkpoints, camera);
     player.render(this.ctx);
     this.drawCollectedFruits(collectedFruits, camera);
 
     camera.restore(this.ctx);
   }
 
-  drawBackground(camera) {
-    const bg = this.assets.backgroundTile;
+  drawBackground(camera, backgroundKey) {
+    const bg = this.assets[backgroundKey];
 
     if (!bg || !bg.complete || bg.naturalWidth === 0) {
       // Fallback solid color gradient if the asset is missing or not loaded
@@ -125,6 +125,48 @@ export class Renderer {
         collected.x - collected.size / 2, collected.y - collected.size / 2,
         collected.size, collected.size
       );
+    }
+  }
+
+  drawCheckpoints(checkpoints, camera) {
+    for (const cp of checkpoints) {
+      if (!camera.isVisible(cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size)) {
+        continue;
+      }
+      
+      let sprite;
+      let srcX = 0;
+      let frameWidth;
+
+      switch(cp.state) {
+        case 'inactive':
+          sprite = this.assets.checkpoint_inactive;
+          frameWidth = sprite.width;
+          break;
+        case 'activating':
+          sprite = this.assets.checkpoint_activation;
+          frameWidth = sprite.width / cp.frameCount;
+          srcX = cp.frame * frameWidth;
+          break;
+        case 'active':
+          sprite = this.assets.checkpoint_active;
+          // Note: Assuming active state has its own animated sprite sheet
+          const activeFrameCount = 4; // Example idle animation frames
+          const activeFrameSpeed = 0.2;
+          const currentFrame = Math.floor((performance.now() / 1000 / activeFrameSpeed) % activeFrameCount);
+          frameWidth = sprite.width / activeFrameCount;
+          srcX = currentFrame * frameWidth;
+          break;
+      }
+
+      if (sprite) {
+        this.ctx.drawImage(
+          sprite,
+          srcX, 0, frameWidth, sprite.height,
+          cp.x - cp.size / 2, cp.y - cp.size / 2,
+          cp.size, cp.size
+        );
+      }
     }
   }
 }

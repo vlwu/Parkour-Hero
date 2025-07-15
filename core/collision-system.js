@@ -4,30 +4,19 @@ export class CollisionSystem {
     // No complex setup needed for this system yet.
   }
 
-  /**
-   * The main update loop for the collision system.
-   * It checks all relevant collisions and returns a report.
-   * @param {Player} player - The player object.
-   * @param {Array<Fruit>} activeFruits - An array of uncollected fruits.
-   * @param {Trophy} trophy - The current level's trophy object.
-   * @returns {object} A report of all collisions that occurred this frame.
-   */
-  update(player, activeFruits, trophy) {
+  update(player, activeFruits, trophy, inactiveCheckpoints) {
     const newlyCollectedFruits = this.checkFruitCollisions(player, activeFruits);
     const trophyCollision = this.checkTrophyCollision(player, trophy);
+    // Check for checkpoint collisions
+    const checkpointCollision = this.checkCheckpointCollisions(player, inactiveCheckpoints);
 
     return {
       newlyCollectedFruits,
       trophyCollision,
+      checkpointCollision, // Return the collided checkpoint
     };
   }
 
-  /**
-   * Checks for collisions between the player and an array of active fruits using AABB.
-   * @param {Player} player
-   * @param {Array<Fruit>} activeFruits - IMPORTANT: Should only contain uncollected fruits.
-   * @returns {Array<Fruit>} An array of fruits the player has just collided with.
-   */
   checkFruitCollisions(player, activeFruits) {
     const collidedFruits = [];
     const px = player.x, py = player.y, pw = player.width, ph = player.height;
@@ -42,12 +31,6 @@ export class CollisionSystem {
     return collidedFruits;
   }
 
-  /**
-   * Checks for collision between the player and the level's trophy.
-   * @param {Player} player
-   * @param {Trophy} trophy
-   * @returns {boolean} True if a collision occurred, otherwise false.
-   */
   checkTrophyCollision(player, trophy) {
     if (!trophy || trophy.acquired || trophy.inactive) {
       return false;
@@ -58,5 +41,18 @@ export class CollisionSystem {
     const tx = trophy.x - trophy.size / 2, ty = trophy.y - trophy.size / 2, ts = trophy.size;
 
     return (px < tx + ts && px + pw > tx && py < ty + ts && py + ph > ty);
+  }
+  
+  //Checks for collision between the player and inactive checkpoints.
+  checkCheckpointCollisions(player, inactiveCheckpoints) {
+    const px = player.x, py = player.y, pw = player.width, ph = player.height;
+
+    for (const cp of inactiveCheckpoints) {
+      const cpx = cp.x - cp.size / 2, cpy = cp.y - cp.size / 2, cps = cp.size;
+      if (px < cpx + cps && px + pw > cpx && py < cpy + cps && py + ph > cpy) {
+        return cp; // Return the first checkpoint hit
+      }
+    }
+    return null;
   }
 }
