@@ -21,6 +21,7 @@ export class Engine {
     this.callbacks = callbacks;
 
     this.lastCheckpoint = null; 
+    this.fruitsAtLastCheckpoint = new Set();
 
     this.camera = new Camera(canvas.width, canvas.height);
     this.hud = new HUD(canvas);
@@ -128,6 +129,7 @@ export class Engine {
     this.particles = []; // Clear particles on level load
 
     this.lastCheckpoint = null; // Reset the last checkpoint on level load
+    this.fruitsAtLastCheckpoint.clear(); // Also clear the fruit state from the last checkpoint
     
     this.player = new Player(
       this.currentLevel.startPosition.x,
@@ -182,8 +184,17 @@ export class Engine {
 
       if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
         const respawnPosition = this.lastCheckpoint || this.currentLevel.startPosition;
-        // Don't reset the whole level, just the player and fruits
-        this.currentLevel.fruits.forEach(f => f.collected = false);
+        
+        // If a checkpoint was reached, restore the fruit state from that point.
+        // Otherwise, reset all fruits to uncollected.
+        if (this.lastCheckpoint) {
+            this.currentLevel.fruits.forEach((fruit, index) => {
+                fruit.collected = this.fruitsAtLastCheckpoint.has(index);
+            });
+        } else {
+            this.currentLevel.fruits.forEach(f => f.collected = false);
+        }
+
         this.player.respawn(respawnPosition);
         this.camera.shake(15, 0.5);
         this.soundManager.play('death_sound', 0.3);
@@ -231,6 +242,14 @@ export class Engine {
           cp.state = 'activating';
           this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; // Respawn on top of the checkpoint
           this.soundManager.play('checkpoint_activated', 1); 
+
+          // Save the state of collected fruits at this checkpoint
+          this.fruitsAtLastCheckpoint.clear();
+          this.currentLevel.fruits.forEach((fruit, index) => {
+              if (fruit.collected) {
+                  this.fruitsAtLastCheckpoint.add(index);
+              }
+          });
 
           // Deactivate other checkpoints to ensure only one is active
           this.currentLevel.checkpoints.forEach(otherCp => {
