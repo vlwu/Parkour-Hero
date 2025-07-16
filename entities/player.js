@@ -141,152 +141,166 @@ export class Player {
       }
 
       if (this.isSpawning && !this.spawnComplete) {
-        // Only update animation timer and frame during spawn
-        this.animationTimer += dt;
-        if (this.animationTimer >= this.spawnAnimationSpeed) {
+      // Only update animation timer and frame during spawn
+      this.animationTimer += dt;
+      if (this.animationTimer >= this.spawnAnimationSpeed) {
+        this.animationTimer = 0;
+        this.animationFrame++;
+        // Check if spawn animation is complete
+        if (this.animationFrame >= this.animationFrames['spawn']) {
+          this.spawnComplete = true;
+          this.isSpawning = false;
+          this.state = 'idle';
+          this.animationFrame = 0; // Reset for idle state
+        }
+      }
+      return;
+    }
+
+    if (this.isDespawning) {
+      this.animationTimer += dt;
+      if (this.animationTimer >= this.animationSpeed) {
           this.animationTimer = 0;
           this.animationFrame++;
-          // Check if spawn animation is complete
-          if (this.animationFrame >= this.animationFrames['spawn']) {
-            this.spawnComplete = true;
-            this.isSpawning = false;
-            this.state = 'idle';
-            this.animationFrame = 0; // Reset for idle state
+          if (this.animationFrame >= this.animationFrames.despawn) {
+              this.despawnAnimationFinished = true;
+              this.isDespawning = false; // Stop further updates
           }
+      }
+      return; // No other logic while despawning
+    }
+
+    // Store previous position for collision resolution
+    const prevX = this.x;
+    const prevY = this.y;
+
+    // Get a filtered list of platforms that are close to the player
+    let nearbyPlatforms = level.platforms;
+    if (level) {
+        const checkRadius = 200; // Check for platforms within 200px
+        nearbyPlatforms = level.platforms.filter(p =>
+            Math.abs(p.x - this.x) < checkRadius + p.width &&
+            Math.abs(p.y - this.y) < checkRadius + p.height
+        );
+    }
+    
+    // Dash cooldown timer (fast, single branch)
+    if (this.dashCooldownTimer > 0) {
+      this.dashCooldownTimer -= dt;
+      if (this.dashCooldownTimer <= 0) this.dashCooldownTimer = 0; // Clamp to zero
+    }
+
+    // Dash logic
+    if (this.isDashing) {
+      this.state = 'dash';
+      this.dashTimer -= dt;
+      if (this.dashTimer <= 0) {
+        this.isDashing = false;
+        this.vx = 0;
+        this.dashCooldownTimer = this.dashCooldown; // Start cooldown
+
+      }
+    }
+
+    // Handle buffered jump execution (first jump only)
+    if (this.jumpBufferTimer > 0 && this.jumpCount === 0) {
+      // Check for ground or coyote time
+      if (this.onGround || this.coyoteTimer > 0) {
+          this.vy = -this.jumpForce;
+          this.jumpCount = 1;
+          this.state = 'jump';
+          this.onGround = false;
+          this.jumpBufferTimer = 0; 
+          this.coyoteTimer = 0; 
+          this.jumpedThisFrame = 1; // Mark as first jump
+      }
+    }
+
+    if (!this.isDashing) this.vy += this.gravity * dt; // Apply gravity only when not dashing (dash is perfectly horizontal)
+    if (this.vy > this.maxFallSpeed) this.vy = this.maxFallSpeed; // Cap falling speed to prevent going too fast
+
+    // Update horizontal position
+    this.x += this.vx * dt;
+    
+    // Handle horizontal collision with platforms
+    if (level) this.handleHorizontalCollision(nearbyPlatforms, prevX);
+
+    // Update vertical position
+    this.y += this.vy * dt;
+    
+    // Handle vertical collision with platforms
+    let groundCollision = false;
+    if (level) groundCollision = this.handleVerticalCollision(nearbyPlatforms, prevY);
+
+    // If clinging but no longer touching a wall, exit cling
+    // Fast wall cling exit: check if still touching wall
+    if (this.state === 'cling') {
+      let touchingWall = false;
+      for (let i = 0, len = nearbyPlatforms.length; i < len; i++) {
+        const p = nearbyPlatforms[i];
+        // Check vertical overlap
+        if (this.y + this.height > p.y && this.y < p.y + p.height) {
+      // Check near left/right edge (within 2px)
+      if (
+        Math.abs((this.x + this.width) - p.x) < 2 ||
+        Math.abs(this.x - (p.x + p.width)) < 2
+      ) {
+        touchingWall = true;
+        break;
+      }
         }
+      }
+      if (!touchingWall) this.state = 'fall'; // Exit cling if not touching wall
+    }
+
+    // Check for falling out of the level boundaries
+    if (level && this.y > level.height + 50) {
+      if (!this.needsRespawn) {
+        this.deathCount++;
+        this.needsRespawn = true;
         return;
       }
+    }
 
-      if (this.isDespawning) {
-        this.animationTimer += dt;
-        if (this.animationTimer >= this.animationSpeed) {
-            this.animationTimer = 0;
-            this.animationFrame++;
-            if (this.animationFrame >= this.animationFrames.despawn) {
-                this.despawnAnimationFinished = true;
-                this.isDespawning = false; // Stop further updates
-            }
-        }
-        return; // No other logic while despawning
+    if (!groundCollision) this.onGround = false; // Update onGround status
+
+    // Handle spawn animation first
+    if (!this.isDashing && this.onGround) {
+      this.jumpCount = 0; // Reset jump count when on ground
+      this.coyoteTimer = this.coyoteTime; // Reset coyote time when on ground
+      this.state = this.vx !== 0 ? 'run' : 'idle';
+    } else if (!this.isDashing && this.state !== 'cling') {
+      // Airborne states
+      if (this.vy > 0) {
+        this.state = 'fall';
+      } else if (this.jumpCount === 2) {
+        this.state = 'double_jump';
+      } else {
+        this.state = 'jump';
       }
+    }
+
+    // Wall boundaries
+    // Clamp player X position within [0, level.width - width]
+    if (this.x < 0) {
+      this.x = 0;
+      this.vx = 0;
+    } else if (level && this.x + this.width > level.width) {
+      this.x = level.width - this.width;
+      this.vx = 0;
+    }
+
+    // Update animation timer and frame
+    this.animationTimer += dt;
+    const currentAnimationSpeed = (this.state === 'spawn') ? this.spawnAnimationSpeed : this.animationSpeed;
+
+    if (this.animationTimer >= currentAnimationSpeed) {
+      this.animationTimer = 0;
       
-      // Get a filtered list of platforms that are close to the player
-      let nearbyPlatforms = level.platforms;
-      if (level) {
-          const checkRadius = 200; // Check for platforms within 200px
-          nearbyPlatforms = level.platforms.filter(p =>
-              Math.abs(p.x - this.x) < checkRadius + p.width &&
-              Math.abs(p.y - this.y) < checkRadius + p.height
-          );
-      }
-      
-      // Dash cooldown timer (fast, single branch)
-      if (this.dashCooldownTimer > 0) {
-        this.dashCooldownTimer -= dt;
-        if (this.dashCooldownTimer <= 0) this.dashCooldownTimer = 0; // Clamp to zero
-      }
-
-      // Dash logic
-      if (this.isDashing) {
-        this.state = 'dash';
-        this.dashTimer -= dt;
-        if (this.dashTimer <= 0) {
-          this.isDashing = false;
-          this.vx = 0;
-          this.dashCooldownTimer = this.dashCooldown; // Start cooldown
-        }
-      }
-
-      // Handle buffered jump execution (first jump only)
-      if (this.jumpBufferTimer > 0 && this.jumpCount === 0) {
-        // Check for ground or coyote time
-        if (this.onGround || this.coyoteTimer > 0) {
-            this.vy = -this.jumpForce;
-            this.jumpCount = 1;
-            this.state = 'jump';
-            this.onGround = false;
-            this.jumpBufferTimer = 0; 
-            this.coyoteTimer = 0; 
-            this.jumpedThisFrame = 1; // Mark as first jump
-        }
-      }
-
-      // Apply gravity
-      if (!this.isDashing) this.vy += this.gravity * dt;
-      if (this.vy > this.maxFallSpeed) this.vy = this.maxFallSpeed;
-
-      // 1. Move and resolve horizontally
-      this.x += this.vx * dt;
-      if (level) this.handleHorizontalCollision(nearbyPlatforms);
-
-      // 2. Move and resolve vertically
-      this.y += this.vy * dt;
-      let groundCollision = false;
-      if (level) groundCollision = this.handleVerticalCollision(nearbyPlatforms);
-      
-      // If clinging but no longer touching a wall, exit cling
-      if (this.state === 'cling') {
-        let touchingWall = false;
-        for (const p of nearbyPlatforms) {
-          if (this.y + this.height > p.y && this.y < p.y + p.height) {
-            if (
-              Math.abs((this.x + this.width) - p.x) < 2 ||
-              Math.abs(this.x - (p.x + p.width)) < 2
-            ) {
-              touchingWall = true;
-              break;
-            }
-          }
-        }
-        if (!touchingWall) this.state = 'fall'; // Exit cling if not touching wall
-      }
-
-      // Check for falling out of the level boundaries
-      if (level && this.y > level.height + 50) {
-        if (!this.needsRespawn) {
-          this.deathCount++;
-          this.needsRespawn = true;
-          return;
-        }
-      }
-      
-      // After vertical collision, if we are not on the ground, set onGround to false
-      if (!groundCollision) this.onGround = false;
-
-      // Update player state based on physics
-      if (!this.isDashing && this.onGround) {
-        this.jumpCount = 0;
-        this.coyoteTimer = this.coyoteTime;
-        this.state = this.vx !== 0 ? 'run' : 'idle';
-      } else if (!this.isDashing && this.state !== 'cling') {
-        // Airborne states
-        if (this.vy > 0) {
-          this.state = 'fall';
-        } else if (this.jumpCount === 2) {
-          this.state = 'double_jump';
-        } else {
-          this.state = 'jump';
-        }
-      }
-
-      // Clamp player X position within level boundaries
-      if (this.x < 0) {
-        this.x = 0;
-        this.vx = 0;
-      } else if (level && this.x + this.width > level.width) {
-        this.x = level.width - this.width;
-        this.vx = 0;
-      }
-
-      // Update animation timer and frame
-      this.animationTimer += dt;
-      const currentAnimationSpeed = (this.state === 'spawn') ? this.spawnAnimationSpeed : this.animationSpeed;
-
-      if (this.animationTimer >= currentAnimationSpeed) {
-        this.animationTimer = 0;
-        const frameCount = this.animationFrames[this.state] || 1;
-        this.animationFrame = (this.animationFrame + 1) % frameCount;
-      }
+      // Get the frame count for current state
+      const frameCount = this.animationFrames[this.state] || 1;
+      this.animationFrame = (this.animationFrame + 1) % frameCount;
+    }
 
     } catch (error) {
       console.error('Error in player update:', error);
@@ -321,65 +335,70 @@ export class Player {
     this.despawnAnimationFinished = false;
   }
 
-  // REFACTORED: Handles horizontal collision based on velocity.
-  handleHorizontalCollision(platforms) {
-    for (const platform of platforms) {
-      if (!this.isCollidingWith(platform)) {
-        continue;
-      }
-  
-      let isWallCollision = false;
-      // Player moving right collided with platform's left side
-      if (this.vx > 0) {
-        this.x = platform.x - this.width;
-        isWallCollision = true;
-      // Player moving left collided with platform's right side
-      } else if (this.vx < 0) {
+  // Handles horizontal collision with platforms and wall cling logic
+  handleHorizontalCollision(platforms, prevX) {
+    const px = this.x, py = this.y, pw = this.width, ph = this.height;
+    for (let i = 0, len = platforms.length; i < len; i++) {
+      const platform = platforms[i]; 
+      // Early exit for non-overlapping cases (AABB)
+      if (
+        px + pw <= platform.x ||
+        px >= platform.x + platform.width ||
+        py + ph <= platform.y ||
+        py >= platform.y + platform.height
+      ) continue;
+
+      const fromLeft = prevX + pw <= platform.x;
+      const fromRight = prevX >= platform.x + platform.width;
+
+      if (fromLeft) {
+        this.x = platform.x - pw;
+        this.vx = 0;
+      } else if (fromRight) {
         this.x = platform.x + platform.width;
-        isWallCollision = true;
+        this.vx = 0;
       }
-  
-      // If a wall collision occurred, handle wall cling logic
-      if (isWallCollision) {
-        // Wall cling only if airborne and not moving up
-        if (!this.onGround && this.vy >= 0) {
-          this.state = 'cling';
-          this.vy = 30;     // Slow slide down
-          this.jumpCount = 1; // Allow wall jump
-        }
-        this.vx = 0; // Stop horizontal movement
-        break; // Exit after resolving one collision
+
+      // Wall cling only if airborne and falling
+      if (!this.onGround && this.vy >= 0 && (fromLeft || fromRight)) {
+        this.state = 'cling';
+        this.vy = 30;
+        this.jumpCount = 1;
       }
+
+      break;
     }
   }
 
-  // REFACTORED: Handles vertical collision based on velocity.
-  handleVerticalCollision(platforms) {
+  // Handles vertical collision with platforms and updates ground status
+  handleVerticalCollision(platforms, prevY) {
     let groundCollision = false;
-  
+
+    // Iterate platforms for collision detection
     for (const platform of platforms) {
-      if (!this.isCollidingWith(platform)) {
-        continue;
-      }
-  
-      // Player moving down (vy > 0) collided with platform top
-      if (this.vy > 0) {
+      if (!this.isCollidingWith(platform)) continue;
+
+      // Check if player is falling and hits the top of the platform
+      const groundTolerance = 1; // 1 pixel tolerance
+      const hitFromAbove = prevY + this.height <= platform.y + groundTolerance && this.vy >= 0;
+      // Check if player is jumping and hits the bottom of the platform
+      const hitFromBelow = prevY >= platform.y + platform.height && this.vy < 0;
+
+      if (hitFromAbove) {
         this.y = platform.y - this.height;
         this.vy = 0;
+        this.jumpCount = 0;
         this.onGround = true;
         groundCollision = true;
-      // Player moving up (vy < 0) collided with platform bottom
-      } else if (this.vy < 0) {
+        break;
+
+      } else if (hitFromBelow) {
         this.y = platform.y + platform.height;
-        this.vy = 0; // Hit ceiling, stop upward motion
-      }
-  
-      // If any vertical collision was resolved, break the loop
-      if (this.vy === 0) {
+        this.vy = 0;
         break;
       }
     }
-  
+
     return groundCollision;
   }
 
@@ -387,8 +406,7 @@ export class Player {
     const px = platform.x, py = platform.y, pw = platform.width, ph = platform.height;
     const x = this.x, y = this.y, w = this.width, h = this.height;
     
-    // Early exit for non-overlapping cases
-    if (x + w <= px || x >= px + pw || y + h <= py || y >= py + ph) return false;
+    if (x + w <= px || x >= px + pw || y + h <= py || y >= py + ph) return false; // Early exit for non-overlapping cases
     return true;
   }
 
