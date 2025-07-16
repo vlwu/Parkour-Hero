@@ -1,16 +1,58 @@
+// Optimized for performance, robustness, and clarity.
+// Version 2.1 - Corrected regressions from previous optimization.
+
+const PLAYER_CONSTANTS = {
+  // Dimensions
+  WIDTH: 32,
+  HEIGHT: 32,
+  SPAWN_WIDTH: 96,
+  SPAWN_HEIGHT: 96,
+  CLING_OFFSET: 7,
+
+  // Physics
+  MOVE_SPEED: 200,      // pixels/s
+  JUMP_FORCE: 400,      // upward velocity impulse
+  GRAVITY: 1200,        // downward acceleration
+  MAX_FALL_SPEED: 500,  // terminal velocity
+
+  // Dash
+  DASH_SPEED: 500,
+  DASH_DURATION: 0.2,   // seconds
+  DASH_COOLDOWN: 0.5,   // seconds
+
+  // Timers
+  COYOTE_TIME: 0.1,     // seconds
+  JUMP_BUFFER_TIME: 0.15, // seconds
+
+  // Animation
+  ANIMATION_SPEED: 0.05,
+  SPAWN_ANIMATION_SPEED: 0.08,
+  ANIMATION_FRAMES: {
+    idle: 11,
+    run: 12,
+    double_jump: 6,
+    jump: 1,
+    fall: 1,
+    dash: 1,
+    cling: 5,
+    spawn: 7,
+    despawn: 7,
+  }
+};
+
 export class Player {
   constructor(x, y, assets, characterId) {
     this.x = x;
     this.y = y;
-    this.width = 32;  // 32x32 sprite size
-    this.height = 32;
-    this.spawnWidth = 96;   // Spawn animation size
-    this.spawnHeight = 96;
+    this.width = PLAYER_CONSTANTS.WIDTH;
+    this.height = PLAYER_CONSTANTS.HEIGHT;
+    this.spawnWidth = PLAYER_CONSTANTS.SPAWN_WIDTH;
+    this.spawnHeight = PLAYER_CONSTANTS.SPAWN_HEIGHT;
 
-    this.vx = 0; // x and y velocity
+    this.vx = 0;
     this.vy = 0;
+    this.deathCount = 0;
     this.needsRespawn = false;
-    this.deathCount = 0; // Track number of deaths
 
     this.jumpCount = 0;
     this.jumpPressed = false;
@@ -20,287 +62,80 @@ export class Player {
     this.characterId = characterId || 'PinkMan';
     this.onGround = false;
 
+    // State flags
     this.isSpawning = true;
     this.spawnComplete = false;
     this.isDespawning = false;
     this.despawnAnimationFinished = false;
-
-    this.jumpedThisFrame = 0; // 0: no, 1: first jump, 2: double jump
-
-    // Coyote time and jump buffer properties
-    this.coyoteTime = 0.1; // 100ms of coyote time
-    this.coyoteTimer = 0;
-    this.jumpBufferTime = 0.15; // 150ms buffer for jump input
-    this.jumpBufferTimer = 0;
-
-    // Dash properties
     this.isDashing = false;
-    this.dashDuration = 0.2;
-    this.dashTimer = 0;        // Timer for how long dash has been going
-    this.dashSpeed = 500;      // Dash velocity in px/s
-    this.dashCooldown = 0.5;
-    this.dashCooldownTimer = 0;  // Timer tracking cooldown
-    this.dashPressed = false;    // Prevent holding down dash key
-    
-    // Animation properties
-    this.animationFrame = 0;
+    this.dashPressed = false;
+    this.jumpedThisFrame = 0; // 0: no, 1: first jump, 2: double jump. Restored for engine integration.
+
+    // Timers
+    this.coyoteTimer = 0;
+    this.jumpBufferTimer = 0;
+    this.dashTimer = 0;
+    this.dashCooldownTimer = 0;
     this.animationTimer = 0;
-    this.animationSpeed = 0.05; // in s
-    this.spawnAnimationSpeed = 0.08;
-    
-    // Animation frame counts for each state (1 for static images)
-    this.animationFrames = {
-      idle: 11,
-      run: 12,
-      double_jump: 6,
-      jump: 1,
-      fall: 1,
-      dash: 1,
-      cling: 5,
-      spawn: 7,
-      despawn: 7,
-    };
-    
-    // Physics constants
-    this.moveSpeed = 200;     // px/s
-    this.jumpForce = 400;     // upward velocity when jumping
-    this.gravity = 1200;      // downward acceleration
-    this.maxFallSpeed = 500;  // terminal velocity
-    
+    this.animationFrame = 0;
+
     console.log('Player initialized at:', x, y);
   }
 
-  // Modified to accept an object of active actions
   handleInput(inputActions) {
-    const prevState = this.state;  // Store previous state to reset animation on state change
+    if (this.isSpawning || this.isDashing || this.isDespawning) {
+      this.vx = this.isDashing ? this.vx : 0;
+      return;
+    }
 
-    // Skip input handling depending on state
-    if (this.isSpawning && !this.spawnComplete) return;
-    if (this.isDashing || this.isDespawning) return;
-    
     // Horizontal movement
     if (inputActions.moveLeft) {
-      this.vx = -this.moveSpeed;
+      this.vx = -PLAYER_CONSTANTS.MOVE_SPEED;
       this.direction = 'left';
-      if (this.onGround) this.state = 'run'; // Only set state if grounded
     } else if (inputActions.moveRight) {
-      this.vx = this.moveSpeed;
+      this.vx = PLAYER_CONSTANTS.MOVE_SPEED;
       this.direction = 'right';
-      if (this.onGround) this.state = 'run';
     } else {
       this.vx = 0;
-      if (this.onGround) this.state = 'idle';
     }
 
-    const jumpKeyDown = inputActions.jump;
-
-    // Buffer jump input. Allows for holding jump to execute on landing.
-    if (jumpKeyDown) {
-      this.jumpBufferTimer = this.jumpBufferTime;
+    // Buffer jump input
+    if (inputActions.jump) {
+      this.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
     }
 
-    // Double jump requires a new, distinct press while airborne.
-    if (jumpKeyDown && !this.jumpPressed && this.jumpCount === 1 && !this.onGround) {
-        this.vy = -this.jumpForce;
-        this.jumpCount = 2;
-        this.state = 'double_jump';
-        this.animationFrame = 0; // Reset animation for double jump
-        this.jumpBufferTimer = 0; // Consume buffer on double jump
-        this.jumpedThisFrame = 2; // Mark as double jump
+    // Double jump (requires a new press while airborne)
+    if (inputActions.jump && !this.jumpPressed && this.jumpCount === 1 && !this.onGround) {
+      this.vy = -PLAYER_CONSTANTS.JUMP_FORCE;
+      this.jumpCount = 2;
+      this.jumpBufferTimer = 0;
+      this.jumpedThisFrame = 2; // Set flag for double jump sound/effect
     }
+    this.jumpPressed = inputActions.jump;
 
-    this.jumpPressed = jumpKeyDown; 
-
-    const dashKeyDown = inputActions.dash; 
-
-    // Dash logic
-    if (dashKeyDown && !this.dashPressed && !this.isDashing && this.dashCooldownTimer <= 0) {
-      this.isDashing = true;                 
-      this.dashTimer = this.dashDuration;     
-      this.vx = this.direction === 'right' ? this.dashSpeed : -this.dashSpeed; 
-      this.vy = 0;                            
-      this.state = 'dash';                    
-      this.animationFrame = 0;               
+    // Dash (requires a new press and cooldown)
+    if (inputActions.dash && !this.dashPressed && this.dashCooldownTimer <= 0) {
+      this.isDashing = true;
+      this.dashTimer = PLAYER_CONSTANTS.DASH_DURATION;
+      this.vx = this.direction === 'right' ? PLAYER_CONSTANTS.DASH_SPEED : -PLAYER_CONSTANTS.DASH_SPEED;
+      this.vy = 0;
+      this.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN;
     }
-
-    this.dashPressed = dashKeyDown; // Update flag for edge detection
-
-    // Fast animation reset on state change
-    if (this.state !== prevState) {
-      this.animationFrame = 0;   
-      this.animationTimer = 0;   
-    }
+    this.dashPressed = inputActions.dash;
   }
 
   update(dt, level = null) {
     try {
-      // Update timers for coyote time and jump buffer
-      if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= dt;
-      if (!this.onGround && this.coyoteTimer > 0) {
-          this.coyoteTimer -= dt;
+      const prevState = this.state;
+
+      // Core gameplay logic only runs when the player is active.
+      if (!this.isSpawning && !this.isDespawning) {
+        this._updateGameplay(dt, level);
       }
 
-      if (this.isSpawning && !this.spawnComplete) {
-      // Only update animation timer and frame during spawn
-      this.animationTimer += dt;
-      if (this.animationTimer >= this.spawnAnimationSpeed) {
-        this.animationTimer = 0;
-        this.animationFrame++;
-        // Check if spawn animation is complete
-        if (this.animationFrame >= this.animationFrames['spawn']) {
-          this.spawnComplete = true;
-          this.isSpawning = false;
-          this.state = 'idle';
-          this.animationFrame = 0; // Reset for idle state
-        }
-      }
-      return;
-    }
-
-    if (this.isDespawning) {
-      this.animationTimer += dt;
-      if (this.animationTimer >= this.animationSpeed) {
-          this.animationTimer = 0;
-          this.animationFrame++;
-          if (this.animationFrame >= this.animationFrames.despawn) {
-              this.despawnAnimationFinished = true;
-              this.isDespawning = false; // Stop further updates
-          }
-      }
-      return; // No other logic while despawning
-    }
-
-    // Store previous position for collision resolution
-    const prevX = this.x;
-    const prevY = this.y;
-
-    // Get a filtered list of platforms that are close to the player
-    let nearbyPlatforms = level.platforms;
-    if (level) {
-        const checkRadius = 200; // Check for platforms within 200px
-        nearbyPlatforms = level.platforms.filter(p =>
-            Math.abs(p.x - this.x) < checkRadius + p.width &&
-            Math.abs(p.y - this.y) < checkRadius + p.height
-        );
-    }
-    
-    // Dash cooldown timer (fast, single branch)
-    if (this.dashCooldownTimer > 0) {
-      this.dashCooldownTimer -= dt;
-      if (this.dashCooldownTimer <= 0) this.dashCooldownTimer = 0; // Clamp to zero
-    }
-
-    // Dash logic
-    if (this.isDashing) {
-      this.state = 'dash';
-      this.dashTimer -= dt;
-      if (this.dashTimer <= 0) {
-        this.isDashing = false;
-        this.vx = 0;
-        this.dashCooldownTimer = this.dashCooldown; // Start cooldown
-
-      }
-    }
-
-    // Handle buffered jump execution (first jump only)
-    if (this.jumpBufferTimer > 0 && this.jumpCount === 0) {
-      // Check for ground or coyote time
-      if (this.onGround || this.coyoteTimer > 0) {
-          this.vy = -this.jumpForce;
-          this.jumpCount = 1;
-          this.state = 'jump';
-          this.onGround = false;
-          this.jumpBufferTimer = 0; 
-          this.coyoteTimer = 0; 
-          this.jumpedThisFrame = 1; // Mark as first jump
-      }
-    }
-
-    if (!this.isDashing) this.vy += this.gravity * dt; // Apply gravity only when not dashing (dash is perfectly horizontal)
-    if (this.vy > this.maxFallSpeed) this.vy = this.maxFallSpeed; // Cap falling speed to prevent going too fast
-
-    // Update horizontal position
-    this.x += this.vx * dt;
-    
-    // Handle horizontal collision with platforms
-    if (level) this.handleHorizontalCollision(nearbyPlatforms, prevX);
-
-    // Update vertical position
-    this.y += this.vy * dt;
-    
-    // Handle vertical collision with platforms
-    let groundCollision = false;
-    if (level) groundCollision = this.handleVerticalCollision(nearbyPlatforms, prevY);
-
-    // If clinging but no longer touching a wall, exit cling
-    // Fast wall cling exit: check if still touching wall
-    if (this.state === 'cling') {
-      let touchingWall = false;
-      for (let i = 0, len = nearbyPlatforms.length; i < len; i++) {
-        const p = nearbyPlatforms[i];
-        // Check vertical overlap
-        if (this.y + this.height > p.y && this.y < p.y + p.height) {
-      // Check near left/right edge (within 2px)
-      if (
-        Math.abs((this.x + this.width) - p.x) < 2 ||
-        Math.abs(this.x - (p.x + p.width)) < 2
-      ) {
-        touchingWall = true;
-        break;
-      }
-        }
-      }
-      if (!touchingWall) this.state = 'fall'; // Exit cling if not touching wall
-    }
-
-    // Check for falling out of the level boundaries
-    if (level && this.y > level.height + 50) {
-      if (!this.needsRespawn) {
-        this.deathCount++;
-        this.needsRespawn = true;
-        return;
-      }
-    }
-
-    if (!groundCollision) this.onGround = false; // Update onGround status
-
-    // Handle spawn animation first
-    if (!this.isDashing && this.onGround) {
-      this.jumpCount = 0; // Reset jump count when on ground
-      this.coyoteTimer = this.coyoteTime; // Reset coyote time when on ground
-      this.state = this.vx !== 0 ? 'run' : 'idle';
-    } else if (!this.isDashing && this.state !== 'cling') {
-      // Airborne states
-      if (this.vy > 0) {
-        this.state = 'fall';
-      } else if (this.jumpCount === 2) {
-        this.state = 'double_jump';
-      } else {
-        this.state = 'jump';
-      }
-    }
-
-    // Wall boundaries
-    // Clamp player X position within [0, level.width - width]
-    if (this.x < 0) {
-      this.x = 0;
-      this.vx = 0;
-    } else if (level && this.x + this.width > level.width) {
-      this.x = level.width - this.width;
-      this.vx = 0;
-    }
-
-    // Update animation timer and frame
-    this.animationTimer += dt;
-    const currentAnimationSpeed = (this.state === 'spawn') ? this.spawnAnimationSpeed : this.animationSpeed;
-
-    if (this.animationTimer >= currentAnimationSpeed) {
-      this.animationTimer = 0;
-      
-      // Get the frame count for current state
-      const frameCount = this.animationFrames[this.state] || 1;
-      this.animationFrame = (this.animationFrame + 1) % frameCount;
-    }
+      // State determination and animation updates run every frame for all states.
+      this._determineState();
+      this._updateAnimation(dt, prevState);
 
     } catch (error) {
       console.error('Error in player update:', error);
@@ -310,212 +145,252 @@ export class Player {
   startDespawn() {
     this.isDespawning = true;
     this.despawnAnimationFinished = false;
-    this.state = 'despawn';
     this.animationFrame = 0;
     this.animationTimer = 0;
-    this.vx = 0;
-    this.vy = 0;
+    this.vx = this.vy = 0;
   }
-
+  
   respawn(startPosition) {
     this.x = startPosition.x;
     this.y = startPosition.y;
-    this.vx = this.vy = 0;
+    this.vx = 0;
+    this.vy = 0;
     this.jumpCount = 0;
     this.jumpPressed = false;
     this.onGround = false;
     this.isDashing = false;
-    this.dashTimer = this.dashCooldownTimer = 0;
-    this.state = 'spawn';
-    this.animationFrame = this.animationTimer = 0;
+    this.dashTimer = 0;
+    this.dashCooldownTimer = 0;
     this.needsRespawn = false;
     this.isSpawning = true;
     this.spawnComplete = false;
     this.isDespawning = false;
     this.despawnAnimationFinished = false;
+    this.animationFrame = 0;
+    this.animationTimer = 0;
+    this.jumpedThisFrame = 0;
   }
-
-  // Handles horizontal collision with platforms and wall cling logic
+  
   handleHorizontalCollision(platforms, prevX) {
-    const px = this.x, py = this.y, pw = this.width, ph = this.height;
-    for (let i = 0, len = platforms.length; i < len; i++) {
-      const platform = platforms[i]; 
-      // Early exit for non-overlapping cases (AABB)
-      if (
-        px + pw <= platform.x ||
-        px >= platform.x + platform.width ||
-        py + ph <= platform.y ||
-        py >= platform.y + platform.height
-      ) continue;
-
-      const fromLeft = prevX + pw <= platform.x;
-      const fromRight = prevX >= platform.x + platform.width;
-
-      if (fromLeft) {
-        this.x = platform.x - pw;
-        this.vx = 0;
-      } else if (fromRight) {
-        this.x = platform.x + platform.width;
-        this.vx = 0;
-      }
-
-      // Wall cling only if airborne and falling
-      if (!this.onGround && this.vy >= 0 && (fromLeft || fromRight)) {
-        this.state = 'cling';
-        this.vy = 30;
-        this.jumpCount = 1;
-      }
-
-      break;
-    }
-  }
-
-  // Handles vertical collision with platforms and updates ground status
-  handleVerticalCollision(platforms, prevY) {
-    let groundCollision = false;
-
-    // Iterate platforms for collision detection
     for (const platform of platforms) {
       if (!this.isCollidingWith(platform)) continue;
 
-      // Check if player is falling and hits the top of the platform
-      const groundTolerance = 1; // 1 pixel tolerance
-      const hitFromAbove = prevY + this.height <= platform.y + groundTolerance && this.vy >= 0;
-      // Check if player is jumping and hits the bottom of the platform
+      const fromLeft = prevX + this.width <= platform.x;
+      const fromRight = prevX >= platform.x + platform.width;
+
+      if (fromLeft) this.x = platform.x - this.width;
+      else if (fromRight) this.x = platform.x + platform.width;
+      
+      this.vx = 0;
+
+      if (!this.onGround && this.vy >= 0) {
+        this.state = 'cling';
+        this.vy = 30; 
+        this.jumpCount = 1;
+      }
+      return; 
+    }
+  }
+
+  handleVerticalCollision(platforms, prevY) {
+    for (const platform of platforms) {
+      if (!this.isCollidingWith(platform)) continue;
+
+      const hitFromAbove = prevY + this.height <= platform.y && this.vy >= 0;
       const hitFromBelow = prevY >= platform.y + platform.height && this.vy < 0;
 
       if (hitFromAbove) {
         this.y = platform.y - this.height;
         this.vy = 0;
-        this.jumpCount = 0;
-        this.onGround = true;
-        groundCollision = true;
-        break;
-
-      } else if (hitFromBelow) {
+        return true; 
+      }
+      if (hitFromBelow) {
         this.y = platform.y + platform.height;
-        this.vy = 0;
-        break;
+        this.vy = 0; 
       }
     }
-
-    return groundCollision;
+    return false;
   }
 
-  isCollidingWith(platform) {
-    const px = platform.x, py = platform.y, pw = platform.width, ph = platform.height;
-    const x = this.x, y = this.y, w = this.width, h = this.height;
-    
-    if (x + w <= px || x >= px + pw || y + h <= py || y >= py + ph) return false; // Early exit for non-overlapping cases
-    return true;
+  isCollidingWith(other) {
+    return (
+      this.x < other.x + other.width &&
+      this.x + this.width > other.x &&
+      this.y < other.y + other.height &&
+      this.y + this.height > other.y
+    );
   }
 
   render(ctx) {
     try {
-      if (this.despawnAnimationFinished) return; 
-      
+      if (this.despawnAnimationFinished && this.state !== 'despawn') return;
+
       const spriteKey = this.getSpriteKey();
-      
-      // Select the correct sprite: character-specific first, then global fallback.
-      let sprite = this.assets.characters[this.characterId]?.[spriteKey];
+      const characterSprites = this.assets.characters[this.characterId];
+      let sprite = characterSprites?.[spriteKey] || this.assets[spriteKey];
+
       if (!sprite) {
-        sprite = this.assets[spriteKey];
-      }
-      
-      // Fallback rendering if sprite not available
-      if (!sprite) {
-        console.warn(`Sprite for ${spriteKey} (char: ${this.characterId}) not loaded, using fallback`);
+        console.warn(`Sprite for ${spriteKey} (char: ${this.characterId}) not loaded.`);
         this.renderFallback(ctx);
         return;
       }
 
-      // Calculate sprite sheet frame dimensions
-      const frameCount = this.animationFrames[this.state] || 1;
+      const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[this.state] || 1;
       const frameWidth = sprite.width / frameCount;
-      const frameHeight = sprite.height;
-      
-      // Calculate source position (which frame to draw)
       const srcX = frameWidth * this.animationFrame;
-      const srcY = 0;
 
       ctx.save();
-
-      // Flip sprite horizontally if facing left
       if (this.direction === 'left') {
         ctx.scale(-1, 1);
-        ctx.translate(-(this.x + this.width), this.y);
+        ctx.translate(-this.x - this.width, this.y);
       } else {
         ctx.translate(this.x, this.y);
       }
-
-      // Make it look like the player is touching the wall when clinging
-      let drawOffsetX = 0;
-      const clingOffset = 7;
-      if (this.state === 'cling') {
-        drawOffsetX = clingOffset;
-      }
-
-      // Use spawn size during spawn/despawn animation, normal size otherwise
+      
       const isSpecialAnim = this.state === 'spawn' || this.state === 'despawn';
       const renderWidth = isSpecialAnim ? this.spawnWidth : this.width;
       const renderHeight = isSpecialAnim ? this.spawnHeight : this.height;
-
-      // Adjust position to center the larger spawn sprite
       const renderX = isSpecialAnim ? -(this.spawnWidth - this.width) / 2 : 0;
       const renderY = isSpecialAnim ? -(this.spawnHeight - this.height) / 2 : 0;
+      const drawOffsetX = (this.state === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
 
       ctx.drawImage(
         sprite,
-        srcX, srcY,
-        frameWidth, frameHeight,
+        srcX, 0, frameWidth, sprite.height,
         drawOffsetX + renderX, renderY,
         renderWidth, renderHeight
       );
 
-      // Restore context
       ctx.restore();
-
     } catch (error) {
       console.error('Error rendering player:', error);
       this.renderFallback(ctx);
     }
   }
-
+  
   getSpriteKey() {
-    // Map states to sprite keys for fast lookup
-    const spriteMap = {
-      jump: 'playerJump',
-      double_jump: 'playerDoubleJump',
-      fall: 'playerFall',
-      run: 'playerRun',
-      dash: 'playerDash',
-      cling: 'playerCling',
-      idle: 'playerIdle',
-      spawn: 'playerAppear',
+    const stateToSpriteMap = {
+      idle: 'playerIdle', run: 'playerRun', jump: 'playerJump',
+      double_jump: 'playerDoubleJump', fall: 'playerFall',
+      dash: 'playerDash', cling: 'playerCling', spawn: 'playerAppear',
       despawn: 'playerDisappear',
     };
-    return spriteMap[this.state] || 'playerIdle';
+    return stateToSpriteMap[this.state] || 'playerIdle';
   }
 
   renderFallback(ctx) {
-    // Fallback rendering when sprites aren't available
-    ctx.fillStyle = '#FF6B35'; // Orange color
+    ctx.fillStyle = '#FF00FF';
     ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+
+  // --- Private Helper Methods ---
+
+  _updateGameplay(dt, level) {
+    this._updateTimers(dt);
+
+    const prevX = this.x;
+    const prevY = this.y;
+
+    if (this.isDashing) {
+      this.dashTimer -= dt;
+      if (this.dashTimer <= 0) {
+        this.isDashing = false;
+        this.vx = 0;
+      }
+    }
+
+    if (this.jumpBufferTimer > 0 && (this.onGround || this.coyoteTimer > 0)) {
+      this.vy = -PLAYER_CONSTANTS.JUMP_FORCE;
+      this.jumpCount = 1;
+      this.onGround = false;
+      this.jumpBufferTimer = 0;
+      this.coyoteTimer = 0;
+      this.jumpedThisFrame = 1; // Set flag for jump sound/effect
+    }
+
+    if (!this.isDashing) this.vy += PLAYER_CONSTANTS.GRAVITY * dt;
+    this.vy = Math.min(this.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
+
+    this.x += this.vx * dt;
+    if (level) this.handleHorizontalCollision(level.platforms, prevX);
+
+    this.y += this.vy * dt;
+    this.onGround = level ? this.handleVerticalCollision(level.platforms, prevY) : false;
+
+    if (this.onGround) {
+      this.jumpCount = 0;
+      this.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
+    }
+
+    if (level && this.y > level.height + 50) {
+      if (!this.needsRespawn) {
+        this.deathCount++;
+        this.needsRespawn = true;
+      }
+    }
+    this.x = Math.max(0, Math.min(this.x, level.width - this.width));
+  }
+
+  _updateTimers(dt) {
+    if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= dt;
+    if (this.coyoteTimer > 0) this.coyoteTimer -= dt;
+    if (this.dashCooldownTimer > 0) this.dashCooldownTimer -= dt;
+  }
+
+  _determineState() {
+    if (this.isDespawning) { this.state = 'despawn'; return; }
+    if (this.isSpawning) { this.state = 'spawn'; return; }
+    if (this.isDashing) { this.state = 'dash'; return; }
+    if (this.state === 'cling' && (this.onGround || this.vx !== 0)) {
+      this.state = 'fall';
+    }
     
-    // Draw a simple face
-    ctx.fillStyle = 'white';
-    ctx.fillRect(this.x, this.y, 4, 4);
-    
-    // Draw direction indicator
-    ctx.fillStyle = 'red';
-    if (this.direction === 'right') {
-      ctx.fillRect(this.x + this.width - 2, this.y + this.height / 2 - 2, 4, 4);
-    } else {
-      ctx.fillRect(this.x - 2, this.y + this.height / 2 - 2, 4, 4);
+    if (!this.onGround && this.state !== 'cling') {
+      if (this.vy < 0) this.state = this.jumpCount === 2 ? 'double_jump' : 'jump';
+      else this.state = 'fall';
+      return;
+    }
+
+    if (this.onGround) {
+      this.state = this.vx === 0 ? 'idle' : 'run';
     }
   }
 
-  // Helper method to get player center point
+  _updateAnimation(dt, prevState) {
+    if (this.state !== prevState) {
+      this.animationFrame = 0;
+      this.animationTimer = 0;
+    }
+
+    this.animationTimer += dt;
+    const speed = (this.state === 'spawn') 
+        ? PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED 
+        : PLAYER_CONSTANTS.ANIMATION_SPEED;
+
+    if (this.animationTimer < speed) return;
+    
+    this.animationTimer -= speed;
+    const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[this.state] || 1;
+    this.animationFrame++;
+
+    const isOneShot = this.state === 'spawn' || this.state === 'despawn';
+    if (isOneShot) {
+      if (this.animationFrame >= frameCount) {
+        this.animationFrame = frameCount - 1; // Clamp to the last frame
+        if (this.state === 'spawn') {
+          this.isSpawning = false;
+          this.spawnComplete = true;
+        }
+        if (this.state === 'despawn') {
+          this.isDespawning = false;
+          this.despawnAnimationFinished = true;
+        }
+      }
+    } else {
+      this.animationFrame %= frameCount; // Loop other animations
+    }
+  }
+  
   getCenterX() { return this.x + this.width / 2; }
   getCenterY() { return this.y + this.height / 2; }
 }
