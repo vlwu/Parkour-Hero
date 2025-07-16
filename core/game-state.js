@@ -60,6 +60,25 @@ export class GameState {
       }
   }
 
+  resetProgress() {
+    try {
+      localStorage.removeItem('parkourGameState');
+      console.log("Game progress has been reset.");
+
+      // Reload the default state
+      const defaultState = this.loadProgress();
+      this.levelProgress = defaultState.levelProgress;
+      this.selectedCharacter = defaultState.selectedCharacter;
+
+      // Reset current level pointers
+      this.currentSection = 0;
+      this.currentLevelIndex = 0;
+
+    } catch (e) {
+      console.error("Failed to reset game state in localStorage", e);
+    }
+  }
+
   unlockAllLevels() {
       const totalLevels = this.levelSections.reduce((acc, section) => acc + section.levels.length, 0);
       this.levelProgress.unlockedLevels[0] = totalLevels;

@@ -129,6 +129,24 @@ loadAssets().then((assets) => {
     };
     console.log('Developer command available: Type `unlockAllLevels()` in the console to unlock all levels.');
     
+    // Expose the reset function to the window for easy debugging
+    window.resetProgress = () => {
+        if (engine && engine.gameState) {
+            engine.gameState.resetProgress();
+            // Reload the first level to reflect the reset state
+            engine.loadLevel(0, 0);
+            console.log("Game reset to Level 1.");
+            // If any menus are open, refresh them
+            if (menuManager.isMainMenuOpen()) {
+                menuManager.populateLevelMenu();
+            }
+            if (!menuManager.characterModal.classList.contains('hidden')) {
+                menuManager.populateCharacterMenu();
+            }
+        }
+    };
+    console.log('Developer command available: Type `resetProgress()` in the console to reset all saved data.');
+    
     console.log('Game started successfully!');
   } catch (error) {
     console.error('Failed to start game engine:', error);
