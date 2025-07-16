@@ -1,6 +1,7 @@
 import { Engine } from './core/engine.js';
 import { loadAssets } from './core/assets.js';
 import { InputManager } from './core/input.js';
+import { MenuManager } from './ui/menu-manager.js';
 
 // Get canvas element and context
 const canvas = document.getElementById('gameCanvas');
@@ -78,26 +79,7 @@ function showLoadingIndicator() {
 // Show initial loading screen
 showLoadingIndicator();
 
-const settingsButton = document.getElementById('settingsButton');
-const settingsModal = document.getElementById('settingsModal');
-const closeModalButton = document.getElementById('closeModalButton');
-const keybindInputs = document.querySelectorAll('.keybind-item input');
-const pauseButton = document.getElementById('pauseButton');
-
-// New Main Menu elements
-const mainMenuButton = document.getElementById('mainMenuButton');
-const mainMenuModal = document.getElementById('mainMenuModal');
-const closeMainMenuButton = document.getElementById('closeMainMenuButton');
-const levelSelectionContainer = document.getElementById('level-selection-container');
-
-// New Character Selection elements
-const characterButton = document.getElementById('characterButton');
-const characterModal = document.getElementById('characterModal');
-const closeCharacterModalButton = document.getElementById('closeCharacterModalButton');
-const characterSelectionContainer = document.getElementById('character-selection-container');
-
-
-// Default keybinds remain the source of truth here
+// Default keybinds remain the source of truth for initialization
 let keybinds = {
   moveLeft: 'a',
   moveRight: 'd',
@@ -105,418 +87,43 @@ let keybinds = {
   dash: ' ',
 };
 
-// New variables for character preview animation
-let characterPreviewAnimationId = null;
-const characterPreviewStates = {};
-
-// Function to format a key string for display
-function formatKeyForDisplay(key) {
-    if (key === ' ') return 'SPACE';
-    if (key.startsWith('arrow')) return key.replace('arrow', '').toUpperCase();
-    return key.toUpperCase();
-}
-
-// Function to update the "How to Play" key displays
-function updateHowToPlayKeyDisplays() {
-    try {
-        document.getElementById('htp-left').textContent = formatKeyForDisplay(keybinds.moveLeft);
-        document.getElementById('htp-right').textContent = formatKeyForDisplay(keybinds.moveRight);
-        document.getElementById('htp-jump').textContent = formatKeyForDisplay(keybinds.jump);
-        document.getElementById('htp-dash').textContent = formatKeyForDisplay(keybinds.dash);
-    } catch (error) {
-        console.warn("Could not update 'How to Play' key displays.", error);
-    }
-}
-
-
-// Function to update the pause button icon based on the engine's state
-function updatePauseButtonIcon() {
-  if (typeof engine === 'undefined') return;
-
-  if (engine.isRunning) {
-    pauseButton.classList.remove('is-paused');
-    pauseButton.setAttribute('aria-label', 'Pause');
-  } else {
-    pauseButton.classList.add('is-paused');
-    pauseButton.setAttribute('aria-label', 'Resume');
-  }
-}
-
-// Function to update the displayed keybinds in the modal
-function updateKeybindDisplay() {
-  keybindInputs.forEach(input => {
-    const action = input.dataset.action;
-    input.value = keybinds[action] === ' ' ? 'Space' : keybinds[action].toUpperCase();
-  });
-  updateHowToPlayKeyDisplays(); // Also update the How to Play section
-}
-
-// Function to update sound settings display
-function updateSoundSettingsDisplay() {
-  if (typeof engine !== 'undefined' && engine.soundManager) {
-    const settings = engine.soundManager.getSettings();
-    
-    const soundToggle = document.getElementById('soundToggle');
-    if (soundToggle) {
-      soundToggle.textContent = settings.enabled ? 'ON' : 'OFF';
-      soundToggle.classList.toggle('sound-enabled', settings.enabled);
-      soundToggle.classList.toggle('sound-disabled', !settings.enabled);
-    }
-    
-    const volumeSlider = document.getElementById('volumeSlider');
-    const volumeValue = document.getElementById('volumeValue');
-    if (volumeSlider && volumeValue) {
-      volumeSlider.value = settings.volume;
-      volumeValue.textContent = Math.round(settings.volume * 100) + '%';
-    }
-    
-    const testSoundButton = document.getElementById('testSoundButton');
-    if (testSoundButton) {
-      testSoundButton.disabled = !settings.enabled;
-    }
-  }
-}
-
-// Function to toggle the settings modal visibility
-function toggleSettingsModal() {
-  settingsModal.classList.toggle('hidden');
-  
-  if (!settingsModal.classList.contains('hidden')) {
-    updateKeybindDisplay();
-    updateSoundSettingsDisplay();
-    
-    if (typeof engine !== 'undefined') {
-      engine.pauseForMenu = true; 
-      if (engine.isRunning) {
-        engine.pause();
-      }
-      updatePauseButtonIcon();
-    }
-  } else {
-    if (typeof engine !== 'undefined') {
-      engine.pauseForMenu = false; 
-      if (!engine.isRunning) {
-        engine.resume();
-      }
-      updatePauseButtonIcon();
-    }
-  }
-}
-
-// Function to populate the level selection grid
-function populateLevelMenu() {
-    if (!engine) return;
-    levelSelectionContainer.innerHTML = ''; // Clear previous content
-
-    const gameState = engine.gameState;
-
-    // Iterate over each section object to create separate containers
-    gameState.levelSections.forEach((section, sectionIndex) => {
-        const sectionContainer = document.createElement('div');
-        sectionContainer.classList.add('level-section-menu');
-
-        const sectionTitle = document.createElement('h4');
-        // Use the 'name' property from the section object for the title
-        sectionTitle.textContent = section.name;
-        sectionContainer.appendChild(sectionTitle);
-
-        const levelGrid = document.createElement('div');
-        levelGrid.classList.add('level-grid');
-
-        // Iterate over levels within the current section's 'levels' array
-        section.levels.forEach((level, levelIndex) => {
-            const button = document.createElement('button');
-            button.textContent = `${levelIndex + 1}`;
-            button.classList.add('level-button');
-
-            const isUnlocked = gameState.isLevelUnlocked(sectionIndex, levelIndex);
-            
-            if (isUnlocked) {
-                if (gameState.isLevelCompleted(sectionIndex, levelIndex)) {
-                    button.classList.add('completed');
-                }
-                if (gameState.currentSection === sectionIndex && gameState.currentLevelIndex === levelIndex) {
-                    button.classList.add('current');
-                }
-
-                button.addEventListener('click', () => {
-                    engine.loadLevel(sectionIndex, levelIndex);
-                    toggleMainMenuModal(); // Close menu after selection
-                });
-            } else {
-                button.classList.add('locked');
-                button.disabled = true;
-                button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"></path></svg>`;
-            }
-            levelGrid.appendChild(button);
-        });
-
-        sectionContainer.appendChild(levelGrid);
-        levelSelectionContainer.appendChild(sectionContainer);
-    });
-}
-
-
-// Function to toggle the main menu modal visibility
-function toggleMainMenuModal() {
-    mainMenuModal.classList.toggle('hidden');
-
-    if (!mainMenuModal.classList.contains('hidden')) {
-        populateLevelMenu(); // Refresh level buttons every time menu is opened
-        updateHowToPlayKeyDisplays(); // Update keybinds display when menu is opened
-        if (typeof engine !== 'undefined') {
-            engine.pauseForMenu = true;
-            if (engine.isRunning) {
-                engine.pause();
-            }
-            updatePauseButtonIcon();
-        }
-    } else {
-        if (typeof engine !== 'undefined') {
-            engine.pauseForMenu = false;
-            if (!engine.isRunning && !engine.gameState.showingLevelComplete) {
-                engine.resume();
-            }
-            updatePauseButtonIcon();
-        }
-    }
-}
-
-// New function to animate character previews in the modal
-function animateCharacterPreviews(timestamp) {
-  // Add a guard clause to stop if the modal is hidden
-  if (characterModal.classList.contains('hidden')) {
-      if (characterPreviewAnimationId) {
-          cancelAnimationFrame(characterPreviewAnimationId);
-          characterPreviewAnimationId = null;
-      }
-      return;
-  }
-
-  if (!engine || !engine.assets) return;
-
-  const previewCanvases = characterSelectionContainer.querySelectorAll('.char-canvas');
-  if (previewCanvases.length === 0) {
-      if (characterPreviewAnimationId) {
-          cancelAnimationFrame(characterPreviewAnimationId);
-          characterPreviewAnimationId = null;
-      }
-      return;
-  }
-
-  previewCanvases.forEach(canvas => {
-      const charId = canvas.dataset.charId;
-      if (!charId) return;
-
-      if (!characterPreviewStates[charId]) {
-          characterPreviewStates[charId] = { frame: 0, timer: 0, lastTime: timestamp };
-      }
-
-      const state = characterPreviewStates[charId];
-      const idleSprite = engine.assets.characters[charId]?.playerIdle;
-      const ctx = canvas.getContext('2d');
-      
-      if (!idleSprite || !ctx) return;
-
-      const deltaTime = (timestamp - state.lastTime) / 1000;
-      state.lastTime = timestamp;
-      state.timer += deltaTime;
-
-      const animationSpeed = 0.08; 
-      const frameCount = 11; 
-      const frameWidth = idleSprite.width / frameCount;
-
-      if (state.timer >= animationSpeed) {
-          state.timer = 0;
-          state.frame = (state.frame + 1) % frameCount;
-      }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(
-          idleSprite,
-          state.frame * frameWidth, 0,
-          frameWidth, idleSprite.height,
-          0, 0,
-          canvas.width, canvas.height
-      );
-  });
-
-  characterPreviewAnimationId = requestAnimationFrame(animateCharacterPreviews);
-}
-
-// Function to populate the character selection menu
-function populateCharacterMenu() {
-    if (!engine) return;
-    characterSelectionContainer.innerHTML = ''; // Clear previous content
-
-    const availableCharacters = Object.keys(engine.assets.characters);
-    const gameState = engine.gameState;
-
-    availableCharacters.forEach(charId => {
-        const card = document.createElement('div');
-        card.className = 'character-card';
-
-        const isUnlocked = gameState.isCharacterUnlocked(charId);
-        const isSelected = gameState.selectedCharacter === charId;
-        
-        if (!isUnlocked) card.classList.add('locked');
-        if (isSelected) card.classList.add('selected');
-
-        const charNameFormatted = charId.replace(/([A-Z])/g, ' $1').trim();
-
-        const unlockText = isUnlocked ? 'Available' : 'Complete more levels to unlock';
-        let buttonContent = isSelected ? 'Selected' : 'Select';
-        if (!isUnlocked) {
-            buttonContent = `<svg class="lock-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"></path></svg> Locked`;
-        }
-
-        card.innerHTML = `
-            <canvas class="char-canvas" data-char-id="${charId}" width="64" height="64"></canvas>
-            <div class="char-name">${charNameFormatted}</div>
-            <div class="char-unlock">${unlockText}</div>
-            <button class="action-button select-button">${buttonContent}</button>
-        `;
-
-        const selectButton = card.querySelector('.select-button');
-        if (!isUnlocked) {
-            selectButton.disabled = true;
-        } else {
-            selectButton.addEventListener('click', () => {
-                if (isSelected) return;
-                gameState.setSelectedCharacter(charId);
-                engine.updatePlayerCharacter();
-                populateCharacterMenu(); // Redraw menu to update styles
-            });
-        }
-
-        characterSelectionContainer.appendChild(card);
-    });
-}
-
-// Function to toggle the character selection modal
-function toggleCharacterModal() {
-    characterModal.classList.toggle('hidden');
-
-    if (!characterModal.classList.contains('hidden')) {
-        populateCharacterMenu();
-        if (typeof engine !== 'undefined') {
-            engine.pauseForMenu = true;
-            if (engine.isRunning) {
-                engine.pause();
-            }
-            updatePauseButtonIcon();
-        }
-        if (!characterPreviewAnimationId) {
-            characterPreviewAnimationId = requestAnimationFrame(animateCharacterPreviews);
-        }
-    } else {
-        if (characterPreviewAnimationId) {
-            cancelAnimationFrame(characterPreviewAnimationId);
-            characterPreviewAnimationId = null;
-        }
-        if (typeof engine !== 'undefined') {
-            engine.pauseForMenu = false;
-            if (!engine.isRunning && !engine.gameState.showingLevelComplete) {
-                engine.resume();
-            }
-            updatePauseButtonIcon();
-        }
-    }
-}
-
-// Sound settings event handlers
-function setupSoundSettings() {
-  const soundToggle = document.getElementById('soundToggle');
-  if (soundToggle) {
-    soundToggle.addEventListener('click', () => {
-      if (typeof engine !== 'undefined' && engine.soundManager) {
-        engine.soundManager.toggleSound();
-        updateSoundSettingsDisplay();
-      }
-    });
-  }
-  
-  const volumeSlider = document.getElementById('volumeSlider');
-  if (volumeSlider) {
-    volumeSlider.addEventListener('input', (e) => {
-      const volume = parseFloat(e.target.value);
-      if (typeof engine !== 'undefined' && engine.soundManager) {
-        engine.soundManager.setVolume(volume);
-        updateSoundSettingsDisplay();
-      }
-    });
-  }
-  
-  const testSoundButton = document.getElementById('testSoundButton');
-  if (testSoundButton) {
-    testSoundButton.addEventListener('click', () => {
-      if (typeof engine !== 'undefined' && engine.soundManager) {
-        engine.soundManager.play('jump', 0.8);
-      }
-    });
-  }
-}
-
-// Event listeners for UI buttons are still managed here
-settingsButton.addEventListener('click', toggleSettingsModal);
-closeModalButton.addEventListener('click', toggleSettingsModal);
-
-// mainMenuButton now opens the main menu modal
-mainMenuButton.addEventListener('click', toggleMainMenuModal);
-closeMainMenuButton.addEventListener('click', toggleMainMenuModal);
-
-// Event listeners for the new character modal
-characterButton.addEventListener('click', toggleCharacterModal);
-closeCharacterModalButton.addEventListener('click', toggleCharacterModal);
-
-
-pauseButton.addEventListener('click', () => {
-  if (typeof engine !== 'undefined') {
-    if (engine.isRunning) {
-      engine.pause();
-    } else {
-      engine.resume();
-    }
-    updatePauseButtonIcon();
-  }
-});
-
-
 // Load assets and start the game
 let engine;
 let inputManager;
+let menuManager;
 
 loadAssets().then((assets) => {
   console.log('Assets loaded successfully, starting game...');
   
   try {
     engine = new Engine(ctx, canvas, assets, keybinds, {
-      onMainMenu: toggleMainMenuModal,
+      onMainMenu: () => menuManager.toggleMainMenuModal(),
     });
 
-    // Initialize the InputManager, passing all necessary dependencies
+    // Initialize MenuManager to handle all DOM UI
+    menuManager = new MenuManager(engine);
+
+    // Initialize the InputManager, passing the MenuManager for UI context
     inputManager = new InputManager(
       engine,
       canvas,
-      keybinds,
-      { settingsModal, keybindInputs, mainMenuModal },
-      { updateKeybindDisplay, updatePauseButtonIcon }
+      menuManager
     );
+    
+    // Initialize UI event listeners and set initial states
+    menuManager.init();
     
     engine.start();
     
-    // Set initial UI states
-    updateHowToPlayKeyDisplays();
-    setupSoundSettings();
-    updatePauseButtonIcon();
+    menuManager.updatePauseButtonIcon();
     
     // Expose the unlock function to the window for easy debugging
     window.unlockAllLevels = () => {
         if (engine && engine.gameState) {
             engine.gameState.unlockAllLevels();
             // If the main menu is open, refresh it to show the unlocked levels
-            if (!mainMenuModal.classList.contains('hidden')) {
-                populateLevelMenu();
+            if (menuManager.isMainMenuOpen()) {
+                menuManager.populateLevelMenu();
             }
         }
     };

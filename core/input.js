@@ -1,11 +1,8 @@
 export class InputManager {
-  constructor(engine, canvas, keybindsRef, uiElements, callbacks) {
+  constructor(engine, canvas, menuManager) {
     this.engine = engine;
     this.canvas = canvas;
-    this.keybinds = keybindsRef;
-    this.ui = uiElements;
-    this.callbacks = callbacks;
-    this.activeKeybindInput = null;
+    this.menuManager = menuManager;
 
     this.init();
   }
@@ -19,46 +16,22 @@ export class InputManager {
     this.canvas.addEventListener('click', this.handleCanvasClick.bind(this));
     this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // UI-specific events for settings
-    this.ui.keybindInputs.forEach(input => {
-      input.addEventListener('click', () => this.startKeybindRemap(input));
-    });
-  }
-
-  startKeybindRemap(inputElement) {
-    if (this.activeKeybindInput) {
-      this.activeKeybindInput.classList.remove('active-rebind');
-    }
-    this.activeKeybindInput = inputElement;
-    inputElement.value = 'Press a key...';
-    inputElement.classList.add('active-rebind');
+    // UI-specific events for keybinds are now handled by MenuManager.
   }
 
   handleKeyDown(e) {
     if (!this.engine) return;
 
     const key = e.key.toLowerCase();
-    const isSettingsOpen = !this.ui.settingsModal.classList.contains('hidden');
-    const isMainMenuOpen = !this.ui.mainMenuModal.classList.contains('hidden');
-    const isRemapping = this.activeKeybindInput && isSettingsOpen;
+    const isMenuOpen = this.menuManager.isModalOpen();
+    const isRemapping = this.menuManager.isRemapping();
     const isLevelComplete = this.engine.gameState.showingLevelComplete;
 
     // 1. Handle keybind remapping (highest priority)
     if (isRemapping) {
       e.preventDefault();
       e.stopPropagation();
-
-      const action = this.activeKeybindInput.dataset.action;
-      const isValidKey = (key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) || ['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(key);
-
-      if (isValidKey) {
-        this.keybinds[action] = key;
-        this.engine.updateKeybinds(this.keybinds);
-      }
-      
-      this.callbacks.updateKeybindDisplay();
-      this.activeKeybindInput.classList.remove('active-rebind');
-      this.activeKeybindInput = null;
+      this.menuManager.setKeybind(e);
       return;
     }
 
@@ -88,15 +61,15 @@ export class InputManager {
     }
 
     // 3. Handle global pause/resume key (only if no menus are open)
-    if (key === 'escape' && !isSettingsOpen && !isMainMenuOpen) {
+    if (key === 'escape' && !isMenuOpen) {
       e.preventDefault();
       this.engine.isRunning ? this.engine.pause() : this.engine.resume();
-      this.callbacks.updatePauseButtonIcon();
+      this.menuManager.updatePauseButtonIcon();
       return;
     }
 
     // 4. Pass general key events to the engine if game is running
-    if (this.engine.isRunning && !isSettingsOpen && !isMainMenuOpen) {
+    if (this.engine.isRunning && !isMenuOpen) {
       if (!e.defaultPrevented) {
         this.engine.handleKeyEvent(key, true);
       }
