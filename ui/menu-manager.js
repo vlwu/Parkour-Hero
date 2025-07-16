@@ -1,0 +1,1 @@
+// This module's sole responsibility would be to abstract all interactions with the DOM. It would contain the logic currently in main.js for showing/hiding modals, populating their content, and handling their specific button clicks.
