@@ -109,6 +109,26 @@ let keybinds = {
 let characterPreviewAnimationId = null;
 const characterPreviewStates = {};
 
+// Function to format a key string for display
+function formatKeyForDisplay(key) {
+    if (key === ' ') return 'SPACE';
+    if (key.startsWith('arrow')) return key.replace('arrow', '').toUpperCase();
+    return key.toUpperCase();
+}
+
+// Function to update the "How to Play" key displays
+function updateHowToPlayKeyDisplays() {
+    try {
+        document.getElementById('htp-left').textContent = formatKeyForDisplay(keybinds.moveLeft);
+        document.getElementById('htp-right').textContent = formatKeyForDisplay(keybinds.moveRight);
+        document.getElementById('htp-jump').textContent = formatKeyForDisplay(keybinds.jump);
+        document.getElementById('htp-dash').textContent = formatKeyForDisplay(keybinds.dash);
+    } catch (error) {
+        console.warn("Could not update 'How to Play' key displays.", error);
+    }
+}
+
+
 // Function to update the pause button icon based on the engine's state
 function updatePauseButtonIcon() {
   if (typeof engine === 'undefined') return;
@@ -128,6 +148,7 @@ function updateKeybindDisplay() {
     const action = input.dataset.action;
     input.value = keybinds[action] === ' ' ? 'Space' : keybinds[action].toUpperCase();
   });
+  updateHowToPlayKeyDisplays(); // Also update the How to Play section
 }
 
 // Function to update sound settings display
@@ -242,6 +263,7 @@ function toggleMainMenuModal() {
 
     if (!mainMenuModal.classList.contains('hidden')) {
         populateLevelMenu(); // Refresh level buttons every time menu is opened
+        updateHowToPlayKeyDisplays(); // Update keybinds display when menu is opened
         if (typeof engine !== 'undefined') {
             engine.pauseForMenu = true;
             if (engine.isRunning) {
@@ -474,6 +496,8 @@ loadAssets().then((assets) => {
     
     engine.start();
     
+    // Set initial UI states
+    updateHowToPlayKeyDisplays();
     setupSoundSettings();
     updatePauseButtonIcon();
     
