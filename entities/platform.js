@@ -106,6 +106,10 @@ export class Level {
       collected: false
     })) || [];
 
+    // Add counters for fruit collection
+    this.totalFruitCount = this.fruits.length;
+    this.collectedFruitCount = 0;
+
     // Initialize checkpoints
     this.checkpoints = levelConfig.checkpoints?.map(cp => ({
       x: cp.x,
@@ -173,6 +177,18 @@ export class Level {
     }
   }
 
+  // Handle fruit collection logic centrally
+  collectFruit(fruit) {
+    if (!fruit.collected) {
+      fruit.collected = true;
+      this.collectedFruitCount++;
+      // Trophy becomes active if all fruits are now collected
+      if (this.trophy && this.allFruitsCollected()) {
+          this.trophy.inactive = false;
+      }
+    }
+  }
+
   // Return array of uncollected fruits
   getActiveFruits() {
     if (!this.fruits.length) return [];
@@ -184,22 +200,15 @@ export class Level {
   }
 
   getFruitCount() {
-    let count = 0;
-    for (let i = 0, len = this.fruits.length; i < len; ++i) {
-      if (this.fruits[i].collected) ++count;
-    }
-    return count;
+    return this.collectedFruitCount;
   }
 
   getTotalFruitCount() {
-    return this.fruits.length;
+    return this.totalFruitCount;
   }
 
   allFruitsCollected() {
-    for (let i = 0, len = this.fruits.length; i < len; ++i) {
-      if (!this.fruits[i].collected) return false;
-    }
-    return true;
+    return this.collectedFruitCount === this.totalFruitCount;
   }
 
   // Returns first platform colliding with player, or null
@@ -223,7 +232,7 @@ export class Level {
     return null;
   }
 
-  // MODIFIED: Efficiently render platforms; optimized with viewport culling
+  // Efficiently render platforms; optimized with viewport culling
   render(ctx, assets, camera) {
     for (let i = 0, len = this.platforms.length; i < len; ++i) {
       const plat = this.platforms[i];
@@ -288,8 +297,6 @@ export class Level {
     const trophy = this.trophy;
     if (!trophy) return;
 
-    trophy.inactive = !this.allFruitsCollected();
-
     // Animate only if active and not acquired
     if (!trophy.inactive && !trophy.acquired) {
       trophy.animationTimer += dt;
@@ -306,7 +313,7 @@ export class Level {
     return !this.trophy || this.trophy.acquired;
   }
 
-  // MODIFIED: Reset level state for replay; optimized for performance and checkpoints
+  // MODIFIED reset to also reset the new counter
   reset() {
     for (let i = 0, len = this.fruits.length; i < len; ++i) {
       const fruit = this.fruits[i];
@@ -314,23 +321,23 @@ export class Level {
       fruit.frame = 0;
       fruit.frameTimer = 0;
     }
+    
+    // Reset the counter
+    this.collectedFruitCount = 0;
 
-    // Reset checkpoints
     for (const cp of this.checkpoints) {
         cp.state = 'inactive';
         cp.frame = 0;
         cp.frameTimer = 0;
     }
 
-    // Reset trophy if present
-    const trophy = this.trophy;
-    if (trophy) {
+    if (this.trophy) {
       trophy.acquired = false;
-      trophy.inactive = true;
+      trophy.inactive = true; // Trophy is always inactive at the start
       trophy.animationFrame = 0;
       trophy.animationTimer = 0;
     }
 
-    this.completed = false; // Reset completion flag
+    this.completed = false;
   }
 }

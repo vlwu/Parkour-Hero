@@ -5,19 +5,23 @@ export class HUD {
   }
 
   _getButtonLayout(screenType, hasNextLevel, hasPreviousLevel) {
-    const buttonWidth = 32;
-    const buttonHeight = 32;
+    const BUTTON_SIZE = 32;
     const buttons = [];
-    let gap;
+    
+    const PANEL_HEIGHT = 300;
+    const PANEL_Y_OFFSET = (this.canvas.height - PANEL_HEIGHT) / 2;
+    const BUTTON_Y_OFFSET = PANEL_Y_OFFSET + 200;
 
-    const panelY = (this.canvas.height - 300) / 2;
-    const buttonY = panelY + 200;
+    let gap;
 
     if (screenType === 'levelComplete') {
         gap = 10;
-        if (hasPreviousLevel) buttons.push({ name: 'previous', asset: 'previous_level_button' });
-        if (hasNextLevel) buttons.push({ name: 'next', asset: 'next_level_button' });
-        buttons.push({ name: 'restart', asset: 'restart_level_button' });
+        // Define buttons with their properties
+        const actionButtons = [];
+        if (hasPreviousLevel) actionButtons.push({ name: 'previous', asset: 'previous_level_button' });
+        actionButtons.push({ name: 'restart', asset: 'restart_level_button' });
+        if (hasNextLevel) actionButtons.push({ name: 'next', asset: 'next_level_button' });
+        buttons.push(...actionButtons);
     } else { // 'pause'
         gap = 20;
         buttons.push({ name: 'resume', asset: 'resume_button' });
@@ -25,16 +29,15 @@ export class HUD {
         buttons.push({ name: 'main_menu', asset: 'level_menu_button' });
     }
 
-    const totalButtonWidth = buttons.length * buttonWidth + (buttons.length > 1 ? (buttons.length - 1) * gap : 0);
-    const startX = (this.canvas.width - totalButtonWidth) / 2;
+    const totalButtonWidth = (buttons.length * BUTTON_SIZE) + (Math.max(0, buttons.length - 1) * gap);
+    let currentX = (this.canvas.width - totalButtonWidth) / 2;
 
-    let currentX = startX;
     for (const button of buttons) {
         button.x = currentX;
-        button.y = buttonY;
-        button.width = buttonWidth;
-        button.height = buttonHeight;
-        currentX += buttonWidth + gap;
+        button.y = BUTTON_Y_OFFSET;
+        button.width = BUTTON_SIZE;
+        button.height = BUTTON_SIZE;
+        currentX += BUTTON_SIZE + gap;
     }
 
     return buttons;
@@ -96,7 +99,8 @@ export class HUD {
     }
   }
 
-  drawLevelCompleteScreen(ctx, level, player, assets, hasNextLevel, hasPreviousLevel) {
+  // MODIFIED to accept levelTime parameter for consistency
+  drawLevelCompleteScreen(ctx, level, player, assets, hasNextLevel, hasPreviousLevel, levelTime = 0) {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     
@@ -122,7 +126,7 @@ export class HUD {
     ctx.fillText(`Level Complete!`, this.canvas.width / 2, panelY + 60);
     
     const deaths = player.deathCount || 0;
-    const timeText = this.formatTime(this.getCurrentLevelTime());
+    const timeText = this.formatTime(levelTime); // Use passed-in time
     
     ctx.fillStyle = '#fff';
     ctx.font = '18px sans-serif';

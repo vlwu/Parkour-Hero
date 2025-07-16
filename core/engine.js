@@ -227,7 +227,8 @@ export class Engine {
 
       if (collisionResults.newlyCollectedFruits.length > 0) {
         for (const fruit of collisionResults.newlyCollectedFruits) {
-          fruit.collected = true;
+          // Use the new centralized method
+          this.currentLevel.collectFruit(fruit);
           this.soundManager.play('collect', 0.8);
 
           this.collectedFruits.push({
@@ -334,7 +335,7 @@ export class Engine {
       this.hud.drawGameHUD(this.ctx, this.currentLevel, this.player, this.soundManager);
 
       if (this.gameState.showingLevelComplete) {
-        this.hud.levelTime = this.levelTime;
+        // Pass the engine's levelTime to the HUD method
         this.hud.drawLevelCompleteScreen(
           this.ctx, 
           this.currentLevel, 
@@ -342,6 +343,7 @@ export class Engine {
           this.assets, 
           this.gameState.hasNextLevel(),
           this.gameState.hasPreviousLevel(),
+          this.levelTime // Pass the current level time
         );
       }
 

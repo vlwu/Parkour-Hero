@@ -284,55 +284,64 @@ function toggleMainMenuModal() {
 
 // New function to animate character previews in the modal
 function animateCharacterPreviews(timestamp) {
-    if (!engine || !engine.assets) return;
+  // Add a guard clause to stop if the modal is hidden
+  if (characterModal.classList.contains('hidden')) {
+      if (characterPreviewAnimationId) {
+          cancelAnimationFrame(characterPreviewAnimationId);
+          characterPreviewAnimationId = null;
+      }
+      return;
+  }
 
-    const previewCanvases = characterSelectionContainer.querySelectorAll('.char-canvas');
-    if (previewCanvases.length === 0) {
-        if (characterPreviewAnimationId) {
-            cancelAnimationFrame(characterPreviewAnimationId);
-            characterPreviewAnimationId = null;
-        }
-        return;
-    }
+  if (!engine || !engine.assets) return;
 
-    previewCanvases.forEach(canvas => {
-        const charId = canvas.dataset.charId;
-        if (!charId) return;
+  const previewCanvases = characterSelectionContainer.querySelectorAll('.char-canvas');
+  if (previewCanvases.length === 0) {
+      if (characterPreviewAnimationId) {
+          cancelAnimationFrame(characterPreviewAnimationId);
+          characterPreviewAnimationId = null;
+      }
+      return;
+  }
 
-        if (!characterPreviewStates[charId]) {
-            characterPreviewStates[charId] = { frame: 0, timer: 0, lastTime: timestamp };
-        }
+  previewCanvases.forEach(canvas => {
+      const charId = canvas.dataset.charId;
+      if (!charId) return;
 
-        const state = characterPreviewStates[charId];
-        const idleSprite = engine.assets.characters[charId]?.playerIdle;
-        const ctx = canvas.getContext('2d');
-        
-        if (!idleSprite || !ctx) return;
+      if (!characterPreviewStates[charId]) {
+          characterPreviewStates[charId] = { frame: 0, timer: 0, lastTime: timestamp };
+      }
 
-        const deltaTime = (timestamp - state.lastTime) / 1000;
-        state.lastTime = timestamp;
-        state.timer += deltaTime;
+      const state = characterPreviewStates[charId];
+      const idleSprite = engine.assets.characters[charId]?.playerIdle;
+      const ctx = canvas.getContext('2d');
+      
+      if (!idleSprite || !ctx) return;
 
-        const animationSpeed = 0.08; 
-        const frameCount = 11; 
-        const frameWidth = idleSprite.width / frameCount;
+      const deltaTime = (timestamp - state.lastTime) / 1000;
+      state.lastTime = timestamp;
+      state.timer += deltaTime;
 
-        if (state.timer >= animationSpeed) {
-            state.timer = 0;
-            state.frame = (state.frame + 1) % frameCount;
-        }
+      const animationSpeed = 0.08; 
+      const frameCount = 11; 
+      const frameWidth = idleSprite.width / frameCount;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(
-            idleSprite,
-            state.frame * frameWidth, 0,
-            frameWidth, idleSprite.height,
-            0, 0,
-            canvas.width, canvas.height
-        );
-    });
+      if (state.timer >= animationSpeed) {
+          state.timer = 0;
+          state.frame = (state.frame + 1) % frameCount;
+      }
 
-    characterPreviewAnimationId = requestAnimationFrame(animateCharacterPreviews);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(
+          idleSprite,
+          state.frame * frameWidth, 0,
+          frameWidth, idleSprite.height,
+          0, 0,
+          canvas.width, canvas.height
+      );
+  });
+
+  characterPreviewAnimationId = requestAnimationFrame(animateCharacterPreviews);
 }
 
 // Function to populate the character selection menu
