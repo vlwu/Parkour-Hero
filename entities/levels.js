@@ -584,3 +584,22 @@ export const levelSections = [
     ]
   }
 ];
+
+export const characterConfig = {
+  PinkMan: {
+    name: "Pink Man",
+    unlockRequirement: 0, // Default character
+  },
+  NinjaFrog: {
+    name: "Ninja Frog",
+    unlockRequirement: 10, 
+  },
+  MaskDude: {
+    name: "Mask Dude",
+    unlockRequirement: 20, 
+  },
+  VirtualGuy: {
+    name: "Virtual Guy",
+    unlockRequirement: 30, 
+  },
+};

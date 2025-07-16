@@ -1,6 +1,6 @@
 import { Player } from '../entities/player.js';
-import { Level } from '../entities/platform.js';
 import { levelSections } from '../entities/levels.js';
+import { Level } from '../entities/platform.js';
 import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
 import { HUD } from '../ui/hud.js';
@@ -49,6 +49,13 @@ export class Engine {
 
     this.wasDashPressed = false;
     this.particles = [];
+  }
+  
+  updatePlayerCharacter() {
+    if (this.player) {
+      this.player.characterId = this.gameState.selectedCharacter;
+      console.log(`Character skin changed to: ${this.gameState.selectedCharacter}`);
+    }
   }
 
   updateKeybinds(newKeybinds) {
@@ -126,6 +133,7 @@ export class Engine {
       this.currentLevel.startPosition.x,
       this.currentLevel.startPosition.y,
       this.assets,
+      this.gameState.selectedCharacter // Pass selected character
     );
     this.player.isSpawning = true;
     this.player.spawnComplete = false;

@@ -1,5 +1,5 @@
 export class Player {
-  constructor(x, y, assets) {
+  constructor(x, y, assets, characterId) {
     this.x = x;
     this.y = y;
     this.width = 32;  // 32x32 sprite size
@@ -17,6 +17,7 @@ export class Player {
     this.direction = 'right';
     this.state = 'idle';
     this.assets = assets;
+    this.characterId = characterId || 'PinkMan';
     this.onGround = false;
 
     this.isSpawning = true;
@@ -414,15 +415,19 @@ export class Player {
 
   render(ctx) {
     try {
-      if (this.despawnAnimationFinished) return; // Don't draw if despawn is fully complete
+      if (this.despawnAnimationFinished) return; 
       
-      // Get the appropriate sprite based on current state
       const spriteKey = this.getSpriteKey();
-      const sprite = this.assets[spriteKey];
+      
+      // Select the correct sprite: character-specific first, then global fallback.
+      let sprite = this.assets.characters[this.characterId]?.[spriteKey];
+      if (!sprite) {
+        sprite = this.assets[spriteKey];
+      }
       
       // Fallback rendering if sprite not available
       if (!sprite) {
-        console.warn(`Sprite ${spriteKey} not loaded, using fallback`);
+        console.warn(`Sprite for ${spriteKey} (char: ${this.characterId}) not loaded, using fallback`);
         this.renderFallback(ctx);
         return;
       }

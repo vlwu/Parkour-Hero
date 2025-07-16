@@ -91,19 +91,29 @@ function loadSound(src, key) {
   });
 }
 
+const characterData = {
+    PinkMan: { path: 'assets/MainCharacters/PinkMan/' },
+    NinjaFrog: { path: 'assets/MainCharacters/NinjaFrog/' },
+    MaskDude: { path: 'assets/MainCharacters/MaskDude/' },
+    VirtualGuy: { path: 'assets/MainCharacters/VirtualGuy/' },
+};
+
+const playerSpriteFiles = {
+    playerJump: 'jump.png',
+    playerDoubleJump: 'double_jump.png',
+    playerIdle: 'idle.png',
+    playerRun: 'run.png',
+    playerFall: 'fall.png',
+    playerDash: 'dash.png',
+    playerCling: 'wall_jump.png',
+};
+
 export async function loadAssets() {
   const imagePaths = {
     // Canvas assets
     backgroundTile: 'assets/Background/Blue.png',
     block: 'assets/Terrain/Terrain.png',
-    // Player sprites
-    playerJump: 'assets/MainCharacters/PinkMan/jump.png',
-    playerDoubleJump: 'assets/MainCharacters/PinkMan/double_jump.png',
-    playerIdle: 'assets/MainCharacters/PinkMan/idle.png',
-    playerRun: 'assets/MainCharacters/PinkMan/run.png',
-    playerFall: 'assets/MainCharacters/PinkMan/fall.png',
-    playerDash: 'assets/MainCharacters/PinkMan/dash.png',
-    playerCling: 'assets/MainCharacters/PinkMan/wall_jump.png',
+    // Non-character-specific player sprites
     playerAppear: 'assets/MainCharacters/Appearing.png',
     playerDisappear: 'assets/MainCharacters/Disappearing.png',
     // Interactive items
@@ -127,6 +137,7 @@ export async function loadAssets() {
     level_menu_button: 'assets/Menu/Buttons/Levels.png',
     resume_button: 'assets/Menu/Buttons/Play.png',
     settings_button: 'assets/Menu/Buttons/Settings.png',
+    character_button: 'assets/Menu/Buttons/Character.png', // New button asset
     // Other assets
     dust_particle: 'assets/Other/Dust Particle.png',
   };
@@ -143,19 +154,43 @@ export async function loadAssets() {
 
   console.log('Starting asset loading...');
 
-  const imagePromises = Object.entries(imagePaths).map(([key, src]) => 
+  // Create promises for regular images and sounds
+  const regularImagePromises = Object.entries(imagePaths).map(([key, src]) => 
     loadImage(src, key).then(img => ({ [key]: img }))
   );
-  
   const soundPromises = Object.entries(soundPaths).map(([key, src]) => 
     loadSound(src, key).then(audio => ({ [key]: audio }))
   );
 
-  const allPromises = [...imagePromises, ...soundPromises];
+  // Create promises for character-specific sprites
+  const characterPromises = [];
+  for (const charKey in characterData) {
+    for (const spriteKey in playerSpriteFiles) {
+        const fullPath = characterData[charKey].path + playerSpriteFiles[spriteKey];
+        const promise = loadImage(fullPath, `${charKey}-${spriteKey}`)
+            .then(img => ({ type: 'character', charKey, spriteKey, img }));
+        characterPromises.push(promise);
+    }
+  }
+
+  const allPromises = [...regularImagePromises, ...soundPromises, ...characterPromises];
   
   try {
-    const loadedAssets = await Promise.all(allPromises);
-    const assets = Object.assign({}, ...loadedAssets);
+    const loadedAssetParts = await Promise.all(allPromises);
+    
+    // Assemble the final assets object
+    const assets = { characters: {} };
+    for (const charKey in characterData) {
+        assets.characters[charKey] = {};
+    }
+
+    for (const part of loadedAssetParts) {
+        if (part.type === 'character') {
+            assets.characters[part.charKey][part.spriteKey] = part.img;
+        } else {
+            Object.assign(assets, part);
+        }
+    }
     
     console.log('All assets processed. Available assets:', Object.keys(assets).length);
     return assets;

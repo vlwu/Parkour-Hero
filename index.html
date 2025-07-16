@@ -22,6 +22,9 @@
   <!-- Main Menu Button -->
   <button id="mainMenuButton" class="main-menu-button" aria-label="Main Menu"></button>
 
+  <!-- Character Selection Button -->
+  <button id="characterButton" class="character-button" aria-label="Select Character"></button>
+
   <!-- Settings Modal -->
   <div id="settingsModal" class="modal-overlay hidden">
     <div class="modal-content">
@@ -109,6 +112,19 @@
               <span class="key-display">ESC</span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Character Selection Modal -->
+  <div id="characterModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <button id="closeCharacterModalButton" class="close-button" aria-label="Close Character Selection"></button>
+      <h2>Character Selection</h2>
+      <div class="settings-section">
+        <h3>Choose Your Hero!</h3>
+        <div id="character-selection-container">
         </div>
       </div>
     </div>

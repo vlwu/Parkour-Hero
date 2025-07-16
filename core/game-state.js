@@ -1,3 +1,5 @@
+import { characterConfig } from '../entities/levels.js';
+
 function getLinearIndex(sectionIndex, levelIndex, levelSections) {
     let linearIndex = 0;
     for (let i = 0; i < sectionIndex; i++) {
@@ -10,31 +12,79 @@ function getLinearIndex(sectionIndex, levelIndex, levelSections) {
 export class GameState {
   constructor(levelSections, dependencies) {
       this.levelSections = levelSections;
-      this.dependencies = dependencies; // Store the dependencies object
+      this.dependencies = dependencies; 
       
       this.currentSection = 0;
       this.currentLevelIndex = 0;
-      this.levelProgress = this.loadProgress();
       this.showingLevelComplete = false;
+
+      const savedState = this.loadProgress();
+      this.levelProgress = savedState.levelProgress;
+      this.selectedCharacter = savedState.selectedCharacter;
   }
 
   loadProgress() {
-      const savedProgress = {
+      try {
+        const saved = localStorage.getItem('parkourGameState');
+        if (saved) {
+          const state = JSON.parse(saved);
+          // Basic validation
+          if (state.levelProgress && state.selectedCharacter) {
+            return state;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load game state from localStorage", e);
+      }
+
+      // Default state if nothing is saved or loading fails
+      return {
+        levelProgress: {
           unlockedLevels: [1], 
           completedLevels: [], 
+        },
+        selectedCharacter: 'PinkMan',
       };
-      return savedProgress;
   }
 
   saveProgress() {
-      console.log("Progress saved:", this.levelProgress);
+      try {
+        const stateToSave = {
+          levelProgress: this.levelProgress,
+          selectedCharacter: this.selectedCharacter,
+        };
+        localStorage.setItem('parkourGameState', JSON.stringify(stateToSave));
+        console.log("Progress saved:", stateToSave);
+      } catch (e) {
+        console.error("Failed to save game state to localStorage", e);
+      }
   }
 
   unlockAllLevels() {
       const totalLevels = this.levelSections.reduce((acc, section) => acc + section.levels.length, 0);
       this.levelProgress.unlockedLevels[0] = totalLevels;
+      this.levelProgress.completedLevels = []; // Clear and...
+      for (let i=0; i < totalLevels; i++) { // ...mock completion
+          this.levelProgress.completedLevels.push(`temp-${i}`);
+      }
       console.log(`%cAll ${totalLevels} levels have been unlocked!`, 'color: lightgreen; font-weight: bold;');
       this.saveProgress();
+  }
+  
+  setSelectedCharacter(characterId) {
+    if (characterConfig[characterId]) {
+      this.selectedCharacter = characterId;
+      this.saveProgress();
+    }
+  }
+  
+  isCharacterUnlocked(characterId) {
+    const config = characterConfig[characterId];
+    if (!config) return false;
+
+    // The number of unique completed levels determines unlocks
+    const completedCount = this.levelProgress.completedLevels.length;
+    return completedCount >= config.unlockRequirement;
   }
 
   onLevelComplete() {

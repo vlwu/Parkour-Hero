@@ -1,5 +1,3 @@
-// main.js
-
 import { Engine } from './core/engine.js';
 import { loadAssets } from './core/assets.js';
 import { InputManager } from './core/input.js';
@@ -91,6 +89,12 @@ const mainMenuButton = document.getElementById('mainMenuButton');
 const mainMenuModal = document.getElementById('mainMenuModal');
 const closeMainMenuButton = document.getElementById('closeMainMenuButton');
 const levelSelectionContainer = document.getElementById('level-selection-container');
+
+// New Character Selection elements
+const characterButton = document.getElementById('characterButton');
+const characterModal = document.getElementById('characterModal');
+const closeCharacterModalButton = document.getElementById('closeCharacterModalButton');
+const characterSelectionContainer = document.getElementById('character-selection-container');
 
 
 // Default keybinds remain the source of truth here
@@ -252,6 +256,80 @@ function toggleMainMenuModal() {
     }
 }
 
+// Function to populate the character selection menu
+function populateCharacterMenu() {
+    if (!engine) return;
+    characterSelectionContainer.innerHTML = ''; // Clear previous content
+
+    const availableCharacters = Object.keys(engine.assets.characters);
+    const gameState = engine.gameState;
+
+    availableCharacters.forEach(charId => {
+        const card = document.createElement('div');
+        card.className = 'character-card';
+
+        const isUnlocked = gameState.isCharacterUnlocked(charId);
+        const isSelected = gameState.selectedCharacter === charId;
+        
+        if (!isUnlocked) card.classList.add('locked');
+        if (isSelected) card.classList.add('selected');
+
+        const idleSprite = engine.assets.characters[charId]?.playerIdle;
+        const charNameFormatted = charId.replace(/([A-Z])/g, ' $1').trim();
+
+        const unlockText = isUnlocked ? 'Available' : 'Complete more levels to unlock';
+        let buttonContent = isSelected ? 'Selected' : 'Select';
+        if (!isUnlocked) {
+            buttonContent = `<svg class="lock-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"></path></svg> Locked`;
+        }
+
+        card.innerHTML = `
+            <img src="${idleSprite?.src || ''}" class="char-img">
+            <div class="char-name">${charNameFormatted}</div>
+            <div class="char-unlock">${unlockText}</div>
+            <button class="action-button select-button">${buttonContent}</button>
+        `;
+
+        const selectButton = card.querySelector('.select-button');
+        if (!isUnlocked) {
+            selectButton.disabled = true;
+        } else {
+            selectButton.addEventListener('click', () => {
+                if (isSelected) return;
+                gameState.setSelectedCharacter(charId);
+                engine.updatePlayerCharacter();
+                populateCharacterMenu(); // Redraw menu to update styles
+            });
+        }
+
+        characterSelectionContainer.appendChild(card);
+    });
+}
+
+// Function to toggle the character selection modal
+function toggleCharacterModal() {
+    characterModal.classList.toggle('hidden');
+
+    if (!characterModal.classList.contains('hidden')) {
+        populateCharacterMenu();
+        if (typeof engine !== 'undefined') {
+            engine.pauseForMenu = true;
+            if (engine.isRunning) {
+                engine.pause();
+            }
+            updatePauseButtonIcon();
+        }
+    } else {
+        if (typeof engine !== 'undefined') {
+            engine.pauseForMenu = false;
+            if (!engine.isRunning && !engine.gameState.showingLevelComplete) {
+                engine.resume();
+            }
+            updatePauseButtonIcon();
+        }
+    }
+}
+
 // Sound settings event handlers
 function setupSoundSettings() {
   const soundToggle = document.getElementById('soundToggle');
@@ -292,6 +370,10 @@ closeModalButton.addEventListener('click', toggleSettingsModal);
 // mainMenuButton now opens the main menu modal
 mainMenuButton.addEventListener('click', toggleMainMenuModal);
 closeMainMenuButton.addEventListener('click', toggleMainMenuModal);
+
+// Event listeners for the new character modal
+characterButton.addEventListener('click', toggleCharacterModal);
+closeCharacterModalButton.addEventListener('click', toggleCharacterModal);
 
 
 pauseButton.addEventListener('click', () => {
