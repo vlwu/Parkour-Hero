@@ -1,0 +1,29 @@
+{
+  "name": "Level 7: Precision Drops",
+  "width": 1280,
+  "height": 2500,
+  "startPosition": { "x": 100, "y": 300 },
+  "platforms": [
+    { "x": 50, "y": 400, "width": 144, "height": 48, "terrainType": "stone" },
+    { "x": 300, "y": 550, "width": 96, "height": 48, "terrainType": "dirt" },
+    { "x": 500, "y": 700, "width": 144, "height": 48, "terrainType": "wood" },
+    { "x": 300, "y": 850, "width": 96, "height": 48, "terrainType": "red_brick" },
+    { "x": 500, "y": 1000, "width": 144, "height": 48, "terrainType": "green_block" },
+    { "x": 750, "y": 1150, "width": 96, "height": 48, "terrainType": "pink_dirt" },
+    { "x": 950, "y": 1300, "width": 144, "height": 48, "terrainType": "orange_dirt" },
+    { "x": 750, "y": 1450, "width": 96, "height": 48, "terrainType": "stone" },
+    { "x": 500, "y": 1600, "width": 192, "height": 48, "terrainType": "dirt" },
+    { "x": 800, "y": 1750, "width": 144, "height": 48, "terrainType": "wood" }
+  ],
+  "fruits": [
+    { "x": 350, "y": 500, "fruitType": "fruit_apple" },
+    { "x": 350, "y": 800, "fruitType": "fruit_bananas" },
+    { "x": 550, "y": 950, "fruitType": "fruit_cherries" },
+    { "x": 1000, "y": 1250, "fruitType": "fruit_kiwi" },
+    { "x": 550, "y": 1550, "fruitType": "fruit_melon" },
+    { "x": 850, "y": 1700, "fruitType": "fruit_orange" },
+    { "x": 80, "y": 350, "fruitType": "fruit_pineapple" },
+    { "x": 800, "y": 1400, "fruitType": "fruit_strawberry" }
+  ],
+  "trophy": { "x": 850, "y": 1734 }
+}

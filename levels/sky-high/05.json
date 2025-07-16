@@ -1,0 +1,29 @@
+{
+  "name": "Level 5: Leaps of Faith",
+  "width": 1280,
+  "height": 2800,
+  "startPosition": { "x": 1100, "y": 2600 },
+  "platforms": [
+    { "x": 1000, "y": 2700, "width": 192, "height": 48, "terrainType": "stone" },
+    { "x": 750, "y": 2600, "width": 96, "height": 48, "terrainType": "pink_dirt" },
+    { "x": 500, "y": 2480, "width": 144, "height": 48, "terrainType": "wood" },
+    { "x": 200, "y": 2350, "width": 192, "height": 48, "terrainType": "red_brick" },
+    { "x": 500, "y": 2200, "width": 96, "height": 48, "terrainType": "dirt" },
+    { "x": 800, "y": 2050, "width": 144, "height": 48, "terrainType": "green_block" },
+    { "x": 1050, "y": 1900, "width": 48, "height": 48, "terrainType": "orange_dirt" },
+    { "x": 800, "y": 1750, "width": 192, "height": 48, "terrainType": "stone" },
+    { "x": 450, "y": 1650, "width": 144, "height": 48, "terrainType": "wood" },
+    { "x": 150, "y": 1550, "width": 96, "height": 48, "terrainType": "dirt" }
+  ],
+  "fruits": [
+    { "x": 800, "y": 2550, "fruitType": "fruit_apple" },
+    { "x": 250, "y": 2300, "fruitType": "fruit_bananas" },
+    { "x": 850, "y": 2000, "fruitType": "fruit_cherries" },
+    { "x": 1100, "y": 1850, "fruitType": "fruit_kiwi" },
+    { "x": 500, "y": 1600, "fruitType": "fruit_melon" },
+    { "x": 200, "y": 1500, "fruitType": "fruit_orange" },
+    { "x": 1050, "y": 2650, "fruitType": "fruit_pineapple" },
+    { "x": 550, "y": 2430, "fruitType": "fruit_strawberry" }
+  ],
+  "trophy": { "x": 200, "y": 1534 }
+}

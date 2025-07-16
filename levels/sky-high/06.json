@@ -1,0 +1,28 @@
+{
+  "name": "Level 6: Zigging and Zagging",
+  "width": 1320,
+  "height": 3200,
+  "startPosition": { "x": 150, "y": 3000 },
+  "platforms": [
+    { "x": 100, "y": 3100, "width": 144, "height": 48, "terrainType": "green_block" },
+    { "x": 400, "y": 2980, "width": 192, "height": 48, "terrainType": "wood" },
+    { "x": 100, "y": 2850, "width": 144, "height": 48, "terrainType": "stone" },
+    { "x": 400, "y": 2700, "width": 192, "height": 48, "terrainType": "orange_dirt" },
+    { "x": 100, "y": 2550, "width": 144, "height": 48, "terrainType": "red_brick" },
+    { "x": 400, "y": 2400, "width": 192, "height": 48, "terrainType": "dirt" },
+    { "x": 100, "y": 2250, "width": 144, "height": 48, "terrainType": "pink_dirt" },
+    { "x": 600, "y": 2150, "width": 96, "height": 48, "terrainType": "stone" },
+    { "x": 1000, "y": 2050, "width": 192, "height": 48, "terrainType": "wood" }
+  ],
+  "fruits": [
+    { "x": 450, "y": 2930, "fruitType": "fruit_apple" },
+    { "x": 150, "y": 2800, "fruitType": "fruit_bananas" },
+    { "x": 450, "y": 2650, "fruitType": "fruit_cherries" },
+    { "x": 150, "y": 2500, "fruitType": "fruit_kiwi" },
+    { "x": 450, "y": 2350, "fruitType": "fruit_melon" },
+    { "x": 750, "y": 2100, "fruitType": "fruit_orange" },
+    { "x": 150, "y": 3050, "fruitType": "fruit_pineapple" },
+    { "x": 1050, "y": 2000, "fruitType": "fruit_strawberry" }
+  ],
+  "trophy": { "x": 1096, "y": 2034 }
+}
