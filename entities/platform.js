@@ -1,3 +1,59 @@
+// Spatial hash grid for efficient broad-phase collision detection.
+class SpatialHashGrid {
+  constructor(levelWidth, levelHeight, cellSize) {
+    this.cellSize = cellSize;
+    this.grid = new Map();
+    this.widthInCells = Math.ceil(levelWidth / cellSize);
+    this.heightInCells = Math.ceil(levelHeight / cellSize);
+  }
+
+  _getGridIndices(obj) {
+    const x1 = Math.floor(obj.x / this.cellSize);
+    const y1 = Math.floor(obj.y / this.cellSize);
+    const objWidth = obj.width || obj.size || 0;
+    const objHeight = obj.height || obj.size || 0;
+    const x2 = Math.floor((obj.x + objWidth) / this.cellSize);
+    const y2 = Math.floor((obj.y + objHeight) / this.cellSize);
+    return { x1, y1, x2, y2 };
+  }
+
+  insert(obj) {
+    const { x1, y1, x2, y2 } = this._getGridIndices(obj);
+    for (let y = y1; y <= y2; y++) {
+      for (let x = x1; x <= x2; x++) {
+        const key = `${x},${y}`;
+        if (!this.grid.has(key)) {
+          this.grid.set(key, new Set());
+        }
+        this.grid.get(key).add(obj);
+      }
+    }
+  }
+
+  query(x, y, width = 0, height = 0) {
+    const potentialColliders = new Set();
+    const queryObj = { x, y, width, height };
+    const { x1, y1, x2, y2 } = this._getGridIndices(queryObj);
+
+    for (let j = y1; j <= y2; j++) {
+      for (let i = x1; i <= x2; i++) {
+        const key = `${i},${j}`;
+        if (this.grid.has(key)) {
+          for (const obj of this.grid.get(key)) {
+            potentialColliders.add(obj);
+          }
+        }
+      }
+    }
+    return Array.from(potentialColliders);
+  }
+
+  clear() {
+    this.grid.clear();
+  }
+}
+
+
 export class Platform {
   constructor(x, y, width, height, terrainType = 'dirt') {
     this.x = x;
@@ -5,6 +61,7 @@ export class Platform {
     this.width = width;
     this.height = height;
     this.terrainType = terrainType; 
+    this.type = 'platform'; // Added for spatial grid filtering
 
     // Sprite sheet configuration for terrain tiles
     this.spriteConfig = {
@@ -87,60 +144,55 @@ export class Level {
     this.name = levelConfig.name || 'Unnamed Level';
     this.width = levelConfig.width || 1280;
     this.height = levelConfig.height || 720;
-    // Use the background from the config, with a fallback
     this.background = levelConfig.background || 'backgroundTile';
     this.completed = false;
     this.startPosition = levelConfig.startPosition ? { ...levelConfig.startPosition } : { x: 100, y: 300 };
 
-    // Directly map platform and fruit data to their respective objects
-    this.platforms = levelConfig.platforms?.map(p => new Platform(p.x, p.y, p.width, p.height, p.terrainType)) || [];
-    this.fruits = levelConfig.fruits?.map(f => ({
-      x: f.x,
-      y: f.y,
-      size: 28,
-      spriteKey: f.fruitType,
-      frame: 0,
-      frameCount: 17,
-      frameSpeed: 0.07,
-      frameTimer: 0,
-      collected: false
-    })) || [];
+    this.grid = new SpatialHashGrid(this.width, this.height, 128);
 
-    // Add counters for fruit collection
+    this.platforms = levelConfig.platforms?.map(p => {
+        const platform = new Platform(p.x, p.y, p.width, p.height, p.terrainType);
+        this.grid.insert(platform);
+        return platform;
+    }) || [];
+
+    this.fruits = levelConfig.fruits?.map(f => {
+      const fruit = {
+        x: f.x, y: f.y, size: 28,
+        spriteKey: f.fruitType, frame: 0,
+        frameCount: 17, frameSpeed: 0.07,
+        frameTimer: 0, collected: false,
+        type: 'fruit'
+      };
+      this.grid.insert(fruit);
+      return fruit;
+    }) || [];
+
     this.totalFruitCount = this.fruits.length;
     this.collectedFruitCount = 0;
 
-    // Initialize checkpoints
-    this.checkpoints = levelConfig.checkpoints?.map(cp => ({
-      x: cp.x,
-      y: cp.y,
-      size: 64, 
-      state: 'inactive', // inactive, activating, active
-      frame: 0,
-      frameCount: 26, // For the activation animation
-      frameSpeed: 0.07,
-      frameTimer: 0,
-    })) || [];
+    this.checkpoints = levelConfig.checkpoints?.map(cp => {
+      const checkpoint = {
+        x: cp.x, y: cp.y, size: 64,
+        state: 'inactive', frame: 0,
+        frameCount: 26, frameSpeed: 0.07,
+        frameTimer: 0, type: 'checkpoint'
+      };
+      this.grid.insert(checkpoint);
+      return checkpoint;
+    }) || [];
 
-    // Initialize the trophy if it exists in the config
     this.trophy = null;
     if (levelConfig.trophy) {
       this.trophy = {
-        x: levelConfig.trophy.x,
-        y: levelConfig.trophy.y,
-        size: 32,
-        frameCount: 8,
-        animationFrame: 0,
-        animationTimer: 0,
-        animationSpeed: 0.35,
-        acquired: false,
-        inactive: true,
-        contactMade: false,
+        x: levelConfig.trophy.x, y: levelConfig.trophy.y, size: 32,
+        frameCount: 8, animationFrame: 0,
+        animationTimer: 0, animationSpeed: 0.35,
+        acquired: false, inactive: true, contactMade: false,
       };
     }
   }
 
-  // New method to update checkpoint animations
   updateCheckpoints(dt) {
     for (const cp of this.checkpoints) {
       if (cp.state === 'activating') {
@@ -149,7 +201,7 @@ export class Level {
           cp.frameTimer -= cp.frameSpeed;
           cp.frame++;
           if (cp.frame >= cp.frameCount) {
-            cp.frame = 0; // Or last frame of idle animation
+            cp.frame = 0;
             cp.state = 'active';
           }
         }
@@ -157,39 +209,34 @@ export class Level {
     }
   }
   
-  // Returns array of inactive checkpoints for collision detection
   getInactiveCheckpoints() {
     if (!this.checkpoints.length) return [];
     return this.checkpoints.filter(cp => cp.state === 'inactive');
   }
 
-  // Efficiently update fruit animations
   updateFruits(dt) {
     for (let i = 0, len = this.fruits.length; i < len; ++i) {
       const fruit = this.fruits[i];
       if (!fruit.collected) {
         fruit.frameTimer += dt;
         if (fruit.frameTimer >= fruit.frameSpeed) {
-          fruit.frameTimer -= fruit.frameSpeed; // Carry over excess time
+          fruit.frameTimer -= fruit.frameSpeed;
           fruit.frame = (fruit.frame + 1) % fruit.frameCount;
         }
       }
     }
   }
 
-  // Handle fruit collection logic centrally
   collectFruit(fruit) {
     if (!fruit.collected) {
       fruit.collected = true;
       this.collectedFruitCount++;
-      // Trophy becomes active if all fruits are now collected
       if (this.trophy && this.allFruitsCollected()) {
           this.trophy.inactive = false;
       }
     }
   }
 
-  // Return array of uncollected fruits
   getActiveFruits() {
     if (!this.fruits.length) return [];
     const result = [];
@@ -211,20 +258,21 @@ export class Level {
     return this.collectedFruitCount === this.totalFruitCount;
   }
 
-  // Returns first platform colliding with player, or null
   checkCollisionWithPlatforms(player) {
-    const px = player.x, py = player.y, pw = player.width, ph = player.height;
-    for (let i = 0, len = this.platforms.length; i < len; ++i) {
-      const plat = this.platforms[i];
-      if (plat.collidesWith(px, py, pw, ph)) return plat;
+    const potentialColliders = this.grid.query(player.x, player.y, player.width, player.height)
+      .filter(obj => obj.type === 'platform');
+      
+    for (const plat of potentialColliders) {
+      if (plat.collidesWith(player.x, player.y, player.width, player.height)) return plat;
     }
     return null;
   }
 
   checkGroundCollision(player) {
-    const playerBottom = player.y + player.height;
-
-    for (const platform of this.platforms) {
+    const potentialColliders = this.grid.query(player.x, player.y, player.width, player.height)
+      .filter(obj => obj.type === 'platform');
+      
+    for (const platform of potentialColliders) {
       if (platform.isPlayerOnTop(player)) {
         return platform;
       }
@@ -232,19 +280,16 @@ export class Level {
     return null;
   }
 
-  // Efficiently render platforms; optimized with viewport culling
   render(ctx, assets, camera) {
     for (let i = 0, len = this.platforms.length; i < len; ++i) {
       const plat = this.platforms[i];
-      // Culling: Only render platforms visible to the camera
       if (camera.isRectVisible(plat)) {
         plat.render(ctx, assets);
       }
     }
 
-    // Trophy: update animation and render if present
     if (this.trophy) {
-      this.updateTrophyAnimation(1 / 60); // Use fixed dt for smoothness
+      this.updateTrophyAnimation(1 / 60);
       this.renderTrophy(ctx, assets);
     }
   }
@@ -255,16 +300,13 @@ export class Level {
     const sprite = assets[spriteKey];
 
     if (!sprite) {
-      // Fallback rendering
       ctx.fillStyle = trophy.acquired ? 'silver' : 'gold';
       if (trophy.inactive) {
         ctx.fillStyle = 'gray'; 
       }
-
       ctx.beginPath();
       ctx.arc(trophy.x, trophy.y, trophy.size / 2, 0, Math.PI * 2);
       ctx.fill();
-
       ctx.fillStyle = 'black';
       ctx.font = '16px sans-serif';
       ctx.textAlign = 'center';
@@ -276,53 +318,43 @@ export class Level {
     const frameHeight = sprite.height;
     const srcX = frameWidth * trophy.animationFrame;
 
-    // Apply transparency if trophy is inactive
     if (trophy.inactive) {
       ctx.globalAlpha = 0.5;
     }
 
     ctx.drawImage(
-      sprite,
-      srcX, 0,
-      frameWidth, frameHeight,
+      sprite, srcX, 0, frameWidth, frameHeight,
       trophy.x - trophy.size / 2, trophy.y - trophy.size / 2,
       trophy.size, trophy.size
     );
-
-    ctx.globalAlpha = 1.0; // Reset transparency
+    ctx.globalAlpha = 1.0;
   }
 
-  // Efficiently update trophy animation and inactive state
   updateTrophyAnimation(dt) {
     const trophy = this.trophy;
     if (!trophy) return;
 
-    // Animate only if active and not acquired
     if (!trophy.inactive && !trophy.acquired) {
       trophy.animationTimer += dt;
       if (trophy.animationTimer >= trophy.animationSpeed) {
-        trophy.animationTimer -= trophy.animationSpeed; // Carry over excess time
+        trophy.animationTimer -= trophy.animationSpeed;
         trophy.animationFrame = (trophy.animationFrame + 1) % trophy.frameCount;
       }
     }
   }
 
-  // Fast check for level completion (all fruits + trophy acquired)
   isCompleted() {
     if (this.fruits.length && !this.fruits.every(f => f.collected)) return false;
     return !this.trophy || this.trophy.acquired;
   }
 
-  // MODIFIED reset to also reset the new counter
   reset() {
     for (let i = 0, len = this.fruits.length; i < len; ++i) {
-      const fruit = this.fruits[i];
-      fruit.collected = false;
-      fruit.frame = 0;
-      fruit.frameTimer = 0;
+      this.fruits[i].collected = false;
+      this.fruits[i].frame = 0;
+      this.fruits[i].frameTimer = 0;
     }
     
-    // Reset the counter
     this.collectedFruitCount = 0;
 
     for (const cp of this.checkpoints) {
@@ -332,10 +364,10 @@ export class Level {
     }
 
     if (this.trophy) {
-      trophy.acquired = false;
-      trophy.inactive = true; // Trophy is always inactive at the start
-      trophy.animationFrame = 0;
-      trophy.animationTimer = 0;
+      this.trophy.acquired = false;
+      this.trophy.inactive = true;
+      this.trophy.animationFrame = 0;
+      this.trophy.animationTimer = 0;
     }
 
     this.completed = false;

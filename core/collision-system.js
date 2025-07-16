@@ -4,28 +4,30 @@ export class CollisionSystem {
     // No complex setup needed for this system yet.
   }
 
-  update(player, activeFruits, trophy, inactiveCheckpoints) {
-    const newlyCollectedFruits = this.checkFruitCollisions(player, activeFruits);
-    const trophyCollision = this.checkTrophyCollision(player, trophy);
-    // Check for checkpoint collisions
-    const checkpointCollision = this.checkCheckpointCollisions(player, inactiveCheckpoints);
+  update(player, level) {
+    const potentialColliders = level.grid.query(player.x, player.y, player.width, player.height);
+    
+    const newlyCollectedFruits = this.checkFruitCollisions(player, potentialColliders);
+    const trophyCollision = this.checkTrophyCollision(player, level.trophy);
+    const checkpointCollision = this.checkCheckpointCollisions(player, potentialColliders);
 
     return {
       newlyCollectedFruits,
       trophyCollision,
-      checkpointCollision, // Return the collided checkpoint
+      checkpointCollision,
     };
   }
 
-  checkFruitCollisions(player, activeFruits) {
+  checkFruitCollisions(player, potentialColliders) {
     const collidedFruits = [];
     const px = player.x, py = player.y, pw = player.width, ph = player.height;
 
-    for (const fruit of activeFruits) {
-      // AABB check is much faster than Math.sqrt
-      const fx = fruit.x - fruit.size / 2, fy = fruit.y - fruit.size / 2, fs = fruit.size;
-      if (px < fx + fs && px + pw > fx && py < fy + fs && py + ph > fy) {
-        collidedFruits.push(fruit);
+    for (const fruit of potentialColliders) {
+      if (fruit.type === 'fruit' && !fruit.collected) {
+        const fx = fruit.x - fruit.size / 2, fy = fruit.y - fruit.size / 2, fs = fruit.size;
+        if (px < fx + fs && px + pw > fx && py < fy + fs && py + ph > fy) {
+          collidedFruits.push(fruit);
+        }
       }
     }
     return collidedFruits;
@@ -36,21 +38,21 @@ export class CollisionSystem {
       return false;
     }
 
-    // AABB (Axis-Aligned Bounding Box) collision check
     const px = player.x, py = player.y, pw = player.width, ph = player.height;
     const tx = trophy.x - trophy.size / 2, ty = trophy.y - trophy.size / 2, ts = trophy.size;
 
     return (px < tx + ts && px + pw > tx && py < ty + ts && py + ph > ty);
   }
   
-  //Checks for collision between the player and inactive checkpoints.
-  checkCheckpointCollisions(player, inactiveCheckpoints) {
+  checkCheckpointCollisions(player, potentialColliders) {
     const px = player.x, py = player.y, pw = player.width, ph = player.height;
 
-    for (const cp of inactiveCheckpoints) {
-      const cpx = cp.x - cp.size / 2, cpy = cp.y - cp.size / 2, cps = cp.size;
-      if (px < cpx + cps && px + pw > cpx && py < cpy + cps && py + ph > cpy) {
-        return cp; // Return the first checkpoint hit
+    for (const cp of potentialColliders) {
+      if (cp.type === 'checkpoint' && cp.state === 'inactive') {
+        const cpx = cp.x - cp.size / 2, cpy = cp.y - cp.size / 2, cps = cp.size;
+        if (px < cpx + cps && px + pw > cpx && py < cpy + cps && py + ph > cpy) {
+          return cp;
+        }
       }
     }
     return null;

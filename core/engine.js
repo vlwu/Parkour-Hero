@@ -185,8 +185,6 @@ export class Engine {
       if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
         const respawnPosition = this.lastCheckpoint || this.currentLevel.startPosition;
         
-        // If a checkpoint was reached, restore the fruit state from that point.
-        // Otherwise, reset all fruits to uncollected.
         if (this.lastCheckpoint) {
             this.currentLevel.fruits.forEach((fruit, index) => {
                 fruit.collected = this.fruitsAtLastCheckpoint.has(index);
@@ -220,14 +218,11 @@ export class Engine {
       
       const collisionResults = this.collisionSystem.update(
         this.player,
-        this.currentLevel.getActiveFruits(),
-        this.currentLevel.trophy,
-        this.currentLevel.getInactiveCheckpoints()
+        this.currentLevel
       );
 
       if (collisionResults.newlyCollectedFruits.length > 0) {
         for (const fruit of collisionResults.newlyCollectedFruits) {
-          // Use the new centralized method
           this.currentLevel.collectFruit(fruit);
           this.soundManager.play('collect', 0.8);
 
@@ -241,10 +236,9 @@ export class Engine {
       if (collisionResults.checkpointCollision) {
           const cp = collisionResults.checkpointCollision;
           cp.state = 'activating';
-          this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; // Respawn on top of the checkpoint
+          this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; 
           this.soundManager.play('checkpoint_activated', 1); 
 
-          // Save the state of collected fruits at this checkpoint
           this.fruitsAtLastCheckpoint.clear();
           this.currentLevel.fruits.forEach((fruit, index) => {
               if (fruit.collected) {
@@ -252,11 +246,10 @@ export class Engine {
               }
           });
 
-          // Deactivate other checkpoints to ensure only one is active
           this.currentLevel.checkpoints.forEach(otherCp => {
               if (otherCp !== cp && otherCp.state === 'active') {
                   otherCp.state = 'inactive';
-                  otherCp.frame = 0; // Also reset its animation frame
+                  otherCp.frame = 0;
               }
           });
       }
@@ -282,24 +275,21 @@ export class Engine {
     const baseSpeed = type === 'dash' ? 150 : 100;
 
     for (let i = 0; i < count; i++) {
-        // The angle determines the particle's direction.
-        // For double jump, we now create a downward-facing cone of particles.
         const angle = (type === 'dash') 
             ? (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2)
-            : (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3); // Centered at 90 deg (down), with a 60 deg spread.
+            : (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3); 
 
         const speed = baseSpeed + Math.random() * 50;
         const particle = {
-            x: x,
-            y: y,
+            x: x, y: y,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            life: 0.4 + Math.random() * 0.3, // 0.4 to 0.7 seconds
+            life: 0.4 + Math.random() * 0.3, 
             initialLife: 0,
             size: 4 + Math.random() * 4,
             alpha: 1.0
         };
-        particle.initialLife = particle.life; // Store for fade calculation
+        particle.initialLife = particle.life; 
         this.particles.push(particle);
     }
   }
@@ -314,8 +304,8 @@ export class Engine {
         } else {
             p.x += p.vx * dt;
             p.y += p.vy * dt;
-            p.vy += 50 * dt; // A little gravity on particles
-            p.alpha = Math.max(0, p.life / p.initialLife); // Fade out
+            p.vy += 50 * dt; 
+            p.alpha = Math.max(0, p.life / p.initialLife); 
         }
     }
   }
@@ -335,7 +325,6 @@ export class Engine {
       this.hud.drawGameHUD(this.ctx, this.currentLevel, this.player, this.soundManager);
 
       if (this.gameState.showingLevelComplete) {
-        // Pass the engine's levelTime to the HUD method
         this.hud.drawLevelCompleteScreen(
           this.ctx, 
           this.currentLevel, 
@@ -343,7 +332,7 @@ export class Engine {
           this.assets, 
           this.gameState.hasNextLevel(),
           this.gameState.hasPreviousLevel(),
-          this.levelTime // Pass the current level time
+          this.levelTime 
         );
       }
 

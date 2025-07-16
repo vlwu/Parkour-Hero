@@ -312,10 +312,20 @@ export class Player {
     this.vy = Math.min(this.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
 
     this.x += this.vx * dt;
-    if (level) this.handleHorizontalCollision(level.platforms, prevX);
+    if (level) {
+        const potentialColliders = level.grid.query(this.x, this.y, this.width, this.height)
+            .filter(obj => obj.type === 'platform');
+        this.handleHorizontalCollision(potentialColliders, prevX);
+    }
 
     this.y += this.vy * dt;
-    this.onGround = level ? this.handleVerticalCollision(level.platforms, prevY) : false;
+    if (level) {
+        const potentialColliders = level.grid.query(this.x, this.y, this.width, this.height)
+            .filter(obj => obj.type === 'platform');
+        this.onGround = this.handleVerticalCollision(potentialColliders, prevY);
+    } else {
+        this.onGround = false;
+    }
 
     if (this.onGround) {
       this.jumpCount = 0;
