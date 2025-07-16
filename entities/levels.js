@@ -31,7 +31,7 @@ export const levelSections = [
       {
         name: "Level 2: Big Drop",
         width: 1320, height: 720,
-        startPosition: { x: 50, y: 350 },
+        startPosition: { x: 50, y: 300 },
         platforms: [
           { x: 0, y: 400, width: 192, height: 48, terrainType: 'dirt' },
           { x: 300, y: 320, width: 96, height: 48, terrainType: 'stone' },
@@ -54,7 +54,7 @@ export const levelSections = [
       {
         name: "Level 3: Downs & Ups",
         width: 1400, height: 720,
-        startPosition: { x: 50, y: 350 },
+        startPosition: { x: 50, y: 300 },
         platforms: [
           { x: 0, y: 400, width: 144, height: 48, terrainType: 'dirt' },
           { x: 200, y: 350, width: 96, height: 48, terrainType: 'wood' },
@@ -78,7 +78,7 @@ export const levelSections = [
       {
         name: "Level 4: Sky Climb",
         width: 1280, height: 720,
-        startPosition: { x: 50, y: 600 },
+        startPosition: { x: 50, y: 550 },
         platforms: [
           { x: 0, y: 650, width: 192, height: 48, terrainType: 'dirt' },
           { x: 200, y: 550, width: 96, height: 48, terrainType: 'stone' },
@@ -102,7 +102,7 @@ export const levelSections = [
       {
         name: "Level 5: Colorful Blocks",
         width: 1400, height: 720,
-        startPosition: { x: 50, y: 350 },
+        startPosition: { x: 50, y: 300 },
         platforms: [
           { x: 0, y: 400, width: 144, height: 48, terrainType: 'green_block' },
           { x: 350, y: 300, width: 144, height: 48, terrainType: 'pink_dirt' },
@@ -111,7 +111,7 @@ export const levelSections = [
           { x: 1050, y: 300, width: 96, height: 48, terrainType: 'dirt' }
         ],
         fruits: [
-          { x: 80, y: 300, fruitType: 'fruit_apple' },
+          { x: 80, y: 250, fruitType: 'fruit_apple' },
           { x: 240, y: 300, fruitType: 'fruit_bananas' },
           { x: 420, y: 250, fruitType: 'fruit_cherries' },
           { x: 630, y: 350, fruitType: 'fruit_kiwi' },
@@ -125,7 +125,7 @@ export const levelSections = [
       {
         name: "Level 6: Narrow Paths",
         width: 1280, height: 720,
-        startPosition: { x: 50, y: 350 },
+        startPosition: { x: 50, y: 300 },
         platforms: [
           { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
           { x: 150, y: 350, width: 48, height: 48, terrainType: 'stone' },
@@ -151,7 +151,7 @@ export const levelSections = [
       {
         name: "Level 7: Stairway",
         width: 1280, height: 720,
-        startPosition: { x: 50, y: 600 },
+        startPosition: { x: 50, y: 550 },
         platforms: [
           { x: 0, y: 650, width: 144, height: 48, terrainType: 'dirt' },
           { x: 200, y: 550, width: 144, height: 48, terrainType: 'wood' },
@@ -175,7 +175,7 @@ export const levelSections = [
       {
         name: "Level 8: Bottomless",
         width: 1320, height: 720,
-        startPosition: { x: 50, y: 350 },
+        startPosition: { x: 50, y: 300 },
         platforms: [
           { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
           { x: 200, y: 500, width: 96, height: 48, terrainType: 'stone' },
@@ -200,7 +200,7 @@ export const levelSections = [
       {
         name: "Level 9: Aerial Mastery",
         width: 1320, height: 720,
-        startPosition: { x: 50, y: 250 },
+        startPosition: { x: 50, y: 200 },
         platforms: [
           { x: 0, y: 300, width: 96, height: 48, terrainType: 'dirt' },
           { x: 150, y: 200, width: 48, height: 48, terrainType: 'stone' },
@@ -226,7 +226,7 @@ export const levelSections = [
       {
         name: "Level 10: Introduction Finale",
         width: 1320, height: 1000,
-        startPosition: { x: 50, y: 350 },
+        startPosition: { x: 50, y: 300 },
         platforms: [
           { x: 0, y: 400, width: 96, height: 48, terrainType: 'dirt' },
           { x: 200, y: 500, width: 96, height: 48, terrainType: 'stone' },
