@@ -1,3 +1,5 @@
+import { levelSections } from '../entities/levels.js';
+
 // Utility to create a fallback canvas for assets
 function createFallbackCanvas(width, height, color, pattern = true) {
   const canvas = document.createElement('canvas');
@@ -91,6 +93,19 @@ function loadSound(src, key) {
   });
 }
 
+// Fetches and parses a single JSON file
+function loadJSON(path) {
+  return fetch(path).then(response => {
+    if (!response.ok) {
+      throw new Error(`Failed to fetch level: ${path}, status: ${response.status}`);
+    }
+    return response.json();
+  }).catch(error => {
+    console.error(`Error loading JSON from ${path}:`, error);
+    return null; // Return null on failure to prevent blocking other assets
+  });
+}
+
 const characterData = {
     PinkMan: { path: 'assets/MainCharacters/PinkMan/' },
     NinjaFrog: { path: 'assets/MainCharacters/NinjaFrog/' },
@@ -173,7 +188,24 @@ export async function loadAssets() {
     }
   }
 
-  const allPromises = [...regularImagePromises, ...soundPromises, ...characterPromises];
+  // Create promises to load level data from JSON files
+  const levelDataPromises = [];
+  levelSections.forEach((section, sectionIndex) => {
+    section.levels.forEach((level, levelIndex) => {
+      if (level.jsonPath) {
+        levelDataPromises.push(
+          loadJSON(level.jsonPath).then(data => ({
+            data,
+            sectionIndex,
+            levelIndex,
+            type: 'level'
+          }))
+        );
+      }
+    });
+  });
+
+  const allPromises = [...regularImagePromises, ...soundPromises, ...characterPromises, ...levelDataPromises];
   
   try {
     const loadedAssetParts = await Promise.all(allPromises);
@@ -185,14 +217,20 @@ export async function loadAssets() {
     }
 
     for (const part of loadedAssetParts) {
+        if (!part) continue; // Skip failed loads
+
         if (part.type === 'character') {
             assets.characters[part.charKey][part.spriteKey] = part.img;
+        } else if (part.type === 'level') {
+            // Hydrate the imported levelSections object with the fetched data.
+            // This is a controlled side-effect that happens before the engine starts.
+            levelSections[part.sectionIndex].levels[part.levelIndex] = part.data;
         } else {
             Object.assign(assets, part);
         }
     }
     
-    console.log('All assets processed. Available assets:', Object.keys(assets).length);
+    console.log('All assets and level data processed. Available assets:', Object.keys(assets).length);
     return assets;
   } catch (error) {
     console.error('A critical error occurred during asset loading:', error);

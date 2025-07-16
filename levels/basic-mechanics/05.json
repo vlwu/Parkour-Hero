@@ -1,0 +1,24 @@
+{
+  "name": "Level 5: Colorful Blocks",
+  "width": 1400,
+  "height": 720,
+  "startPosition": { "x": 50, "y": 300 },
+  "platforms": [
+    { "x": 0, "y": 400, "width": 144, "height": 48, "terrainType": "green_block" },
+    { "x": 350, "y": 300, "width": 144, "height": 48, "terrainType": "pink_dirt" },
+    { "x": 550, "y": 400, "width": 96, "height": 48, "terrainType": "red_brick" },
+    { "x": 800, "y": 250, "width": 144, "height": 48, "terrainType": "orange_dirt" },
+    { "x": 1050, "y": 300, "width": 96, "height": 48, "terrainType": "dirt" }
+  ],
+  "fruits": [
+    { "x": 80, "y": 250, "fruitType": "fruit_apple" },
+    { "x": 240, "y": 300, "fruitType": "fruit_bananas" },
+    { "x": 420, "y": 250, "fruitType": "fruit_cherries" },
+    { "x": 630, "y": 350, "fruitType": "fruit_kiwi" },
+    { "x": 870, "y": 200, "fruitType": "fruit_melon" },
+    { "x": 1200, "y": 175, "fruitType": "fruit_orange" },
+    { "x": 800, "y": 350, "fruitType": "fruit_pineapple" },
+    { "x": 1000, "y": 100, "fruitType": "fruit_strawberry" }
+  ],
+  "trophy": { "x": 1080, "y": 284 }
+}

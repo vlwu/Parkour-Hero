@@ -1,0 +1,26 @@
+{
+  "name": "Level 6: Narrow Paths",
+  "width": 1280, "height": 720,
+  "startPosition": { "x": 50, "y": 300 },
+  "platforms": [
+    { "x": 0, "y": 400, "width": 96, "height": 48, "terrainType": "dirt" },
+    { "x": 150, "y": 350, "width": 48, "height": 48, "terrainType": "stone" },
+    { "x": 250, "y": 300, "width": 48, "height": 48, "terrainType": "wood" },
+    { "x": 350, "y": 500, "width": 48, "height": 48, "terrainType": "red_brick" },
+    { "x": 450, "y": 250, "width": 48, "height": 48, "terrainType": "green_block" },
+    { "x": 600, "y": 400, "width": 48, "height": 48, "terrainType": "pink_dirt" },
+    { "x": 750, "y": 300, "width": 96, "height": 48, "terrainType": "orange_dirt" },
+    { "x": 950, "y": 200, "width": 144, "height": 48, "terrainType": "stone" }
+  ],
+  "fruits": [
+    { "x": 180, "y": 300, "fruitType": "fruit_apple" },
+    { "x": 280, "y": 250, "fruitType": "fruit_bananas" },
+    { "x": 380, "y": 450, "fruitType": "fruit_cherries" },
+    { "x": 480, "y": 200, "fruitType": "fruit_kiwi" },
+    { "x": 630, "y": 350, "fruitType": "fruit_melon" },
+    { "x": 800, "y": 250, "fruitType": "fruit_orange" },
+    { "x": 950, "y": 300, "fruitType": "fruit_pineapple" },
+    { "x": 550, "y": 350, "fruitType": "fruit_strawberry" }
+  ],
+  "trophy": { "x": 1020, "y": 184 }
+}
