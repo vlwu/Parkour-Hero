@@ -4,13 +4,85 @@ export class Renderer {
     this.ctx = ctx;
     this.canvas = canvas;
     this.assets = assets;
+    // Optimization: Cache for pre-rendered static level backgrounds.
+    // This avoids redrawing the tiled background every frame.
+    this.backgroundCanvasCache = new Map();
+  }
+
+  /**
+   * Creates a full-sized canvas with the tiled background pre-drawn onto it.
+   * This canvas is cached to be reused across frames, avoiding expensive re-tiling.
+   * @param {object} level - The level object containing dimensions and background info.
+   * @returns {HTMLCanvasElement} The pre-rendered background canvas.
+   * @private
+   */
+  _preRenderBackground(level) {
+    const bgKey = level.background;
+    // Return the cached canvas if it already exists.
+    if (this.backgroundCanvasCache.has(bgKey)) {
+      const cachedData = this.backgroundCanvasCache.get(bgKey);
+      if (cachedData.width === level.width && cachedData.height === level.height) {
+        return cachedData.canvas;
+      }
+    }
+
+    const bg = this.assets[bgKey];
+    const offscreenCanvas = document.createElement('canvas');
+    offscreenCanvas.width = level.width;
+    offscreenCanvas.height = level.height;
+    const offscreenCtx = offscreenCanvas.getContext('2d');
+
+    if (!bg || !bg.complete || bg.naturalWidth === 0) {
+      // Fallback solid color gradient for the entire level background.
+      const gradient = offscreenCtx.createLinearGradient(0, 0, 0, offscreenCanvas.height);
+      gradient.addColorStop(0, '#87CEEB');
+      gradient.addColorStop(1, '#98FB98');
+      offscreenCtx.fillStyle = gradient;
+      offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+    } else {
+      const tileSize = 64;
+      const spriteSize = 64;
+      const srcX = 0, srcY = 0;
+
+      // Loop to tile the background across the entire level dimensions.
+      for (let y = 0; y < level.height; y += tileSize) {
+        for (let x = 0; x < level.width; x += tileSize) {
+          try {
+            offscreenCtx.drawImage(
+              bg,
+              srcX, srcY,
+              spriteSize, spriteSize,
+              x, y,
+              tileSize, tileSize
+            );
+          } catch (error) {
+            console.warn('Failed to draw background tile, using fallback color.', error);
+            offscreenCtx.fillStyle = '#87CEEB';
+            offscreenCtx.fillRect(x, y, tileSize, tileSize);
+          }
+        }
+      }
+    }
+    
+    // Store the newly created canvas and its dimensions in the cache.
+    this.backgroundCanvasCache.set(bgKey, {
+        canvas: offscreenCanvas,
+        width: level.width,
+        height: level.height
+    });
+    return offscreenCanvas;
   }
 
   renderScene(camera, level, player, collectedFruits, particles) {
     camera.apply(this.ctx);
 
-    this.drawBackground(camera, level.background);
-    level.render(this.ctx, this.assets, camera);
+    // Optimization: Draw the entire pre-rendered background in a single operation.
+    const backgroundCanvas = this._preRenderBackground(level);
+    this.ctx.drawImage(backgroundCanvas, 0, 0);
+
+    // Render all dynamic and interactive elements on top of the background.
+    // The order is critical for correct visual layering.
+    level.render(this.ctx, this.assets, camera); // Renders platforms and trophy.
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
     player.render(this.ctx);
@@ -20,50 +92,7 @@ export class Renderer {
     camera.restore(this.ctx);
   }
 
-  drawBackground(camera, backgroundKey) {
-    const bg = this.assets[backgroundKey];
-
-    if (!bg || !bg.complete || bg.naturalWidth === 0) {
-      // Fallback solid color gradient if the asset is missing or not loaded
-      const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-      gradient.addColorStop(0, '#87CEEB');
-      gradient.addColorStop(1, '#98FB98');
-      this.ctx.fillStyle = gradient;
-      this.ctx.fillRect(camera.x, camera.y, this.canvas.width, this.canvas.height);
-      return;
-    }
-
-    const tileSize = 64;
-    const spriteSize = 64;
-    const srcX = 0, srcY = 0;
-
-    // Calculate which tiles are visible in the camera's viewport
-    const startX = Math.floor(camera.x / tileSize);
-    const startY = Math.floor(camera.y / tileSize);
-    const endX = Math.ceil((camera.x + this.canvas.width) / tileSize);
-    const endY = Math.ceil((camera.y + this.canvas.height) / tileSize);
-
-    for (let i = startX; i <= endX; i++) {
-      const x = i * tileSize;
-      for (let j = startY; j <= endY; j++) {
-        const y = j * tileSize;
-        try {
-          this.ctx.drawImage(
-            bg,
-            srcX, srcY,
-            spriteSize, spriteSize,
-            x, y,
-            tileSize, tileSize
-          );
-        } catch (error) {
-          // This catch is for rare cases where a loaded image is corrupt.
-          console.warn('Failed to draw background tile, using fallback color.', error);
-          this.ctx.fillStyle = '#87CEEB';
-          this.ctx.fillRect(x, y, tileSize, tileSize);
-        }
-      }
-    }
-  }
+  // The original drawBackground method is now obsolete and has been replaced by the caching system.
 
   // The 'fruits' array is now pre-filtered to only contain active fruits.
   drawFruits(fruits, camera) {
