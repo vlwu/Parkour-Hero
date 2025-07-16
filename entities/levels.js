@@ -528,7 +528,7 @@ export const levelSections = [
         trophy: { x: 1120, y: 564 }
       },
       {
-        name: "Level 10: Zero Gravity",
+        name: "Level 10: Defying Gravity",
         width: 1500, height: 1500,
         startPosition: { x: 100, y: 1300 },
         platforms: [
@@ -547,7 +547,7 @@ export const levelSections = [
           { x: 1350, y: 600, fruitType: 'fruit_cherries' },
           { x: 1150, y: 450, fruitType: 'fruit_kiwi' },
           { x: 850, y: 300, fruitType: 'fruit_melon' },
-          { x: 100, y: 1350, fruitType: 'fruit_orange' },
+          { x: 100, y: 1200, fruitType: 'fruit_orange' },
           { x: 550, y: 1050, fruitType: 'fruit_pineapple' },
           { x: 1150, y: 750, fruitType: 'fruit_strawberry' }
         ],
@@ -559,7 +559,7 @@ export const levelSections = [
     name: "Jungle Journey",
     levels: [
       {
-        name: "Level 1: Save Point",
+        name: "Level 1: Placeholder",
         width: 1600, height: 720,
         startPosition: { x: 100, y: 550 },
         platforms: [
@@ -585,7 +585,7 @@ export const levelSections = [
   }
 ];
 
-export const characterConfig = {
+export const characterConfig = { // Unlock a character every 10 levels
   PinkMan: {
     name: "Pink Man",
     unlockRequirement: 0, // Default character
