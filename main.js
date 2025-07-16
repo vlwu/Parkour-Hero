@@ -105,6 +105,10 @@ let keybinds = {
   dash: ' ',
 };
 
+// New variables for character preview animation
+let characterPreviewAnimationId = null;
+const characterPreviewStates = {};
+
 // Function to update the pause button icon based on the engine's state
 function updatePauseButtonIcon() {
   if (typeof engine === 'undefined') return;
@@ -256,6 +260,59 @@ function toggleMainMenuModal() {
     }
 }
 
+// New function to animate character previews in the modal
+function animateCharacterPreviews(timestamp) {
+    if (!engine || !engine.assets) return;
+
+    const previewCanvases = characterSelectionContainer.querySelectorAll('.char-canvas');
+    if (previewCanvases.length === 0) {
+        if (characterPreviewAnimationId) {
+            cancelAnimationFrame(characterPreviewAnimationId);
+            characterPreviewAnimationId = null;
+        }
+        return;
+    }
+
+    previewCanvases.forEach(canvas => {
+        const charId = canvas.dataset.charId;
+        if (!charId) return;
+
+        if (!characterPreviewStates[charId]) {
+            characterPreviewStates[charId] = { frame: 0, timer: 0, lastTime: timestamp };
+        }
+
+        const state = characterPreviewStates[charId];
+        const idleSprite = engine.assets.characters[charId]?.playerIdle;
+        const ctx = canvas.getContext('2d');
+        
+        if (!idleSprite || !ctx) return;
+
+        const deltaTime = (timestamp - state.lastTime) / 1000;
+        state.lastTime = timestamp;
+        state.timer += deltaTime;
+
+        const animationSpeed = 0.08; 
+        const frameCount = 11; 
+        const frameWidth = idleSprite.width / frameCount;
+
+        if (state.timer >= animationSpeed) {
+            state.timer = 0;
+            state.frame = (state.frame + 1) % frameCount;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(
+            idleSprite,
+            state.frame * frameWidth, 0,
+            frameWidth, idleSprite.height,
+            0, 0,
+            canvas.width, canvas.height
+        );
+    });
+
+    characterPreviewAnimationId = requestAnimationFrame(animateCharacterPreviews);
+}
+
 // Function to populate the character selection menu
 function populateCharacterMenu() {
     if (!engine) return;
@@ -274,7 +331,6 @@ function populateCharacterMenu() {
         if (!isUnlocked) card.classList.add('locked');
         if (isSelected) card.classList.add('selected');
 
-        const idleSprite = engine.assets.characters[charId]?.playerIdle;
         const charNameFormatted = charId.replace(/([A-Z])/g, ' $1').trim();
 
         const unlockText = isUnlocked ? 'Available' : 'Complete more levels to unlock';
@@ -284,7 +340,7 @@ function populateCharacterMenu() {
         }
 
         card.innerHTML = `
-            <img src="${idleSprite?.src || ''}" class="char-img">
+            <canvas class="char-canvas" data-char-id="${charId}" width="64" height="64"></canvas>
             <div class="char-name">${charNameFormatted}</div>
             <div class="char-unlock">${unlockText}</div>
             <button class="action-button select-button">${buttonContent}</button>
@@ -319,7 +375,14 @@ function toggleCharacterModal() {
             }
             updatePauseButtonIcon();
         }
+        if (!characterPreviewAnimationId) {
+            characterPreviewAnimationId = requestAnimationFrame(animateCharacterPreviews);
+        }
     } else {
+        if (characterPreviewAnimationId) {
+            cancelAnimationFrame(characterPreviewAnimationId);
+            characterPreviewAnimationId = null;
+        }
         if (typeof engine !== 'undefined') {
             engine.pauseForMenu = false;
             if (!engine.isRunning && !engine.gameState.showingLevelComplete) {

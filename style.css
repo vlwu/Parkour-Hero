@@ -38,7 +38,7 @@ canvas {
 /* Pause Button */
 .pause-button {
   position: absolute;
-  top: 78px; /* Directly below the settings button (48px height + 10px gap + margin) */
+  top: 78px; 
   right: 20px;
   width: 48px;
   height: 48px;
@@ -58,7 +58,7 @@ canvas {
 
 /* When paused, switch to the Resume icon */
 .pause-button.is-paused {
-  background-image: url('assets/Menu/Buttons/Play.png'); /* Paused state is Resume icon */
+  background-image: url('assets/Menu/Buttons/Play.png'); 
 }
 
 /* Main Menu Button */
@@ -365,7 +365,7 @@ canvas {
   padding: 10px;
 }
 
-/* New: Styles for the menu section wrapper */
+/* Styles for the menu section wrapper */
 .level-section-menu {
   background-color: #3a3a3a;
   border-radius: 8px;
@@ -373,7 +373,7 @@ canvas {
   border: 1px solid #4a4a4a;
 }
 
-/* New: Styles for the section title */
+/* Styles for the section title */
 .level-section-menu h4 {
   margin: 0 0 15px 0;
   color: #fff;
@@ -383,7 +383,7 @@ canvas {
   text-align: left;
 }
 
-/* New: Grid container for the buttons inside a section */
+/* Grid container for the buttons inside a section */
 .level-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
@@ -480,7 +480,7 @@ canvas {
   text-align: center;
 }
 
-.character-card .char-img {
+.character-card .char-canvas {
   width: 64px;
   height: 64px;
   background-color: #444;
