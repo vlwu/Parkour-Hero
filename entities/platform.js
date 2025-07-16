@@ -258,6 +258,12 @@ export class Level {
     return this.collectedFruitCount === this.totalFruitCount;
   }
 
+  recalculateCollectedFruits() {
+    this.collectedFruitCount = this.fruits.reduce((count, fruit) => {
+        return count + (fruit.collected ? 1 : 0);
+    }, 0);
+  }
+
   checkCollisionWithPlatforms(player) {
     const potentialColliders = this.grid.query(player.x, player.y, player.width, player.height)
       .filter(obj => obj.type === 'platform');

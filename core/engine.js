@@ -193,6 +193,9 @@ export class Engine {
             this.currentLevel.fruits.forEach(f => f.collected = false);
         }
 
+        // After resetting the fruit 'collected' flags, we must synchronize the count.
+        this.currentLevel.recalculateCollectedFruits();
+
         this.player.respawn(respawnPosition);
         this.camera.shake(15, 0.5);
         this.soundManager.play('death_sound', 0.3);
