@@ -7,14 +7,14 @@ export class MenuManager {
 
     // --- DOM Element Queries ---
     this.settingsModal = document.getElementById('settingsModal');
-    this.mainMenuModal = document.getElementById('mainMenuModal');
+    this.levelsMenuModal = document.getElementById('levelsMenuModal');
     this.characterModal = document.getElementById('characterModal');
     this.settingsButton = document.getElementById('settingsButton');
     this.pauseButton = document.getElementById('pauseButton');
-    this.mainMenuButton = document.getElementById('mainMenuButton');
+    this.levelsMenuButton = document.getElementById('levelsMenuButton');
     this.characterButton = document.getElementById('characterButton');
     this.closeSettingsModalButton = document.getElementById('closeModalButton');
-    this.closeMainMenuButton = document.getElementById('closeMainMenuButton');
+    this.closeLevelsMenuButton = document.getElementById('closeLevelsMenuButton');
     this.closeCharacterModalButton = document.getElementById('closeCharacterModalButton');
     this.keybindInputs = document.querySelectorAll('.keybind-item input');
     this.soundToggle = document.getElementById('soundToggle');
@@ -41,12 +41,12 @@ export class MenuManager {
         }
         this.updatePauseButtonIcon();
     });
-    this.mainMenuButton.addEventListener('click', () => this.toggleMainMenuModal());
+    this.levelsMenuButton.addEventListener('click', () => this.toggleLevelsMenuModal());
     this.characterButton.addEventListener('click', () => this.toggleCharacterModal());
 
     // Modal close buttons
     this.closeSettingsModalButton.addEventListener('click', () => this.toggleSettingsModal());
-    this.closeMainMenuButton.addEventListener('click', () => this.toggleMainMenuModal());
+    this.closeLevelsMenuButton.addEventListener('click', () => this.toggleLevelsMenuModal());
     this.closeCharacterModalButton.addEventListener('click', () => this.toggleCharacterModal());
 
     // Settings listeners
@@ -58,12 +58,12 @@ export class MenuManager {
 
   isModalOpen() {
     return !this.settingsModal.classList.contains('hidden') ||
-           !this.mainMenuModal.classList.contains('hidden') ||
+           !this.levelsMenuModal.classList.contains('hidden') ||
            !this.characterModal.classList.contains('hidden');
   }
 
-  isMainMenuOpen() {
-    return !this.mainMenuModal.classList.contains('hidden');
+  isLevelsMenuOpen() {
+    return !this.levelsMenuModal.classList.contains('hidden');
   }
   
   _toggleModal(modalElement, onOpen, onClose) {
@@ -96,8 +96,8 @@ export class MenuManager {
       });
   }
 
-  toggleMainMenuModal() {
-      this._toggleModal(this.mainMenuModal, () => {
+  toggleLevelsMenuModal() {
+      this._toggleModal(this.levelsMenuModal, () => {
           this.populateLevelMenu();
           this.updateHowToPlayKeyDisplays();
       });
@@ -196,7 +196,7 @@ export class MenuManager {
                   if (gameState.currentSection === sectionIndex && gameState.currentLevelIndex === levelIndex) button.classList.add('current');
                   button.addEventListener('click', () => {
                       this.engine.loadLevel(sectionIndex, levelIndex);
-                      this.toggleMainMenuModal();
+                      this.toggleLevelsMenuModal();
                   });
               } else {
                   button.classList.add('locked');

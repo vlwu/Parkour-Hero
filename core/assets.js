@@ -160,7 +160,8 @@ export async function loadAssets() {
     level_menu_button: 'assets/Menu/Buttons/Levels.png',
     resume_button: 'assets/Menu/Buttons/Play.png',
     settings_button: 'assets/Menu/Buttons/Settings.png',
-    character_button: 'assets/Menu/Buttons/Character.png', // New button asset
+    character_button: 'assets/Menu/Buttons/Character.png', 
+    how_to_play_button: 'assets/Menu/Buttons/How To Play.png',
     // Other assets
     dust_particle: 'assets/Other/Dust Particle.png',
     ice_particle: 'assets/Traps/Sand Mud Ice/Ice Particle.png',

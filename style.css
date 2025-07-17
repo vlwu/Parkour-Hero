@@ -61,8 +61,8 @@ canvas {
   background-image: url('assets/Menu/Buttons/Play.png'); 
 }
 
-/* Main Menu Button */
-.main-menu-button {
+/* Levels Menu Button */
+.levels-menu-button {
   position: absolute;
   top: 136px; 
   right: 20px;
@@ -78,14 +78,14 @@ canvas {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease-in-out;
 }
-.main-menu-button:hover {
+.levels-menu-button:hover {
   transform: scale(1.1);
 }
 
 /* Character Button */
 .character-button {
   position: absolute;
-  top: 194px; /* Below Main Menu button */
+  top: 194px; /* Below Levels Menu button */
   right: 20px;
   width: 48px;
   height: 48px;
