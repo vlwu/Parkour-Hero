@@ -2,6 +2,7 @@ import { Engine } from './core/engine.js';
 import { loadAssets } from './core/assets.js';
 import { InputManager } from './core/input.js';
 import { MenuManager } from './ui/menu-manager.js';
+import { eventBus } from './core/event-bus.js';
 
 // Get canvas element and context
 const canvas = document.getElementById('gameCanvas');
@@ -96,13 +97,10 @@ loadAssets().then((assets) => {
   console.log('Assets loaded successfully, starting game...');
   
   try {
-    engine = new Engine(ctx, canvas, assets, keybinds, {
-      onMainMenu: () => menuManager.toggleLevelsMenuModal(),
-    });
+    engine = new Engine(ctx, canvas, assets, keybinds);
 
     // Initialize MenuManager to handle all DOM UI
-    menuManager = new MenuManager(engine);
-    engine.menuManager = menuManager; // Provide engine with a reference to the menu manager
+    menuManager = new MenuManager(assets, engine.gameState, keybinds);
 
     // Initialize the InputManager, passing the MenuManager for UI context
     inputManager = new InputManager(
@@ -116,16 +114,13 @@ loadAssets().then((assets) => {
     
     engine.start();
     
-    menuManager.updatePauseButtonIcon();
+    eventBus.publish('gameResumed'); // To set initial pause button state
     
     // Expose the unlock function to the window for easy debugging
     window.unlockAllLevels = () => {
         if (engine && engine.gameState) {
             engine.gameState.unlockAllLevels();
-            // If the main menu is open, refresh it to show the unlocked levels
-            if (menuManager.isLevelsMenuOpen()) {
-                menuManager.populateLevelMenu();
-            }
+            eventBus.publish('gameStateUpdated', engine.gameState);
         }
     };
     console.log('Developer command available: Type `unlockAllLevels()` in the console to unlock all levels.');
@@ -134,16 +129,9 @@ loadAssets().then((assets) => {
     window.resetProgress = () => {
         if (engine && engine.gameState) {
             engine.gameState.resetProgress();
-            // Reload the first level to reflect the reset state
             engine.loadLevel(0, 0);
             console.log("Game reset to Level 1.");
-            // If any menus are open, refresh them
-            if (menuManager.isLevelsMenuOpen()) {
-                menuManager.populateLevelMenu();
-            }
-            if (!menuManager.characterModal.classList.contains('hidden')) {
-                menuManager.populateCharacterMenu();
-            }
+            eventBus.publish('gameStateUpdated', engine.gameState);
         }
     };
     console.log('Developer command available: Type `resetProgress()` in the console to reset all saved data.');

@@ -1,3 +1,5 @@
+import { eventBus } from '../core/event-bus.js';
+
 // Optimized for performance, robustness, and clarity.
 // Version 2.7 - Fixed wall-jump FSM state loop.
 
@@ -77,21 +79,28 @@ class RunState extends State {
 
 class JumpState extends State {
   constructor() { super('jump'); }
+  enter(player) {
+    if (player.jumpCount === 1) { // First jump
+        eventBus.publish('playSound', { key: 'jump', volume: 0.8 });
+    }
+  }
   update(player) {
     if (player.isDashing) { return player.transitionTo('dash'); }
     if (player.jumpCount === 2) { return player.transitionTo('double_jump'); }
     if (player.vy >= 0) { return player.transitionTo('fall'); }
-    // MODIFICATION: Only transition to cling if falling or sliding, not jumping up.
     if (player.isAgainstWall && player.vy >= 0) { return player.transitionTo('cling'); }
   }
 }
 
 class DoubleJumpState extends State {
     constructor() { super('double_jump'); }
+    enter(player) {
+        eventBus.publish('playSound', { key: 'double_jump', volume: 0.6 });
+        eventBus.publish('createParticles', { x: player.getCenterX(), y: player.y + player.height, type: 'double_jump' });
+    }
     update(player) {
         if (player.isDashing) { return player.transitionTo('dash'); }
         if (player.vy >= 0) { return player.transitionTo('fall'); }
-        // MODIFICATION: Only transition to cling if falling or sliding, not jumping up.
         if (player.isAgainstWall && player.vy >= 0) { return player.transitionTo('cling'); }
     }
 }
@@ -107,6 +116,10 @@ class FallState extends State {
 
 class DashState extends State {
   constructor() { super('dash'); }
+  enter(player) {
+      eventBus.publish('playSound', { key: 'dash', volume: 0.7 });
+      eventBus.publish('createParticles', { x: player.getCenterX(), y: player.getCenterY(), type: 'dash', direction: player.direction });
+  }
   update(player) {
     if (!player.isDashing) {
       player.transitionTo(player.onGround ? 'idle' : 'fall');
@@ -187,8 +200,6 @@ export class Player {
     this.despawnAnimationFinished = false;
     this.isDashing = false;
     this.dashPressed = false;
-    this.jumpedThisFrame = 0;
-    this.dashedThisFrame = false;
 
     this.coyoteTimer = 0;
     this.jumpBufferTimer = 0;
@@ -197,7 +208,6 @@ export class Player {
     this.animationTimer = 0;
     this.animationFrame = 0;
 
-    this.soundEvents = [];
     this.activeSurfaceSound = null;
 
     this.transitionTo(this.isSpawning ? 'spawn' : 'idle');
@@ -234,14 +244,19 @@ export class Player {
     else if (inputActions.moveRight) this.direction = 'right';
 
     if (inputActions.jump) {
-      this.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
+        if (!this.jumpPressed && this.jumpBufferTimer <= 0) {
+            this.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
+        }
+    }
+
+    if (this.jumpBufferTimer > 0 && this.jumpCount < 1) {
+        this.transitionTo('jump');
     }
 
     if (inputActions.jump && !this.jumpPressed && this.jumpCount === 1 && !this.onGround) {
       this.vy = -PLAYER_CONSTANTS.JUMP_FORCE;
       this.jumpCount = 2;
       this.jumpBufferTimer = 0;
-      this.jumpedThisFrame = 2;
       this.transitionTo('double_jump');
     }
     this.jumpPressed = inputActions.jump;
@@ -252,7 +267,6 @@ export class Player {
       this.vx = this.direction === 'right' ? PLAYER_CONSTANTS.DASH_SPEED : -PLAYER_CONSTANTS.DASH_SPEED;
       this.vy = 0;
       this.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN;
-      this.dashedThisFrame = true;
       this.transitionTo('dash');
     }
     this.dashPressed = inputActions.dash;
@@ -293,8 +307,6 @@ export class Player {
     this.spawnComplete = false;
     this.isDespawning = false;
     this.despawnAnimationFinished = false;
-    this.jumpedThisFrame = 0;
-    this.dashedThisFrame = false;
     this.transitionTo('spawn');
   }
 
@@ -360,12 +372,6 @@ export class Player {
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 
-  getAndClearSoundEvents() {
-    const events = [...this.soundEvents];
-    this.soundEvents.length = 0;
-    return events;
-  }
-
   _updateTimers(dt) {
     if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= dt;
     if (this.coyoteTimer > 0) this.coyoteTimer -= dt;
@@ -414,10 +420,10 @@ export class Player {
 
     if (requiredSound !== this.activeSurfaceSound) {
         if (this.activeSurfaceSound) {
-            this.soundEvents.push({ type: 'stopLoop', key: this.activeSurfaceSound });
+            eventBus.publish('stopSoundLoop', { key: this.activeSurfaceSound });
         }
         if (requiredSound) {
-            this.soundEvents.push({ type: 'playLoop', key: requiredSound });
+            eventBus.publish('startSoundLoop', { key: requiredSound });
         }
         this.activeSurfaceSound = requiredSound;
     }

@@ -1,4 +1,5 @@
 import { PLAYER_CONSTANTS } from '../entities/player.js';
+import { eventBus } from './event-bus.js';
 
 // Physics and Collision detection/response system.
 export class PhysicsSystem {
@@ -105,23 +106,14 @@ export class PhysicsSystem {
     // --- 4. CHECK LEVEL BOUNDS & OTHER INTERACTIONS ---
     
     if (level && player.y > level.height + 50) {
-      if (!player.needsRespawn) {
-        player.deathCount++;
-        player.needsRespawn = true;
-      }
+      eventBus.publish('playerDied');
     }
     player.x = Math.max(0, Math.min(player.x, level.width - player.width));
 
     // Check for non-platform collisions (fruits, checkpoints, etc.)
-    const newlyCollectedFruits = this._checkFruitCollisions(player, potentialColliders);
-    const trophyCollision = this._checkTrophyCollision(player, level.trophy);
-    const checkpointCollision = this._checkCheckpointCollisions(player, potentialColliders);
-
-    return {
-      newlyCollectedFruits,
-      trophyCollision,
-      checkpointCollision,
-    };
+    this._checkFruitCollisions(player, potentialColliders);
+    this._checkTrophyCollision(player, level.trophy);
+    this._checkCheckpointCollisions(player, potentialColliders);
   }
   
   // --- Private Collision Resolution Methods (Moved from Player) ---
@@ -183,27 +175,27 @@ export class PhysicsSystem {
   // --- Other Collision Checks (Previously CollisionSystem) ---
 
   _checkFruitCollisions(player, potentialColliders) {
-    const collidedFruits = [];
     const px = player.x, py = player.y, pw = player.width, ph = player.height;
 
     for (const fruit of potentialColliders) {
       if (fruit.type === 'fruit' && !fruit.collected) {
         const fx = fruit.x - fruit.size / 2, fy = fruit.y - fruit.size / 2, fs = fruit.size;
         if (px < fx + fs && px + pw > fx && py < fy + fs && py + ph > fy) {
-          collidedFruits.push(fruit);
+          eventBus.publish('fruitCollected', fruit);
         }
       }
     }
-    return collidedFruits;
   }
 
   _checkTrophyCollision(player, trophy) {
     if (!trophy || trophy.acquired || trophy.inactive) {
-      return false;
+      return;
     }
     const px = player.x, py = player.y, pw = player.width, ph = player.height;
     const tx = trophy.x - trophy.size / 2, ty = trophy.y - trophy.size / 2, ts = trophy.size;
-    return (px < tx + ts && px + pw > tx && py < ty + ts && py + ph > ty);
+    if (px < tx + ts && px + pw > tx && py < ty + ts && py + ph > ty) {
+      eventBus.publish('trophyCollision');
+    }
   }
   
   _checkCheckpointCollisions(player, potentialColliders) {
@@ -212,10 +204,9 @@ export class PhysicsSystem {
       if (cp.type === 'checkpoint' && cp.state === 'inactive') {
         const cpx = cp.x - cp.size / 2, cpy = cp.y - cp.size / 2, cps = cp.size;
         if (px < cpx + cps && px + pw > cpx && py < cpy + cps && py + ph > cpy) {
-          return cp;
+          eventBus.publish('checkpointActivated', cp);
         }
       }
     }
-    return null;
   }
 }

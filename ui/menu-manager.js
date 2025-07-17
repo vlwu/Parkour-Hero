@@ -1,9 +1,13 @@
 import { characterConfig } from '../entities/levels.js';
+import { eventBus } from '../core/event-bus.js';
 
 export class MenuManager {
-  constructor(engine) {
-    this.engine = engine;
-    this.keybinds = engine.keybinds;
+  constructor(assets, gameState, keybinds) {
+    this.assets = assets;
+    this.gameState = gameState;
+    this.keybinds = keybinds;
+    this.isGameRunning = true;
+    this.isPausedForMenu = false;
 
     // --- DOM Element Queries ---
     this.settingsModal = document.getElementById('settingsModal');
@@ -61,9 +65,48 @@ export class MenuManager {
   }
 
   init() {
+    this._setupEventListeners();
+    this._setupEventSubscriptions();
+    
+    this.updateHowToPlayKeyDisplays();
+    this.updateSoundSettingsDisplay();
+  }
+  
+  _setupEventSubscriptions() {
+      eventBus.subscribe('gamePaused', () => {
+          this.isGameRunning = false;
+          this.updatePauseButtonIcon();
+      });
+      eventBus.subscribe('gameResumed', () => {
+          this.isGameRunning = true;
+          this.isPausedForMenu = false;
+          this.updatePauseButtonIcon();
+      });
+      eventBus.subscribe('levelComplete', ({ deaths, time }) => {
+          this.showLevelCompleteScreen(deaths, time);
+      });
+      eventBus.subscribe('levelLoaded', ({ gameState }) => {
+          this.gameState = gameState;
+          this.closeAllModals();
+      });
+      eventBus.subscribe('pauseModalRequested', () => {
+          this.togglePauseModal();
+      });
+      eventBus.subscribe('statsUpdated', (stats) => {
+          this.updatePauseModalStats(stats);
+          this.updateSoundSettingsDisplay(stats);
+      });
+      eventBus.subscribe('gameStateUpdated', (gameState) => {
+          this.gameState = gameState;
+          if (this.isLevelsMenuOpen()) this.populateLevelMenu();
+          if (!this.characterModal.classList.contains('hidden')) this.populateCharacterMenu();
+      });
+  }
+
+  _setupEventListeners() {
     // Top-level UI buttons
     this.settingsButton.addEventListener('click', () => this.toggleSettingsModal());
-    this.pauseButton.addEventListener('click', () => this.togglePauseModal());
+    this.pauseButton.addEventListener('click', () => eventBus.publish('requestPauseToggle'));
     this.levelsMenuButton.addEventListener('click', () => this.toggleLevelsMenuModal());
     this.characterButton.addEventListener('click', () => this.toggleCharacterModal());
     this.infoButton.addEventListener('click', () => this.toggleInfoModal());
@@ -77,18 +120,15 @@ export class MenuManager {
     // Settings listeners
     this.setupSoundSettingsListeners();
     this.setupKeybindListeners();
-    this.updateHowToPlayKeyDisplays();
-    this.updateSoundSettingsDisplay();
 
     // Pause Modal listeners
     this.pauseResumeButton.addEventListener('click', () => this.togglePauseModal());
     this.pauseRestartButton.addEventListener('click', () => {
       this.togglePauseModal();
-      this.engine.loadLevel(this.engine.gameState.currentSection, this.engine.gameState.currentLevelIndex);
-      this.engine.resume();
+      eventBus.publish('requestLevelRestart');
     });
     this.pauseMainMenuButton.addEventListener('click', () => {
-        this.pauseModal.classList.add('hidden'); // Close pause modal without resuming
+        this.pauseModal.classList.add('hidden');
         this.toggleLevelsMenuModal();
     });
 
@@ -107,6 +147,15 @@ export class MenuManager {
            !this.infoModal.classList.contains('hidden');
   }
 
+  closeAllModals() {
+    this.settingsModal.classList.add('hidden');
+    this.levelsMenuModal.classList.add('hidden');
+    this.characterModal.classList.add('hidden');
+    this.pauseModal.classList.add('hidden');
+    this.levelCompleteModal.classList.add('hidden');
+    this.infoModal.classList.add('hidden');
+  }
+
   isLevelsMenuOpen() {
     return !this.levelsMenuModal.classList.contains('hidden');
   }
@@ -117,16 +166,16 @@ export class MenuManager {
       const isOpen = !modalElement.classList.contains('hidden');
 
       if (isOpen) {
-          this.engine.pauseForMenu = true;
-          if (this.engine.isRunning) {
-              this.engine.pause();
+          this.isPausedForMenu = true;
+          if (this.isGameRunning) {
+              eventBus.publish('requestPauseToggle');
           }
           if (onOpen) onOpen();
       } else if (wasOpen) {
           if (!this.isModalOpen()) {
-              this.engine.pauseForMenu = false;
-              if (!this.engine.isRunning && !this.engine.gameState.showingLevelComplete) {
-                  this.engine.resume();
+              this.isPausedForMenu = false;
+              if (!this.isGameRunning && !this.gameState.showingLevelComplete) {
+                  eventBus.publish('requestResume');
               }
           }
           if (onClose) onClose();
@@ -171,14 +220,7 @@ export class MenuManager {
   }
 
   togglePauseModal() {
-      this._toggleModal(this.pauseModal, () => {
-          const { currentLevel, player, levelTime } = this.engine;
-          const collected = currentLevel.getFruitCount();
-          const total = currentLevel.getTotalFruitCount();
-          this.pauseStatsFruits.textContent = `Fruits: ${collected} / ${total}`;
-          this.pauseStatsDeaths.textContent = `Deaths: ${player.deathCount || 0}`;
-          this.pauseStatsTime.textContent = `Time: ${this.formatTime(levelTime)}`;
-      });
+      this._toggleModal(this.pauseModal);
   }
   
   showLevelCompleteScreen(deaths, time) {
@@ -186,22 +228,20 @@ export class MenuManager {
       this.lcDeaths.textContent = `Deaths: ${deaths}`;
       this.lcTime.textContent = `Time Taken: ${this.formatTime(time)}`;
 
-      this.lcNextButton.style.display = this.engine.gameState.hasNextLevel() ? 'inline-block' : 'none';
-      this.lcPreviousButton.style.display = this.engine.gameState.hasPreviousLevel() ? 'inline-block' : 'none';
+      this.lcNextButton.style.display = this.gameState.hasNextLevel() ? 'inline-block' : 'none';
+      this.lcPreviousButton.style.display = this.gameState.hasPreviousLevel() ? 'inline-block' : 'none';
 
       this.levelCompleteModal.classList.remove('hidden');
   }
   
   handleLevelCompleteAction(action) {
       if (this.levelCompleteModal.classList.contains('hidden')) return;
-
       this.levelCompleteModal.classList.add('hidden');
-      this.engine.gameState.handleLevelCompleteAction(action);
+      this.gameState.handleLevelCompleteAction(action);
   }
 
   updatePauseButtonIcon() {
-    // The pause button icon should reflect the *game loop's* state, not menu visibility
-    if (this.engine.isRunning) {
+    if (this.isGameRunning) {
         this.pauseButton.classList.remove('is-paused');
         this.pauseButton.setAttribute('aria-label', 'Pause');
     } else {
@@ -210,13 +250,20 @@ export class MenuManager {
     }
   }
   
+  updatePauseModalStats({ collectedFruits, totalFruits, deathCount, levelTime }) {
+    if (this.pauseModal.classList.contains('hidden')) return;
+    this.pauseStatsFruits.textContent = `Fruits: ${collectedFruits} / ${totalFruits}`;
+    this.pauseStatsDeaths.textContent = `Deaths: ${deathCount || 0}`;
+    this.pauseStatsTime.textContent = `Time: ${this.formatTime(levelTime)}`;
+  }
+
   formatKeyForDisplay(key) {
     if (key === ' ') return 'SPACE';
     if (key.startsWith('arrow')) return key.replace('arrow', '').toUpperCase();
     return key.toUpperCase();
   }
   
-  formatTime(seconds) {
+  formatTime(seconds = 0) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     const wholeSeconds = Math.floor(remainingSeconds);
@@ -244,28 +291,26 @@ export class MenuManager {
       }
   }
 
-  updateSoundSettingsDisplay() {
-      if (!this.engine.soundManager) return;
-      const settings = this.engine.soundManager.getSettings();
+  updateSoundSettingsDisplay(stats) {
+      if (!stats) return;
       if (this.soundToggle) {
-          this.soundToggle.textContent = settings.enabled ? 'ON' : 'OFF';
-          this.soundToggle.classList.toggle('sound-enabled', settings.enabled);
-          this.soundToggle.classList.toggle('sound-disabled', !settings.enabled);
+          this.soundToggle.textContent = stats.soundEnabled ? 'ON' : 'OFF';
+          this.soundToggle.classList.toggle('sound-enabled', stats.soundEnabled);
+          this.soundToggle.classList.toggle('sound-disabled', !stats.soundEnabled);
       }
       if (this.volumeSlider && this.volumeValue) {
-          this.volumeSlider.value = settings.volume;
-          this.volumeValue.textContent = `${Math.round(settings.volume * 100)}%`;
+          this.volumeSlider.value = stats.soundVolume;
+          this.volumeValue.textContent = `${Math.round(stats.soundVolume * 100)}%`;
       }
       if (this.testSoundButton) {
-          this.testSoundButton.disabled = !settings.enabled;
+          this.testSoundButton.disabled = !stats.soundEnabled;
       }
   }
 
   populateLevelMenu() {
       this.levelSelectionContainer.innerHTML = '';
-      const gameState = this.engine.gameState;
 
-      gameState.levelSections.forEach((section, sectionIndex) => {
+      this.gameState.levelSections.forEach((section, sectionIndex) => {
           const sectionContainer = document.createElement('div');
           sectionContainer.classList.add('level-section-menu');
           const sectionTitle = document.createElement('h4');
@@ -278,13 +323,13 @@ export class MenuManager {
               const button = document.createElement('button');
               button.textContent = `${levelIndex + 1}`;
               button.classList.add('level-button');
-              const isUnlocked = gameState.isLevelUnlocked(sectionIndex, levelIndex);
+              const isUnlocked = this.gameState.isLevelUnlocked(sectionIndex, levelIndex);
               
               if (isUnlocked) {
-                  if (gameState.isLevelCompleted(sectionIndex, levelIndex)) button.classList.add('completed');
-                  if (gameState.currentSection === sectionIndex && gameState.currentLevelIndex === levelIndex) button.classList.add('current');
+                  if (this.gameState.isLevelCompleted(sectionIndex, levelIndex)) button.classList.add('completed');
+                  if (this.gameState.currentSection === sectionIndex && this.gameState.currentLevelIndex === levelIndex) button.classList.add('current');
                   button.addEventListener('click', () => {
-                      this.engine.loadLevel(sectionIndex, levelIndex);
+                      eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
                       this.toggleLevelsMenuModal();
                   });
               } else {
@@ -301,14 +346,13 @@ export class MenuManager {
 
   populateCharacterMenu() {
     this.characterSelectionContainer.innerHTML = ''; 
-    const availableCharacters = Object.keys(this.engine.assets.characters);
-    const gameState = this.engine.gameState;
+    const availableCharacters = Object.keys(this.assets.characters);
 
     availableCharacters.forEach(charId => {
         const card = document.createElement('div');
         card.className = 'character-card';
-        const isUnlocked = gameState.isCharacterUnlocked(charId);
-        const isSelected = gameState.selectedCharacter === charId;
+        const isUnlocked = this.gameState.isCharacterUnlocked(charId);
+        const isSelected = this.gameState.selectedCharacter === charId;
         
         if (!isUnlocked) card.classList.add('locked');
         if (isSelected) card.classList.add('selected');
@@ -324,7 +368,7 @@ export class MenuManager {
         card.innerHTML = `
             <canvas class="char-canvas" data-char-id="${charId}" width="64" height="64"></canvas>
             <div class="char-name">${charNameFormatted}</div>
-            <div class="char-unlock">${unlockText}</div>
+            <div class.char-unlock">${unlockText}</div>
             <button class="action-button select-button">${buttonContent}</button>
         `;
         const selectButton = card.querySelector('.select-button');
@@ -333,8 +377,8 @@ export class MenuManager {
         } else {
             selectButton.addEventListener('click', () => {
                 if (isSelected) return;
-                gameState.setSelectedCharacter(charId);
-                this.engine.updatePlayerCharacter();
+                this.gameState.setSelectedCharacter(charId);
+                eventBus.publish('characterUpdated', charId);
                 this.populateCharacterMenu();
             });
         }
@@ -358,7 +402,7 @@ export class MenuManager {
             this.characterPreviewStates[charId] = { frame: 0, timer: 0, lastTime: timestamp };
         }
         const state = this.characterPreviewStates[charId];
-        const idleSprite = this.engine.assets.characters[charId]?.playerIdle;
+        const idleSprite = this.assets.characters[charId]?.playerIdle;
         const ctx = canvas.getContext('2d');
         if (!idleSprite || !ctx) return;
         const deltaTime = (timestamp - state.lastTime) / 1000;
@@ -378,20 +422,18 @@ export class MenuManager {
   setupSoundSettingsListeners() {
       if (this.soundToggle) {
           this.soundToggle.addEventListener('click', () => {
-              this.engine.soundManager.toggleSound();
-              this.updateSoundSettingsDisplay();
+              eventBus.publish('toggleSound');
           });
       }
       if (this.volumeSlider) {
           this.volumeSlider.addEventListener('input', (e) => {
               const volume = parseFloat(e.target.value);
-              this.engine.soundManager.setVolume(volume);
-              this.updateSoundSettingsDisplay();
+              eventBus.publish('setSoundVolume', { volume });
           });
       }
       if (this.testSoundButton) {
           this.testSoundButton.addEventListener('click', () => {
-              this.engine.soundManager.play('jump', 0.8);
+              eventBus.publish('playSound', { key: 'jump', volume: 0.8 });
           });
       }
   }
@@ -425,7 +467,7 @@ export class MenuManager {
 
       if (isValidKey) {
           this.keybinds[action] = key;
-          this.engine.updateKeybinds(this.keybinds);
+          eventBus.publish('keybindsUpdated', this.keybinds);
       }
       
       this.activeKeybindInput.classList.remove('active-rebind');

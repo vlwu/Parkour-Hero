@@ -5,11 +5,12 @@ import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
 import { HUD } from '../ui/hud.js';
 import { GameState } from './game-state.js';
-import { PhysicsSystem } from './physics-system.js'; // IMPORT a PhysicsSystem now
+import { PhysicsSystem } from './physics-system.js';
 import { Renderer } from './renderer.js';
+import { eventBus } from './event-bus.js';
 
 export class Engine {
-  constructor(ctx, canvas, assets, initialKeybinds, callbacks = {}) {
+  constructor(ctx, canvas, assets, initialKeybinds) {
     this.ctx = ctx;
     this.canvas = canvas;
     this.assets = assets;
@@ -17,9 +18,7 @@ export class Engine {
     this.keys = {};
     this.keybinds = initialKeybinds;
     this.isRunning = false;
-    this.pauseForMenu = false; // Differentiates menu pause from user pause
-    this.callbacks = callbacks;
-    this.menuManager = null; // Will be set externally after initialization
+    this.pauseForMenu = false;
 
     this.lastCheckpoint = null; 
     this.fruitsAtLastCheckpoint = new Set();
@@ -28,43 +27,46 @@ export class Engine {
     this.hud = new HUD(canvas);
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
-    this.physicsSystem = new PhysicsSystem(); // INSTANTIATE PhysicsSystem
+    this.physicsSystem = new PhysicsSystem();
     this.renderer = new Renderer(ctx, canvas, assets);
 
     this.levelStartTime = 0;
     this.levelTime = 0;
 
-    this.gameState = new GameState(levelSections, {
-      loadLevel: this.loadLevel.bind(this),
-      pause: this.pause.bind(this),
-      resume: this.resume.bind(this),
-      getEngineState: () => ({
-        player: this.player,
-        soundManager: this.soundManager,
-        hud: this.hud,
-        levelTime: this.levelTime
-      })
-    });
+    this.gameState = new GameState(levelSections);
     
     this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
     this.camera.snapToPlayer(this.player);
 
     this.particles = [];
+    this._setupEventSubscriptions();
   }
   
-  updatePlayerCharacter() {
+  _setupEventSubscriptions() {
+    eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
+    eventBus.subscribe('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
+    eventBus.subscribe('requestPauseToggle', () => this.togglePause());
+    eventBus.subscribe('requestResume', () => this.resume());
+    eventBus.subscribe('keybindsUpdated', (newKeybinds) => this.updateKeybinds(newKeybinds));
+    
+    eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
+    eventBus.subscribe('trophyCollision', () => this._onTrophyCollision());
+    eventBus.subscribe('checkpointActivated', (cp) => this._onCheckpointActivated(cp));
+    eventBus.subscribe('createParticles', ({x, y, type, direction}) => this.createDustParticles(x, y, type, direction));
+    eventBus.subscribe('playerDied', () => this._onPlayerDied());
+    eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
+    eventBus.subscribe('gamePaused', () => this.pause());
+  }
+
+  updatePlayerCharacter(newCharId) {
     if (this.player) {
-      this.player.characterId = this.gameState.selectedCharacter;
-      console.log(`Character skin changed to: ${this.gameState.selectedCharacter}`);
+      this.player.characterId = newCharId || this.gameState.selectedCharacter;
+      console.log(`Character skin changed to: ${this.player.characterId}`);
     }
   }
 
   updateKeybinds(newKeybinds) {
     this.keybinds = { ...newKeybinds };
-  }
-
-  getSoundManager() {
-    return this.soundManager;
   }
 
   start() {
@@ -79,6 +81,15 @@ export class Engine {
     this.soundManager.stopAll();
   }
 
+  togglePause() {
+    if (this.isRunning) {
+      this.pause();
+      eventBus.publish('pauseModalRequested');
+    } else {
+      this.resume();
+    }
+  }
+
   pause() {
       if (!this.isRunning) return;
       this.isRunning = false;
@@ -86,9 +97,7 @@ export class Engine {
       if (this.player) {
         this.player.needsRespawn = false;
       }
-      if (this.menuManager) {
-        this.menuManager.updatePauseButtonIcon();
-      }
+      // No longer need to publish 'gamePaused' here, as this method is now a *reaction* to that event.
   }
 
   resume() {
@@ -103,14 +112,11 @@ export class Engine {
     if (this.player) {
       this.player.needsRespawn = false;
     }
-    if (this.menuManager) {
-        this.menuManager.updatePauseButtonIcon();
-    }
+    eventBus.publish('gameResumed');
   }
 
   gameLoop(currentTime = performance.now()) {
     if (!this.isRunning) {
-      if (this.menuManager) this.menuManager.updatePauseButtonIcon();
       return;
     }
 
@@ -134,18 +140,18 @@ export class Engine {
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
     this.currentLevel = new Level(levelSections[sectionIndex].levels[levelIndex]);
-
+    
     this.collectedFruits = [];
-    this.particles = []; // Clear particles on level load
+    this.particles = [];
 
-    this.lastCheckpoint = null; // Reset the last checkpoint on level load
-    this.fruitsAtLastCheckpoint.clear(); // Also clear the fruit state from the last checkpoint
+    this.lastCheckpoint = null;
+    this.fruitsAtLastCheckpoint.clear();
     
     this.player = new Player(
       this.currentLevel.startPosition.x,
       this.currentLevel.startPosition.y,
       this.assets,
-      this.gameState.selectedCharacter // Pass selected character
+      this.gameState.selectedCharacter
     );
     this.player.isSpawning = true;
     this.player.spawnComplete = false;
@@ -157,7 +163,9 @@ export class Engine {
 
     this.levelStartTime = performance.now();
     this.resume();
-}
+    eventBus.publish('levelLoaded', { gameState: this.gameState });
+  }
+
   update(dt) {
     try {
       if (this.isRunning && !this.gameState.showingLevelComplete) {
@@ -173,7 +181,7 @@ export class Engine {
 
       this.player.handleInput(inputActions);
       
-      const collisionResults = this.physicsSystem.update(
+      this.physicsSystem.update(
         this.player,
         this.currentLevel,
         dt,
@@ -181,29 +189,12 @@ export class Engine {
       );
 
       this.player.update(dt);
-      
-      this.processPlayerEvents();
       this.updateParticles(dt);
       
       this.camera.update(this.player, dt);
 
       if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
-        const respawnPosition = this.lastCheckpoint || this.currentLevel.startPosition;
-        
-        if (this.lastCheckpoint) {
-            this.currentLevel.fruits.forEach((fruit, index) => {
-                fruit.collected = this.fruitsAtLastCheckpoint.has(index);
-            });
-        } else {
-            this.currentLevel.fruits.forEach(f => f.collected = false);
-        }
-
-        this.currentLevel.recalculateCollectedFruits();
-
-        this.player.respawn(respawnPosition);
-        this.camera.shake(15, 0.5);
-        this.soundManager.play('death_sound', 0.3);
-        this.player.needsRespawn = false;
+        this._respawnPlayer();
       }
 
       this.currentLevel.updateFruits(dt);
@@ -223,87 +214,87 @@ export class Engine {
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
 
-      if (collisionResults.newlyCollectedFruits.length > 0) {
-        for (const fruit of collisionResults.newlyCollectedFruits) {
-          this.currentLevel.collectFruit(fruit);
-          this.soundManager.play('collect', 0.8);
-
-          this.collectedFruits.push({
-            x: fruit.x, y: fruit.y, size: fruit.size, frame: 0,
-            frameSpeed: 0.1, frameTimer: 0, collectedFrameCount: 6
-          });
-        }
-      }
-
-      if (collisionResults.checkpointCollision) {
-          const cp = collisionResults.checkpointCollision;
-          cp.state = 'activating';
-          this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; 
-          this.soundManager.play('checkpoint_activated', 1); 
-
-          this.fruitsAtLastCheckpoint.clear();
-          this.currentLevel.fruits.forEach((fruit, index) => {
-              if (fruit.collected) {
-                  this.fruitsAtLastCheckpoint.add(index);
-              }
-          });
-
-          this.currentLevel.checkpoints.forEach(otherCp => {
-              if (otherCp !== cp && otherCp.state === 'active') {
-                  otherCp.state = 'inactive';
-                  otherCp.frame = 0;
-              }
-          });
-      }
-
-      if (collisionResults.trophyCollision && !this.player.isDespawning) {
-        this.currentLevel.trophy.acquired = true;
-        this.camera.shake(8, 0.3);
-        this.player.startDespawn();
-      }
-
       if (this.player.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
         this.gameState.onLevelComplete();
         this.player.despawnAnimationFinished = false; 
-        if (this.menuManager) {
-            this.menuManager.showLevelCompleteScreen(this.player.deathCount, this.levelTime);
-        }
+        eventBus.publish('levelComplete', { deaths: this.player.deathCount, time: this.levelTime });
       }
+
+      eventBus.publish('statsUpdated', {
+        levelName: this.currentLevel.name,
+        collectedFruits: this.currentLevel.getFruitCount(),
+        totalFruits: this.currentLevel.getTotalFruitCount(),
+        deathCount: this.player.deathCount,
+        levelTime: this.levelTime,
+        soundEnabled: this.soundManager.settings.enabled,
+        soundVolume: this.soundManager.settings.volume
+      });
 
     } catch (error) {
       console.error('Error in update loop:', error);
     }
   }
 
-  processPlayerEvents() {
-    // Process sound events emitted by the player (e.g., surface sounds)
-    const soundEvents = this.player.getAndClearSoundEvents();
-    for (const event of soundEvents) {
-      if (event.type === 'playLoop') {
-        this.soundManager.playLoop(event.key);
-      } else if (event.type === 'stopLoop') {
-        this.soundManager.stopLoop(event.key);
-      }
-    }
-
-    // Process action events for one-shot sounds and particles
-    if (this.player.dashedThisFrame) {
-      this.soundManager.play('dash', 0.7);
-      this.createDustParticles(this.player.getCenterX(), this.player.getCenterY(), 'dash', this.player.direction);
-      this.player.dashedThisFrame = false; // Reset flag
-    }
-
-    if (this.player.jumpedThisFrame > 0) {
-      if (this.player.jumpedThisFrame === 1) {
-        this.soundManager.play('jump', 0.8);
-      } else if (this.player.jumpedThisFrame === 2) {
-        this.soundManager.play('double_jump', 0.6);
-        this.createDustParticles(this.player.getCenterX(), this.player.y + this.player.height, 'double_jump');
-      }
-      this.player.jumpedThisFrame = 0; // Reset flag
+  _onPlayerDied() {
+    if (!this.player.needsRespawn) {
+      this.player.deathCount++;
+      this.player.needsRespawn = true;
     }
   }
 
+  _respawnPlayer() {
+    const respawnPosition = this.lastCheckpoint || this.currentLevel.startPosition;
+    
+    if (this.lastCheckpoint) {
+        this.currentLevel.fruits.forEach((fruit, index) => {
+            fruit.collected = this.fruitsAtLastCheckpoint.has(index);
+        });
+    } else {
+        this.currentLevel.fruits.forEach(f => f.collected = false);
+    }
+    this.currentLevel.recalculateCollectedFruits();
+    this.player.respawn(respawnPosition);
+    this.camera.shake(15, 0.5);
+    eventBus.publish('playSound', { key: 'death_sound', volume: 0.3 });
+    this.player.needsRespawn = false;
+  }
+
+  _onFruitCollected(fruit) {
+    this.currentLevel.collectFruit(fruit);
+    eventBus.publish('playSound', { key: 'collect', volume: 0.8 });
+
+    this.collectedFruits.push({
+      x: fruit.x, y: fruit.y, size: fruit.size, frame: 0,
+      frameSpeed: 0.1, frameTimer: 0, collectedFrameCount: 6
+    });
+  }
+
+  _onCheckpointActivated(cp) {
+      cp.state = 'activating';
+      this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; 
+      eventBus.publish('playSound', { key: 'checkpoint_activated', volume: 1 });
+
+      this.fruitsAtLastCheckpoint.clear();
+      this.currentLevel.fruits.forEach((fruit, index) => {
+          if (fruit.collected) this.fruitsAtLastCheckpoint.add(index);
+      });
+
+      this.currentLevel.checkpoints.forEach(otherCp => {
+          if (otherCp !== cp && otherCp.state === 'active') {
+              otherCp.state = 'inactive';
+              otherCp.frame = 0;
+          }
+      });
+  }
+
+  _onTrophyCollision() {
+    if (!this.player.isDespawning) {
+      this.currentLevel.trophy.acquired = true;
+      this.camera.shake(8, 0.3);
+      this.player.startDespawn();
+    }
+  }
+  
   createDustParticles(x, y, type, direction = 'right') {
     const count = type === 'dash' ? 10 : 7;
     const baseSpeed = type === 'dash' ? 150 : 100;
@@ -356,7 +347,7 @@ export class Engine {
         this.particles
       );
 
-      this.hud.drawGameHUD(this.ctx, this.currentLevel, this.player, this.soundManager);
+      this.hud.drawGameHUD(this.ctx);
 
     } catch (error) {
       console.error('Error in render loop:', error);
@@ -364,22 +355,5 @@ export class Engine {
       this.ctx.font = '20px sans-serif';
       this.ctx.fillText('Rendering Error - Check Console', 10, 30);
     }
-  }
-
-    handleCanvasClick(x, y) {
-      // This method is now empty because all UI clicks are handled
-      // by DOM event listeners in MenuManager.
-  }
-
-  handleKeyEvent(key, isDown) {
-      this.keys[key] = isDown;
-  }
-
-  getCamera() {
-    return this.camera;
-  }
-
-  shakeScreen(intensity = 10, duration = 0.2) {
-    this.camera.shake(intensity, duration);
   }
 }

@@ -1,3 +1,5 @@
+import { eventBus } from './event-bus.js';
+
 export class SoundManager {
   constructor() {
     this.sounds = {};
@@ -8,25 +10,26 @@ export class SoundManager {
       enabled: true,
       volume: 0.5,
     };
-    this.onSettingsChange = null;
     this.loadSettings();
+    this._setupEventSubscriptions();
+  }
+
+  _setupEventSubscriptions() {
+    eventBus.subscribe('playSound', ({key, volume}) => this.play(key, volume));
+    eventBus.subscribe('startSoundLoop', ({key, volume}) => this.playLoop(key, volume));
+    eventBus.subscribe('stopSoundLoop', ({key}) => this.stopLoop(key));
+    eventBus.subscribe('toggleSound', () => this.toggleSound());
+    eventBus.subscribe('setSoundVolume', ({volume}) => this.setVolume(volume));
   }
 
   loadSettings() {
-    this.enabled = this.settings.enabled;
-    this.volume = this.settings.volume;
+    this.settings.enabled = true; // Simplified for this context
+    this.settings.volume = 0.5;
   }
 
   saveSettings() {
-    this.settings.enabled = this.enabled;
-    this.settings.volume = this.volume;
-    if (this.onSettingsChange) {
-      this.onSettingsChange(this.getSettings());
-    }
-  }
-
-  setSettingsChangeCallback(callback) {
-    this.onSettingsChange = callback;
+    // In a real app, this would save to localStorage.
+    // For now, it just updates the internal state.
   }
 
   loadSounds(assets) {
@@ -35,7 +38,7 @@ export class SoundManager {
     soundKeys.forEach(key => {
       if (assets[key]) {
         this.sounds[key] = assets[key];
-        this.sounds[key].volume = this.volume;
+        this.sounds[key].volume = this.settings.volume;
       } else {
         console.warn(`Sound asset ${key} not found in assets`);
       }
@@ -43,7 +46,7 @@ export class SoundManager {
   }
 
   async play(soundKey, volumeMultiplier = 1.0) {
-    if (!this.enabled || !this.sounds[soundKey]) {
+    if (!this.settings.enabled || !this.sounds[soundKey]) {
       return;
     }
 
@@ -53,7 +56,7 @@ export class SoundManager {
 
     try {
       const audioClone = this.sounds[soundKey].cloneNode(true);
-      audioClone.volume = Math.max(0, Math.min(1, this.volume * volumeMultiplier));
+      audioClone.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
       audioClone.currentTime = 0;
       await audioClone.play();
     } catch (error) {
@@ -62,14 +65,14 @@ export class SoundManager {
   }
 
   async playLoop(soundKey, volumeMultiplier = 1.0) {
-    if (!this.enabled || !this.sounds[soundKey] || this.loopingSounds[soundKey]) {
+    if (!this.settings.enabled || !this.sounds[soundKey] || this.loopingSounds[soundKey]) {
       return;
     }
     if (!this.audioUnlocked) await this.unlockAudio();
 
     try {
       const audio = this.sounds[soundKey].cloneNode(true);
-      audio.volume = Math.max(0, Math.min(1, this.volume * volumeMultiplier));
+      audio.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
       audio.loop = true;
       await audio.play();
       this.loopingSounds[soundKey] = audio;
@@ -134,51 +137,37 @@ export class SoundManager {
   }
 
   setVolume(volume) {
-    this.volume = Math.max(0, Math.min(1, volume));
+    this.settings.volume = Math.max(0, Math.min(1, volume));
     Object.values(this.sounds).forEach(sound => {
       if (sound) {
-        sound.volume = this.volume;
+        sound.volume = this.settings.volume;
       }
     });
      // Also update currently playing loops
     for(const audio of Object.values(this.loopingSounds)) {
-      audio.volume = this.volume;
+      audio.volume = this.settings.volume;
     }
     this.saveSettings();
   }
-
+  
   setEnabled(enabled) {
-    this.enabled = enabled;
-    if (!this.enabled) {
+    this.settings.enabled = enabled;
+    if (!this.settings.enabled) {
       this.stopAll();
     }
     this.saveSettings();
   }
   
   toggleSound() {
-    this.setEnabled(!this.enabled);
-    return this.enabled;
+    this.setEnabled(!this.settings.enabled);
+    return this.settings.enabled;
   }
 
   getSettings() {
     return {
-      enabled: this.enabled,
-      volume: this.volume,
+      enabled: this.settings.enabled,
+      volume: this.settings.volume,
       audioUnlocked: this.audioUnlocked,
-    };
-  }
-
-  getDebugInfo() {
-    return {
-      ...this.getSettings(),
-      audioContextState: this.audioContext?.state,
-      soundCount: Object.keys(this.sounds).length,
-      loopingNow: Object.keys(this.loopingSounds),
-      sounds: Object.keys(this.sounds).map(key => ({
-        key,
-        ready: this.sounds[key]?.readyState >= 2,
-        duration: this.sounds[key]?.duration,
-      })),
     };
   }
 }

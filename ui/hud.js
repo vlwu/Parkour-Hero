@@ -1,14 +1,29 @@
+import { eventBus } from '../core/event-bus.js';
+
 export class HUD {
   constructor(canvas) {
     this.canvas = canvas;
     this.isVisible = true;
+    this.stats = {
+      levelName: 'Loading...',
+      collectedFruits: 0,
+      totalFruits: 0,
+      deathCount: 0,
+      soundEnabled: true,
+      soundVolume: 0.5
+    };
+    eventBus.subscribe('statsUpdated', (newStats) => this.updateStats(newStats));
   }
 
   setVisible(visible) {
     this.isVisible = visible;
   }
 
-  drawGameHUD(ctx, level, player, soundManager) {
+  updateStats(newStats) {
+    this.stats = { ...this.stats, ...newStats };
+  }
+
+  drawGameHUD(ctx) {
     if (!this.isVisible) return;
 
     try {
@@ -25,15 +40,13 @@ export class HUD {
       ctx.roundRect(hudX, hudY, hudWidth, hudHeight, 10);
       ctx.fill();
 
-      const totalFruits = level.getTotalFruitCount();
-      const collectedFruits = level.getFruitCount();
-      const soundSettings = soundManager.getSettings();
+      const { levelName, collectedFruits, totalFruits, deathCount, soundEnabled, soundVolume } = this.stats;
       
       const lines = [
-        `${level.name}`,
+        `${levelName}`,
         `Fruits: ${collectedFruits} / ${totalFruits}`,
-        `Deaths: ${player.deathCount || 0}`,
-        `Sound: ${soundSettings.enabled ? 'On' : 'Off'} (${Math.round(soundSettings.volume * 100)}%)`
+        `Deaths: ${deathCount || 0}`,
+        `Sound: ${soundEnabled ? 'On' : 'Off'} (${Math.round(soundVolume * 100)}%)`
       ];
 
       ctx.font = '16px sans-serif';
@@ -58,9 +71,5 @@ export class HUD {
     } catch (error) {
       console.warn('Error drawing HUD:', error);
     }
-  }
-
-  getCurrentLevelTime() {
-    return this.levelTime || 0;
   }
 }

@@ -1,4 +1,5 @@
 import { characterConfig } from '../entities/levels.js';
+import { eventBus } from '../core/event-bus.js';
 
 function getLinearIndex(sectionIndex, levelIndex, levelSections) {
     let linearIndex = 0;
@@ -10,9 +11,8 @@ function getLinearIndex(sectionIndex, levelIndex, levelSections) {
 }
 
 export class GameState {
-  constructor(levelSections, dependencies) {
+  constructor(levelSections) {
       this.levelSections = levelSections;
-      this.dependencies = dependencies; 
       
       this.currentSection = 0;
       this.currentLevelIndex = 0;
@@ -123,10 +123,9 @@ export class GameState {
           this.saveProgress();
       }
 
-      const { soundManager } = this.dependencies.getEngineState();
-      soundManager.play('level_complete', 1.0);
+      eventBus.publish('playSound', { key: 'level_complete', volume: 1.0 });
       this.showingLevelComplete = true;
-      this.dependencies.pause();
+      eventBus.publish('gamePaused');
   }
 
   isLevelUnlocked(sectionIndex, levelIndex) {
@@ -152,13 +151,6 @@ export class GameState {
 
   handleLevelCompleteAction(action) {
     this.showingLevelComplete = false;
-    
-    const { player } = this.dependencies.getEngineState();
-    if (player) {
-      player.needsRespawn = false;
-    }
-    
-    const { loadLevel } = this.dependencies;
 
     if (action === 'next') {
       if (this.currentLevelIndex + 1 < this.levelSections[this.currentSection].levels.length) {
@@ -167,9 +159,9 @@ export class GameState {
         this.currentSection++;
         this.currentLevelIndex = 0;
       }
-      loadLevel(this.currentSection, this.currentLevelIndex);
+      eventBus.publish('requestLevelLoad', { sectionIndex: this.currentSection, levelIndex: this.currentLevelIndex });
     } else if (action === 'restart') {
-      loadLevel(this.currentSection, this.currentLevelIndex);
+      eventBus.publish('requestLevelLoad', { sectionIndex: this.currentSection, levelIndex: this.currentLevelIndex });
     } else if (action === 'previous' && this.hasPreviousLevel()) {
       if (this.currentLevelIndex > 0) {
         this.currentLevelIndex--;
@@ -177,7 +169,7 @@ export class GameState {
         this.currentSection--;
         this.currentLevelIndex = this.levelSections[this.currentSection].levels.length - 1;
       }
-      loadLevel(this.currentSection, this.currentLevelIndex);
+      eventBus.publish('requestLevelLoad', { sectionIndex: this.currentSection, levelIndex: this.currentLevelIndex });
     }
   }
 }
