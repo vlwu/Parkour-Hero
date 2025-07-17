@@ -5,7 +5,7 @@ import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
 import { HUD } from '../ui/hud.js';
 import { GameState } from './game-state.js';
-import { CollisionSystem } from './collision-system.js';
+import { CollisionSystem } from './physics-system.js';
 import { Renderer } from './renderer.js';
 
 export class Engine {
