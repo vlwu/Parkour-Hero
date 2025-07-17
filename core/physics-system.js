@@ -37,6 +37,7 @@ export class PhysicsSystem {
       player.jumpBufferTimer = 0;
       player.coyoteTimer = 0;
       player.jumpedThisFrame = 1;
+      eventBus.publish('playSound', { key: 'jump', volume: 0.8 });
     }
 
     // Horizontal movement physics

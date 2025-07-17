@@ -79,11 +79,6 @@ class RunState extends State {
 
 class JumpState extends State {
   constructor() { super('jump'); }
-  enter(player) {
-    if (player.jumpCount === 1) { // First jump
-        eventBus.publish('playSound', { key: 'jump', volume: 0.8 });
-    }
-  }
   update(player) {
     if (player.isDashing) { return player.transitionTo('dash'); }
     if (player.jumpCount === 2) { return player.transitionTo('double_jump'); }

@@ -56,6 +56,12 @@ export class Engine {
     eventBus.subscribe('playerDied', () => this._onPlayerDied());
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
     eventBus.subscribe('gamePaused', () => this.pause());
+
+    eventBus.subscribe('playerDied', () => this._onPlayerDied());
+    eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
+    eventBus.subscribe('gamePaused', () => this.pause());
+    eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
+    eventBus.subscribe('allMenusClosed', () => this.pauseForMenu = false);
   }
 
   updatePlayerCharacter(newCharId) {

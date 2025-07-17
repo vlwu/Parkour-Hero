@@ -162,17 +162,25 @@ export class MenuManager {
   
   _toggleModal(modalElement, onOpen, onClose) {
       const wasOpen = !modalElement.classList.contains('hidden');
+      const anyModalWasOpen = this.isModalOpen();
+
       modalElement.classList.toggle('hidden');
       const isOpen = !modalElement.classList.contains('hidden');
 
       if (isOpen) {
+          if (!anyModalWasOpen) {
+              // This is the first modal being opened
+              eventBus.publish('menuOpened');
+          }
           this.isPausedForMenu = true;
           if (this.isGameRunning) {
-              eventBus.publish('requestPauseToggle');
+              eventBus.publish('gamePaused');
           }
           if (onOpen) onOpen();
       } else if (wasOpen) {
           if (!this.isModalOpen()) {
+              // This was the last modal to close
+              eventBus.publish('allMenusClosed');
               this.isPausedForMenu = false;
               if (!this.isGameRunning && !this.gameState.showingLevelComplete) {
                   eventBus.publish('requestResume');
