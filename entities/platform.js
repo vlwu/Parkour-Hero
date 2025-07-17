@@ -17,7 +17,6 @@ export class Platform {
       green_block: { srcX: 0, srcY: 128 }, 
       orange_dirt: { srcX: 96, srcY: 64 }, 
       pink_dirt: { srcX: 96, srcY: 128 }, 
-      red_brick: { srcX: 272, srcY: 64 }, 
     };
 
     this.tileSize = 48; // Size of each tile in the spritesheet

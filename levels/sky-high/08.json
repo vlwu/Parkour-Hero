@@ -7,14 +7,14 @@
     { "x": 50, "y": 3400, "width": 192, "height": 48, "terrainType": "dirt" },
     { "x": 350, "y": 3250, "width": 144, "height": 48, "terrainType": "stone" },
     { "x": 600, "y": 3100, "width": 96, "height": 48, "terrainType": "wood" },
-    { "x": 850, "y": 2950, "width": 192, "height": 48, "terrainType": "red_brick" },
+    { "x": 850, "y": 2950, "width": 192, "height": 48, "terrainType": "wood" },
     { "x": 1100, "y": 2800, "width": 144, "height": 48, "terrainType": "green_block" },
     { "x": 850, "y": 2650, "width": 96, "height": 48, "terrainType": "pink_dirt" },
     { "x": 600, "y": 2500, "width": 192, "height": 48, "terrainType": "orange_dirt" },
     { "x": 350, "y": 2350, "width": 144, "height": 48, "terrainType": "stone" },
     { "x": 100, "y": 2200, "width": 96, "height": 48, "terrainType": "dirt" },
     { "x": 350, "y": 2050, "width": 192, "height": 48, "terrainType": "wood" },
-    { "x": 650, "y": 1900, "width": 144, "height": 48, "terrainType": "red_brick" },
+    { "x": 650, "y": 1900, "width": 144, "height": 48, "terrainType": "wood" },
     { "x": 950, "y": 1750, "width": 192, "height": 48, "terrainType": "green_block" }
   ],
   "fruits": [

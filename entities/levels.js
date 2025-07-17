@@ -103,8 +103,8 @@ export const levelSections = [
           { x: 0, y: 600, width: 288, height: 48, terrainType: 'dirt' },
           { x: 450, y: 550, width: 96, height: 48, terrainType: 'wood' },
           { x: 700, y: 500, width: 192, height: 48, terrainType: 'stone' },
-          { x: 1100, y: 600, width: 48, height: 48, terrainType: 'red_brick' },
-          { x: 1250, y: 550, width: 48, height: 48, terrainType: 'red_brick' },
+          { x: 1100, y: 600, width: 48, height: 48, terrainType: 'wood' },
+          { x: 1250, y: 550, width: 48, height: 48, terrainType: 'wood' },
           { x: 1400, y: 500, width: 192, height: 48, terrainType: 'dirt' }
         ],
         fruits: [

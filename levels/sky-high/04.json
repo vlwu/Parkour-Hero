@@ -5,7 +5,7 @@
   "startPosition": { "x": 100, "y": 1800 },
   "platforms": [
     { "x": 50, "y": 1900, "width": 192, "height": 48, "terrainType": "dirt" },
-    { "x": 400, "y": 1850, "width": 144, "height": 48, "terrainType": "red_brick" },
+    { "x": 400, "y": 1850, "width": 144, "height": 48, "terrainType": "wood" },
     { "x": 700, "y": 1780, "width": 96, "height": 48, "terrainType": "stone" },
     { "x": 1000, "y": 1700, "width": 192, "height": 48, "terrainType": "wood" },
     { "x": 800, "y": 1550, "width": 144, "height": 48, "terrainType": "green_block" },

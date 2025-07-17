@@ -8,7 +8,7 @@
     { "x": 400, "y": 450, "width": 144, "height": 48, "terrainType": "stone" },
     { "x": 600, "y": 350, "width": 144, "height": 48, "terrainType": "green_block" },
     { "x": 800, "y": 250, "width": 144, "height": 48, "terrainType": "orange_dirt" },
-    { "x": 1000, "y": 150, "width": 144, "height": 48, "terrainType": "red_brick" }
+    { "x": 1000, "y": 150, "width": 144, "height": 48, "terrainType": "wood" }
   ],
   "fruits": [
     { "x": 80, "y": 500, "fruitType": "fruit_apple" },

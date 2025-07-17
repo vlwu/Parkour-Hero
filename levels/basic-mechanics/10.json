@@ -7,7 +7,7 @@
     { "x": 0, "y": 400, "width": 96, "height": 48, "terrainType": "dirt" },
     { "x": 200, "y": 500, "width": 96, "height": 48, "terrainType": "stone" },
     { "x": 350, "y": 350, "width": 48, "height": 48, "terrainType": "wood" },
-    { "x": 500, "y": 150, "width": 144, "height": 48, "terrainType": "red_brick" },
+    { "x": 500, "y": 150, "width": 144, "height": 48, "terrainType": "wood" },
     { "x": 700, "y": 400, "width": 96, "height": 48, "terrainType": "green_block" },
     { "x": 900, "y": 300, "width": 144, "height": 48, "terrainType": "orange_dirt" },
     { "x": 1100, "y": 200, "width": 96, "height": 48, "terrainType": "pink_dirt" }
