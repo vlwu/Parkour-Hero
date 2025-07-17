@@ -24,6 +24,10 @@
 
   <!-- Character Selection Button -->
   <button id="characterButton" class="character-button" aria-label="Select Character"></button>
+  
+  <!-- Info Button -->
+  <button id="infoButton" class="info-button" aria-label="How to Play"></button>
+
 
   <!-- Settings Modal -->
   <div id="settingsModal" class="modal-overlay hidden">
@@ -88,7 +92,15 @@
           <!-- Level buttons will be dynamically inserted here -->
         </div>
       </div>
-
+    </div>
+  </div>
+  
+  <!-- Info Modal -->
+  <div id="infoModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <button id="closeInfoModalButton" class="close-button" aria-label="Close Info"></button>
+       <h2>Info Section</h2>
+       
       <!-- How to Play -->
       <div class="settings-section">
         <h3>How to Play</h3>
@@ -116,6 +128,7 @@
       </div>
     </div>
   </div>
+
 
   <!-- Character Selection Modal -->
   <div id="characterModal" class="modal-overlay hidden">

@@ -153,15 +153,6 @@ export async function loadAssets() {
     sand_mud_ice: 'assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
     trampoline_idle: 'assets/Traps/Trampoline/Idle.png',
     trampoline_jump: 'assets/Traps/Trampoline/Jump.png',
-    // Menu assets
-    next_level_button: 'assets/Menu/Buttons/Next.png',
-    restart_level_button: 'assets/Menu/Buttons/Restart.png',
-    previous_level_button: 'assets/Menu/Buttons/Previous.png',
-    level_menu_button: 'assets/Menu/Buttons/Levels.png',
-    resume_button: 'assets/Menu/Buttons/Play.png',
-    settings_button: 'assets/Menu/Buttons/Settings.png',
-    character_button: 'assets/Menu/Buttons/Character.png', 
-    how_to_play_button: 'assets/Menu/Buttons/How To Play.png',
     // Other assets
     dust_particle: 'assets/Other/Dust Particle.png',
     ice_particle: 'assets/Traps/Sand Mud Ice/Ice Particle.png',

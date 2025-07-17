@@ -103,6 +103,27 @@ canvas {
   transform: scale(1.1);
 }
 
+/* Info Button */
+.info-button {
+  position: absolute;
+  top: 252px; /* Below Character button */
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background-image: url('assets/Menu/Buttons/Info.png'); 
+  background-size: cover;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 100;
+  border-radius: 10%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease-in-out;
+}
+.info-button:hover {
+  transform: scale(1.1);
+}
+
 /* Modal Overlay */
 .modal-overlay {
   position: fixed;
