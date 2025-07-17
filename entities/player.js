@@ -1,7 +1,7 @@
 // Optimized for performance, robustness, and clarity.
-// Version 2.3 - Fixed cling state, dash event, and redundant physics.
+// Version 2.4 - Physics logic externalized to PhysicsSystem.
 
-const PLAYER_CONSTANTS = {
+export const PLAYER_CONSTANTS = {
   // Dimensions
   WIDTH: 32,
   HEIGHT: 32,
@@ -135,17 +135,14 @@ export class Player {
     this.dashPressed = inputActions.dash;
   }
 
-  update(dt, level = null, inputActions = {}) {
+  // The update method is now only responsible for non-physics updates.
+  update(dt) {
     try {
       const prevState = this.state;
-      this.isAgainstWall = false; // Reset collision flag each frame
-
-      // Core gameplay logic only runs when the player is active.
-      if (!this.isSpawning && !this.isDespawning) {
-        this._updateGameplay(dt, level, inputActions);
-      }
-
-      // State determination and animation updates run every frame for all states.
+      
+      // The PhysicsSystem now handles all gameplay-related movement and state changes.
+      // This method is now only for animations and state determination based on physics results.
+      
       this._determineState();
       this._updateAnimation(dt, prevState);
       this._updateSurfaceSound();
@@ -188,57 +185,7 @@ export class Player {
     this.dashedThisFrame = false;
   }
   
-  handleHorizontalCollision(platforms, prevX) {
-    for (const platform of platforms) {
-      if (!this.isCollidingWith(platform)) continue;
-
-      const fromLeft = prevX + this.width <= platform.x;
-      const fromRight = prevX >= platform.x + platform.width;
-
-      if (fromLeft) this.x = platform.x - this.width;
-      else if (fromRight) this.x = platform.x + platform.width;
-      
-      this.vx = 0;
-      this.isAgainstWall = true;
-
-      if (!this.onGround && this.vy >= 0) {
-        this.state = 'cling';
-        this.vy = 30; 
-        this.jumpCount = 1;
-      }
-      return; 
-    }
-  }
-
-  handleVerticalCollision(platforms, prevY) {
-    const GROUND_TOLERANCE = 1; // Prevent floating-point errors from causing missed ground detection.
-    for (const platform of platforms) {
-      if (!this.isCollidingWith(platform)) continue;
-
-      const hitFromAbove = prevY + this.height <= platform.y + GROUND_TOLERANCE && this.vy >= 0;
-      const hitFromBelow = prevY >= platform.y + platform.height && this.vy < 0;
-
-      if (hitFromAbove) {
-        this.y = platform.y - this.height;
-        this.vy = 0;
-        return platform;
-      }
-      if (hitFromBelow) {
-        this.y = platform.y + platform.height;
-        this.vy = 0; 
-      }
-    }
-    return null;
-  }
-
-  isCollidingWith(other) {
-    return (
-      this.x < other.x + other.width &&
-      this.x + this.width > other.x &&
-      this.y < other.y + other.height &&
-      this.y + this.height > other.y
-    );
-  }
+  // All collision handling methods have been moved to PhysicsSystem.
 
   render(ctx) {
     try {
@@ -309,104 +256,6 @@ export class Player {
   }
 
   // --- Private Helper Methods ---
-
-  _updateGameplay(dt, level, inputActions) {
-    this._updateTimers(dt);
-
-    const prevX = this.x;
-    const prevY = this.y;
-
-    if (this.isDashing) {
-      this.dashTimer -= dt;
-      if (this.dashTimer <= 0) {
-        this.isDashing = false;
-        this.vx = 0;
-      }
-    }
-
-    // Jump logic
-    if (this.jumpBufferTimer > 0 && (this.onGround || this.coyoteTimer > 0)) {
-      let jumpForce = PLAYER_CONSTANTS.JUMP_FORCE;
-      if (this.groundType === 'mud') {
-        jumpForce *= PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER;
-      }
-      this.vy = -jumpForce;
-      this.jumpCount = 1;
-      this.onGround = false;
-      this.jumpBufferTimer = 0;
-      this.coyoteTimer = 0;
-      this.jumpedThisFrame = 1;
-    }
-
-    // Horizontal movement physics
-    if (!this.isDashing) {
-      if (this.isOnIce) {
-        if (inputActions.moveLeft) {
-          this.vx -= PLAYER_CONSTANTS.ICE_ACCELERATION * dt;
-        } else if (inputActions.moveRight) {
-          this.vx += PLAYER_CONSTANTS.ICE_ACCELERATION * dt;
-        } else { // Apply friction
-          if (this.vx > 0) {
-            this.vx = Math.max(0, this.vx - PLAYER_CONSTANTS.ICE_FRICTION * dt);
-          } else if (this.vx < 0) {
-            this.vx = Math.min(0, this.vx + PLAYER_CONSTANTS.ICE_FRICTION * dt);
-          }
-        }
-        this.vx = Math.max(-PLAYER_CONSTANTS.MOVE_SPEED, Math.min(PLAYER_CONSTANTS.MOVE_SPEED, this.vx));
-      } else { // Standard movement
-        const moveSpeed = (this.groundType === 'sand')
-          ? PLAYER_CONSTANTS.MOVE_SPEED * PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER
-          : PLAYER_CONSTANTS.MOVE_SPEED;
-        if (inputActions.moveLeft) {
-          this.vx = -moveSpeed;
-        } else if (inputActions.moveRight) {
-          this.vx = moveSpeed;
-        } else {
-          this.vx = 0;
-        }
-      }
-    }
-
-    // Vertical movement (gravity)
-    if (!this.isDashing) this.vy += PLAYER_CONSTANTS.GRAVITY * dt;
-    this.vy = Math.min(this.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
-
-    // Apply horizontal velocity and check for collisions
-    this.x += this.vx * dt;
-    if (level) {
-        const potentialColliders = level.grid.query(this.x, this.y, this.width, this.height)
-            .filter(obj => obj.type === 'platform');
-        this.handleHorizontalCollision(potentialColliders, prevX);
-    }
-
-    // Apply vertical velocity and check for collisions
-    this.y += this.vy * dt;
-    let groundPlatform = null;
-    if (level) {
-        const potentialColliders = level.grid.query(this.x, this.y, this.width, this.height)
-            .filter(obj => obj.type === 'platform');
-        groundPlatform = this.handleVerticalCollision(potentialColliders, prevY);
-    }
-
-    // Update ground state
-    this.onGround = !!groundPlatform;
-    this.groundType = this.onGround ? groundPlatform.terrainType : null;
-    this.isOnIce = this.groundType === 'ice';
-
-    if (this.onGround) {
-      this.jumpCount = 0;
-      this.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
-    }
-
-    // Level bounds and death plane
-    if (level && this.y > level.height + 50) {
-      if (!this.needsRespawn) {
-        this.deathCount++;
-        this.needsRespawn = true;
-      }
-    }
-    this.x = Math.max(0, Math.min(this.x, level.width - this.width));
-  }
 
   _updateTimers(dt) {
     if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= dt;

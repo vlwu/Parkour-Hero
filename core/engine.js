@@ -5,7 +5,7 @@ import { Camera } from './camera.js';
 import { SoundManager } from './sound.js';
 import { HUD } from '../ui/hud.js';
 import { GameState } from './game-state.js';
-import { CollisionSystem } from './physics-system.js';
+import { PhysicsSystem } from './physics-system.js'; // IMPORT a PhysicsSystem now
 import { Renderer } from './renderer.js';
 
 export class Engine {
@@ -28,7 +28,7 @@ export class Engine {
     this.hud = new HUD(canvas);
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
-    this.collisionSystem = new CollisionSystem();
+    this.physicsSystem = new PhysicsSystem(); // INSTANTIATE PhysicsSystem
     this.renderer = new Renderer(ctx, canvas, assets);
 
     this.levelStartTime = 0;
@@ -164,6 +164,9 @@ export class Engine {
         this.levelTime = (performance.now() - this.levelStartTime) / 1000;
       }
 
+      // --- NEW UPDATE ORDER ---
+
+      // 1. GATHER INPUT
       const inputActions = {
         moveLeft: this.keys[this.keybinds.moveLeft] || false,
         moveRight: this.keys[this.keybinds.moveRight] || false,
@@ -171,9 +174,21 @@ export class Engine {
         dash: this.keys[this.keybinds.dash] || false,
       };
 
+      // 2. PROCESS INPUT: Player determines its intent based on raw input.
       this.player.handleInput(inputActions);
-      this.player.update(dt, this.currentLevel, inputActions);
       
+      // 3. APPLY PHYSICS: The PhysicsSystem moves the player and resolves all collisions.
+      const collisionResults = this.physicsSystem.update(
+        this.player,
+        this.currentLevel,
+        dt,
+        inputActions
+      );
+
+      // 4. UPDATE ENTITY STATE: Player updates its animation/state based on the results of the physics step.
+      this.player.update(dt);
+      
+      // 5. PROCESS EVENTS & COLLISION RESULTS
       this.processPlayerEvents();
       this.updateParticles(dt);
       
@@ -214,11 +229,6 @@ export class Engine {
         }
       }
       this.collectedFruits = this.collectedFruits.filter(f => !f.done);
-      
-      const collisionResults = this.collisionSystem.update(
-        this.player,
-        this.currentLevel
-      );
 
       if (collisionResults.newlyCollectedFruits.length > 0) {
         for (const fruit of collisionResults.newlyCollectedFruits) {
