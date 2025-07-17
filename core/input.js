@@ -84,4 +84,8 @@ export class InputManager {
       this.engine.keys[e.key.toLowerCase()] = false;
     }
   }
+
+  handleCanvasClick(e) {
+    // This method is required to prevent a startup error, but currently has no specific functionality.
+  }
 }

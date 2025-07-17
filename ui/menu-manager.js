@@ -124,7 +124,6 @@ export class MenuManager {
     // Pause Modal listeners
     this.pauseResumeButton.addEventListener('click', () => this.togglePauseModal());
     this.pauseRestartButton.addEventListener('click', () => {
-      this.togglePauseModal();
       eventBus.publish('requestLevelRestart');
     });
     this.pauseMainMenuButton.addEventListener('click', () => {
@@ -168,10 +167,7 @@ export class MenuManager {
       const isOpen = !modalElement.classList.contains('hidden');
 
       if (isOpen) {
-          if (!anyModalWasOpen) {
-              // This is the first modal being opened
-              eventBus.publish('menuOpened');
-          }
+          if (!anyModalWasOpen) eventBus.publish('menuOpened');
           this.isPausedForMenu = true;
           if (this.isGameRunning) {
               eventBus.publish('gamePaused');
@@ -179,7 +175,6 @@ export class MenuManager {
           if (onOpen) onOpen();
       } else if (wasOpen) {
           if (!this.isModalOpen()) {
-              // This was the last modal to close
               eventBus.publish('allMenusClosed');
               this.isPausedForMenu = false;
               if (!this.isGameRunning && !this.gameState.showingLevelComplete) {
@@ -188,7 +183,6 @@ export class MenuManager {
           }
           if (onClose) onClose();
       }
-      this.updatePauseButtonIcon();
   }
 
   toggleSettingsModal() {
@@ -228,7 +222,8 @@ export class MenuManager {
   }
 
   togglePauseModal() {
-      this._toggleModal(this.pauseModal);
+      this.pauseModal.classList.toggle('hidden');
+      eventBus.publish('requestPauseToggle');
   }
   
   showLevelCompleteScreen(deaths, time) {
