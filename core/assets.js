@@ -146,6 +146,7 @@ export async function loadAssets() {
     checkpoint_active: 'assets/Items/Checkpoints/Checkpoint/Checkpoint (Flag Idle).png',
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
     // Traps
+    spike: 'assets/Traps/Spikes/Two.png',
     fire_off: 'assets/Traps/Fire/off.png',
     fire_hit: 'assets/Traps/Fire/hit.png',
     fire_on: 'assets/Traps/Fire/on.png',
