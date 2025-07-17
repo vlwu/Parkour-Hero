@@ -68,7 +68,9 @@ export class PhysicsSystem {
     }
 
     // Vertical movement (gravity)
-    if (!player.isDashing) player.vy += PLAYER_CONSTANTS.GRAVITY * dt;
+    if (!player.isDashing && !player.isSpawning && !player.isDespawning) {
+      player.vy += PLAYER_CONSTANTS.GRAVITY * dt;
+    }
     player.vy = Math.min(player.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
 
 
