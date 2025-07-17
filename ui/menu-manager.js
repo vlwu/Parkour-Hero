@@ -11,16 +11,19 @@ export class MenuManager {
     this.characterModal = document.getElementById('characterModal');
     this.pauseModal = document.getElementById('pauseModal');
     this.levelCompleteModal = document.getElementById('levelCompleteModal');
+    this.infoModal = document.getElementById('infoModal');
 
     this.settingsButton = document.getElementById('settingsButton');
     this.pauseButton = document.getElementById('pauseButton');
     this.levelsMenuButton = document.getElementById('levelsMenuButton');
     this.characterButton = document.getElementById('characterButton');
+    this.infoButton = document.getElementById('infoButton');
 
     // Modal Close Buttons
     this.closeSettingsModalButton = document.getElementById('closeModalButton');
     this.closeLevelsMenuButton = document.getElementById('closeLevelsMenuButton');
     this.closeCharacterModalButton = document.getElementById('closeCharacterModalButton');
+    this.closeInfoModalButton = document.getElementById('closeInfoModalButton');
 
     // Settings
     this.keybindInputs = document.querySelectorAll('.keybind-item input');
@@ -63,11 +66,13 @@ export class MenuManager {
     this.pauseButton.addEventListener('click', () => this.togglePauseModal());
     this.levelsMenuButton.addEventListener('click', () => this.toggleLevelsMenuModal());
     this.characterButton.addEventListener('click', () => this.toggleCharacterModal());
+    this.infoButton.addEventListener('click', () => this.toggleInfoModal());
 
     // Modal close buttons
     this.closeSettingsModalButton.addEventListener('click', () => this.toggleSettingsModal());
     this.closeLevelsMenuButton.addEventListener('click', () => this.toggleLevelsMenuModal());
     this.closeCharacterModalButton.addEventListener('click', () => this.toggleCharacterModal());
+    this.closeInfoModalButton.addEventListener('click', () => this.toggleInfoModal());
 
     // Settings listeners
     this.setupSoundSettingsListeners();
@@ -98,7 +103,8 @@ export class MenuManager {
            !this.levelsMenuModal.classList.contains('hidden') ||
            !this.characterModal.classList.contains('hidden') ||
            !this.pauseModal.classList.contains('hidden') ||
-           !this.levelCompleteModal.classList.contains('hidden');
+           !this.levelCompleteModal.classList.contains('hidden') ||
+           !this.infoModal.classList.contains('hidden');
   }
 
   isLevelsMenuOpen() {
@@ -138,6 +144,11 @@ export class MenuManager {
   toggleLevelsMenuModal() {
       this._toggleModal(this.levelsMenuModal, () => {
           this.populateLevelMenu();
+      });
+  }
+
+  toggleInfoModal() {
+      this._toggleModal(this.infoModal, () => {
           this.updateHowToPlayKeyDisplays();
       });
   }
