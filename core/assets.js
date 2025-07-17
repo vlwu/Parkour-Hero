@@ -146,7 +146,7 @@ export async function loadAssets() {
     checkpoint_active: 'assets/Items/Checkpoints/Checkpoint/Checkpoint (Flag Idle).png',
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
     // Traps
-    spike: 'assets/Traps/Spikes/Two.png',
+    spike_two: 'assets/Traps/Spikes/Two.png',
     fire_off: 'assets/Traps/Fire/off.png',
     fire_hit: 'assets/Traps/Fire/hit.png',
     fire_on: 'assets/Traps/Fire/on.png',
@@ -176,6 +176,9 @@ export async function loadAssets() {
     death_sound: 'assets/Sounds/Death.mp3',
     dash: 'assets/Sounds/Whoosh.mp3',
     checkpoint_activated: 'assets/Sounds/Checkpoint (Activation).mp3',
+    sand_walk: 'assets/Sounds/Sand Walk.mp3',
+    mud_run: 'assets/Sounds/Mud Run.mp3',
+    ice_run: 'assets/Sounds/Ice Run.mp3',
   };
 
   console.log('Starting asset loading...');

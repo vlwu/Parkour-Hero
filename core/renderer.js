@@ -4,18 +4,9 @@ export class Renderer {
     this.ctx = ctx;
     this.canvas = canvas;
     this.assets = assets;
-    // Optimization: Cache for pre-rendered static level backgrounds.
-    // This avoids redrawing the tiled background every frame.
     this.backgroundCanvasCache = new Map();
   }
 
-  /**
-   * Creates a full-sized canvas with the tiled background pre-drawn onto it.
-   * This canvas is cached to be reused across frames, avoiding expensive re-tiling.
-   * @param {object} level - The level object containing dimensions and background info.
-   * @returns {HTMLCanvasElement} The pre-rendered background canvas.
-   * @private
-   */
   _preRenderBackground(level) {
     const bgKey = level.background;
     // Return the cached canvas if it already exists.
@@ -80,8 +71,6 @@ export class Renderer {
     const backgroundCanvas = this._preRenderBackground(level);
     this.ctx.drawImage(backgroundCanvas, 0, 0);
 
-    // Render all dynamic and interactive elements on top of the background.
-    // The order is critical for correct visual layering.
     level.render(this.ctx, this.assets, camera); // Renders platforms and trophy.
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
@@ -91,8 +80,6 @@ export class Renderer {
 
     camera.restore(this.ctx);
   }
-
-  // The original drawBackground method is now obsolete and has been replaced by the caching system.
 
   // The 'fruits' array is now pre-filtered to only contain active fruits.
   drawFruits(fruits, camera) {
