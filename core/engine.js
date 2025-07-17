@@ -155,6 +155,7 @@ export class Engine {
   togglePause() {
     if (this.isRunning) {
       this.pause();
+      eventBus.publish('gamePaused');
     } else {
       this.resume();
     }
