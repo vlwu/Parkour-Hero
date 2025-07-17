@@ -1,5 +1,5 @@
 // Optimized for performance, robustness, and clarity.
-// Version 2.4 - Physics logic externalized to PhysicsSystem.
+// Version 2.5 - FSM implemented, constants reintegrated.
 
 export const PLAYER_CONSTANTS = {
   // Dimensions
@@ -46,6 +46,102 @@ export const PLAYER_CONSTANTS = {
   }
 };
 
+// --- FINITE STATE MACHINE (FSM) ---
+
+class State {
+  constructor(name) { this.name = name; }
+  enter(player) {}
+  exit(player) {}
+  update(player, dt) {}
+}
+
+class IdleState extends State {
+  constructor() { super('idle'); }
+  update(player) {
+    if (player.isDashing) { return player.transitionTo('dash'); }
+    if (!player.onGround) { return player.transitionTo('fall'); }
+    if (player.jumpBufferTimer > 0) { return player.transitionTo('jump'); }
+    if (Math.abs(player.vx) > 1) { return player.transitionTo('run'); }
+  }
+}
+
+class RunState extends State {
+  constructor() { super('run'); }
+  update(player) {
+    if (player.isDashing) { return player.transitionTo('dash'); }
+    if (!player.onGround) { return player.transitionTo('fall'); }
+    if (player.jumpBufferTimer > 0) { return player.transitionTo('jump'); }
+    if (Math.abs(player.vx) < 1) { return player.transitionTo('idle'); }
+  }
+}
+
+class JumpState extends State {
+  constructor() { super('jump'); }
+  update(player) {
+    if (player.isDashing) { return player.transitionTo('dash'); }
+    if (player.jumpCount === 2) { return player.transitionTo('double_jump'); }
+    if (player.vy >= 0) { return player.transitionTo('fall'); }
+    if (player.isAgainstWall) { return player.transitionTo('cling'); }
+  }
+}
+
+class DoubleJumpState extends State {
+    constructor() { super('double_jump'); }
+    update(player) {
+        if (player.isDashing) { return player.transitionTo('dash'); }
+        if (player.vy >= 0) { return player.transitionTo('fall'); }
+        if (player.isAgainstWall) { return player.transitionTo('cling'); }
+    }
+}
+
+class FallState extends State {
+  constructor() { super('fall'); }
+  update(player) {
+    if (player.isDashing) { return player.transitionTo('dash'); }
+    if (player.onGround) { return player.transitionTo('idle'); }
+    if (player.jumpCount === 2) { return player.transitionTo('double_jump'); }
+    if (player.isAgainstWall) { return player.transitionTo('cling'); }
+  }
+}
+
+class DashState extends State {
+  constructor() { super('dash'); }
+  update(player) {
+    if (!player.isDashing) {
+      player.transitionTo(player.onGround ? 'idle' : 'fall');
+    }
+  }
+}
+
+class ClingState extends State {
+  constructor() { super('cling'); }
+  enter(player) {
+    player.jumpCount = 1; // Wall jumps are re-enabled upon clinging
+  }
+  update(player) {
+    if (player.jumpBufferTimer > 0) { return player.transitionTo('jump'); }
+    if (player.onGround) { return player.transitionTo('idle'); }
+    if (!player.isAgainstWall) { return player.transitionTo('fall'); }
+  }
+}
+
+class SpawnState extends State {
+  constructor() { super('spawn'); }
+  update(player) {
+    if (player.spawnComplete) {
+      player.transitionTo('idle');
+    }
+  }
+}
+
+class DespawnState extends State {
+  constructor() { super('despawn'); }
+  enter(player) {
+    player.vx = 0;
+    player.vy = 0;
+  }
+}
+
 export class Player {
   constructor(x, y, assets, characterId) {
     this.x = x;
@@ -63,15 +159,27 @@ export class Player {
     this.jumpCount = 0;
     this.jumpPressed = false;
     this.direction = 'right';
-    this.state = 'idle';
     this.assets = assets;
     this.characterId = characterId || 'PinkMan';
     this.onGround = false;
-    this.groundType = null; // e.g., 'dirt', 'sand', 'ice'
+    this.groundType = null;
     this.isOnIce = false;
     this.isAgainstWall = false;
 
-    // State flags
+    this.state = 'idle'; // Maintained for compatibility
+    this.currentState = null;
+    this.states = {
+      idle: new IdleState(),
+      run: new RunState(),
+      jump: new JumpState(),
+      double_jump: new DoubleJumpState(),
+      fall: new FallState(),
+      dash: new DashState(),
+      cling: new ClingState(),
+      spawn: new SpawnState(),
+      despawn: new DespawnState(),
+    };
+
     this.isSpawning = true;
     this.spawnComplete = false;
     this.isDespawning = false;
@@ -81,7 +189,6 @@ export class Player {
     this.jumpedThisFrame = 0;
     this.dashedThisFrame = false;
 
-    // Timers
     this.coyoteTimer = 0;
     this.jumpBufferTimer = 0;
     this.dashTimer = 0;
@@ -89,11 +196,31 @@ export class Player {
     this.animationTimer = 0;
     this.animationFrame = 0;
 
-    // Sound control
     this.soundEvents = [];
     this.activeSurfaceSound = null;
 
+    this.transitionTo(this.isSpawning ? 'spawn' : 'idle');
     console.log('Player initialized at:', x, y);
+  }
+
+  transitionTo(newStateName) {
+    if (this.currentState && this.currentState.name === newStateName) return;
+    
+    const oldState = this.currentState;
+    if (oldState) {
+        oldState.exit(this);
+    }
+
+    this.currentState = this.states[newStateName];
+    const oldStateName = this.state;
+    this.state = newStateName;
+
+    if (this.state !== oldStateName) {
+        this.animationFrame = 0;
+        this.animationTimer = 0;
+    }
+    
+    this.currentState.enter(this);
   }
 
   handleInput(inputActions) {
@@ -102,28 +229,22 @@ export class Player {
       return;
     }
 
-    // Horizontal direction
-    if (inputActions.moveLeft) {
-      this.direction = 'left';
-    } else if (inputActions.moveRight) {
-      this.direction = 'right';
-    }
+    if (inputActions.moveLeft) this.direction = 'left';
+    else if (inputActions.moveRight) this.direction = 'right';
 
-    // Buffer jump input
     if (inputActions.jump) {
       this.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
     }
 
-    // Double jump (requires a new press while airborne)
     if (inputActions.jump && !this.jumpPressed && this.jumpCount === 1 && !this.onGround) {
       this.vy = -PLAYER_CONSTANTS.JUMP_FORCE;
       this.jumpCount = 2;
       this.jumpBufferTimer = 0;
-      this.jumpedThisFrame = 2; // Set flag for double jump sound/effect
+      this.jumpedThisFrame = 2;
+      this.transitionTo('double_jump');
     }
     this.jumpPressed = inputActions.jump;
 
-    // Dash (requires a new press and cooldown)
     if (inputActions.dash && !this.dashPressed && this.dashCooldownTimer <= 0) {
       this.isDashing = true;
       this.dashTimer = PLAYER_CONSTANTS.DASH_DURATION;
@@ -131,22 +252,16 @@ export class Player {
       this.vy = 0;
       this.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN;
       this.dashedThisFrame = true;
+      this.transitionTo('dash');
     }
     this.dashPressed = inputActions.dash;
   }
 
-  // The update method is now only responsible for non-physics updates.
   update(dt) {
     try {
-      const prevState = this.state;
-      
-      // The PhysicsSystem now handles all gameplay-related movement and state changes.
-      // This method is now only for animations and state determination based on physics results.
-      
-      this._determineState();
-      this._updateAnimation(dt, prevState);
+      this.currentState.update(this, dt);
+      this._updateAnimation(dt);
       this._updateSurfaceSound();
-
     } catch (error) {
       console.error('Error in player update:', error);
     }
@@ -155,11 +270,9 @@ export class Player {
   startDespawn() {
     this.isDespawning = true;
     this.despawnAnimationFinished = false;
-    this.animationFrame = 0;
-    this.animationTimer = 0;
-    this.vx = this.vy = 0;
+    this.transitionTo('despawn');
   }
-  
+
   respawn(startPosition) {
     this.x = startPosition.x;
     this.y = startPosition.y;
@@ -179,13 +292,10 @@ export class Player {
     this.spawnComplete = false;
     this.isDespawning = false;
     this.despawnAnimationFinished = false;
-    this.animationFrame = 0;
-    this.animationTimer = 0;
     this.jumpedThisFrame = 0;
     this.dashedThisFrame = false;
+    this.transitionTo('spawn');
   }
-  
-  // All collision handling methods have been moved to PhysicsSystem.
 
   render(ctx) {
     try {
@@ -233,7 +343,7 @@ export class Player {
       this.renderFallback(ctx);
     }
   }
-  
+
   getSpriteKey() {
     const stateToSpriteMap = {
       idle: 'playerIdle', run: 'playerRun', jump: 'playerJump',
@@ -255,43 +365,15 @@ export class Player {
     return events;
   }
 
-  // --- Private Helper Methods ---
-
   _updateTimers(dt) {
     if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= dt;
     if (this.coyoteTimer > 0) this.coyoteTimer -= dt;
     if (this.dashCooldownTimer > 0) this.dashCooldownTimer -= dt;
   }
 
-  _determineState() {
-    if (this.isDespawning) { this.state = 'despawn'; return; }
-    if (this.isSpawning) { this.state = 'spawn'; return; }
-    if (this.isDashing) { this.state = 'dash'; return; }
-    
-    // Exit cling state if not against a wall or if on the ground
-    if (this.state === 'cling' && (!this.isAgainstWall || this.onGround)) {
-      this.state = 'fall';
-    }
-    
-    if (!this.onGround && this.state !== 'cling') {
-      if (this.vy < 0) this.state = this.jumpCount === 2 ? 'double_jump' : 'jump';
-      else this.state = 'fall';
-      return;
-    }
-
-    if (this.onGround) {
-      this.state = Math.abs(this.vx) < 1 ? 'idle' : 'run';
-    }
-  }
-
-  _updateAnimation(dt, prevState) {
-    if (this.state !== prevState) {
-      this.animationFrame = 0;
-      this.animationTimer = 0;
-    }
-
+  _updateAnimation(dt) {
     this.animationTimer += dt;
-    const speed = (this.state === 'spawn') 
+    const speed = (this.state === 'spawn' || this.state === 'despawn') 
         ? PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED 
         : PLAYER_CONSTANTS.ANIMATION_SPEED;
 
@@ -304,7 +386,7 @@ export class Player {
     const isOneShot = this.state === 'spawn' || this.state === 'despawn';
     if (isOneShot) {
       if (this.animationFrame >= frameCount) {
-        this.animationFrame = frameCount - 1; // Clamp to the last frame
+        this.animationFrame = frameCount - 1;
         if (this.state === 'spawn') {
           this.isSpawning = false;
           this.spawnComplete = true;
@@ -315,7 +397,7 @@ export class Player {
         }
       }
     } else {
-      this.animationFrame %= frameCount; // Loop other animations
+      this.animationFrame %= frameCount;
     }
   }
 
