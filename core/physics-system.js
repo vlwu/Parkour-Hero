@@ -41,7 +41,7 @@ export class PhysicsSystem {
     }
 
     // Horizontal movement physics
-    if (!player.isDashing && !player.isSpawning) {
+    if (!player.isDashing && !player.isSpawning && !player.isDespawning) {
       if (player.isOnIce) {
         if (inputActions.moveLeft) {
           player.vx -= PLAYER_CONSTANTS.ICE_ACCELERATION * dt;

@@ -109,7 +109,7 @@ export class MenuManager {
   _setupEventListeners() {
     // Top-level UI buttons
     this.settingsButton.addEventListener('click', () => this.toggleSettingsModal());
-    this.pauseButton.addEventListener('click', () => eventBus.publish('requestPauseToggle'));
+    this.pauseButton.addEventListener('click', () => eventBus.publish('pauseModalRequested'));
     this.levelsMenuButton.addEventListener('click', () => this.toggleLevelsMenuModal());
     this.characterButton.addEventListener('click', () => this.toggleCharacterModal());
     this.infoButton.addEventListener('click', () => this.toggleInfoModal());
