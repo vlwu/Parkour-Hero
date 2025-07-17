@@ -145,6 +145,13 @@ export async function loadAssets() {
     checkpoint_activation: 'assets/Items/Checkpoints/Checkpoint/Checkpoint (Flag Out).png',
     checkpoint_active: 'assets/Items/Checkpoints/Checkpoint/Checkpoint (Flag Idle).png',
     trophy: 'assets/Items/Checkpoints/End/End (Pressed).png',
+    // Traps
+    fire_off: 'assets/Traps/Fire/off.png',
+    fire_hit: 'assets/Traps/Fire/hit.png',
+    fire_on: 'assets/Traps/Fire/on.png',
+    sand_mud_ice: 'assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
+    trampoline_idle: 'assets/Traps/Trampoline/Idle.png',
+    trampoline_jump: 'assets/Traps/Trampoline/Jump.png',
     // Menu assets
     next_level_button: 'assets/Menu/Buttons/Next.png',
     restart_level_button: 'assets/Menu/Buttons/Restart.png',
@@ -155,6 +162,9 @@ export async function loadAssets() {
     character_button: 'assets/Menu/Buttons/Character.png', // New button asset
     // Other assets
     dust_particle: 'assets/Other/Dust Particle.png',
+    ice_particle: 'assets/Traps/Sand Mud Ice/Ice Particle.png',
+    sand_particle: 'assets/Traps/Sand Mud Ice/Sand Particle.png',
+    mud_particle: 'assets/Traps/Sand Mud Ice/Mud Particle.png',
   };
 
   const soundPaths = {
