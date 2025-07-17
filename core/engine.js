@@ -48,7 +48,6 @@ export class Engine {
     this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
     this.camera.snapToPlayer(this.player);
 
-    this.wasDashPressed = false;
     this.particles = [];
   }
   
@@ -153,7 +152,6 @@ export class Engine {
         this.levelTime = (performance.now() - this.levelStartTime) / 1000;
       }
 
-      // Update cooldown timers
       const inputActions = {
         moveLeft: this.keys[this.keybinds.moveLeft] || false,
         moveRight: this.keys[this.keybinds.moveRight] || false,
@@ -161,25 +159,12 @@ export class Engine {
         dash: this.keys[this.keybinds.dash] || false,
       };
 
-      const dashJustPressed = inputActions.dash && !this.wasDashPressed;
-      this.wasDashPressed = inputActions.dash;
-      if (dashJustPressed && !this.player.isDashing && this.player.dashCooldownTimer <= 0) {
-        this.soundManager.play('dash', 0.7);
-        this.createDustParticles(this.player.getCenterX(), this.player.getCenterY(), 'dash', this.player.direction);
-      }
-
       this.player.handleInput(inputActions);
-      this.player.update(dt, this.currentLevel);
+      this.player.update(dt, this.currentLevel, inputActions);
+      
+      this.processPlayerEvents();
       this.updateParticles(dt);
-
-      if (this.player.jumpedThisFrame === 1) {
-        this.soundManager.play('jump', 0.8);
-      } else if (this.player.jumpedThisFrame === 2) {
-          this.soundManager.play('double_jump', 0.6);
-          this.createDustParticles(this.player.getCenterX(), this.player.y + this.player.height, 'double_jump');
-      }
-      this.player.jumpedThisFrame = 0; // Reset flag after checking
-
+      
       this.camera.update(this.player, dt);
 
       if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
@@ -193,7 +178,6 @@ export class Engine {
             this.currentLevel.fruits.forEach(f => f.collected = false);
         }
 
-        // After resetting the fruit 'collected' flags, we must synchronize the count.
         this.currentLevel.recalculateCollectedFruits();
 
         this.player.respawn(respawnPosition);
@@ -270,6 +254,35 @@ export class Engine {
 
     } catch (error) {
       console.error('Error in update loop:', error);
+    }
+  }
+
+  processPlayerEvents() {
+    // Process sound events emitted by the player (e.g., surface sounds)
+    const soundEvents = this.player.getAndClearSoundEvents();
+    for (const event of soundEvents) {
+      if (event.type === 'playLoop') {
+        this.soundManager.playLoop(event.key);
+      } else if (event.type === 'stopLoop') {
+        this.soundManager.stopLoop(event.key);
+      }
+    }
+
+    // Process action events for one-shot sounds and particles
+    if (this.player.dashedThisFrame) {
+      this.soundManager.play('dash', 0.7);
+      this.createDustParticles(this.player.getCenterX(), this.player.getCenterY(), 'dash', this.player.direction);
+      this.player.dashedThisFrame = false; // Reset flag
+    }
+
+    if (this.player.jumpedThisFrame > 0) {
+      if (this.player.jumpedThisFrame === 1) {
+        this.soundManager.play('jump', 0.8);
+      } else if (this.player.jumpedThisFrame === 2) {
+        this.soundManager.play('double_jump', 0.6);
+        this.createDustParticles(this.player.getCenterX(), this.player.y + this.player.height, 'double_jump');
+      }
+      this.player.jumpedThisFrame = 0; // Reset flag
     }
   }
 

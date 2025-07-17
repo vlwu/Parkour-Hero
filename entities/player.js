@@ -1,5 +1,5 @@
 // Optimized for performance, robustness, and clarity.
-// Version 2.1 - Corrected regressions from previous optimization.
+// Version 2.3 - Fixed cling state, dash event, and redundant physics.
 
 const PLAYER_CONSTANTS = {
   // Dimensions
@@ -23,6 +23,12 @@ const PLAYER_CONSTANTS = {
   // Timers
   COYOTE_TIME: 0.1,     // seconds
   JUMP_BUFFER_TIME: 0.15, // seconds
+
+  // Surface Modifiers
+  SAND_MOVE_MULTIPLIER: 0.5,
+  MUD_JUMP_MULTIPLIER: 0.6,
+  ICE_ACCELERATION: 800,
+  ICE_FRICTION: 400,
 
   // Animation
   ANIMATION_SPEED: 0.05,
@@ -61,6 +67,9 @@ export class Player {
     this.assets = assets;
     this.characterId = characterId || 'PinkMan';
     this.onGround = false;
+    this.groundType = null; // e.g., 'dirt', 'sand', 'ice'
+    this.isOnIce = false;
+    this.isAgainstWall = false;
 
     // State flags
     this.isSpawning = true;
@@ -69,7 +78,8 @@ export class Player {
     this.despawnAnimationFinished = false;
     this.isDashing = false;
     this.dashPressed = false;
-    this.jumpedThisFrame = 0; // 0: no, 1: first jump, 2: double jump. Restored for engine integration.
+    this.jumpedThisFrame = 0;
+    this.dashedThisFrame = false;
 
     // Timers
     this.coyoteTimer = 0;
@@ -78,6 +88,10 @@ export class Player {
     this.dashCooldownTimer = 0;
     this.animationTimer = 0;
     this.animationFrame = 0;
+
+    // Sound control
+    this.soundEvents = [];
+    this.activeSurfaceSound = null;
 
     console.log('Player initialized at:', x, y);
   }
@@ -88,15 +102,11 @@ export class Player {
       return;
     }
 
-    // Horizontal movement
+    // Horizontal direction
     if (inputActions.moveLeft) {
-      this.vx = -PLAYER_CONSTANTS.MOVE_SPEED;
       this.direction = 'left';
     } else if (inputActions.moveRight) {
-      this.vx = PLAYER_CONSTANTS.MOVE_SPEED;
       this.direction = 'right';
-    } else {
-      this.vx = 0;
     }
 
     // Buffer jump input
@@ -120,22 +130,25 @@ export class Player {
       this.vx = this.direction === 'right' ? PLAYER_CONSTANTS.DASH_SPEED : -PLAYER_CONSTANTS.DASH_SPEED;
       this.vy = 0;
       this.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN;
+      this.dashedThisFrame = true;
     }
     this.dashPressed = inputActions.dash;
   }
 
-  update(dt, level = null) {
+  update(dt, level = null, inputActions = {}) {
     try {
       const prevState = this.state;
+      this.isAgainstWall = false; // Reset collision flag each frame
 
       // Core gameplay logic only runs when the player is active.
       if (!this.isSpawning && !this.isDespawning) {
-        this._updateGameplay(dt, level);
+        this._updateGameplay(dt, level, inputActions);
       }
 
       // State determination and animation updates run every frame for all states.
       this._determineState();
       this._updateAnimation(dt, prevState);
+      this._updateSurfaceSound();
 
     } catch (error) {
       console.error('Error in player update:', error);
@@ -158,6 +171,9 @@ export class Player {
     this.jumpCount = 0;
     this.jumpPressed = false;
     this.onGround = false;
+    this.groundType = null;
+    this.isOnIce = false;
+    this.isAgainstWall = false;
     this.isDashing = false;
     this.dashTimer = 0;
     this.dashCooldownTimer = 0;
@@ -169,6 +185,7 @@ export class Player {
     this.animationFrame = 0;
     this.animationTimer = 0;
     this.jumpedThisFrame = 0;
+    this.dashedThisFrame = false;
   }
   
   handleHorizontalCollision(platforms, prevX) {
@@ -182,6 +199,7 @@ export class Player {
       else if (fromRight) this.x = platform.x + platform.width;
       
       this.vx = 0;
+      this.isAgainstWall = true;
 
       if (!this.onGround && this.vy >= 0) {
         this.state = 'cling';
@@ -202,14 +220,14 @@ export class Player {
       if (hitFromAbove) {
         this.y = platform.y - this.height;
         this.vy = 0;
-        return true; 
+        return platform;
       }
       if (hitFromBelow) {
         this.y = platform.y + platform.height;
         this.vy = 0; 
       }
     }
-    return false;
+    return null;
   }
 
   isCollidingWith(other) {
@@ -283,9 +301,15 @@ export class Player {
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 
+  getAndClearSoundEvents() {
+    const events = [...this.soundEvents];
+    this.soundEvents.length = 0;
+    return events;
+  }
+
   // --- Private Helper Methods ---
 
-  _updateGameplay(dt, level) {
+  _updateGameplay(dt, level, inputActions) {
     this._updateTimers(dt);
 
     const prevX = this.x;
@@ -299,18 +323,54 @@ export class Player {
       }
     }
 
+    // Jump logic
     if (this.jumpBufferTimer > 0 && (this.onGround || this.coyoteTimer > 0)) {
-      this.vy = -PLAYER_CONSTANTS.JUMP_FORCE;
+      let jumpForce = PLAYER_CONSTANTS.JUMP_FORCE;
+      if (this.groundType === 'mud') {
+        jumpForce *= PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER;
+      }
+      this.vy = -jumpForce;
       this.jumpCount = 1;
       this.onGround = false;
       this.jumpBufferTimer = 0;
       this.coyoteTimer = 0;
-      this.jumpedThisFrame = 1; // Set flag for jump sound/effect
+      this.jumpedThisFrame = 1;
     }
 
+    // Horizontal movement physics
+    if (!this.isDashing) {
+      if (this.isOnIce) {
+        if (inputActions.moveLeft) {
+          this.vx -= PLAYER_CONSTANTS.ICE_ACCELERATION * dt;
+        } else if (inputActions.moveRight) {
+          this.vx += PLAYER_CONSTANTS.ICE_ACCELERATION * dt;
+        } else { // Apply friction
+          if (this.vx > 0) {
+            this.vx = Math.max(0, this.vx - PLAYER_CONSTANTS.ICE_FRICTION * dt);
+          } else if (this.vx < 0) {
+            this.vx = Math.min(0, this.vx + PLAYER_CONSTANTS.ICE_FRICTION * dt);
+          }
+        }
+        this.vx = Math.max(-PLAYER_CONSTANTS.MOVE_SPEED, Math.min(PLAYER_CONSTANTS.MOVE_SPEED, this.vx));
+      } else { // Standard movement
+        const moveSpeed = (this.groundType === 'sand')
+          ? PLAYER_CONSTANTS.MOVE_SPEED * PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER
+          : PLAYER_CONSTANTS.MOVE_SPEED;
+        if (inputActions.moveLeft) {
+          this.vx = -moveSpeed;
+        } else if (inputActions.moveRight) {
+          this.vx = moveSpeed;
+        } else {
+          this.vx = 0;
+        }
+      }
+    }
+
+    // Vertical movement (gravity)
     if (!this.isDashing) this.vy += PLAYER_CONSTANTS.GRAVITY * dt;
     this.vy = Math.min(this.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
 
+    // Apply horizontal velocity and check for collisions
     this.x += this.vx * dt;
     if (level) {
         const potentialColliders = level.grid.query(this.x, this.y, this.width, this.height)
@@ -318,20 +378,26 @@ export class Player {
         this.handleHorizontalCollision(potentialColliders, prevX);
     }
 
+    // Apply vertical velocity and check for collisions
     this.y += this.vy * dt;
+    let groundPlatform = null;
     if (level) {
         const potentialColliders = level.grid.query(this.x, this.y, this.width, this.height)
             .filter(obj => obj.type === 'platform');
-        this.onGround = this.handleVerticalCollision(potentialColliders, prevY);
-    } else {
-        this.onGround = false;
+        groundPlatform = this.handleVerticalCollision(potentialColliders, prevY);
     }
+
+    // Update ground state
+    this.onGround = !!groundPlatform;
+    this.groundType = this.onGround ? groundPlatform.terrainType : null;
+    this.isOnIce = this.groundType === 'ice';
 
     if (this.onGround) {
       this.jumpCount = 0;
       this.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
     }
 
+    // Level bounds and death plane
     if (level && this.y > level.height + 50) {
       if (!this.needsRespawn) {
         this.deathCount++;
@@ -351,7 +417,9 @@ export class Player {
     if (this.isDespawning) { this.state = 'despawn'; return; }
     if (this.isSpawning) { this.state = 'spawn'; return; }
     if (this.isDashing) { this.state = 'dash'; return; }
-    if (this.state === 'cling' && (this.onGround || this.vx !== 0)) {
+    
+    // Exit cling state if not against a wall or if on the ground
+    if (this.state === 'cling' && (!this.isAgainstWall || this.onGround)) {
       this.state = 'fall';
     }
     
@@ -362,7 +430,7 @@ export class Player {
     }
 
     if (this.onGround) {
-      this.state = this.vx === 0 ? 'idle' : 'run';
+      this.state = Math.abs(this.vx) < 1 ? 'idle' : 'run';
     }
   }
 
@@ -398,6 +466,27 @@ export class Player {
       }
     } else {
       this.animationFrame %= frameCount; // Loop other animations
+    }
+  }
+
+  _updateSurfaceSound() {
+    let requiredSound = null;
+    if (this.onGround && Math.abs(this.vx) > 1 && !this.isDashing) {
+        switch (this.groundType) {
+            case 'sand': requiredSound = 'sand_walk'; break;
+            case 'mud': requiredSound = 'mud_run'; break;
+            case 'ice': requiredSound = 'ice_run'; break;
+        }
+    }
+
+    if (requiredSound !== this.activeSurfaceSound) {
+        if (this.activeSurfaceSound) {
+            this.soundEvents.push({ type: 'stopLoop', key: this.activeSurfaceSound });
+        }
+        if (requiredSound) {
+            this.soundEvents.push({ type: 'playLoop', key: requiredSound });
+        }
+        this.activeSurfaceSound = requiredSound;
     }
   }
   

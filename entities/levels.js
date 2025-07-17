@@ -96,27 +96,32 @@ export const levelSections = [
     name: "Jungle Journey",
     levels: [
       {
-        name: "Level 1: Placeholder",
-        width: 1600, height: 720,
+        name: "Level 1: Slippery Slopes",
+        width: 1800, height: 720,
         startPosition: { x: 100, y: 550 },
         platforms: [
-          { x: 0, y: 600, width: 288, height: 48, terrainType: 'dirt' },
-          { x: 450, y: 550, width: 96, height: 48, terrainType: 'wood' },
-          { x: 700, y: 500, width: 192, height: 48, terrainType: 'stone' },
-          { x: 1100, y: 600, width: 48, height: 48, terrainType: 'wood' },
-          { x: 1250, y: 550, width: 48, height: 48, terrainType: 'wood' },
-          { x: 1400, y: 500, width: 192, height: 48, terrainType: 'dirt' }
+          // Start area
+          { x: 0, y: 600, width: 288, height: 120, terrainType: 'dirt' },
+          // Sand pit
+          { x: 350, y: 650, width: 384, height: 70, terrainType: 'sand' },
+          // Mud slope
+          { x: 800, y: 600, width: 288, height: 120, terrainType: 'mud' },
+          { x: 950, y: 550, width: 192, height: 170, terrainType: 'mud' },
+          // Ice bridge
+          { x: 1250, y: 500, width: 400, height: 48, terrainType: 'ice' },
+          // End platform
+          { x: 1700, y: 450, width: 96, height: 270, terrainType: 'stone' }
         ],
         fruits: [
-          { x: 200, y: 550, fruitType: 'fruit_apple' },
-          { x: 498, y: 500, fruitType: 'fruit_bananas' },
-          { x: 1124, y: 550, fruitType: 'fruit_cherries' },
-          { x: 1274, y: 500, fruitType: 'fruit_kiwi' },
+          { x: 542, y: 600, fruitType: 'fruit_pineapple' },
+          { x: 1046, y: 500, fruitType: 'fruit_orange' },
+          { x: 1450, y: 450, fruitType: 'fruit_strawberry' },
         ],
         checkpoints: [
-          { x: 796, y: 468 } 
+          { x: 896, y: 568 },
+          { x: 1298, y: 468 }
         ],
-        trophy: { x: 1496, y: 484 }
+        trophy: { x: 1748, y: 434 }
       }
     ]
   }

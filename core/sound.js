@@ -1,6 +1,7 @@
 export class SoundManager {
   constructor() {
     this.sounds = {};
+    this.loopingSounds = {}; // To manage active looping sounds
     this.audioContext = null;
     this.audioUnlocked = false;
     this.settings = {
@@ -60,6 +61,37 @@ export class SoundManager {
     }
   }
 
+  async playLoop(soundKey, volumeMultiplier = 1.0) {
+    if (!this.enabled || !this.sounds[soundKey] || this.loopingSounds[soundKey]) {
+      return;
+    }
+    if (!this.audioUnlocked) await this.unlockAudio();
+
+    try {
+      const audio = this.sounds[soundKey].cloneNode(true);
+      audio.volume = Math.max(0, Math.min(1, this.volume * volumeMultiplier));
+      audio.loop = true;
+      await audio.play();
+      this.loopingSounds[soundKey] = audio;
+    } catch (error) {
+      console.error(`Failed to play looping sound ${soundKey}:`, error);
+    }
+  }
+
+  stopLoop(soundKey) {
+    if (this.loopingSounds[soundKey]) {
+      this.loopingSounds[soundKey].pause();
+      this.loopingSounds[soundKey].currentTime = 0;
+      delete this.loopingSounds[soundKey];
+    }
+  }
+
+  stopAllLoops() {
+    for (const soundKey in this.loopingSounds) {
+      this.stopLoop(soundKey);
+    }
+  }
+
   async unlockAudio() {
     if (this.audioUnlocked) return;
 
@@ -92,7 +124,13 @@ export class SoundManager {
   }
 
   stopAll() {
-    Object.keys(this.sounds).forEach(this.stop.bind(this));
+    this.stopAllLoops();
+    Object.values(this.sounds).forEach(sound => {
+        if(sound && !sound.paused) {
+            sound.pause();
+            sound.currentTime = 0;
+        }
+    });
   }
 
   setVolume(volume) {
@@ -102,6 +140,10 @@ export class SoundManager {
         sound.volume = this.volume;
       }
     });
+     // Also update currently playing loops
+    for(const audio of Object.values(this.loopingSounds)) {
+      audio.volume = this.volume;
+    }
     this.saveSettings();
   }
 
@@ -131,6 +173,7 @@ export class SoundManager {
       ...this.getSettings(),
       audioContextState: this.audioContext?.state,
       soundCount: Object.keys(this.sounds).length,
+      loopingNow: Object.keys(this.loopingSounds),
       sounds: Object.keys(this.sounds).map(key => ({
         key,
         ready: this.sounds[key]?.readyState >= 2,

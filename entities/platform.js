@@ -6,17 +6,20 @@ export class Platform {
     this.y = y;
     this.width = width;
     this.height = height;
-    this.terrainType = terrainType; 
+    this.terrainType = terrainType;
     this.type = 'platform'; // Added for spatial grid filtering
 
     // Sprite sheet configuration for terrain tiles
     this.spriteConfig = {
-      dirt: { srcX: 96, srcY: 0 },     
-      stone: { srcX: 0, srcY: 0 },    
-      wood: { srcX: 0, srcY: 64 },     
-      green_block: { srcX: 0, srcY: 128 }, 
-      orange_dirt: { srcX: 96, srcY: 64 }, 
-      pink_dirt: { srcX: 96, srcY: 128 }, 
+      dirt: { srcX: 96, srcY: 0 },
+      stone: { srcX: 0, srcY: 0 },
+      wood: { srcX: 0, srcY: 64 },
+      green_block: { srcX: 0, srcY: 128 },
+      orange_dirt: { srcX: 96, srcY: 64 },
+      pink_dirt: { srcX: 96, srcY: 128 },
+      sand: { srcX: 0, srcY: 0 },   
+      mud: { srcX: 64, srcY: 0 },    
+      ice: { srcX: 128, srcY: 0 },   
     };
 
     this.tileSize = 48; // Size of each tile in the spritesheet
@@ -32,8 +35,8 @@ export class Platform {
 
   // Fast check: is player standing on top of this platform?
   isPlayerOnTop(player) {
-    const pb = player.y + player.height; 
-    const pt = this.y; 
+    const pb = player.y + player.height;
+    const pt = this.y;
 
     if (player.x + player.width <= this.x || player.x >= this.x + this.width) return false; // Early exit if not horizontally aligned
 
@@ -43,7 +46,9 @@ export class Platform {
 
   render(ctx, assets) {
     try {
-      const terrainSprite = assets.block;
+      const terrainSprite = this.terrainType === 'sand' || this.terrainType === 'mud' || this.terrainType === 'ice'
+        ? assets.sand_mud_ice
+        : assets.block;
 
       if (!terrainSprite) {
         this.renderFallback(ctx);
@@ -73,9 +78,12 @@ export class Platform {
   renderFallback(ctx) {
     // Simple colored rectangle fallback
     const colors = {
-      dirt: '#8B4513',    
-      stone: '#696969',   
-      wood: '#D2691E'    
+      dirt: '#8B4513',
+      stone: '#696969',
+      wood: '#D2691E',
+      sand: '#F4A460',
+      mud: '#665A48',
+      ice: '#ADD8E6'
     };
 
     ctx.fillStyle = colors[this.terrainType] || '#808080';
