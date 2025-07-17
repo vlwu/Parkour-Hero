@@ -148,6 +148,7 @@ export class SoundManager {
       audio.volume = this.settings.volume;
     }
     this.saveSettings();
+    eventBus.publish('soundSettingsChanged', { soundEnabled: this.settings.enabled, soundVolume: this.settings.volume });
   }
   
   setEnabled(enabled) {
@@ -156,6 +157,7 @@ export class SoundManager {
       this.stopAll();
     }
     this.saveSettings();
+    eventBus.publish('soundSettingsChanged', { soundEnabled: this.settings.enabled, soundVolume: this.settings.volume });
   }
   
   toggleSound() {

@@ -101,6 +101,9 @@ export class MenuManager {
           if (this.isLevelsMenuOpen()) this.populateLevelMenu();
           if (!this.characterModal.classList.contains('hidden')) this.populateCharacterMenu();
       });
+      eventBus.subscribe('soundSettingsChanged', (settings) => {
+          this.updateSoundSettingsDisplay(settings);
+      });
   }
 
   _setupEventListeners() {
@@ -333,7 +336,6 @@ export class MenuManager {
                   if (this.gameState.currentSection === sectionIndex && this.gameState.currentLevelIndex === levelIndex) button.classList.add('current');
                   button.addEventListener('click', () => {
                       eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
-                      this.toggleLevelsMenuModal();
                   });
               } else {
                   button.classList.add('locked');
@@ -432,6 +434,9 @@ export class MenuManager {
           this.volumeSlider.addEventListener('input', (e) => {
               const volume = parseFloat(e.target.value);
               eventBus.publish('setSoundVolume', { volume });
+              if (this.volumeValue) {
+                  this.volumeValue.textContent = `${Math.round(volume * 100)}%`;
+              }
           });
       }
       if (this.testSoundButton) {

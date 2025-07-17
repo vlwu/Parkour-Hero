@@ -1,5 +1,3 @@
-// core/event-bus.js
-
 class EventBus {
   constructor() {
     this.events = {};

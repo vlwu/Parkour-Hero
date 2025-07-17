@@ -137,6 +137,8 @@ export class Engine {
       return;
     }
 
+    this.pauseForMenu = false;
+
     this.gameState.showingLevelComplete = false;
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
