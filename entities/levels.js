@@ -96,7 +96,7 @@ export const levelSections = [
     name: "Jungle Journey",
     levels: [
       {
-        name: "Level 1: Slippery Slopes",
+        name: "Level 1: Test Level",
         width: 1800, height: 720,
         startPosition: { x: 100, y: 550 },
         platforms: [

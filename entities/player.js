@@ -211,10 +211,11 @@ export class Player {
   }
 
   handleVerticalCollision(platforms, prevY) {
+    const GROUND_TOLERANCE = 1; // Prevent floating-point errors from causing missed ground detection.
     for (const platform of platforms) {
       if (!this.isCollidingWith(platform)) continue;
 
-      const hitFromAbove = prevY + this.height <= platform.y && this.vy >= 0;
+      const hitFromAbove = prevY + this.height <= platform.y + GROUND_TOLERANCE && this.vy >= 0;
       const hitFromBelow = prevY >= platform.y + platform.height && this.vy < 0;
 
       if (hitFromAbove) {
