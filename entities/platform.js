@@ -17,7 +17,7 @@ export class Platform {
       green_block: { srcX: 0, srcY: 128 },
       orange_dirt: { srcX: 96, srcY: 64 },
       pink_dirt: { srcX: 96, srcY: 128 },
-      sand: { srcX: 0, srcY: 0 },   
+      sand: { srcX: 0, srcY: 0 },  
       mud: { srcX: 64, srcY: 0 },    
       ice: { srcX: 128, srcY: 0 },   
     };

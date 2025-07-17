@@ -164,9 +164,6 @@ export class Engine {
         this.levelTime = (performance.now() - this.levelStartTime) / 1000;
       }
 
-      // --- NEW UPDATE ORDER ---
-
-      // 1. GATHER INPUT
       const inputActions = {
         moveLeft: this.keys[this.keybinds.moveLeft] || false,
         moveRight: this.keys[this.keybinds.moveRight] || false,
@@ -174,10 +171,8 @@ export class Engine {
         dash: this.keys[this.keybinds.dash] || false,
       };
 
-      // 2. PROCESS INPUT: Player determines its intent based on raw input.
       this.player.handleInput(inputActions);
       
-      // 3. APPLY PHYSICS: The PhysicsSystem moves the player and resolves all collisions.
       const collisionResults = this.physicsSystem.update(
         this.player,
         this.currentLevel,
@@ -185,10 +180,8 @@ export class Engine {
         inputActions
       );
 
-      // 4. UPDATE ENTITY STATE: Player updates its animation/state based on the results of the physics step.
       this.player.update(dt);
       
-      // 5. PROCESS EVENTS & COLLISION RESULTS
       this.processPlayerEvents();
       this.updateParticles(dt);
       
