@@ -93,7 +93,7 @@ export class Platform {
 
 // Level class to manage collections of platforms and game objectives
 export class Level {
-  constructor(levelConfig) {
+  constructor(levelConfig, animationConfig) {
     this.name = levelConfig.name || 'Unnamed Level';
     this.width = levelConfig.width || 1280;
     this.height = levelConfig.height || 720;
@@ -111,9 +111,9 @@ export class Level {
 
     this.fruits = levelConfig.fruits?.map(f => {
       const fruit = {
-        x: f.x, y: f.y, size: 28,
+        x: f.x, y: f.y, size: animationConfig.fruit.size,
         spriteKey: f.fruitType, frame: 0,
-        frameCount: 17, frameSpeed: 0.07,
+        frameCount: animationConfig.fruit.frameCount, frameSpeed: animationConfig.fruit.frameSpeed,
         frameTimer: 0, collected: false,
         type: 'fruit'
       };
@@ -126,9 +126,9 @@ export class Level {
 
     this.checkpoints = levelConfig.checkpoints?.map(cp => {
       const checkpoint = {
-        x: cp.x, y: cp.y, size: 64,
+        x: cp.x, y: cp.y, size: animationConfig.checkpoint.size,
         state: 'inactive', frame: 0,
-        frameCount: 26, frameSpeed: 0.07,
+        frameCount: animationConfig.checkpoint.activation.frameCount, frameSpeed: animationConfig.checkpoint.activation.frameSpeed,
         frameTimer: 0, type: 'checkpoint'
       };
       this.grid.insert(checkpoint);
@@ -138,9 +138,9 @@ export class Level {
     this.trophy = null;
     if (levelConfig.trophy) {
       this.trophy = {
-        x: levelConfig.trophy.x, y: levelConfig.trophy.y, size: 32,
-        frameCount: 8, animationFrame: 0,
-        animationTimer: 0, animationSpeed: 0.35,
+        x: levelConfig.trophy.x, y: levelConfig.trophy.y, size: animationConfig.trophy.size,
+        frameCount: animationConfig.trophy.frameCount, animationFrame: 0,
+        animationTimer: 0, animationSpeed: animationConfig.trophy.animationSpeed,
         acquired: false, inactive: true, contactMade: false,
       };
     }

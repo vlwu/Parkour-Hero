@@ -14,9 +14,10 @@ import { eventBus } from './event-bus.js';
  * Particles are reused from a pool instead of being created and destroyed.
  */
 class ParticlePool {
-    constructor(initialSize = 100) {
+    constructor(initialSize = 100, particleConfig) {
         this._pool = [];
         this._active = [];
+        this.config = particleConfig;
 
         // Pre-populate the pool for efficiency.
         for (let i = 0; i < initialSize; i++) {
@@ -63,7 +64,7 @@ class ParticlePool {
             } else {
                 p.x += p.vx * dt;
                 p.y += p.vy * dt;
-                p.vy += 50 * dt; // Simple gravity
+                p.vy += this.config.gravity * dt; // Simple gravity
                 p.alpha = Math.max(0, p.life / p.initialLife);
             }
         }
@@ -104,7 +105,7 @@ export class Engine {
 
     this.gameState = new GameState(levelSections);
     
-    this.particleSystem = new ParticlePool();
+    this.particleSystem = new ParticlePool(100, assets.configs.animations.particles);
     this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
     this.camera.snapToPlayer(this.player);
 
@@ -168,7 +169,6 @@ export class Engine {
       if (this.player) {
         this.player.needsRespawn = false;
       }
-      // No longer need to publish 'gamePaused' here, as this method is now a *reaction* to that event.
   }
 
   resume() {
@@ -212,7 +212,7 @@ export class Engine {
     this.gameState.showingLevelComplete = false;
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
-    this.currentLevel = new Level(levelSections[sectionIndex].levels[levelIndex]);
+    this.currentLevel = new Level(levelSections[sectionIndex].levels[levelIndex], this.assets.configs.animations);
     
     this.collectedFruits = [];
     this.particleSystem.clearActive();
@@ -369,24 +369,27 @@ export class Engine {
   }
   
   createDustParticles(x, y, type, direction = 'right') {
-    const count = type === 'dash' ? 10 : 7;
-    const baseSpeed = type === 'dash' ? 150 : 100;
+    const particleConfig = this.assets.configs.animations.particles[type] || this.assets.configs.animations.particles.jump;
+
+    const count = particleConfig.count;
+    const baseSpeed = particleConfig.baseSpeed;
+    const speedRange = particleConfig.speedRange;
 
     for (let i = 0; i < count; i++) {
         const angle = (type === 'dash') 
-            ? (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2)
-            : (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3); 
+            ? (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * particleConfig.angleRange
+            : (Math.PI / 2) + (Math.random() - 0.5) * particleConfig.angleRange; 
 
-        const speed = baseSpeed + Math.random() * 50;
+        const speed = baseSpeed + Math.random() * speedRange;
         const particle = this.particleSystem.get();
         
         particle.x = x;
         particle.y = y;
         particle.vx = Math.cos(angle) * speed;
         particle.vy = Math.sin(angle) * speed;
-        particle.life = 0.4 + Math.random() * 0.3; 
+        particle.life = particleConfig.lifeMin + Math.random() * particleConfig.lifeRange; 
         particle.initialLife = particle.life;
-        particle.size = 4 + Math.random() * 4;
+        particle.size = particleConfig.sizeMin + Math.random() * particleConfig.sizeRange;
         particle.alpha = 1.0;
     }
   }
@@ -421,8 +424,9 @@ export class Engine {
           case 'activating': spriteKey = 'checkpoint_activation'; frameCount = cp.frameCount; break;
           case 'active':
             spriteKey = 'checkpoint_active';
-            const activeFrameCount = 10;
-            const activeFrameSpeed = 0.1;
+            const activeAnimConfig = this.assets.configs.animations.checkpoint.active;
+            const activeFrameCount = activeAnimConfig.frameCount;
+            const activeFrameSpeed = activeAnimConfig.frameSpeed;
             frame = Math.floor((performance.now() / 1000 / activeFrameSpeed) % activeFrameCount);
             frameCount = activeFrameCount;
             break;

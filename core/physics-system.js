@@ -1,4 +1,3 @@
-import { PLAYER_CONSTANTS } from '../entities/player.js';
 import { eventBus } from './event-bus.js';
 
 // Physics and Collision detection/response system.
@@ -16,6 +15,7 @@ export class PhysicsSystem {
 
     const prevX = player.x;
     const prevY = player.y;
+    const playerConfig = player.configs.player;
 
     if (player.isDashing) {
       player.dashTimer -= dt;
@@ -27,9 +27,9 @@ export class PhysicsSystem {
 
     // Jump logic
     if (player.jumpBufferTimer > 0 && (player.onGround || player.coyoteTimer > 0)) {
-      let jumpForce = PLAYER_CONSTANTS.JUMP_FORCE;
+      let jumpForce = playerConfig.physics.jumpForce;
       if (player.groundType === 'mud') {
-        jumpForce *= PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER;
+        jumpForce *= playerConfig.surfaceModifiers.mudJumpMultiplier;
       }
       player.vy = -jumpForce;
       player.jumpCount = 1;
@@ -44,21 +44,21 @@ export class PhysicsSystem {
     if (!player.isDashing && !player.isSpawning && !player.isDespawning) {
       if (player.isOnIce) {
         if (inputActions.moveLeft) {
-          player.vx -= PLAYER_CONSTANTS.ICE_ACCELERATION * dt;
+          player.vx -= playerConfig.surfaceModifiers.iceAcceleration * dt;
         } else if (inputActions.moveRight) {
-          player.vx += PLAYER_CONSTANTS.ICE_ACCELERATION * dt;
+          player.vx += playerConfig.surfaceModifiers.iceAcceleration * dt;
         } else { // Apply friction
           if (player.vx > 0) {
-            player.vx = Math.max(0, player.vx - PLAYER_CONSTANTS.ICE_FRICTION * dt);
+            player.vx = Math.max(0, player.vx - playerConfig.surfaceModifiers.iceFriction * dt);
           } else if (player.vx < 0) {
-            player.vx = Math.min(0, player.vx + PLAYER_CONSTANTS.ICE_FRICTION * dt);
+            player.vx = Math.min(0, player.vx + playerConfig.surfaceModifiers.iceFriction * dt);
           }
         }
-        player.vx = Math.max(-PLAYER_CONSTANTS.MOVE_SPEED, Math.min(PLAYER_CONSTANTS.MOVE_SPEED, player.vx));
+        player.vx = Math.max(-playerConfig.physics.moveSpeed, Math.min(playerConfig.physics.moveSpeed, player.vx));
       } else { // Standard movement
         const moveSpeed = (player.groundType === 'sand')
-          ? PLAYER_CONSTANTS.MOVE_SPEED * PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER
-          : PLAYER_CONSTANTS.MOVE_SPEED;
+          ? playerConfig.physics.moveSpeed * playerConfig.surfaceModifiers.sandMoveMultiplier
+          : playerConfig.physics.moveSpeed;
         if (inputActions.moveLeft) {
           player.vx = -moveSpeed;
         } else if (inputActions.moveRight) {
@@ -71,9 +71,9 @@ export class PhysicsSystem {
 
     // Vertical movement (gravity)
     if (!player.isDashing && !player.isSpawning && !player.isDespawning) {
-      player.vy += PLAYER_CONSTANTS.GRAVITY * dt;
+      player.vy += playerConfig.physics.gravity * dt;
     }
-    player.vy = Math.min(player.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
+    player.vy = Math.min(player.vy, playerConfig.physics.maxFallSpeed);
 
 
     // --- 2. BROAD-PHASE COLLISION DETECTION (Query the grid ONCE) ---
@@ -101,7 +101,7 @@ export class PhysicsSystem {
 
     if (player.onGround) {
       player.jumpCount = 0;
-      player.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
+      player.coyoteTimer = playerConfig.timers.coyote;
     }
     
     // --- 4. CHECK LEVEL BOUNDS & OTHER INTERACTIONS ---
