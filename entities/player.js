@@ -20,7 +20,7 @@ export const PLAYER_CONSTANTS = {
   // Dash
   DASH_SPEED: 500,
   DASH_DURATION: 0.2,   // seconds
-  DASH_COOLDOWN: 0.5,   // seconds
+  DASH_COOLDOWN: 0.7,   // seconds
 
   // Timers
   COYOTE_TIME: 0.1,     // seconds
@@ -33,7 +33,7 @@ export const PLAYER_CONSTANTS = {
   ICE_FRICTION: 400,
 
   // Animation
-  ANIMATION_SPEED: 0.05,
+  ANIMATION_SPEED: 0.06,
   SPAWN_ANIMATION_SPEED: 0.08,
   ANIMATION_FRAMES: {
     idle: 11,
