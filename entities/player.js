@@ -136,11 +136,8 @@ class ClingState extends State {
 
 class SpawnState extends State {
   constructor() { super('spawn'); }
-  update(player) {
-    if (player.spawnComplete) {
-      player.transitionTo('idle');
-    }
-  }
+  // The update logic is removed from here. The state will now persist until it is changed externally by the player's main update method.
+  update(player) { }
 }
 
 class DespawnState extends State {
@@ -269,6 +266,11 @@ export class Player {
 
   update(dt) {
     try {
+      // This check must happen after the state has had a chance to run and before the next render.
+      if (this.spawnComplete && this.state === 'spawn') {
+          this.transitionTo('idle');
+      }
+      
       this.currentState.update(this, dt);
       this._updateAnimation(dt);
       this._updateSurfaceSound();
@@ -305,51 +307,30 @@ export class Player {
     this.transitionTo('spawn');
   }
 
-  render(ctx) {
-    try {
-      if (this.despawnAnimationFinished && this.state !== 'despawn') return;
+  getRenderData() {
+    if (this.despawnAnimationFinished) return null;
 
-      const spriteKey = this.getSpriteKey();
-      const characterSprites = this.assets.characters[this.characterId];
-      let sprite = characterSprites?.[spriteKey] || this.assets[spriteKey];
-
-      if (!sprite) {
-        console.warn(`Sprite for ${spriteKey} (char: ${this.characterId}) not loaded.`);
-        this.renderFallback(ctx);
-        return;
-      }
-
-      const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[this.state] || 1;
-      const frameWidth = sprite.width / frameCount;
-      const srcX = frameWidth * this.animationFrame;
-
-      ctx.save();
-      if (this.direction === 'left') {
-        ctx.scale(-1, 1);
-        ctx.translate(-this.x - this.width, this.y);
-      } else {
-        ctx.translate(this.x, this.y);
-      }
-      
-      const isSpecialAnim = this.state === 'spawn' || this.state === 'despawn';
-      const renderWidth = isSpecialAnim ? this.spawnWidth : this.width;
-      const renderHeight = isSpecialAnim ? this.spawnHeight : this.height;
-      const renderX = isSpecialAnim ? -(this.spawnWidth - this.width) / 2 : 0;
-      const renderY = isSpecialAnim ? -(this.spawnHeight - this.height) / 2 : 0;
-      const drawOffsetX = (this.state === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
-
-      ctx.drawImage(
-        sprite,
-        srcX, 0, frameWidth, sprite.height,
-        drawOffsetX + renderX, renderY,
-        renderWidth, renderHeight
-      );
-
-      ctx.restore();
-    } catch (error) {
-      console.error('Error rendering player:', error);
-      this.renderFallback(ctx);
-    }
+    const isSpecialAnim = this.state === 'spawn' || this.state === 'despawn';
+    const renderWidth = isSpecialAnim ? this.spawnWidth : this.width;
+    const renderHeight = isSpecialAnim ? this.spawnHeight : this.height;
+    
+    return {
+        type: 'player',
+        x: this.x,
+        y: this.y,
+        width: this.width,
+        height: this.height,
+        renderWidth: renderWidth,
+        renderHeight: renderHeight,
+        offsetX: (isSpecialAnim ? -(this.spawnWidth - this.width) / 2 : 0) + ((this.state === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0),
+        offsetY: isSpecialAnim ? -(this.spawnHeight - this.height) / 2 : 0,
+        spriteKey: this.getSpriteKey(),
+        characterId: this.characterId,
+        frame: this.animationFrame,
+        frameCount: PLAYER_CONSTANTS.ANIMATION_FRAMES[this.state] || 1,
+        direction: this.direction,
+        fallbackColor: '#FF00FF'
+    };
   }
 
   getSpriteKey() {
