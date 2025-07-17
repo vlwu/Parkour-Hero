@@ -9,20 +9,47 @@ export class MenuManager {
     this.settingsModal = document.getElementById('settingsModal');
     this.levelsMenuModal = document.getElementById('levelsMenuModal');
     this.characterModal = document.getElementById('characterModal');
+    this.pauseModal = document.getElementById('pauseModal');
+    this.levelCompleteModal = document.getElementById('levelCompleteModal');
+
     this.settingsButton = document.getElementById('settingsButton');
     this.pauseButton = document.getElementById('pauseButton');
     this.levelsMenuButton = document.getElementById('levelsMenuButton');
     this.characterButton = document.getElementById('characterButton');
+
+    // Modal Close Buttons
     this.closeSettingsModalButton = document.getElementById('closeModalButton');
     this.closeLevelsMenuButton = document.getElementById('closeLevelsMenuButton');
     this.closeCharacterModalButton = document.getElementById('closeCharacterModalButton');
+
+    // Settings
     this.keybindInputs = document.querySelectorAll('.keybind-item input');
     this.soundToggle = document.getElementById('soundToggle');
     this.volumeSlider = document.getElementById('volumeSlider');
     this.volumeValue = document.getElementById('volumeValue');
     this.testSoundButton = document.getElementById('testSoundButton');
+
+    // Level Selection
     this.levelSelectionContainer = document.getElementById('level-selection-container');
+    
+    // Character Selection
     this.characterSelectionContainer = document.getElementById('character-selection-container');
+    
+    // Pause Modal Elements
+    this.pauseResumeButton = document.getElementById('pause-resume-button');
+    this.pauseRestartButton = document.getElementById('pause-restart-button');
+    this.pauseMainMenuButton = document.getElementById('pause-main-menu-button');
+    this.pauseStatsFruits = document.getElementById('pause-stats-fruits');
+    this.pauseStatsDeaths = document.getElementById('pause-stats-deaths');
+    this.pauseStatsTime = document.getElementById('pause-stats-time');
+
+    // Level Complete Modal Elements
+    this.lcTitle = document.getElementById('level-complete-title');
+    this.lcDeaths = document.getElementById('level-complete-deaths');
+    this.lcTime = document.getElementById('level-complete-time');
+    this.lcPreviousButton = document.getElementById('lc-previous-button');
+    this.lcRestartButton = document.getElementById('lc-restart-button');
+    this.lcNextButton = document.getElementById('lc-next-button');
 
     // --- UI State ---
     this.activeKeybindInput = null;
@@ -33,14 +60,7 @@ export class MenuManager {
   init() {
     // Top-level UI buttons
     this.settingsButton.addEventListener('click', () => this.toggleSettingsModal());
-    this.pauseButton.addEventListener('click', () => {
-        if (this.engine.isRunning) {
-            this.engine.pause();
-        } else {
-            this.engine.resume();
-        }
-        this.updatePauseButtonIcon();
-    });
+    this.pauseButton.addEventListener('click', () => this.togglePauseModal());
     this.levelsMenuButton.addEventListener('click', () => this.toggleLevelsMenuModal());
     this.characterButton.addEventListener('click', () => this.toggleCharacterModal());
 
@@ -54,12 +74,31 @@ export class MenuManager {
     this.setupKeybindListeners();
     this.updateHowToPlayKeyDisplays();
     this.updateSoundSettingsDisplay();
+
+    // Pause Modal listeners
+    this.pauseResumeButton.addEventListener('click', () => this.togglePauseModal());
+    this.pauseRestartButton.addEventListener('click', () => {
+      this.togglePauseModal();
+      this.engine.loadLevel(this.engine.gameState.currentSection, this.engine.gameState.currentLevelIndex);
+      this.engine.resume();
+    });
+    this.pauseMainMenuButton.addEventListener('click', () => {
+        this.pauseModal.classList.add('hidden'); // Close pause modal without resuming
+        this.toggleLevelsMenuModal();
+    });
+
+    // Level Complete listeners
+    this.lcPreviousButton.addEventListener('click', () => this.handleLevelCompleteAction('previous'));
+    this.lcRestartButton.addEventListener('click', () => this.handleLevelCompleteAction('restart'));
+    this.lcNextButton.addEventListener('click', () => this.handleLevelCompleteAction('next'));
   }
 
   isModalOpen() {
     return !this.settingsModal.classList.contains('hidden') ||
            !this.levelsMenuModal.classList.contains('hidden') ||
-           !this.characterModal.classList.contains('hidden');
+           !this.characterModal.classList.contains('hidden') ||
+           !this.pauseModal.classList.contains('hidden') ||
+           !this.levelCompleteModal.classList.contains('hidden');
   }
 
   isLevelsMenuOpen() {
@@ -120,7 +159,37 @@ export class MenuManager {
       );
   }
 
+  togglePauseModal() {
+      this._toggleModal(this.pauseModal, () => {
+          const { currentLevel, player, levelTime } = this.engine;
+          const collected = currentLevel.getFruitCount();
+          const total = currentLevel.getTotalFruitCount();
+          this.pauseStatsFruits.textContent = `Fruits: ${collected} / ${total}`;
+          this.pauseStatsDeaths.textContent = `Deaths: ${player.deathCount || 0}`;
+          this.pauseStatsTime.textContent = `Time: ${this.formatTime(levelTime)}`;
+      });
+  }
+  
+  showLevelCompleteScreen(deaths, time) {
+      this.lcTitle.textContent = `Level Complete!`;
+      this.lcDeaths.textContent = `Deaths: ${deaths}`;
+      this.lcTime.textContent = `Time Taken: ${this.formatTime(time)}`;
+
+      this.lcNextButton.style.display = this.engine.gameState.hasNextLevel() ? 'inline-block' : 'none';
+      this.lcPreviousButton.style.display = this.engine.gameState.hasPreviousLevel() ? 'inline-block' : 'none';
+
+      this.levelCompleteModal.classList.remove('hidden');
+  }
+  
+  handleLevelCompleteAction(action) {
+      if (this.levelCompleteModal.classList.contains('hidden')) return;
+
+      this.levelCompleteModal.classList.add('hidden');
+      this.engine.gameState.handleLevelCompleteAction(action);
+  }
+
   updatePauseButtonIcon() {
+    // The pause button icon should reflect the *game loop's* state, not menu visibility
     if (this.engine.isRunning) {
         this.pauseButton.classList.remove('is-paused');
         this.pauseButton.setAttribute('aria-label', 'Pause');
@@ -134,6 +203,15 @@ export class MenuManager {
     if (key === ' ') return 'SPACE';
     if (key.startsWith('arrow')) return key.replace('arrow', '').toUpperCase();
     return key.toUpperCase();
+  }
+  
+  formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    const wholeSeconds = Math.floor(remainingSeconds);
+    const milliseconds = Math.floor((remainingSeconds - wholeSeconds) * 1000);
+    
+    return `${minutes.toString().padStart(2, '0')}:${wholeSeconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
   }
 
   updateKeybindDisplay() {

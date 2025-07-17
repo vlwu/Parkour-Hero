@@ -97,11 +97,12 @@ loadAssets().then((assets) => {
   
   try {
     engine = new Engine(ctx, canvas, assets, keybinds, {
-      onMainMenu: () => menuManager.toggleMainMenuModal(),
+      onMainMenu: () => menuManager.toggleLevelsMenuModal(),
     });
 
     // Initialize MenuManager to handle all DOM UI
     menuManager = new MenuManager(engine);
+    engine.menuManager = menuManager; // Provide engine with a reference to the menu manager
 
     // Initialize the InputManager, passing the MenuManager for UI context
     inputManager = new InputManager(
@@ -122,7 +123,7 @@ loadAssets().then((assets) => {
         if (engine && engine.gameState) {
             engine.gameState.unlockAllLevels();
             // If the main menu is open, refresh it to show the unlocked levels
-            if (menuManager.isMainMenuOpen()) {
+            if (menuManager.isLevelsMenuOpen()) {
                 menuManager.populateLevelMenu();
             }
         }
@@ -137,7 +138,7 @@ loadAssets().then((assets) => {
             engine.loadLevel(0, 0);
             console.log("Game reset to Level 1.");
             // If any menus are open, refresh them
-            if (menuManager.isMainMenuOpen()) {
+            if (menuManager.isLevelsMenuOpen()) {
                 menuManager.populateLevelMenu();
             }
             if (!menuManager.characterModal.classList.contains('hidden')) {

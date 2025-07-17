@@ -15,15 +15,12 @@ export class InputManager {
     // Mouse/Touch events
     this.canvas.addEventListener('click', this.handleCanvasClick.bind(this));
     this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-
-    // UI-specific events for keybinds are now handled by MenuManager.
   }
 
   handleKeyDown(e) {
-    if (!this.engine) return;
+    if (!this.engine || !this.menuManager) return;
 
     const key = e.key.toLowerCase();
-    const isMenuOpen = this.menuManager.isModalOpen();
     const isRemapping = this.menuManager.isRemapping();
     const isLevelComplete = this.engine.gameState.showingLevelComplete;
 
@@ -55,21 +52,25 @@ export class InputManager {
       }
       if (action) {
         e.preventDefault();
-        this.engine.gameState.handleLevelCompleteAction(action);
+        this.menuManager.handleLevelCompleteAction(action);
       }
       return;
     }
-
-    // 3. Handle global pause/resume key (only if no menus are open)
-    if (key === 'escape' && !isMenuOpen) {
-      e.preventDefault();
-      this.engine.isRunning ? this.engine.pause() : this.engine.resume();
-      this.menuManager.updatePauseButtonIcon();
-      return;
+    
+    // 3. Handle closing/opening menus with Escape key
+    if (key === 'escape') {
+        e.preventDefault();
+        // If any modal other than the pause modal is open, this will do nothing.
+        // If only the pause modal is open, it will close it.
+        // If no modal is open, it will open the pause modal.
+        if (!this.menuManager.isModalOpen() || !this.menuManager.pauseModal.classList.contains('hidden')) {
+            this.menuManager.togglePauseModal();
+        }
+        return;
     }
 
     // 4. Pass general key events to the engine if game is running
-    if (this.engine.isRunning && !isMenuOpen) {
+    if (this.engine.isRunning && !this.menuManager.isModalOpen()) {
       if (!e.defaultPrevented) {
         this.engine.handleKeyEvent(key, true);
       }
@@ -83,12 +84,7 @@ export class InputManager {
   }
 
   handleCanvasClick(e) {
-    if (!this.engine) return;
-
-    const rect = this.canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width * this.canvas.width;
-    const y = (e.clientY - rect.top) / rect.height * this.canvas.height;
-
-    this.engine.handleCanvasClick(x, y);
+    // Canvas clicks are no longer used for UI interaction,
+    // as all menus are now DOM elements. This is kept for potential future use.
   }
 }

@@ -158,7 +158,7 @@ export class GameState {
       player.needsRespawn = false;
     }
     
-    const { loadLevel, resume } = this.dependencies;
+    const { loadLevel } = this.dependencies;
 
     if (action === 'next') {
       if (this.currentLevelIndex + 1 < this.levelSections[this.currentSection].levels.length) {
@@ -179,21 +179,5 @@ export class GameState {
       }
       loadLevel(this.currentSection, this.currentLevelIndex);
     }
-    
-    resume();
-  }
-
-  handleLevelCompleteClick(x, y) {
-    if (!this.showingLevelComplete) return false;
-    
-    const { hud } = this.dependencies.getEngineState();
-    const action = hud.handleLevelCompleteClick(x, y, this.hasNextLevel(), this.hasPreviousLevel());
-    
-    if (action) {
-      this.handleLevelCompleteAction(action);
-      return true;
-    }
-    
-    return false;
   }
 }

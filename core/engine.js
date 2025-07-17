@@ -19,6 +19,7 @@ export class Engine {
     this.isRunning = false;
     this.pauseForMenu = false; // Differentiates menu pause from user pause
     this.callbacks = callbacks;
+    this.menuManager = null; // Will be set externally after initialization
 
     this.lastCheckpoint = null; 
     this.fruitsAtLastCheckpoint = new Set();
@@ -67,7 +68,9 @@ export class Engine {
   }
 
   start() {
+    if (this.isRunning) return;
     this.isRunning = true;
+    this.lastFrameTime = performance.now();
     this.gameLoop();
   }
 
@@ -77,18 +80,19 @@ export class Engine {
   }
 
   pause() {
+      if (!this.isRunning) return;
       this.isRunning = false;
       this.soundManager.stopAll();
-
       if (this.player) {
         this.player.needsRespawn = false;
       }
-      
-      this.render(); 
+      if (this.menuManager) {
+        this.menuManager.updatePauseButtonIcon();
+      }
   }
 
   resume() {
-    if (this.pauseForMenu) return; // Don't resume if a menu is open
+    if (this.pauseForMenu) return;
 
     if (!this.isRunning) {
       this.isRunning = true;
@@ -99,10 +103,16 @@ export class Engine {
     if (this.player) {
       this.player.needsRespawn = false;
     }
+    if (this.menuManager) {
+        this.menuManager.updatePauseButtonIcon();
+    }
   }
 
   gameLoop(currentTime = performance.now()) {
-    if (!this.isRunning) return;
+    if (!this.isRunning) {
+      if (this.menuManager) this.menuManager.updatePauseButtonIcon();
+      return;
+    }
 
     const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.016);
     this.lastFrameTime = currentTime;
@@ -120,6 +130,7 @@ export class Engine {
       return;
     }
 
+    this.gameState.showingLevelComplete = false;
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
     this.currentLevel = new Level(levelSections[sectionIndex].levels[levelIndex]);
@@ -145,6 +156,7 @@ export class Engine {
     this.camera.snapToPlayer(this.player);
 
     this.levelStartTime = performance.now();
+    this.resume();
 }
   update(dt) {
     try {
@@ -250,6 +262,9 @@ export class Engine {
       if (this.player.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
         this.gameState.onLevelComplete();
         this.player.despawnAnimationFinished = false; 
+        if (this.menuManager) {
+            this.menuManager.showLevelCompleteScreen(this.player.deathCount, this.levelTime);
+        }
       }
 
     } catch (error) {
@@ -340,22 +355,6 @@ export class Engine {
 
       this.hud.drawGameHUD(this.ctx, this.currentLevel, this.player, this.soundManager);
 
-      if (this.gameState.showingLevelComplete) {
-        this.hud.drawLevelCompleteScreen(
-          this.ctx, 
-          this.currentLevel, 
-          this.player, 
-          this.assets, 
-          this.gameState.hasNextLevel(),
-          this.gameState.hasPreviousLevel(),
-          this.levelTime 
-        );
-      }
-
-      if (!this.isRunning && !this.gameState.showingLevelComplete && !this.pauseForMenu) {
-        this.hud.drawPauseScreen(this.ctx, this.currentLevel, this.player, this.assets, this.levelTime);
-      }
-
     } catch (error) {
       console.error('Error in render loop:', error);
       this.ctx.fillStyle = 'red';
@@ -365,24 +364,8 @@ export class Engine {
   }
 
     handleCanvasClick(x, y) {
-      if (this.gameState.showingLevelComplete) {
-          const action = this.hud.handleLevelCompleteClick(x, y, this.gameState.hasNextLevel(), this.gameState.hasPreviousLevel());
-          if (action) {
-              this.gameState.handleLevelCompleteAction(action);
-          }
-      } else if (!this.isRunning) {
-          const action = this.hud.handlePauseScreenClick(x, y);
-          if (action === 'resume') {
-              this.resume();
-          } else if (action === 'restart') {
-              this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
-              this.resume();
-          } else if (action === 'main_menu') {
-              if (this.callbacks.onMainMenu) {
-                  this.callbacks.onMainMenu();
-              }
-          }
-      }
+      // This method is now empty because all UI clicks are handled
+      // by DOM event listeners in MenuManager.
   }
 
   handleKeyEvent(key, isDown) {

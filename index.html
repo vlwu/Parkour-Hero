@@ -53,7 +53,7 @@
       <!-- Keybind Settings Section -->
       <div class="settings-section">
         <h3>Keybind Settings</h3>
-        <div class="keybind-list">
+        <div class.keybind-list">
           <div class="keybind-item">
             <label for="keybind-move-left">Move Left:</label>
             <input type="text" id="keybind-move-left" data-action="moveLeft" readonly />
@@ -128,6 +128,40 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Pause Modal -->
+  <div id="pauseModal" class="modal-overlay hidden">
+      <div class="modal-content">
+          <h2>Game Paused</h2>
+          <p class="subtitle">Press ESC to resume</p>
+          <div class="stats-container">
+              <div id="pause-stats-fruits" class="stat-item">Fruits: 0 / 0</div>
+              <div id="pause-stats-deaths" class="stat-item">Deaths: 0</div>
+              <div id="pause-stats-time" class="stat-item">Time: 00:00.000</div>
+          </div>
+          <div class="button-container">
+              <button id="pause-resume-button" class="action-button">Resume</button>
+              <button id="pause-restart-button" class="action-button">Restart</button>
+              <button id="pause-main-menu-button" class="action-button">Main Menu</button>
+          </div>
+      </div>
+  </div>
+
+  <!-- Level Complete Modal -->
+  <div id="levelCompleteModal" class="modal-overlay hidden">
+      <div class="modal-content">
+          <h2 id="level-complete-title">Level Complete!</h2>
+          <div class="stats-container">
+              <div id="level-complete-deaths" class="stat-item">Deaths: 0</div>
+              <div id="level-complete-time" class="stat-item">Time Taken: 00:00.000</div>
+          </div>
+          <div class="button-container">
+              <button id="lc-previous-button" class="action-button">Previous</button>
+              <button id="lc-restart-button" class="action-button">Restart</button>
+              <button id="lc-next-button" class="action-button">Next Level</button>
+          </div>
+      </div>
   </div>
 
   <script type="module" src="main.js"></script>
