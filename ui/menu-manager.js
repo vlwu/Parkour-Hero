@@ -257,7 +257,6 @@ export class MenuManager {
   }
   
   updatePauseModalStats({ collectedFruits, totalFruits, deathCount, levelTime }) {
-    if (this.pauseModal.classList.contains('hidden')) return;
     this.pauseStatsFruits.textContent = `Fruits: ${collectedFruits} / ${totalFruits}`;
     this.pauseStatsDeaths.textContent = `Deaths: ${deathCount || 0}`;
     this.pauseStatsTime.textContent = `Time: ${this.formatTime(levelTime)}`;
