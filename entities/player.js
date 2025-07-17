@@ -1,5 +1,5 @@
 // Optimized for performance, robustness, and clarity.
-// Version 2.5 - FSM implemented, constants reintegrated.
+// Version 2.7 - Fixed wall-jump FSM state loop.
 
 export const PLAYER_CONSTANTS = {
   // Dimensions
@@ -81,7 +81,8 @@ class JumpState extends State {
     if (player.isDashing) { return player.transitionTo('dash'); }
     if (player.jumpCount === 2) { return player.transitionTo('double_jump'); }
     if (player.vy >= 0) { return player.transitionTo('fall'); }
-    if (player.isAgainstWall) { return player.transitionTo('cling'); }
+    // MODIFICATION: Only transition to cling if falling or sliding, not jumping up.
+    if (player.isAgainstWall && player.vy >= 0) { return player.transitionTo('cling'); }
   }
 }
 
@@ -90,7 +91,8 @@ class DoubleJumpState extends State {
     update(player) {
         if (player.isDashing) { return player.transitionTo('dash'); }
         if (player.vy >= 0) { return player.transitionTo('fall'); }
-        if (player.isAgainstWall) { return player.transitionTo('cling'); }
+        // MODIFICATION: Only transition to cling if falling or sliding, not jumping up.
+        if (player.isAgainstWall && player.vy >= 0) { return player.transitionTo('cling'); }
     }
 }
 
@@ -99,7 +101,6 @@ class FallState extends State {
   update(player) {
     if (player.isDashing) { return player.transitionTo('dash'); }
     if (player.onGround) { return player.transitionTo('idle'); }
-    if (player.jumpCount === 2) { return player.transitionTo('double_jump'); }
     if (player.isAgainstWall) { return player.transitionTo('cling'); }
   }
 }
