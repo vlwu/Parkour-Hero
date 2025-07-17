@@ -53,7 +53,7 @@
       <!-- Keybind Settings Section -->
       <div class="settings-section">
         <h3>Keybind Settings</h3>
-        <div class.keybind-list">
+        <div class="keybind-list">
           <div class="keybind-item">
             <label for="keybind-move-left">Move Left:</label>
             <input type="text" id="keybind-move-left" data-action="moveLeft" readonly />
@@ -141,9 +141,15 @@
               <div id="pause-stats-time" class="stat-item">Time: 00:00.000</div>
           </div>
           <div class="button-container">
-              <button id="pause-resume-button" class="action-button">Resume</button>
-              <button id="pause-restart-button" class="action-button">Restart</button>
-              <button id="pause-main-menu-button" class="action-button">Main Menu</button>
+              <button id="pause-resume-button" class="modal-image-button" aria-label="Resume">
+                <img src="assets/Menu/Buttons/Play.png" alt="Resume">
+              </button>
+              <button id="pause-restart-button" class="modal-image-button" aria-label="Restart">
+                <img src="assets/Menu/Buttons/Restart.png" alt="Restart">
+              </button>
+              <button id="pause-main-menu-button" class="modal-image-button" aria-label="Main Menu">
+                <img src="assets/Menu/Buttons/Levels.png" alt="Main Menu">
+              </button>
           </div>
       </div>
   </div>
@@ -157,9 +163,15 @@
               <div id="level-complete-time" class="stat-item">Time Taken: 00:00.000</div>
           </div>
           <div class="button-container">
-              <button id="lc-previous-button" class="action-button">Previous</button>
-              <button id="lc-restart-button" class="action-button">Restart</button>
-              <button id="lc-next-button" class="action-button">Next Level</button>
+              <button id="lc-previous-button" class="modal-image-button" aria-label="Previous Level">
+                  <img src="assets/Menu/Buttons/Previous.png" alt="Previous Level">
+              </button>
+              <button id="lc-restart-button" class="modal-image-button" aria-label="Restart Level">
+                  <img src="assets/Menu/Buttons/Restart.png" alt="Restart Level">
+              </button>
+              <button id="lc-next-button" class="modal-image-button" aria-label="Next Level">
+                  <img src="assets/Menu/Buttons/Next.png" alt="Next Level">
+              </button>
           </div>
       </div>
   </div>
