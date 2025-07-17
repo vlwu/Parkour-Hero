@@ -72,19 +72,16 @@ export class InputManager {
     // 4. Pass general key events to the engine if game is running
     if (this.engine.isRunning && !this.menuManager.isModalOpen()) {
       if (!e.defaultPrevented) {
-        this.engine.handleKeyEvent(key, true);
+        // Corrected line: Directly modify the engine's key state object.
+        this.engine.keys[key] = true;
       }
     }
   }
 
   handleKeyUp(e) {
     if (this.engine) {
-      this.engine.handleKeyEvent(e.key.toLowerCase(), false);
+      // Corrected line: Directly modify the engine's key state object.
+      this.engine.keys[e.key.toLowerCase()] = false;
     }
-  }
-
-  handleCanvasClick(e) {
-    // Canvas clicks are no longer used for UI interaction,
-    // as all menus are now DOM elements. This is kept for potential future use.
   }
 }
