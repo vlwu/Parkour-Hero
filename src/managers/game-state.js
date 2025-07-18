@@ -1,5 +1,5 @@
-import { characterConfig } from '../entities/levels.js';
-import { eventBus } from '../core/event-bus.js';
+import { characterConfig } from '../entities/level-definitions.js';
+import { eventBus } from '../utils/event-bus.js';
 
 function getLinearIndex(sectionIndex, levelIndex, levelSections) {
     let linearIndex = 0;

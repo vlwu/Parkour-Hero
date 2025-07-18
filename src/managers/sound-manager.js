@@ -1,4 +1,4 @@
-import { eventBus } from './event-bus.js';
+import { eventBus } from '../utils/event-bus.js';
 
 // Sounds that are UI notifications and should not be pooled or stopped by a global pause.
 const UI_SOUNDS = ['level_complete', 'checkpoint_activated'];

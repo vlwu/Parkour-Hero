@@ -1,8 +1,8 @@
-import { Engine } from './core/engine.js';
-import { loadAssets } from './core/assets.js';
-import { InputManager } from './core/input.js';
-import { MenuManager } from './ui/menu-manager.js';
-import { eventBus } from './core/event-bus.js';
+import { Engine } from './src/core/engine.js';
+import { loadAssets } from './src/managers/asset-manager.js';
+import { InputManager } from './src/systems/input-system.js';
+import { MenuManager } from './src/ui/menu-manager.js';
+import { eventBus } from './src/utils/event-bus.js';
 
 // Get canvas element and context
 const canvas = document.getElementById('gameCanvas');

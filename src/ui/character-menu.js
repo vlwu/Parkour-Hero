@@ -1,5 +1,5 @@
-import { eventBus } from '../core/event-bus.js';
-import { characterConfig } from '../entities/levels.js';
+import { eventBus } from '../utils/event-bus.js';
+import { characterConfig } from '../entities/level-definitions.js';
 
 export class CharacterMenu {
     constructor(gameState, assets) {

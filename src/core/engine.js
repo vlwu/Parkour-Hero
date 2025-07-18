@@ -1,13 +1,13 @@
 import { Player } from '../entities/player.js';
-import { levelSections } from '../entities/levels.js';
-import { Level } from '../entities/platform.js';
+import { levelSections } from '../entities/level-definitions.js';
+import { Level } from '../entities/level.js';
 import { Camera } from './camera.js';
-import { SoundManager } from './sound.js';
+import { SoundManager } from '../managers/sound-manager.js';
 import { HUD } from '../ui/hud.js';
-import { GameState } from './game-state.js';
-import { PhysicsSystem } from './physics-system.js';
-import { Renderer } from './renderer.js';
-import { eventBus } from './event-bus.js';
+import { GameState } from '../managers/game-state.js';
+import { PhysicsSystem } from '../systems/physics-system.js';
+import { Renderer } from '../systems/renderer.js';
+import { eventBus } from '../utils/event-bus.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) {

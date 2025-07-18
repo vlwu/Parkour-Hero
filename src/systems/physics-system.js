@@ -1,5 +1,5 @@
-import { PLAYER_CONSTANTS } from '../entities/player.js';
-import { eventBus } from './event-bus.js';
+import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { eventBus } from '../utils/event-bus.js';
 
 // Physics and Collision detection/response system.
 export class PhysicsSystem {

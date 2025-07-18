@@ -1,4 +1,4 @@
-import { PLAYER_CONSTANTS } from '../entities/player.js';
+import { PLAYER_CONSTANTS } from '../utils/constants.js';
 
 // the renderer file is responsible for rendering the game world, including the player and other entities.
 export class Renderer {

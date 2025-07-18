@@ -1,4 +1,4 @@
-import { levelSections } from '../entities/levels.js';
+import { levelSections } from '../entities/level-definitions.js';
 
 // Utility to create a fallback canvas for assets
 function createFallbackCanvas(width, height, color, pattern = true) {

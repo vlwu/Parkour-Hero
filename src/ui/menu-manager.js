@@ -1,4 +1,4 @@
-import { eventBus } from '../core/event-bus.js';
+import { eventBus } from '../utils/event-bus.js';
 import { SettingsMenu } from './settings-menu.js';
 import { LevelMenu } from './level-menu.js';
 import { CharacterMenu } from './character-menu.js';

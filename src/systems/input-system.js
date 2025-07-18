@@ -1,4 +1,4 @@
-import { eventBus } from '../core/event-bus.js';
+import { eventBus } from '../utils/event-bus.js';
 
 export class InputManager {
   constructor(engine, canvas, menuManager) {
