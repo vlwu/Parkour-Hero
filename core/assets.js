@@ -173,11 +173,6 @@ export async function loadAssets() {
     ice_run: 'assets/Sounds/Ice Run.mp3',
   };
 
-  const configPaths = {
-    player: 'configs/player.json',
-    animations: 'configs/animations.json'
-  };
-
   console.log('Starting asset loading...');
 
   // Create promises for regular images and sounds
@@ -199,11 +194,6 @@ export async function loadAssets() {
     }
   }
 
-  // Create promises for configuration files
-  const configPromises = Object.entries(configPaths).map(([key, path]) =>
-    loadJSON(path).then(data => ({ type: 'config', key, data }))
-  );
-
   // Create promises to load level data from JSON files
   const levelDataPromises = [];
   levelSections.forEach((section, sectionIndex) => {
@@ -221,13 +211,13 @@ export async function loadAssets() {
     });
   });
 
-  const allPromises = [...regularImagePromises, ...soundPromises, ...characterPromises, ...levelDataPromises, ...configPromises];
+  const allPromises = [...regularImagePromises, ...soundPromises, ...characterPromises, ...levelDataPromises];
   
   try {
     const loadedAssetParts = await Promise.all(allPromises);
     
     // Assemble the final assets object
-    const assets = { characters: {}, configs: {} };
+    const assets = { characters: {} };
     for (const charKey in characterData) {
         assets.characters[charKey] = {};
     }
@@ -241,8 +231,6 @@ export async function loadAssets() {
             // Hydrate the imported levelSections object with the fetched data.
             // This is a controlled side-effect that happens before the engine starts.
             levelSections[part.sectionIndex].levels[part.levelIndex] = part.data;
-        } else if (part.type === 'config') {
-            assets.configs[part.key] = part.data;
         } else {
             Object.assign(assets, part);
         }

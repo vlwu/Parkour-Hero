@@ -3,6 +3,51 @@ import { eventBus } from '../core/event-bus.js';
 // Optimized for performance, robustness, and clarity.
 // Version 2.7 - Fixed wall-jump FSM state loop.
 
+export const PLAYER_CONSTANTS = {
+  // Dimensions
+  WIDTH: 32,
+  HEIGHT: 32,
+  SPAWN_WIDTH: 96,
+  SPAWN_HEIGHT: 96,
+  CLING_OFFSET: 7,
+
+  // Physics
+  MOVE_SPEED: 200,      // pixels/s
+  JUMP_FORCE: 400,      // upward velocity impulse
+  GRAVITY: 1200,        // downward acceleration
+  MAX_FALL_SPEED: 500,  // terminal velocity
+
+  // Dash
+  DASH_SPEED: 500,
+  DASH_DURATION: 0.2,   // seconds
+  DASH_COOLDOWN: 0.7,   // seconds
+
+  // Timers
+  COYOTE_TIME: 0.1,     // seconds
+  JUMP_BUFFER_TIME: 0.15, // seconds
+
+  // Surface Modifiers
+  SAND_MOVE_MULTIPLIER: 0.5,
+  MUD_JUMP_MULTIPLIER: 0.6,
+  ICE_ACCELERATION: 800,
+  ICE_FRICTION: 400,
+
+  // Animation
+  ANIMATION_SPEED: 0.06,
+  SPAWN_ANIMATION_SPEED: 0.08,
+  ANIMATION_FRAMES: {
+    idle: 11,
+    run: 12,
+    double_jump: 6,
+    jump: 1,
+    fall: 1,
+    dash: 1,
+    cling: 5,
+    spawn: 7,
+    despawn: 7,
+  }
+};
+
 // --- FINITE STATE MACHINE (FSM) ---
 
 class State {
@@ -105,16 +150,12 @@ class DespawnState extends State {
 
 export class Player {
   constructor(x, y, assets, characterId) {
-    this.configs = {
-        player: assets.configs.player,
-        animations: assets.configs.animations
-    };
     this.x = x;
     this.y = y;
-    this.width = this.configs.player.dimensions.width;
-    this.height = this.configs.player.dimensions.height;
-    this.spawnWidth = this.configs.player.dimensions.spawnWidth;
-    this.spawnHeight = this.configs.player.dimensions.spawnHeight;
+    this.width = PLAYER_CONSTANTS.WIDTH;
+    this.height = PLAYER_CONSTANTS.HEIGHT;
+    this.spawnWidth = PLAYER_CONSTANTS.SPAWN_WIDTH;
+    this.spawnHeight = PLAYER_CONSTANTS.SPAWN_HEIGHT;
 
     this.vx = 0;
     this.vy = 0;
@@ -196,7 +237,7 @@ export class Player {
 
     if (inputActions.jump) {
         if (!this.jumpPressed && this.jumpBufferTimer <= 0) {
-            this.jumpBufferTimer = this.configs.player.timers.jumpBuffer;
+            this.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
         }
     }
 
@@ -205,7 +246,7 @@ export class Player {
     }
 
     if (inputActions.jump && !this.jumpPressed && this.jumpCount === 1 && !this.onGround) {
-      this.vy = -this.configs.player.physics.jumpForce;
+      this.vy = -PLAYER_CONSTANTS.JUMP_FORCE;
       this.jumpCount = 2;
       this.jumpBufferTimer = 0;
       this.transitionTo('double_jump');
@@ -214,10 +255,10 @@ export class Player {
 
     if (inputActions.dash && !this.dashPressed && this.dashCooldownTimer <= 0) {
       this.isDashing = true;
-      this.dashTimer = this.configs.player.dash.duration;
-      this.vx = this.direction === 'right' ? this.configs.player.dash.speed : -this.configs.player.dash.speed;
+      this.dashTimer = PLAYER_CONSTANTS.DASH_DURATION;
+      this.vx = this.direction === 'right' ? PLAYER_CONSTANTS.DASH_SPEED : -PLAYER_CONSTANTS.DASH_SPEED;
       this.vy = 0;
-      this.dashCooldownTimer = this.configs.player.dash.cooldown;
+      this.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN;
       this.transitionTo('dash');
     }
     this.dashPressed = inputActions.dash;
@@ -281,12 +322,12 @@ export class Player {
         height: this.height,
         renderWidth: renderWidth,
         renderHeight: renderHeight,
-        offsetX: (isSpecialAnim ? -(this.spawnWidth - this.width) / 2 : 0) + ((this.state === 'cling') ? this.configs.player.dimensions.clingOffset : 0),
+        offsetX: (isSpecialAnim ? -(this.spawnWidth - this.width) / 2 : 0) + ((this.state === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0),
         offsetY: isSpecialAnim ? -(this.spawnHeight - this.height) / 2 : 0,
         spriteKey: this.getSpriteKey(),
         characterId: this.characterId,
         frame: this.animationFrame,
-        frameCount: this.configs.animations.player.frames[this.state] || 1,
+        frameCount: PLAYER_CONSTANTS.ANIMATION_FRAMES[this.state] || 1,
         direction: this.direction,
         fallbackColor: '#FF00FF'
     };
@@ -316,13 +357,13 @@ export class Player {
   _updateAnimation(dt) {
     this.animationTimer += dt;
     const speed = (this.state === 'spawn' || this.state === 'despawn') 
-        ? this.configs.animations.player.spawnSpeed 
-        : this.configs.animations.player.speed;
+        ? PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED 
+        : PLAYER_CONSTANTS.ANIMATION_SPEED;
 
     if (this.animationTimer < speed) return;
     
     this.animationTimer -= speed;
-    const frameCount = this.configs.animations.player.frames[this.state] || 1;
+    const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[this.state] || 1;
     this.animationFrame++;
 
     const isOneShot = this.state === 'spawn' || this.state === 'despawn';
