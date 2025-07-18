@@ -1,0 +1,460 @@
+import { Player } from '../entities/player.js';
+import { levelSections } from '../entities/levels.js';
+import { Level } from '../entities/platform.js';
+import { Camera } from './camera.js';
+import { SoundManager } from './sound.js';
+import { HUD } from '../ui/hud.js';
+import { GameState } from './game-state.js';
+import { PhysicsSystem } from './physics-system.js';
+import { Renderer } from './renderer.js';
+import { eventBus } from './event-bus.js';
+
+/**
+ * Manages the lifecycle of particle objects to reduce garbage collection.
+ * Particles are reused from a pool instead of being created and destroyed.
+ */
+class ParticlePool {
+    constructor(initialSize = 100, particleConfig) {
+        this._pool = [];
+        this._active = [];
+        this.config = particleConfig;
+
+        // Pre-populate the pool for efficiency.
+        for (let i = 0; i < initialSize; i++) {
+            this._pool.push({});
+        }
+    }
+
+    // The list of currently active particles.
+    get activeParticles() {
+        return this._active;
+    }
+
+    //Retrieves a particle from the pool, initializes it, and adds it to the active list.
+    get() {
+        let particle;
+        if (this._pool.length > 0) {
+            particle = this._pool.pop();
+        } else {
+            // Pool is empty, create a new object. This allows the pool to grow if needed.
+            particle = {};
+        }
+        this._active.push(particle);
+        return particle;
+    }
+
+
+    // Returns a particle to the pool, making it available for reuse.
+    release(particle) {
+        const index = this._active.indexOf(particle);
+        if (index !== -1) {
+            this._active.splice(index, 1);
+        }
+        this._pool.push(particle);
+    }
+
+    // Updates all active particles, releasing those whose lifetime has expired.
+    update(dt) {
+        for (let i = this._active.length - 1; i >= 0; i--) {
+            const p = this._active[i];
+            p.life -= dt;
+
+            if (p.life <= 0) {
+                this.release(p);
+            } else {
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.vy += this.config.gravity * dt; // Simple gravity
+                p.alpha = Math.max(0, p.life / p.initialLife);
+            }
+        }
+    }
+
+    // Returns all active particles to the pool.
+    clearActive() {
+        while (this._active.length > 0) {
+            this.release(this._active[0]);
+        }
+    }
+}
+
+
+export class Engine {
+  constructor(ctx, canvas, assets, initialKeybinds) {
+    this.ctx = ctx;
+    this.canvas = canvas;
+    this.assets = assets;
+    this.lastFrameTime = 0;
+    this.keys = {};
+    this.keybinds = initialKeybinds;
+    this.isRunning = false;
+    this.pauseForMenu = false;
+
+    this.lastCheckpoint = null; 
+    this.fruitsAtLastCheckpoint = new Set();
+
+    this.camera = new Camera(canvas.width, canvas.height);
+    this.hud = new HUD(canvas);
+    this.soundManager = new SoundManager();
+    this.soundManager.loadSounds(assets);
+    this.physicsSystem = new PhysicsSystem();
+    this.renderer = new Renderer(ctx, canvas, assets);
+
+    this.levelStartTime = 0;
+    this.levelTime = 0;
+
+    this.gameState = new GameState(levelSections);
+    
+    this.particleSystem = new ParticlePool(100, assets.configs.animations.particles);
+    this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
+    this.camera.snapToPlayer(this.player);
+
+    this._setupEventSubscriptions();
+  }
+  
+  _setupEventSubscriptions() {
+    eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
+    eventBus.subscribe('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
+    eventBus.subscribe('requestPauseToggle', () => this.togglePause());
+    eventBus.subscribe('requestResume', () => this.resume());
+    eventBus.subscribe('keybindsUpdated', (newKeybinds) => this.updateKeybinds(newKeybinds));
+    
+    eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
+    eventBus.subscribe('trophyCollision', () => this._onTrophyCollision());
+    eventBus.subscribe('checkpointActivated', (cp) => this._onCheckpointActivated(cp));
+    eventBus.subscribe('createParticles', ({x, y, type, direction}) => this.createDustParticles(x, y, type, direction));
+    eventBus.subscribe('playerDied', () => this._onPlayerDied());
+    eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
+    eventBus.subscribe('gamePaused', () => this.pause());
+    eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
+    eventBus.subscribe('allMenusClosed', () => this.pauseForMenu = false);
+  }
+
+  updatePlayerCharacter(newCharId) {
+    if (this.player) {
+      this.player.characterId = newCharId || this.gameState.selectedCharacter;
+      console.log(`Character skin changed to: ${this.player.characterId}`);
+    }
+  }
+
+  updateKeybinds(newKeybinds) {
+    this.keybinds = { ...newKeybinds };
+  }
+
+  start() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.lastFrameTime = performance.now();
+    this.gameLoop();
+  }
+
+  stop() {
+    this.isRunning = false;
+    this.soundManager.stopAll();
+  }
+
+  togglePause() {
+    if (this.isRunning) {
+      this.pause();
+      eventBus.publish('gamePaused');
+    } else {
+      this.resume();
+    }
+  }
+
+  pause() {
+      if (!this.isRunning) return;
+      this.isRunning = false;
+      this.soundManager.stopAll();
+      if (this.player) {
+        this.player.needsRespawn = false;
+      }
+  }
+
+  resume() {
+    if (this.pauseForMenu) return;
+
+    if (!this.isRunning) {
+      this.isRunning = true;
+      this.lastFrameTime = performance.now();
+      this.gameLoop();
+    }
+
+    if (this.player) {
+      this.player.needsRespawn = false;
+    }
+    eventBus.publish('gameResumed');
+  }
+
+  gameLoop(currentTime = performance.now()) {
+    if (!this.isRunning) {
+      return;
+    }
+
+    const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.016);
+    this.lastFrameTime = currentTime;
+
+    this.update(deltaTime);
+    this.render();
+
+    requestAnimationFrame((time) => this.gameLoop(time));
+  }
+
+  loadLevel(sectionIndex, levelIndex) {
+    if (sectionIndex >= levelSections.length || 
+        levelIndex >= levelSections[sectionIndex].levels.length) {
+      console.error(`Invalid level: Section ${sectionIndex}, Level ${levelIndex}`);
+      return;
+    }
+
+    this.pauseForMenu = false;
+
+    this.gameState.showingLevelComplete = false;
+    this.gameState.currentSection = sectionIndex;
+    this.gameState.currentLevelIndex = levelIndex;
+    this.currentLevel = new Level(levelSections[sectionIndex].levels[levelIndex], this.assets.configs.animations);
+    
+    this.collectedFruits = [];
+    this.particleSystem.clearActive();
+
+    this.lastCheckpoint = null;
+    this.fruitsAtLastCheckpoint.clear();
+    
+    this.player = new Player(
+      this.currentLevel.startPosition.x,
+      this.currentLevel.startPosition.y,
+      this.assets,
+      this.gameState.selectedCharacter
+    );
+    this.player.isSpawning = true;
+    this.player.spawnComplete = false;
+    this.player.state = 'spawn';
+    this.player.deathCount = 0;
+
+    this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
+    this.camera.snapToPlayer(this.player);
+
+    this.levelStartTime = performance.now();
+    this.resume();
+    eventBus.publish('levelLoaded', { gameState: this.gameState });
+  }
+
+  update(dt) {
+    try {
+      if (this.isRunning && !this.gameState.showingLevelComplete) {
+        this.levelTime = (performance.now() - this.levelStartTime) / 1000;
+      }
+
+      const inputActions = {
+        moveLeft: this.keys[this.keybinds.moveLeft] || false,
+        moveRight: this.keys[this.keybinds.moveRight] || false,
+        jump: this.keys[this.keybinds.jump] || false,
+        dash: this.keys[this.keybinds.dash] || false,
+      };
+
+      this.player.handleInput(inputActions);
+      
+      this.physicsSystem.update(
+        this.player,
+        this.currentLevel,
+        dt,
+        inputActions
+      );
+
+      this.player.update(dt);
+      this.particleSystem.update(dt);
+      
+      this.camera.update(this.player, dt);
+
+      if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
+        this._respawnPlayer();
+      }
+
+      this.currentLevel.updateFruits(dt);
+      this.currentLevel.updateTrophyAnimation(dt);
+      this.currentLevel.updateCheckpoints(dt);
+      
+      this.collectedFruits = this.collectedFruits || [];
+      for (const collected of this.collectedFruits) {
+        collected.frameTimer += dt;
+        if (collected.frameTimer >= collected.frameSpeed) {
+          collected.frameTimer = 0;
+          collected.frame++;
+          if (collected.frame >= collected.collectedFrameCount) {
+            collected.done = true;
+          }
+        }
+      }
+      this.collectedFruits = this.collectedFruits.filter(f => !f.done);
+
+      if (this.player.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
+        this.gameState.onLevelComplete();
+        this.player.despawnAnimationFinished = false; 
+        eventBus.publish('levelComplete', { deaths: this.player.deathCount, time: this.levelTime });
+      }
+
+      eventBus.publish('statsUpdated', {
+        levelName: this.currentLevel.name,
+        collectedFruits: this.currentLevel.getFruitCount(),
+        totalFruits: this.currentLevel.getTotalFruitCount(),
+        deathCount: this.player.deathCount,
+        levelTime: this.levelTime,
+        soundEnabled: this.soundManager.settings.enabled,
+        soundVolume: this.soundManager.settings.volume
+      });
+
+    } catch (error) {
+      console.error('Error in update loop:', error);
+    }
+  }
+
+  _onPlayerDied() {
+    if (!this.player.needsRespawn) {
+      this.player.deathCount++;
+      this.player.needsRespawn = true;
+    }
+  }
+
+  _respawnPlayer() {
+    const respawnPosition = this.lastCheckpoint || this.currentLevel.startPosition;
+    
+    if (this.lastCheckpoint) {
+        this.currentLevel.fruits.forEach((fruit, index) => {
+            fruit.collected = this.fruitsAtLastCheckpoint.has(index);
+        });
+    } else {
+        this.currentLevel.fruits.forEach(f => f.collected = false);
+    }
+    this.currentLevel.recalculateCollectedFruits();
+    this.player.respawn(respawnPosition);
+    this.camera.shake(15, 0.5);
+    eventBus.publish('playSound', { key: 'death_sound', volume: 0.3 });
+    this.player.needsRespawn = false;
+  }
+
+  _onFruitCollected(fruit) {
+    this.currentLevel.collectFruit(fruit);
+    eventBus.publish('playSound', { key: 'collect', volume: 0.8 });
+
+    this.collectedFruits.push({
+      x: fruit.x, y: fruit.y, size: fruit.size, frame: 0,
+      frameSpeed: 0.1, frameTimer: 0, collectedFrameCount: 6
+    });
+  }
+
+  _onCheckpointActivated(cp) {
+      cp.state = 'activating';
+      this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; 
+      eventBus.publish('playSound', { key: 'checkpoint_activated', volume: 1 });
+
+      this.fruitsAtLastCheckpoint.clear();
+      this.currentLevel.fruits.forEach((fruit, index) => {
+          if (fruit.collected) this.fruitsAtLastCheckpoint.add(index);
+      });
+
+      this.currentLevel.checkpoints.forEach(otherCp => {
+          if (otherCp !== cp && otherCp.state === 'active') {
+              otherCp.state = 'inactive';
+              otherCp.frame = 0;
+          }
+      });
+  }
+
+  _onTrophyCollision() {
+    if (!this.player.isDespawning) {
+      this.currentLevel.trophy.acquired = true;
+      this.camera.shake(8, 0.3);
+      this.player.startDespawn();
+    }
+  }
+  
+  createDustParticles(x, y, type, direction = 'right') {
+    const particleConfig = this.assets.configs.animations.particles[type] || this.assets.configs.animations.particles.jump;
+
+    const count = particleConfig.count;
+    const baseSpeed = particleConfig.baseSpeed;
+    const speedRange = particleConfig.speedRange;
+
+    for (let i = 0; i < count; i++) {
+        const angle = (type === 'dash') 
+            ? (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * particleConfig.angleRange
+            : (Math.PI / 2) + (Math.random() - 0.5) * particleConfig.angleRange; 
+
+        const speed = baseSpeed + Math.random() * speedRange;
+        const particle = this.particleSystem.get();
+        
+        particle.x = x;
+        particle.y = y;
+        particle.vx = Math.cos(angle) * speed;
+        particle.vy = Math.sin(angle) * speed;
+        particle.life = particleConfig.lifeMin + Math.random() * particleConfig.lifeRange; 
+        particle.initialLife = particle.life;
+        particle.size = particleConfig.sizeMin + Math.random() * particleConfig.sizeRange;
+        particle.alpha = 1.0;
+    }
+  }
+
+  render() {
+    try {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      const renderQueue = [];
+
+      // Populate render queue from various game objects.
+      const playerRenderData = this.player.getRenderData();
+      if (playerRenderData) {
+        renderQueue.push(playerRenderData);
+      }
+      
+      for (const fruit of this.currentLevel.getActiveFruits()) {
+        renderQueue.push({
+          type: 'fruit',
+          x: fruit.x - fruit.size / 2, y: fruit.y - fruit.size / 2,
+          width: fruit.size, height: fruit.size,
+          spriteKey: fruit.spriteKey,
+          frame: fruit.frame,
+          frameCount: fruit.frameCount
+        });
+      }
+
+      for (const cp of this.currentLevel.checkpoints) {
+        let spriteKey, frame = cp.frame, frameCount = 1, state = cp.state;
+        switch(state) {
+          case 'inactive': spriteKey = 'checkpoint_inactive'; frame = 0; break;
+          case 'activating': spriteKey = 'checkpoint_activation'; frameCount = cp.frameCount; break;
+          case 'active':
+            spriteKey = 'checkpoint_active';
+            const activeAnimConfig = this.assets.configs.animations.checkpoint.active;
+            const activeFrameCount = activeAnimConfig.frameCount;
+            const activeFrameSpeed = activeAnimConfig.frameSpeed;
+            frame = Math.floor((performance.now() / 1000 / activeFrameSpeed) % activeFrameCount);
+            frameCount = activeFrameCount;
+            break;
+        }
+        if (spriteKey) renderQueue.push({ type: 'checkpoint', x: cp.x - cp.size / 2, y: cp.y - cp.size / 2, width: cp.size, height: cp.size, spriteKey, frame, frameCount });
+      }
+      
+      for (const p of this.particleSystem.activeParticles) {
+        renderQueue.push({ type: 'particle', x: p.x - p.size / 2, y: p.y - p.size / 2, width: p.size, height: p.size, spriteKey: 'dust_particle', alpha: p.alpha });
+      }
+
+      for (const collected of this.collectedFruits) {
+        renderQueue.push({ type: 'collected_fruit', x: collected.x - collected.size / 2, y: collected.y - collected.size / 2, width: collected.size, height: collected.size, spriteKey: 'fruit_collected', frame: collected.frame, frameCount: 6 });
+      }
+
+      this.renderer.renderScene(
+        this.camera,
+        this.currentLevel,
+        renderQueue
+      );
+
+      this.hud.drawGameHUD(this.ctx);
+
+    } catch (error) {
+      console.error('Error in render loop:', error);
+      this.ctx.fillStyle = 'red';
+      this.ctx.font = '20px sans-serif';
+      this.ctx.fillText('Rendering Error - Check Console', 10, 30);
+    }
+  }
+}

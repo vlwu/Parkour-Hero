@@ -1,0 +1,23 @@
+{
+  "name": "Level 2: Big Drop",
+  "width": 1320, "height": 720,
+  "startPosition": { "x": 50, "y": 300 },
+  "platforms": [
+    { "x": 0, "y": 400, "width": 192, "height": 48, "terrainType": "dirt" },
+    { "x": 300, "y": 320, "width": 96, "height": 48, "terrainType": "stone" },
+    { "x": 450, "y": 240, "width": 144, "height": 48, "terrainType": "wood" },
+    { "x": 700, "y": 160, "width": 144, "height": 48, "terrainType": "dirt" },
+    { "x": 1000, "y": 600, "width": 144, "height": 48, "terrainType": "stone" }
+  ],
+  "fruits": [
+    { "x": 75, "y": 250, "fruitType": "fruit_apple" },
+    { "x": 340, "y": 270, "fruitType": "fruit_bananas" },
+    { "x": 525, "y": 190, "fruitType": "fruit_cherries" },
+    { "x": 800, "y": 110, "fruitType": "fruit_kiwi" },
+    { "x": 1000, "y": 100, "fruitType": "fruit_melon" },
+    { "x": 250, "y": 300, "fruitType": "fruit_orange" },
+    { "x": 650, "y": 110, "fruitType": "fruit_pineapple" },
+    { "x": 900, "y": 80, "fruitType": "fruit_strawberry" }
+  ],
+  "trophy": { "x": 1120, "y": 584 }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "Level 10: Defying Gravity",
+  "width": 1500,
+  "height": 1500,
+  "startPosition": { "x": 100, "y": 1300 },
+  "platforms": [
+    { "x": 50, "y": 1400, "width": 144, "height": 48, "terrainType": "wood" },
+    { "x": 300, "y": 1250, "width": 96, "height": 48, "terrainType": "stone" },
+    { "x": 500, "y": 1100, "width": 192, "height": 48, "terrainType": "green_block" },
+    { "x": 800, "y": 950, "width": 144, "height": 48, "terrainType": "pink_dirt" },
+    { "x": 1100, "y": 800, "width": 96, "height": 48, "terrainType": "orange_dirt" },
+    { "x": 1300, "y": 650, "width": 144, "height": 48, "terrainType": "wood" },
+    { "x": 1100, "y": 500, "width": 192, "height": 48, "terrainType": "dirt" },
+    { "x": 800, "y": 350, "width": 96, "height": 48, "terrainType": "stone" }
+  ],
+  "fruits": [
+    { "x": 350, "y": 1200, "fruitType": "fruit_apple" },
+    { "x": 850, "y": 900, "fruitType": "fruit_bananas" },
+    { "x": 1350, "y": 600, "fruitType": "fruit_cherries" },
+    { "x": 1150, "y": 450, "fruitType": "fruit_kiwi" },
+    { "x": 850, "y": 300, "fruitType": "fruit_melon" },
+    { "x": 100, "y": 1200, "fruitType": "fruit_orange" },
+    { "x": 550, "y": 1050, "fruitType": "fruit_pineapple" },
+    { "x": 1150, "y": 750, "fruitType": "fruit_strawberry" }
+  ],
+  "trophy": { "x": 848, "y": 334 }
+}

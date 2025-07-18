@@ -1,0 +1,24 @@
+{
+  "name": "Level 7: Stairway",
+  "width": 1280, "height": 720,
+  "startPosition": { "x": 50, "y": 550 },
+  "platforms": [
+    { "x": 0, "y": 650, "width": 144, "height": 48, "terrainType": "dirt" },
+    { "x": 200, "y": 550, "width": 144, "height": 48, "terrainType": "mud" },
+    { "x": 400, "y": 450, "width": 144, "height": 48, "terrainType": "stone" },
+    { "x": 600, "y": 350, "width": 144, "height": 48, "terrainType": "green_block" },
+    { "x": 800, "y": 250, "width": 144, "height": 48, "terrainType": "ice" },
+    { "x": 1000, "y": 150, "width": 144, "height": 48, "terrainType": "wood" }
+  ],
+  "fruits": [
+    { "x": 80, "y": 500, "fruitType": "fruit_apple" },
+    { "x": 270, "y": 500, "fruitType": "fruit_bananas" },
+    { "x": 470, "y": 300, "fruitType": "fruit_cherries" },
+    { "x": 300, "y": 250, "fruitType": "fruit_kiwi" },
+    { "x": 870, "y": 220, "fruitType": "fruit_melon" },
+    { "x": 1070, "y": 250, "fruitType": "fruit_orange" },
+    { "x": 350, "y": 400, "fruitType": "fruit_pineapple" },
+    { "x": 600, "y": 100, "fruitType": "fruit_strawberry" }
+  ],
+  "trophy": { "x": 1070, "y": 134 }
+}

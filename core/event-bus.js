@@ -1,0 +1,37 @@
+class EventBus {
+  constructor() {
+    this.events = {};
+    if (window.eventBus) {
+      return window.eventBus;
+    }
+    window.eventBus = this;
+  }
+
+  subscribe(eventName, callback) {
+    if (!this.events[eventName]) {
+      this.events[eventName] = new Set();
+    }
+    this.events[eventName].add(callback);
+  }
+
+  unsubscribe(eventName, callback) {
+    if (this.events[eventName]) {
+      this.events[eventName].delete(callback);
+    }
+  }
+
+  publish(eventName, data) {
+    if (this.events[eventName]) {
+      this.events[eventName].forEach(callback => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(`Error in event bus callback for event: ${eventName}`, error);
+        }
+      });
+    }
+  }
+}
+
+// Export a singleton instance to be used across the application.
+export const eventBus = new EventBus();

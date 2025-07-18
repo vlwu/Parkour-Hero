@@ -1,0 +1,30 @@
+{
+  "dimensions": {
+    "width": 32,
+    "height": 32,
+    "spawnWidth": 96,
+    "spawnHeight": 96,
+    "clingOffset": 7
+  },
+  "physics": {
+    "moveSpeed": 200,
+    "jumpForce": 400,
+    "gravity": 1200,
+    "maxFallSpeed": 500
+  },
+  "dash": {
+    "speed": 500,
+    "duration": 0.2,
+    "cooldown": 0.7
+  },
+  "timers": {
+    "coyote": 0.1,
+    "jumpBuffer": 0.15
+  },
+  "surfaceModifiers": {
+    "sandMoveMultiplier": 0.5,
+    "mudJumpMultiplier": 0.6,
+    "iceAcceleration": 800,
+    "iceFriction": 400
+  }
+}
