@@ -125,7 +125,7 @@ export const levelSections = [
         trophy: { x: 1064, y: 616 }
       }
     ]
-  }
+  },
 ];
 
 export const characterConfig = { // Unlock a character every 10 levels

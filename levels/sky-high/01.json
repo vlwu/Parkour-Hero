@@ -6,12 +6,12 @@
   "startPosition": { "x": 100, "y": 1950 },
   "platforms": [
     { "x": 50, "y": 2050, "width": 192, "height": 48, "terrainType": "stone" },
-    { "x": 300, "y": 1900, "width": 144, "height": 48, "terrainType": "dirt" },
+    { "x": 300, "y": 1900, "width": 144, "height": 48, "terrainType": "orange_dirt" },
     { "x": 150, "y": 1750, "width": 96, "height": 48, "terrainType": "wood" },
     { "x": 400, "y": 1600, "width": 192, "height": 48, "terrainType": "stone" },
     { "x": 650, "y": 1480, "width": 48, "height": 48, "terrainType": "green_block" },
     { "x": 800, "y": 1350, "width": 144, "height": 48, "terrainType": "pink_dirt" },
-    { "x": 600, "y": 1200, "width": 96, "height": 48, "terrainType": "dirt" },
+    { "x": 600, "y": 1200, "width": 96, "height": 48, "terrainType": "stone" },
     { "x": 400, "y": 1050, "width": 144, "height": 48, "terrainType": "wood" },
     { "x": 150, "y": 900, "width": 192, "height": 48, "terrainType": "stone" },
     { "x": 300, "y": 750, "width": 48, "height": 48, "terrainType": "orange_dirt" },
@@ -20,8 +20,7 @@
     { "x": 1000, "y": 350, "width": 192, "height": 48, "terrainType": "stone" }
   ],
   "checkpoints": [
-    { "x": 500, "y": 1568 },
-    { "x": 300, "y": 868 }
+    { "x": 500, "y": 1568 }
   ],
   "fruits": [
     { "x": 350, "y": 1850, "fruitType": "fruit_apple" },

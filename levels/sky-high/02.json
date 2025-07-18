@@ -4,20 +4,23 @@
   "height": 2500,
   "startPosition": { "x": 640, "y": 2300 },
   "platforms": [
-    { "x": 550, "y": 2400, "width": 192, "height": 48, "terrainType": "wood" },
-    { "x": 800, "y": 2280, "width": 96, "height": 48, "terrainType": "wood" },
+    { "x": 550, "y": 2400, "width": 192, "height": 48, "terrainType": "dirt" },
+    { "x": 800, "y": 2280, "width": 96, "height": 48, "terrainType": "dirt" },
     { "x": 600, "y": 2150, "width": 144, "height": 48, "terrainType": "green_block" },
-    { "x": 350, "y": 2000, "width": 192, "height": 48, "terrainType": "dirt" },
+    { "x": 350, "y": 2000, "width": 192, "height": 48, "terrainType": "wood" },
     { "x": 150, "y": 1850, "width": 96, "height": 48, "terrainType": "pink_dirt" },
     { "x": 400, "y": 1700, "width": 48, "height": 48, "terrainType": "stone" },
     { "x": 650, "y": 1550, "width": 144, "height": 48, "terrainType": "orange_dirt" },
-    { "x": 900, "y": 1400, "width": 96, "height": 48, "terrainType": "dirt" },
+    { "x": 900, "y": 1400, "width": 96, "height": 48, "terrainType": "pink_dirt" },
     { "x": 700, "y": 1250, "width": 144, "height": 48, "terrainType": "stone" },
     { "x": 450, "y": 1100, "width": 96, "height": 48, "terrainType": "wood" },
     { "x": 200, "y": 950, "width": 192, "height": 48, "terrainType": "wood" },
     { "x": 450, "y": 775, "width": 48, "height": 48, "terrainType": "green_block" },
-    { "x": 650, "y": 650, "width": 144, "height": 48, "terrainType": "dirt" },
-    { "x": 950, "y": 475, "width": 192, "height": 48, "terrainType": "stone" }
+    { "x": 650, "y": 670, "width": 144, "height": 48, "terrainType": "dirt" },
+    { "x": 950, "y": 500, "width": 192, "height": 48, "terrainType": "stone" }
+  ],
+  "checkpoints": [
+    { "x": 950, "y": 1368 }
   ],
   "fruits": [
     { "x": 850, "y": 2230, "fruitType": "fruit_apple" },
@@ -29,5 +32,5 @@
     { "x": 700, "y": 550, "fruitType": "fruit_pineapple" },
     { "x": 1050, "y": 400, "fruitType": "fruit_strawberry" }
   ],
-  "trophy": { "x": 1046, "y": 459 }
+  "trophy": { "x": 1046, "y": 484 }
 }
