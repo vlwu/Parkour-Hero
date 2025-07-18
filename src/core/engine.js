@@ -1,12 +1,11 @@
 import { Player } from '../entities/player.js';
-import { levelSections } from '../entities/level-definitions.js';
-import { Level } from '../entities/level.js';
 import { Camera } from './camera.js';
 import { SoundManager } from '../managers/sound-manager.js';
 import { HUD } from '../ui/hud.js';
 import { GameState } from '../managers/game-state.js';
 import { PhysicsSystem } from '../systems/physics-collision-system.js';
 import { Renderer } from '../systems/renderer.js';
+import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
 
 export class Engine {
@@ -29,18 +28,19 @@ export class Engine {
     this.soundManager.loadSounds(assets);
     this.physicsSystem = new PhysicsSystem();
     this.renderer = new Renderer(ctx, canvas, assets);
+    this.gameState = new GameState();
+    this.levelManager = new LevelManager(this.gameState); 
 
     this.levelStartTime = 0;
     this.levelTime = 0;
-
-    this.gameState = new GameState(levelSections);
-    
-    this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
-    this.camera.snapToPlayer(this.player);
+    this.currentLevel = null; // Will be set by loadLevel
 
     this.particles = [];
     this.menuManager = null; // Will be set by main.js
     this._setupEventSubscriptions();
+    
+    // Initial level load
+    this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
   }
   
   _setupEventSubscriptions() {
@@ -69,7 +69,7 @@ export class Engine {
   // Action handlers that check game state before acting
   _handleActionConfirm() {
     if (this.gameState.showingLevelComplete) {
-      const action = this.gameState.hasNextLevel() ? 'next' : 'restart';
+      const action = this.levelManager.hasNextLevel() ? 'next' : 'restart';
       this.menuManager.handleLevelCompleteAction(action);
     }
   }
@@ -81,19 +81,21 @@ export class Engine {
   }
 
   _handleActionNext() {
-    if (this.gameState.showingLevelComplete && this.gameState.hasNextLevel()) {
+    if (this.gameState.showingLevelComplete && this.levelManager.hasNextLevel()) {
       this.menuManager.handleLevelCompleteAction('next');
     }
   }
 
   _handleActionPrevious() {
-    if (this.gameState.showingLevelComplete && this.gameState.hasPreviousLevel()) {
+    if (this.gameState.showingLevelComplete && this.levelManager.hasPreviousLevel()) {
       this.menuManager.handleLevelCompleteAction('previous');
     }
   }
 
   setMenuManager(menuManager) {
       this.menuManager = menuManager;
+      // Pass the level manager to the menu manager so it can check hasNextLevel, etc.
+      this.menuManager.setLevelManager(this.levelManager); 
   }
 
   updatePlayerCharacter(newCharId) {
@@ -159,29 +161,19 @@ export class Engine {
   }
 
   loadLevel(sectionIndex, levelIndex) {
-    if (sectionIndex >= levelSections.length || 
-        levelIndex >= levelSections[sectionIndex].levels.length) {
-      console.error(`Invalid level: Section ${sectionIndex}, Level ${levelIndex}`);
+    // Delegate level creation
+    const newLevel = this.levelManager.loadLevel(sectionIndex, levelIndex);
+    if (!newLevel) {
+      this.stop(); // Halt the game if level loading fails critically
       return;
     }
-
-    const levelData = levelSections[sectionIndex].levels[levelIndex];
-    if (!levelData) {
-        console.error(`Failed to load level data for Section ${sectionIndex}, Level ${levelIndex}. The JSON file may be missing or failed to fetch. Cannot proceed.`);
-        this.stop(); // Halt the game to prevent a crash.
-        return;
-    }
+    this.currentLevel = newLevel;
 
     this.pauseForMenu = false;
-
     this.gameState.showingLevelComplete = false;
-    this.gameState.currentSection = sectionIndex;
-    this.gameState.currentLevelIndex = levelIndex;
-    this.currentLevel = new Level(levelData);
     
     this.collectedFruits = [];
     this.particles = [];
-
     this.lastCheckpoint = null;
     this.fruitsAtLastCheckpoint.clear();
     
@@ -191,11 +183,8 @@ export class Engine {
       this.assets,
       this.gameState.selectedCharacter
     );
-    this.player.isSpawning = true;
-    this.player.spawnComplete = false;
-    this.player.deathCount = 0;
 
-    this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
+    this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
     this.camera.snapToPlayer(this.player);
 
     this.levelStartTime = performance.now();

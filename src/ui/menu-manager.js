@@ -9,6 +9,7 @@ export class MenuManager {
     this.assets = assets;
     this.gameState = gameState;
     this.keybinds = keybinds;
+    this.levelManager = null;
     this.isGameRunning = true;
     this.isPausedForMenu = false;
 
@@ -48,6 +49,10 @@ export class MenuManager {
     this.lcPreviousButton = document.getElementById('lc-previous-button');
     this.lcRestartButton = document.getElementById('lc-restart-button');
     this.lcNextButton = document.getElementById('lc-next-button');
+  }
+
+  setLevelManager(levelManager) { 
+    this.levelManager = levelManager;
   }
 
   init() {
@@ -188,10 +193,12 @@ export class MenuManager {
       this.allModals.forEach(m => m.classList.add('hidden'));
       this.lcTitle.textContent = `Level Complete!`;
       this.lcDeaths.textContent = `Deaths: ${deaths}`;
-      this.lcTime.textContent = `Time Taken: ${formatTime(time)}`;
+      this.lcTime.textContent = formatTime(time);
 
-      this.lcNextButton.style.display = this.gameState.hasNextLevel() ? 'inline-block' : 'none';
-      this.lcPreviousButton.style.display = this.gameState.hasPreviousLevel() ? 'inline-block' : 'none';
+      if (this.levelManager) {
+        this.lcNextButton.style.display = this.levelManager.hasNextLevel() ? 'inline-block' : 'none';
+        this.lcPreviousButton.style.display = this.levelManager.hasPreviousLevel() ? 'inline-block' : 'none';
+      }
 
       this.levelCompleteModal.classList.remove('hidden');
   }
@@ -199,7 +206,9 @@ export class MenuManager {
   handleLevelCompleteAction(action) {
       if (this.levelCompleteModal.classList.contains('hidden')) return;
       this.levelCompleteModal.classList.add('hidden');
-      this.gameState.handleLevelCompleteAction(action);
+      if (this.levelManager) { 
+        this.levelManager.handleLevelCompleteAction(action);
+      }
   }
 
   updatePauseButtonIcon() {

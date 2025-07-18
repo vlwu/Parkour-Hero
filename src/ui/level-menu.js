@@ -1,4 +1,5 @@
 import { eventBus } from '../utils/event-bus.js';
+import { levelSections } from '../entities/level-definitions.js';
 
 export class LevelMenu {
     constructor(gameState) {
@@ -19,7 +20,7 @@ export class LevelMenu {
         if (!this.levelSelectionContainer) return;
         this.levelSelectionContainer.innerHTML = '';
   
-        this.gameState.levelSections.forEach((section, sectionIndex) => {
+        levelSections.forEach((section, sectionIndex) => {
             const sectionContainer = document.createElement('div');
             sectionContainer.classList.add('level-section-menu');
             const sectionTitle = document.createElement('h4');

@@ -1,5 +1,6 @@
 import { characterConfig } from '../entities/level-definitions.js';
 import { eventBus } from '../utils/event-bus.js';
+import { levelSections } from '../entities/level-definitions.js';
 
 function getLinearIndex(sectionIndex, levelIndex, levelSections) {
     let linearIndex = 0;
@@ -11,9 +12,7 @@ function getLinearIndex(sectionIndex, levelIndex, levelSections) {
 }
 
 export class GameState {
-  constructor(levelSections) {
-      this.levelSections = levelSections;
-      
+  constructor() {
       this.currentSection = 0;
       this.currentLevelIndex = 0;
       this.showingLevelComplete = false;
@@ -131,8 +130,8 @@ export class GameState {
       if (!this.levelProgress.completedLevels.includes(levelId)) {
           this.levelProgress.completedLevels.push(levelId);
           
-          const totalLevels = this.levelSections.reduce((acc, section) => acc + section.levels.length, 0);
-          const currentLinearIndex = getLinearIndex(this.currentSection, this.currentLevelIndex, this.levelSections);
+          const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
+          const currentLinearIndex = getLinearIndex(this.currentSection, this.currentLevelIndex, levelSections);
           
           if (currentLinearIndex + 1 < totalLevels) {
               const nextUnlockedCount = currentLinearIndex + 2;
@@ -149,7 +148,7 @@ export class GameState {
   }
 
   isLevelUnlocked(sectionIndex, levelIndex) {
-      const levelLinearIndex = getLinearIndex(sectionIndex, levelIndex, this.levelSections);
+      const levelLinearIndex = getLinearIndex(sectionIndex, levelIndex, levelSections);
       return levelLinearIndex < this.levelProgress.unlockedLevels[0];
   }
 
@@ -157,39 +156,5 @@ export class GameState {
       const levelId = `${sectionIndex}-${levelIndex}`;
       return this.levelProgress.completedLevels.includes(levelId);
   }
-
-
-  hasNextLevel() {
-    const hasNextInSection = this.currentLevelIndex + 1 < this.levelSections[this.currentSection].levels.length;
-    const hasNextSection = this.currentSection + 1 < this.levelSections.length;
-    return hasNextInSection || hasNextSection;
-  }
-
-  hasPreviousLevel() {
-    return this.currentLevelIndex > 0 || this.currentSection > 0;
-  }
-
-  handleLevelCompleteAction(action) {
-    this.showingLevelComplete = false;
-
-    if (action === 'next') {
-      if (this.currentLevelIndex + 1 < this.levelSections[this.currentSection].levels.length) {
-        this.currentLevelIndex++;
-      } else if (this.currentSection + 1 < this.levelSections.length) {
-        this.currentSection++;
-        this.currentLevelIndex = 0;
-      }
-      eventBus.publish('requestLevelLoad', { sectionIndex: this.currentSection, levelIndex: this.currentLevelIndex });
-    } else if (action === 'restart') {
-      eventBus.publish('requestLevelLoad', { sectionIndex: this.currentSection, levelIndex: this.currentLevelIndex });
-    } else if (action === 'previous' && this.hasPreviousLevel()) {
-      if (this.currentLevelIndex > 0) {
-        this.currentLevelIndex--;
-      } else if (this.currentSection > 0) {
-        this.currentSection--;
-        this.currentLevelIndex = this.levelSections[this.currentSection].levels.length - 1;
-      }
-      eventBus.publish('requestLevelLoad', { sectionIndex: this.currentSection, levelIndex: this.currentLevelIndex });
-    }
-  }
+  
 }
