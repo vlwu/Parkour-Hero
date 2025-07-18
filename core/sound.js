@@ -4,6 +4,9 @@ export class SoundManager {
   constructor() {
     this.sounds = {};
     this.loopingSounds = {}; // To manage active looping sounds
+    this.soundPool = {}; // To manage pooled audio objects
+    this.poolSize = 5; // Number of audio objects to pool per sound effect
+
     this.audioContext = null;
     this.audioUnlocked = false;
     this.settings = {
@@ -38,7 +41,16 @@ export class SoundManager {
     soundKeys.forEach(key => {
       if (assets[key]) {
         this.sounds[key] = assets[key];
-        this.sounds[key].volume = this.settings.volume;
+
+        // Pre-populate the pool for non-looping sounds
+        const isLoopingSound = key.includes('walk') || key.includes('run');
+        if (!isLoopingSound) {
+            this.soundPool[key] = [];
+            for (let i = 0; i < this.poolSize; i++) {
+                const clone = this.sounds[key].cloneNode(true);
+                this.soundPool[key].push({ audio: clone, inUse: false });
+            }
+        }
       } else {
         console.warn(`Sound asset ${key} not found in assets`);
       }
@@ -53,14 +65,38 @@ export class SoundManager {
     if (!this.audioUnlocked) {
       await this.unlockAudio();
     }
+    
+    const pool = this.soundPool[soundKey];
+    if (!pool) {
+        console.warn(`Sound ${soundKey} is not a pooled sound. Use playLoop for looping audio.`);
+        return;
+    }
 
     try {
-      const audioClone = this.sounds[soundKey].cloneNode(true);
-      audioClone.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
-      audioClone.currentTime = 0;
-      await audioClone.play();
+        let soundToPlay = pool.find(s => !s.inUse);
+
+        if (soundToPlay) {
+            soundToPlay.inUse = true;
+            const audio = soundToPlay.audio;
+            
+            audio.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
+            audio.currentTime = 0;
+            
+            // When the sound finishes playing, release it back to the pool.
+            audio.onended = () => {
+                soundToPlay.inUse = false;
+                audio.onended = null; // Clean up listener
+            };
+            
+            await audio.play().catch(e => {
+                console.error(`Audio pool play failed for ${soundKey}:`, e);
+                soundToPlay.inUse = false; // Release on error
+            });
+        } else {
+            console.warn(`Sound pool for ${soundKey} was depleted. No sound played.`);
+        }
     } catch (error) {
-      console.error(`Failed to play sound ${soundKey}:`, error);
+      console.error(`Failed to play sound from pool ${soundKey}:`, error);
     }
   }
 
@@ -120,26 +156,33 @@ export class SoundManager {
   }
 
   stop(soundKey) {
-    if (this.sounds[soundKey]) {
-      this.sounds[soundKey].pause();
-      this.sounds[soundKey].currentTime = 0;
+    // This is less relevant for pooled sounds, but good for loops.
+    if (this.loopingSounds[soundKey]) {
+        this.stopLoop(soundKey);
     }
   }
 
   stopAll() {
     this.stopAllLoops();
-    Object.values(this.sounds).forEach(sound => {
-        if(sound && !sound.paused) {
-            sound.pause();
-            sound.currentTime = 0;
-        }
+    // Stop any currently playing pooled sounds and release them
+    Object.values(this.soundPool).forEach(pool => {
+        pool.forEach(pooledSound => {
+            if (pooledSound.inUse) {
+                pooledSound.audio.pause();
+                pooledSound.audio.currentTime = 0;
+                pooledSound.inUse = false;
+            }
+        });
     });
   }
 
   setVolume(volume) {
     this.settings.volume = Math.max(0, Math.min(1, volume));
+    
+    // Update master sound objects (clones get volume set at play time)
     Object.values(this.sounds).forEach(sound => {
       if (sound) {
+        // This is less critical now for pooled sounds but good practice
         sound.volume = this.settings.volume;
       }
     });
