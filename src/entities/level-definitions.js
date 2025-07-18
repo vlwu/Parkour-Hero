@@ -96,32 +96,33 @@ export const levelSections = [
     name: "Jungle Journey",
     levels: [
       {
-        name: "Level 1: Test Level",
-        width: 1800, height: 720,
-        startPosition: { x: 100, y: 550 },
+        name: "Wall Jump Test Chamber",
+        width: 1280, height: 720,
+        startPosition: { x: 100, y: 600 },
         platforms: [
-          // Start area
-          { x: 0, y: 600, width: 288, height: 120, terrainType: 'dirt' },
-          // Sand pit
-          { x: 350, y: 650, width: 384, height: 70, terrainType: 'sand' },
-          // Mud slope
-          { x: 800, y: 600, width: 288, height: 120, terrainType: 'mud' },
-          { x: 950, y: 550, width: 192, height: 170, terrainType: 'mud' },
-          // Ice bridge
-          { x: 1250, y: 500, width: 400, height: 48, terrainType: 'ice' },
-          // End platform
-          { x: 1700, y: 450, width: 96, height: 270, terrainType: 'stone' }
+          // Floor
+          { x: 0, y: 680, width: 1280, height: 48, terrainType: 'dirt' },
+          
+          // First wall jump section
+          { x: 350, y: 400, width: 48, height: 288, terrainType: 'stone' },
+          { x: 550, y: 200, width: 48, height: 288, terrainType: 'stone' },
+          
+          // Landing platform
+          { x: 350, y: 150, width: 240, height: 48, terrainType: 'wood' },
+
+          // A non-climbable wall for testing
+          { x: 800, y: 400, width: 48, height: 288, terrainType: 'dirt' },
+          
+          // Trophy platform
+          { x: 1000, y: 632, width: 128, height: 48, terrainType: 'stone' },
         ],
         fruits: [
-          { x: 542, y: 600, fruitType: 'fruit_pineapple' },
-          { x: 1046, y: 500, fruitType: 'fruit_orange' },
-          { x: 1450, y: 450, fruitType: 'fruit_strawberry' },
+          { x: 474, y: 100, fruitType: 'fruit_cherries' }
         ],
         checkpoints: [
-          { x: 896, y: 568 },
-          { x: 1298, y: 468 }
+          { x: 1190, y: 640 }
         ],
-        trophy: { x: 1748, y: 434 }
+        trophy: { x: 1064, y: 616 }
       }
     ]
   }

@@ -161,17 +161,22 @@ export class Renderer {
             }
 
             const config = platform.spriteConfig[platform.terrainType];
-            const fullTiles = Math.floor(platform.width / platform.tileSize);
+            const tilesX = Math.floor(platform.width / platform.tileSize);
+            const tilesY = Math.floor(platform.height / platform.tileSize);
 
-            for (let i = 0; i < fullTiles; i++) {
-                const tileX = platform.x + i * platform.tileSize;
-                this.ctx.drawImage(
-                    terrainSprite,
-                    config.srcX, config.srcY,
-                    platform.tileSize, platform.tileSize,
-                    tileX, platform.y,
-                    platform.tileSize, platform.tileSize
-                );
+            // Nested loop to tile both horizontally and vertically
+            for (let j = 0; j < tilesY; j++) {
+                for (let i = 0; i < tilesX; i++) {
+                    const tileX = platform.x + i * platform.tileSize;
+                    const tileY = platform.y + j * platform.tileSize;
+                    this.ctx.drawImage(
+                        terrainSprite,
+                        config.srcX, config.srcY,
+                        platform.tileSize, platform.tileSize,
+                        tileX, tileY,
+                        platform.tileSize, platform.tileSize
+                    );
+                }
             }
         } catch (error) {
             console.warn('Error rendering platform:', error);

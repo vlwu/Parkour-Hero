@@ -26,17 +26,24 @@ export class PhysicsSystem {
     }
 
     // Jump logic
-    if (player.jumpBufferTimer > 0 && (player.onGround || player.coyoteTimer > 0)) {
+    const isClinging = player.currentState.name === 'cling';
+    if (player.jumpBufferTimer > 0 && (player.onGround || player.coyoteTimer > 0 || isClinging)) {
       let jumpForce = PLAYER_CONSTANTS.JUMP_FORCE;
-      if (player.groundType === 'mud') {
+
+      if (isClinging) {
+        // This is the wall jump. Push the player away from the wall.
+        player.vx = (player.direction === 'left' ? 1 : -1) * PLAYER_CONSTANTS.MOVE_SPEED;
+        // Flip the player's facing direction for animations and subsequent movement.
+        player.direction = player.direction === 'left' ? 'right' : 'left';
+      } else if (player.groundType === 'mud') {
         jumpForce *= PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER;
       }
+      
       player.vy = -jumpForce;
       player.jumpCount = 1;
       player.onGround = false;
       player.jumpBufferTimer = 0;
       player.coyoteTimer = 0;
-      player.jumpedThisFrame = 1;
       eventBus.publish('playSound', { key: 'jump', volume: 0.8 });
     }
 
@@ -140,12 +147,18 @@ export class PhysicsSystem {
       else if (fromRight) player.x = platform.x + platform.width;
       
       player.vx = 0;
-      player.isAgainstWall = true;
+      
+      const unClimbableWalls = ['dirt', 'sand', 'mud', 'ice'];
+      const isClimbable = !unClimbableWalls.includes(platform.terrainType);
+      
+      if (isClimbable) {
+        player.isAgainstWall = true;
 
-      // Handle wall cling/slide state
-      if (!player.onGround && player.vy >= 0) {
-        player.transitionTo('cling');
-        player.vy = 30; // Slow slide
+        // Handle wall cling/slide state
+        if (!player.onGround && player.vy >= 0) {
+          player.transitionTo('cling');
+          player.vy = 30; // Slow slide
+        }
       }
       return; // Stop after first collision
     }
