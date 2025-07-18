@@ -1,5 +1,8 @@
 import { eventBus } from './event-bus.js';
 
+// Sounds that are UI notifications and should not be pooled or stopped by a global pause.
+const UI_SOUNDS = ['level_complete', 'checkpoint_activated'];
+
 export class SoundManager {
   constructor() {
     this.sounds = {};
@@ -42,9 +45,9 @@ export class SoundManager {
       if (assets[key]) {
         this.sounds[key] = assets[key];
 
-        // Pre-populate the pool for non-looping sounds
+        // Only pool sounds that are not designated as UI sounds or looping sounds.
         const isLoopingSound = key.includes('walk') || key.includes('run');
-        if (!isLoopingSound) {
+        if (!isLoopingSound && !UI_SOUNDS.includes(key)) {
             this.soundPool[key] = [];
             for (let i = 0; i < this.poolSize; i++) {
                 const clone = this.sounds[key].cloneNode(true);
@@ -65,7 +68,24 @@ export class SoundManager {
     if (!this.audioUnlocked) {
       await this.unlockAudio();
     }
-    
+
+    // If it's a designated UI sound, play it as a one-off clone that won't be interrupted by the pool's stopAll logic.
+    if (UI_SOUNDS.includes(soundKey)) {
+        try {
+            const audioClone = this.sounds[soundKey].cloneNode(true);
+            audioClone.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
+            audioClone.currentTime = 0;
+            await audioClone.play();
+        } catch (error) {
+            // This can still fail if the user clicks away, but it won't be from our own pause() call.
+            if (error.name !== 'AbortError') {
+              console.error(`Failed to play UI sound ${soundKey}:`, error);
+            }
+        }
+        return;
+    }
+
+    // For all other sounds, use the performance-optimized pool.
     const pool = this.soundPool[soundKey];
     if (!pool) {
         console.warn(`Sound ${soundKey} is not a pooled sound. Use playLoop for looping audio.`);
@@ -82,14 +102,16 @@ export class SoundManager {
             audio.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
             audio.currentTime = 0;
             
-            // When the sound finishes playing, release it back to the pool.
             audio.onended = () => {
                 soundToPlay.inUse = false;
                 audio.onended = null; // Clean up listener
             };
             
             await audio.play().catch(e => {
-                console.error(`Audio pool play failed for ${soundKey}:`, e);
+                // This error might still happen if the user switches tabs, but not from our code.
+                if (e.name !== 'AbortError') {
+                    console.error(`Audio pool play failed for ${soundKey}:`, e);
+                }
                 soundToPlay.inUse = false; // Release on error
             });
         } else {
@@ -164,7 +186,7 @@ export class SoundManager {
 
   stopAll() {
     this.stopAllLoops();
-    // Stop any currently playing pooled sounds and release them
+    // This part is now safe because the problematic UI sounds are not in the pool.
     Object.values(this.soundPool).forEach(pool => {
         pool.forEach(pooledSound => {
             if (pooledSound.inUse) {
@@ -179,14 +201,11 @@ export class SoundManager {
   setVolume(volume) {
     this.settings.volume = Math.max(0, Math.min(1, volume));
     
-    // Update master sound objects (clones get volume set at play time)
     Object.values(this.sounds).forEach(sound => {
       if (sound) {
-        // This is less critical now for pooled sounds but good practice
         sound.volume = this.settings.volume;
       }
     });
-     // Also update currently playing loops
     for(const audio of Object.values(this.loopingSounds)) {
       audio.volume = this.settings.volume;
     }
