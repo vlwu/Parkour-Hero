@@ -39,6 +39,7 @@ export class Engine {
     this.camera.snapToPlayer(this.player);
 
     this.particles = [];
+    this.menuManager = null; // Will be set by main.js
     this._setupEventSubscriptions();
   }
   
@@ -57,6 +58,42 @@ export class Engine {
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
     eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
     eventBus.subscribe('allMenusClosed', () => this.pauseForMenu = false);
+
+    // Subscriptions to handle decoupled input actions
+    eventBus.subscribe('action_confirm_pressed', () => this._handleActionConfirm());
+    eventBus.subscribe('action_restart_pressed', () => this._handleActionRestart());
+    eventBus.subscribe('action_next_pressed', () => this._handleActionNext());
+    eventBus.subscribe('action_previous_pressed', () => this._handleActionPrevious());
+  }
+
+  // Action handlers that check game state before acting
+  _handleActionConfirm() {
+    if (this.gameState.showingLevelComplete) {
+      const action = this.gameState.hasNextLevel() ? 'next' : 'restart';
+      this.menuManager.handleLevelCompleteAction(action);
+    }
+  }
+
+  _handleActionRestart() {
+    if (this.gameState.showingLevelComplete) {
+      this.menuManager.handleLevelCompleteAction('restart');
+    }
+  }
+
+  _handleActionNext() {
+    if (this.gameState.showingLevelComplete && this.gameState.hasNextLevel()) {
+      this.menuManager.handleLevelCompleteAction('next');
+    }
+  }
+
+  _handleActionPrevious() {
+    if (this.gameState.showingLevelComplete && this.gameState.hasPreviousLevel()) {
+      this.menuManager.handleLevelCompleteAction('previous');
+    }
+  }
+
+  setMenuManager(menuManager) {
+      this.menuManager = menuManager;
   }
 
   updatePlayerCharacter(newCharId) {
@@ -149,7 +186,6 @@ export class Engine {
     );
     this.player.isSpawning = true;
     this.player.spawnComplete = false;
-    this.player.state = 'spawn';
     this.player.deathCount = 0;
 
     this.camera.updateLevelBounds(this.currentLevel.width || 1280, this.currentLevel.height || 720);
@@ -166,11 +202,14 @@ export class Engine {
         this.levelTime = (performance.now() - this.levelStartTime) / 1000;
       }
 
+      // Explicitly check if the game is in a state to process player input for gameplay actions.
+      const canProcessGameplayInput = this.isRunning && !this.pauseForMenu && !this.gameState.showingLevelComplete;
+
       const inputActions = {
-        moveLeft: this.keys[this.keybinds.moveLeft] || false,
-        moveRight: this.keys[this.keybinds.moveRight] || false,
-        jump: this.keys[this.keybinds.jump] || false,
-        dash: this.keys[this.keybinds.dash] || false,
+        moveLeft: canProcessGameplayInput && (this.keys[this.keybinds.moveLeft] || false),
+        moveRight: canProcessGameplayInput && (this.keys[this.keybinds.moveRight] || false),
+        jump: canProcessGameplayInput && (this.keys[this.keybinds.jump] || false),
+        dash: canProcessGameplayInput && (this.keys[this.keybinds.dash] || false),
       };
 
       this.player.handleInput(inputActions);

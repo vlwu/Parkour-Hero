@@ -1,3 +1,5 @@
+import { eventBus } from '../core/event-bus.js';
+
 export class InputManager {
   constructor(engine, canvas, menuManager) {
     this.engine = engine;
@@ -30,48 +32,40 @@ export class InputManager {
       return;
     }
 
-    // 2. Handle Escape key for all menu interactions
+    // 2. Handle Escape key for all menu interactions (this is a global UI concern)
     if (key === 'escape') {
         e.preventDefault();
         this.menuManager.handleEscape();
         return;
     }
 
-    // 3. Handle level complete screen keyboard input
-    if (this.engine.gameState.showingLevelComplete) {
-      let action = null;
-      switch (key) {
-        case 'enter':
-        case ' ':
-          action = this.engine.gameState.hasNextLevel() ? 'next' : 'restart';
-          break;
-        case 'r':
-          action = 'restart';
-          break;
-        case 'n':
-          if (this.engine.gameState.hasNextLevel()) action = 'next';
-          break;
-        case 'p':
-          if (this.engine.gameState.hasPreviousLevel()) action = 'previous';
-          break;
-      }
-      if (action) {
-        e.preventDefault();
-        this.menuManager.handleLevelCompleteAction(action);
-      }
-      return;
+    // 3. Publish discrete action events for non-gameplay keys.
+    // The engine will subscribe and decide what to do based on game state.
+    const menuActionMap = {
+        'enter': 'confirm',
+        'r': 'restart',
+        'n': 'next',
+        'p': 'previous',
+    };
+    
+    // The space bar is special, as it's a game action (dash) and can be a menu action (confirm).
+    // We publish the event, and the engine will decide how to use it based on context.
+    if (key === ' ') {
+        eventBus.publish('action_confirm_pressed');
+    }
+
+    const action = menuActionMap[key];
+    if (action) {
+        eventBus.publish(`action_${action}_pressed`);
     }
     
-    // 4. Pass general key events to the engine if game is running and no modal is open
-    if (this.engine.isRunning && !this.menuManager.isModalOpen()) {
-      // Corrected line: Directly modify the engine's key state object.
-      this.engine.keys[key] = true;
-    }
+    // 4. Update the engine's key state for polling-based input (movement, jumping, dashing).
+    // The engine's update loop will check if the game is in a state to accept these inputs.
+    this.engine.keys[key] = true;
   }
 
   handleKeyUp(e) {
     if (this.engine) {
-      // Corrected line: Directly modify the engine's key state object.
       this.engine.keys[e.key.toLowerCase()] = false;
     }
   }
