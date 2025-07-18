@@ -144,9 +144,8 @@ export class PhysicsSystem {
 
       // Handle wall cling/slide state
       if (!player.onGround && player.vy >= 0) {
-        player.state = 'cling';
+        player.transitionTo('cling');
         player.vy = 30; // Slow slide
-        player.jumpCount = 1; // Allow wall jump
       }
       return; // Stop after first collision
     }

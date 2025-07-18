@@ -175,7 +175,6 @@ export class Player {
     this.isOnIce = false;
     this.isAgainstWall = false;
 
-    this.state = 'idle'; // Maintained for compatibility
     this.currentState = null;
     this.states = {
       idle: new IdleState(),
@@ -218,10 +217,8 @@ export class Player {
     }
 
     this.currentState = this.states[newStateName];
-    const oldStateName = this.state;
-    this.state = newStateName;
 
-    if (this.state !== oldStateName) {
+    if (!oldState || this.currentState.name !== oldState.name) {
         this.animationFrame = 0;
         this.animationTimer = 0;
     }
@@ -306,13 +303,14 @@ export class Player {
   }
 
   getSpriteKey() {
+    const stateName = this.currentState.name;
     const stateToSpriteMap = {
       idle: 'playerIdle', run: 'playerRun', jump: 'playerJump',
       double_jump: 'playerDoubleJump', fall: 'playerFall',
       dash: 'playerDash', cling: 'playerCling', spawn: 'playerAppear',
       despawn: 'playerDisappear',
     };
-    return stateToSpriteMap[this.state] || 'playerIdle';
+    return stateToSpriteMap[stateName] || 'playerIdle';
   }
 
   _updateTimers(dt) {
@@ -323,25 +321,26 @@ export class Player {
 
   _updateAnimation(dt) {
     this.animationTimer += dt;
-    const speed = (this.state === 'spawn' || this.state === 'despawn') 
+    const stateName = this.currentState.name;
+    const speed = (stateName === 'spawn' || stateName === 'despawn') 
         ? PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED 
         : PLAYER_CONSTANTS.ANIMATION_SPEED;
 
     if (this.animationTimer < speed) return;
     
     this.animationTimer -= speed;
-    const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[this.state] || 1;
+    const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
     this.animationFrame++;
 
-    const isOneShot = this.state === 'spawn' || this.state === 'despawn';
+    const isOneShot = stateName === 'spawn' || stateName === 'despawn';
     if (isOneShot) {
       if (this.animationFrame >= frameCount) {
         this.animationFrame = frameCount - 1;
-        if (this.state === 'spawn') {
+        if (stateName === 'spawn') {
           this.isSpawning = false;
           this.spawnComplete = true;
         }
-        if (this.state === 'despawn') {
+        if (stateName === 'despawn') {
           this.isDespawning = false;
           this.despawnAnimationFinished = true;
         }

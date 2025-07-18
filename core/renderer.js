@@ -87,7 +87,8 @@ export class Renderer {
 
   drawPlayer(player) {
     try {
-      if (player.despawnAnimationFinished && player.state !== 'despawn') return;
+      const stateName = player.currentState.name;
+      if (player.despawnAnimationFinished && stateName !== 'despawn') return;
 
       const spriteKey = player.getSpriteKey();
       const characterSprites = this.assets.characters[player.characterId];
@@ -100,7 +101,7 @@ export class Renderer {
         return;
       }
 
-      const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[player.state] || 1;
+      const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
       const frameWidth = sprite.width / frameCount;
       const srcX = frameWidth * player.animationFrame;
 
@@ -112,12 +113,12 @@ export class Renderer {
         this.ctx.translate(player.x, player.y);
       }
       
-      const isSpecialAnim = player.state === 'spawn' || player.state === 'despawn';
+      const isSpecialAnim = stateName === 'spawn' || stateName === 'despawn';
       const renderWidth = isSpecialAnim ? player.spawnWidth : player.width;
       const renderHeight = isSpecialAnim ? player.spawnHeight : player.height;
       const renderX = isSpecialAnim ? -(player.spawnWidth - player.width) / 2 : 0;
       const renderY = isSpecialAnim ? -(player.spawnHeight - player.height) / 2 : 0;
-      const drawOffsetX = (player.state === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
+      const drawOffsetX = (stateName === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
 
       this.ctx.drawImage(
         sprite,
