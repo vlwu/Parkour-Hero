@@ -1,14 +1,14 @@
 {
-  "name": "Level 9: Aerial Mastery",
+  "name": "Level 9: Wayfinder",
   "width": 1320,
   "height": 720,
   "startPosition": { "x": 50, "y": 200 },
   "platforms": [
-    { "x": 0, "y": 300, "width": 96, "height": 48, "terrainType": "dirt" },
-    { "x": 150, "y": 200, "width": 48, "height": 48, "terrainType": "stone" },
+    { "x": 0, "y": 300, "width": 96, "height": 48, "terrainType": "green_block" },
+    { "x": 150, "y": 200, "width": 48, "height": 48, "terrainType": "dirt" },
     { "x": 250, "y": 350, "width": 48, "height": 48, "terrainType": "wood" },
-    { "x": 400, "y": 150, "width": 96, "height": 48, "terrainType": "green_block" },
-    { "x": 600, "y": 250, "width": 48, "height": 48, "terrainType": "wood" },
+    { "x": 400, "y": 150, "width": 96, "height": 48, "terrainType": "mud" },
+    { "x": 600, "y": 250, "width": 48, "height": 48, "terrainType": "ice" },
     { "x": 750, "y": 180, "width": 96, "height": 48, "terrainType": "orange_dirt" },
     { "x": 950, "y": 300, "width": 48, "height": 48, "terrainType": "pink_dirt" },
     { "x": 1100, "y": 220, "width": 144, "height": 48, "terrainType": "stone" }

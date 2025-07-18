@@ -6,43 +6,43 @@ export const levelSections = [
     name: "Basic Mechanics",
     levels: [
       {
-        name: "Level 1: It's Too Easy",
+        name: "Level 1",
         jsonPath: "levels/basic-mechanics/01.json"
       },
       {
-        name: "Level 2: Big Drop",
+        name: "Level 2",
         jsonPath: "levels/basic-mechanics/02.json"
       },
       {
-        name: "Level 3: Downs & Ups",
+        name: "Level 3",
         jsonPath: "levels/basic-mechanics/03.json"
       },
       {
-        name: "Level 4: Sky Climb",
+        name: "Level 4",
         jsonPath: "levels/basic-mechanics/04.json"
       },
       {
-        name: "Level 5: Colorful Blocks",
+        name: "Level 5",
         jsonPath: "levels/basic-mechanics/05.json"
       },
       {
-        name: "Level 6: Narrow Paths",
+        name: "Level 6",
         jsonPath: "levels/basic-mechanics/06.json"
       },
       {
-        name: "Level 7: Stairway",
+        name: "Level 7",
         jsonPath: "levels/basic-mechanics/07.json"
       },
       {
-        name: "Level 8: Bottomless",
+        name: "Level 8",
         jsonPath: "levels/basic-mechanics/08.json"
       },
       {
-        name: "Level 9: Aerial Mastery",
+        name: "Level 9",
         jsonPath: "levels/basic-mechanics/09.json"
       },
       {
-        name: "Level 10: Introduction Finale",
+        name: "Level 10",
         jsonPath: "levels/basic-mechanics/10.json"
       },
     ]
@@ -51,43 +51,43 @@ export const levelSections = [
     name: "Sky High",
     levels: [
       {
-        name: "Level 1: Cloud Rise",
+        name: "Level 1",
         jsonPath: "levels/sky-high/01.json"
       },
       {
-        name: "Level 2: Stratosphere Hop",
+        name: "Level 2",
         jsonPath: "levels/sky-high/02.json"
       },
       {
-        name: "Level 3: Celestial Ascent",
+        name: "Level 3",
         jsonPath: "levels/sky-high/03.json"
       },
       {
-        name: "Level 4: Dash Gauntlet",
+        name: "Level 4",
         jsonPath: "levels/sky-high/04.json"
       },
       {
-        name: "Level 5: Leaps of Faith",
+        name: "Level 5",
         jsonPath: "levels/sky-high/05.json"
       },
       {
-        name: "Level 6: Zigging and Zagging",
+        name: "Level 6",
         jsonPath: "levels/sky-high/06.json"
       },
       {
-        name: "Level 7: Precision Drops",
+        name: "Level 7",
         jsonPath: "levels/sky-high/07.json"
       },
       {
-        name: "Level 8: Final Ascent",
+        name: "Level 8",
         jsonPath: "levels/sky-high/08.json"
       },
       {
-        name: "Level 9: The Summit",
+        name: "Level 9",
         jsonPath: "levels/sky-high/09.json"
       },
       {
-        name: "Level 10: Defying Gravity",
+        name: "Level 10",
         jsonPath: "levels/sky-high/10.json"
       }
     ]

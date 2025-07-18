@@ -6,9 +6,9 @@
     { "x": 0, "y": 400, "width": 144, "height": 48, "terrainType": "dirt" },
     { "x": 200, "y": 350, "width": 96, "height": 48, "terrainType": "wood" },
     { "x": 350, "y": 500, "width": 96, "height": 48, "terrainType": "stone" },
-    { "x": 600, "y": 350, "width": 96, "height": 48, "terrainType": "dirt" },
+    { "x": 600, "y": 350, "width": 96, "height": 48, "terrainType": "green_block" },
     { "x": 800, "y": 200, "width": 144, "height": 48, "terrainType": "wood" },
-    { "x": 1050, "y": 300, "width": 192, "height": 48, "terrainType": "stone" }
+    { "x": 1050, "y": 300, "width": 192, "height": 48, "terrainType": "ice" }
   ],
   "fruits": [
     { "x": 50, "y": 250, "fruitType": "fruit_apple" },

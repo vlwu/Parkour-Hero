@@ -9,7 +9,7 @@
     { "x": 350, "y": 500, "width": 48, "height": 48, "terrainType": "sand" },
     { "x": 450, "y": 250, "width": 48, "height": 48, "terrainType": "green_block" },
     { "x": 600, "y": 400, "width": 48, "height": 48, "terrainType": "pink_dirt" },
-    { "x": 750, "y": 300, "width": 96, "height": 48, "terrainType": "orange_dirt" },
+    { "x": 750, "y": 300, "width": 96, "height": 48, "terrainType": "ice" },
     { "x": 950, "y": 200, "width": 144, "height": 48, "terrainType": "dirt" }
   ],
   "fruits": [

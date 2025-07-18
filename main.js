@@ -102,7 +102,7 @@ loadAssets().then((assets) => {
     // Initialize MenuManager to handle all DOM UI
     menuManager = new MenuManager(assets, engine.gameState, keybinds);
     
-    // **THE FIX IS HERE**: Link the engine to the menu manager so they can communicate.
+    // Link the engine to the menu manager so they can communicate.
     engine.setMenuManager(menuManager);
 
     // Initialize the InputManager, passing the MenuManager for UI context
