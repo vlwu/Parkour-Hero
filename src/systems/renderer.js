@@ -257,12 +257,15 @@ export class Renderer {
   }
 
   drawParticles(particles, camera) {
-    const sprite = this.assets.dust_particle;
-    if (!sprite || particles.length === 0) return;
+    if (particles.length === 0) return;
 
     this.ctx.save();
     for (let i = 0, len = particles.length; i < len; i++) {
         const p = particles[i];
+        
+        // Use the particle's spriteKey to get the correct asset, with a fallback
+        const sprite = this.assets[p.spriteKey] || this.assets.dust_particle;
+        if (!sprite) continue;
 
         if (!camera.isVisible(p.x, p.y, p.size, p.size)) {
             continue;

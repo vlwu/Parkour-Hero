@@ -53,7 +53,7 @@ export class Engine {
     eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
     eventBus.subscribe('trophyCollision', () => this._onTrophyCollision());
     eventBus.subscribe('checkpointActivated', (cp) => this._onCheckpointActivated(cp));
-    eventBus.subscribe('createParticles', ({x, y, type, direction}) => this.createDustParticles(x, y, type, direction));
+    eventBus.subscribe('createParticles', ({x, y, type, direction}) => this.createParticles(x, y, type, direction));
     eventBus.subscribe('playerDied', () => this._onPlayerDied());
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
     eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
@@ -324,26 +324,46 @@ export class Engine {
     }
   }
   
-  createDustParticles(x, y, type, direction = 'right') {
-    const count = type === 'dash' ? 10 : 7;
-    const baseSpeed = type === 'dash' ? 150 : 100;
+  createParticles(x, y, type, direction = 'right') {
+    let count, baseSpeed, particleConfig;
+    const particleConfigs = {
+        dash: { count: 10, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
+        double_jump: { count: 7, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
+        sand: { count: 2, baseSpeed: 20, spriteKey: 'sand_particle', life: 0.5, gravity: 120 },
+        mud: { count: 2, baseSpeed: 15, spriteKey: 'mud_particle', life: 0.6, gravity: 100 },
+        ice: { count: 2, baseSpeed: 25, spriteKey: 'ice_particle', life: 0.4, gravity: 20 }
+    };
+    
+    particleConfig = particleConfigs[type];
+    if (!particleConfig) return;
+
+    count = particleConfig.count;
+    baseSpeed = particleConfig.baseSpeed;
 
     for (let i = 0; i < count; i++) {
-        const angle = (type === 'dash') 
-            ? (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2)
-            : (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3); 
-
-        const speed = baseSpeed + Math.random() * 50;
+        let angle;
+        if (type === 'dash') {
+            angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
+        } else if (type === 'double_jump') {
+            angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
+        } else { // For sand, mud, ice - a little poof upwards
+            angle = - (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 4);
+        }
+        
+        const speed = baseSpeed + Math.random() * (baseSpeed * 0.5);
+        const life = particleConfig.life + Math.random() * 0.3;
+        
         const particle = {
             x: x, y: y,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            life: 0.4 + Math.random() * 0.3, 
-            initialLife: 0,
-            size: 4 + Math.random() * 4,
-            alpha: 1.0
+            life: life,
+            initialLife: life,
+            size: 5 + Math.random() * 4,
+            alpha: 1.0,
+            spriteKey: particleConfig.spriteKey,
+            gravity: particleConfig.gravity
         };
-        particle.initialLife = particle.life; 
         this.particles.push(particle);
     }
   }
@@ -358,7 +378,7 @@ export class Engine {
         } else {
             p.x += p.vx * dt;
             p.y += p.vy * dt;
-            p.vy += 50 * dt; 
+            p.vy += (p.gravity || 50) * dt; 
             p.alpha = Math.max(0, p.life / p.initialLife); 
         }
     }

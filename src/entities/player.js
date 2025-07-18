@@ -156,6 +156,7 @@ export class Player {
     this.animationFrame = 0;
 
     this.activeSurfaceSound = null;
+    this.surfaceParticleTimer = 0;
 
     this.transitionTo(this.isSpawning ? 'spawn' : 'idle');
     console.log('Player initialized at:', x, y);
@@ -222,6 +223,7 @@ export class Player {
       this.currentState.update(this, dt);
       this._updateAnimation(dt);
       this._updateSurfaceSound();
+      this._updateSurfaceParticles(dt);
     } catch (error) {
       console.error('Error in player update:', error);
     }
@@ -303,6 +305,31 @@ export class Player {
     }
   }
 
+  _updateSurfaceParticles(dt) {
+    const canEmit = this.onGround && Math.abs(this.vx) > 1 && !this.isDashing;
+    if (!canEmit) return;
+
+    const particleTypeMap = {
+        sand: 'sand',
+        mud: 'mud',
+        ice: 'ice'
+    };
+    const particleType = particleTypeMap[this.groundType];
+    if (!particleType) return;
+
+    this.surfaceParticleTimer += dt;
+    const EMIT_INTERVAL = 0.1;
+
+    if (this.surfaceParticleTimer >= EMIT_INTERVAL) {
+        this.surfaceParticleTimer -= EMIT_INTERVAL;
+        eventBus.publish('createParticles', {
+            x: this.getCenterX(),
+            y: this.y + this.height,
+            type: particleType,
+        });
+    }
+  }
+  
   _updateSurfaceSound() {
     let requiredSound = null;
     if (this.onGround && Math.abs(this.vx) > 1 && !this.isDashing) {
