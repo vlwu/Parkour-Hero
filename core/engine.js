@@ -165,12 +165,19 @@ export class Engine {
       return;
     }
 
+    const levelData = levelSections[sectionIndex].levels[levelIndex];
+    if (!levelData) {
+        console.error(`Failed to load level data for Section ${sectionIndex}, Level ${levelIndex}. The JSON file may be missing or failed to fetch. Cannot proceed.`);
+        this.stop(); // Halt the game to prevent a crash.
+        return;
+    }
+
     this.pauseForMenu = false;
 
     this.gameState.showingLevelComplete = false;
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
-    this.currentLevel = new Level(levelSections[sectionIndex].levels[levelIndex]);
+    this.currentLevel = new Level(levelData);
     
     this.collectedFruits = [];
     this.particles = [];
