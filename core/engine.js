@@ -45,8 +45,8 @@ export class Engine {
   _setupEventSubscriptions() {
     eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
     eventBus.subscribe('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
-    eventBus.subscribe('requestPauseToggle', () => this.togglePause());
     eventBus.subscribe('requestResume', () => this.resume());
+    eventBus.subscribe('requestPause', () => this.pause());
     eventBus.subscribe('keybindsUpdated', (newKeybinds) => this.updateKeybinds(newKeybinds));
     
     eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
@@ -55,7 +55,6 @@ export class Engine {
     eventBus.subscribe('createParticles', ({x, y, type, direction}) => this.createDustParticles(x, y, type, direction));
     eventBus.subscribe('playerDied', () => this._onPlayerDied());
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
-    eventBus.subscribe('gamePaused', () => this.pause());
     eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
     eventBus.subscribe('allMenusClosed', () => this.pauseForMenu = false);
   }
@@ -83,15 +82,6 @@ export class Engine {
     this.soundManager.stopAll();
   }
 
-  togglePause() {
-    if (this.isRunning) {
-      this.pause();
-      eventBus.publish('gamePaused');
-    } else {
-      this.resume();
-    }
-  }
-
   pause() {
       if (!this.isRunning) return;
       this.isRunning = false;
@@ -99,7 +89,7 @@ export class Engine {
       if (this.player) {
         this.player.needsRespawn = false;
       }
-      // No longer need to publish 'gamePaused' here, as this method is now a *reaction* to that event.
+      eventBus.publish('gamePaused');
   }
 
   resume() {

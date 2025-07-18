@@ -21,19 +21,24 @@ export class InputManager {
     if (!this.engine || !this.menuManager) return;
 
     const key = e.key.toLowerCase();
-    const isRemapping = this.menuManager.isRemapping();
-    const isLevelComplete = this.engine.gameState.showingLevelComplete;
 
     // 1. Handle keybind remapping (highest priority)
-    if (isRemapping) {
+    if (this.menuManager.isRemapping()) {
       e.preventDefault();
       e.stopPropagation();
       this.menuManager.setKeybind(e);
       return;
     }
 
-    // 2. Handle level complete screen keyboard input
-    if (isLevelComplete) {
+    // 2. Handle Escape key for all menu interactions
+    if (key === 'escape') {
+        e.preventDefault();
+        this.menuManager.handleEscape();
+        return;
+    }
+
+    // 3. Handle level complete screen keyboard input
+    if (this.engine.gameState.showingLevelComplete) {
       let action = null;
       switch (key) {
         case 'enter':
@@ -57,24 +62,10 @@ export class InputManager {
       return;
     }
     
-    // 3. Handle closing/opening menus with Escape key
-    if (key === 'escape') {
-        e.preventDefault();
-        // If any modal other than the pause modal is open, this will do nothing.
-        // If only the pause modal is open, it will close it.
-        // If no modal is open, it will open the pause modal.
-        if (!this.menuManager.isModalOpen() || !this.menuManager.pauseModal.classList.contains('hidden')) {
-            this.menuManager.togglePauseModal();
-        }
-        return;
-    }
-
-    // 4. Pass general key events to the engine if game is running
+    // 4. Pass general key events to the engine if game is running and no modal is open
     if (this.engine.isRunning && !this.menuManager.isModalOpen()) {
-      if (!e.defaultPrevented) {
-        // Corrected line: Directly modify the engine's key state object.
-        this.engine.keys[key] = true;
-      }
+      // Corrected line: Directly modify the engine's key state object.
+      this.engine.keys[key] = true;
     }
   }
 

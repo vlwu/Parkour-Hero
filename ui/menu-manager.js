@@ -17,6 +17,9 @@ export class MenuManager {
     this.levelCompleteModal = document.getElementById('levelCompleteModal');
     this.infoModal = document.getElementById('infoModal');
 
+    // Create a list of all modals for easier management
+    this.allModals = [this.settingsModal, this.levelsMenuModal, this.characterModal, this.pauseModal, this.levelCompleteModal, this.infoModal];
+
     this.settingsButton = document.getElementById('settingsButton');
     this.pauseButton = document.getElementById('pauseButton');
     this.levelsMenuButton = document.getElementById('levelsMenuButton');
@@ -87,10 +90,7 @@ export class MenuManager {
       });
       eventBus.subscribe('levelLoaded', ({ gameState }) => {
           this.gameState = gameState;
-          this.closeAllModals();
-      });
-      eventBus.subscribe('pauseModalRequested', () => {
-          this.togglePauseModal();
+          this.allModals.forEach(m => m.classList.add('hidden'));
       });
       eventBus.subscribe('statsUpdated', (stats) => {
           this.updatePauseModalStats(stats);
@@ -98,7 +98,7 @@ export class MenuManager {
       });
       eventBus.subscribe('gameStateUpdated', (gameState) => {
           this.gameState = gameState;
-          if (this.isLevelsMenuOpen()) this.populateLevelMenu();
+          if (!this.levelsMenuModal.classList.contains('hidden')) this.populateLevelMenu();
           if (!this.characterModal.classList.contains('hidden')) this.populateCharacterMenu();
       });
       eventBus.subscribe('soundSettingsChanged', (settings) => {
@@ -108,30 +108,47 @@ export class MenuManager {
 
   _setupEventListeners() {
     // Top-level UI buttons
-    this.settingsButton.addEventListener('click', () => this.toggleSettingsModal());
-    this.pauseButton.addEventListener('click', () => eventBus.publish('pauseModalRequested'));
-    this.levelsMenuButton.addEventListener('click', () => this.toggleLevelsMenuModal());
-    this.characterButton.addEventListener('click', () => this.toggleCharacterModal());
-    this.infoButton.addEventListener('click', () => this.toggleInfoModal());
+    this.settingsButton.addEventListener('click', () => this.toggleModal(this.settingsModal, () => this.onSettingsOpen()));
+    this.levelsMenuButton.addEventListener('click', () => this.toggleModal(this.levelsMenuModal, () => this.populateLevelMenu()));
+    this.characterButton.addEventListener('click', () => this.toggleModal(this.characterModal, () => this.onCharacterOpen(), () => this.onCharacterClose()));
+    this.infoButton.addEventListener('click', () => this.toggleModal(this.infoModal, () => this.updateHowToPlayKeyDisplays()));
 
-    // Modal close buttons
-    this.closeSettingsModalButton.addEventListener('click', () => this.toggleSettingsModal());
-    this.closeLevelsMenuButton.addEventListener('click', () => this.toggleLevelsMenuModal());
-    this.closeCharacterModalButton.addEventListener('click', () => this.toggleCharacterModal());
-    this.closeInfoModalButton.addEventListener('click', () => this.toggleInfoModal());
+    // Special handler for the Pause/Resume button
+    this.pauseButton.addEventListener('click', () => {
+      if (this.pauseButton.classList.contains('is-paused')) {
+        const openModal = this.allModals.find(m => !m.classList.contains('hidden'));
+        if (openModal) {
+          this.toggleModal(openModal);
+        } else {
+          if (!this.gameState.showingLevelComplete) {
+            eventBus.publish('requestResume');
+          }
+        }
+      } else {
+        this.toggleModal(this.pauseModal);
+      }
+    });
+
+    // Modal close buttons (the 'X' in the corner)
+    this.allModals.forEach(modal => {
+        const closeButton = modal.querySelector('.close-button');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => this.toggleModal(modal));
+        }
+    });
 
     // Settings listeners
     this.setupSoundSettingsListeners();
     this.setupKeybindListeners();
 
     // Pause Modal listeners
-    this.pauseResumeButton.addEventListener('click', () => this.togglePauseModal());
+    this.pauseResumeButton.addEventListener('click', () => this.toggleModal(this.pauseModal));
     this.pauseRestartButton.addEventListener('click', () => {
       eventBus.publish('requestLevelRestart');
     });
     this.pauseMainMenuButton.addEventListener('click', () => {
-        this.pauseModal.classList.add('hidden');
-        this.toggleLevelsMenuModal();
+        this.toggleModal(this.pauseModal); // Close pause modal
+        this.toggleModal(this.levelsMenuModal, () => this.populateLevelMenu()); // Open levels modal
     });
 
     // Level Complete listeners
@@ -141,95 +158,76 @@ export class MenuManager {
   }
 
   isModalOpen() {
-    return !this.settingsModal.classList.contains('hidden') ||
-           !this.levelsMenuModal.classList.contains('hidden') ||
-           !this.characterModal.classList.contains('hidden') ||
-           !this.pauseModal.classList.contains('hidden') ||
-           !this.levelCompleteModal.classList.contains('hidden') ||
-           !this.infoModal.classList.contains('hidden');
+    return this.allModals.some(m => !m.classList.contains('hidden'));
   }
 
-  closeAllModals() {
-    this.settingsModal.classList.add('hidden');
-    this.levelsMenuModal.classList.add('hidden');
-    this.characterModal.classList.add('hidden');
-    this.pauseModal.classList.add('hidden');
-    this.levelCompleteModal.classList.add('hidden');
-    this.infoModal.classList.add('hidden');
+  toggleModal(modal, onOpen, onClose) {
+    if (!modal) return;
+    const isOpening = modal.classList.contains('hidden');
+
+    if (isOpening) {
+      const anyModalAlreadyOpen = this.isModalOpen();
+      this.allModals.forEach(m => {
+        if (m === modal) {
+          m.classList.remove('hidden');
+        } else {
+          m.classList.add('hidden');
+        }
+      });
+      
+      if (onOpen) onOpen();
+
+      if (!anyModalAlreadyOpen) {
+        this.isPausedForMenu = true;
+        eventBus.publish('menuOpened');
+        if (this.isGameRunning) {
+          eventBus.publish('requestPause');
+        }
+      }
+    } else {
+      modal.classList.add('hidden');
+      if (onClose) onClose();
+
+      if (!this.isModalOpen()) {
+        this.isPausedForMenu = false;
+        eventBus.publish('allMenusClosed');
+        if (!this.gameState.showingLevelComplete) {
+          eventBus.publish('requestResume');
+        }
+      }
+    }
   }
 
-  isLevelsMenuOpen() {
-    return !this.levelsMenuModal.classList.contains('hidden');
-  }
-  
-  _toggleModal(modalElement, onOpen, onClose) {
-      const wasOpen = !modalElement.classList.contains('hidden');
-      const anyModalWasOpen = this.isModalOpen();
-
-      modalElement.classList.toggle('hidden');
-      const isOpen = !modalElement.classList.contains('hidden');
-
-      if (isOpen) {
-          if (!anyModalWasOpen) eventBus.publish('menuOpened');
-          this.isPausedForMenu = true;
-          if (this.isGameRunning) {
-              eventBus.publish('gamePaused');
-          }
-          if (onOpen) onOpen();
-      } else if (wasOpen) {
-          if (!this.isModalOpen()) {
-              eventBus.publish('allMenusClosed');
-              this.isPausedForMenu = false;
-              if (!this.isGameRunning && !this.gameState.showingLevelComplete) {
-                  eventBus.publish('requestResume');
-              }
-          }
-          if (onClose) onClose();
+  handleEscape() {
+      const openModal = this.allModals.find(m => !m.classList.contains('hidden'));
+      if (openModal) {
+          this.toggleModal(openModal);
+      } else if (!this.gameState.showingLevelComplete) {
+          this.toggleModal(this.pauseModal);
       }
   }
 
-  toggleSettingsModal() {
-      this._toggleModal(this.settingsModal, () => {
-          this.updateKeybindDisplay();
-          this.updateSoundSettingsDisplay();
-      });
+  onSettingsOpen() {
+      this.updateKeybindDisplay();
+      this.updateSoundSettingsDisplay();
   }
 
-  toggleLevelsMenuModal() {
-      this._toggleModal(this.levelsMenuModal, () => {
-          this.populateLevelMenu();
-      });
-  }
-
-  toggleInfoModal() {
-      this._toggleModal(this.infoModal, () => {
-          this.updateHowToPlayKeyDisplays();
-      });
+  onCharacterOpen() {
+      this.populateCharacterMenu();
+      if (!this.characterPreviewAnimationId) {
+          this.characterPreviewAnimationId = requestAnimationFrame(t => this.animateCharacterPreviews(t));
+      }
   }
   
-  toggleCharacterModal() {
-      this._toggleModal(this.characterModal, 
-          () => {
-              this.populateCharacterMenu();
-              if (!this.characterPreviewAnimationId) {
-                  this.characterPreviewAnimationId = requestAnimationFrame(t => this.animateCharacterPreviews(t));
-              }
-          },
-          () => {
-              if (this.characterPreviewAnimationId) {
-                  cancelAnimationFrame(this.characterPreviewAnimationId);
-                  this.characterPreviewAnimationId = null;
-              }
-          }
-      );
-  }
-
-  togglePauseModal() {
-      this.pauseModal.classList.toggle('hidden');
-      eventBus.publish('requestPauseToggle');
+  onCharacterClose() {
+      if (this.characterPreviewAnimationId) {
+          cancelAnimationFrame(this.characterPreviewAnimationId);
+          this.characterPreviewAnimationId = null;
+      }
   }
   
   showLevelCompleteScreen(deaths, time) {
+      this.allModals.forEach(m => m.classList.add('hidden'));
       this.lcTitle.textContent = `Level Complete!`;
       this.lcDeaths.textContent = `Deaths: ${deaths}`;
       this.lcTime.textContent = `Time Taken: ${this.formatTime(time)}`;

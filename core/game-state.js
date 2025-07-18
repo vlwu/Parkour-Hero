@@ -125,7 +125,7 @@ export class GameState {
 
       eventBus.publish('playSound', { key: 'level_complete', volume: 1.0 });
       this.showingLevelComplete = true;
-      eventBus.publish('gamePaused');
+      eventBus.publish('requestPause');
   }
 
   isLevelUnlocked(sectionIndex, levelIndex) {
