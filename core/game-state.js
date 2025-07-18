@@ -23,28 +23,48 @@ export class GameState {
       this.selectedCharacter = savedState.selectedCharacter;
   }
 
+  _getDefaultState() {
+    return {
+      levelProgress: {
+        unlockedLevels: [1], 
+        completedLevels: [], 
+      },
+      selectedCharacter: 'PinkMan',
+    };
+  }
+
   loadProgress() {
       try {
         const saved = localStorage.getItem('parkourGameState');
-        if (saved) {
-          const state = JSON.parse(saved);
-          // Basic validation
-          if (state.levelProgress && state.selectedCharacter) {
-            return state;
-          }
+        if (!saved) {
+          return this._getDefaultState();
         }
-      } catch (e) {
-        console.error("Failed to load game state from localStorage", e);
-      }
 
-      // Default state if nothing is saved or loading fails
-      return {
-        levelProgress: {
-          unlockedLevels: [1], 
-          completedLevels: [], 
-        },
-        selectedCharacter: 'PinkMan',
-      };
+        const state = JSON.parse(saved);
+
+        // Stricter validation for the parsed object
+        if (typeof state !== 'object' || state === null) {
+          console.warn('Saved game state is not an object. Resetting to default.');
+          return this._getDefaultState();
+        }
+
+        const lp = state.levelProgress;
+        if (typeof lp !== 'object' || lp === null || !Array.isArray(lp.unlockedLevels) || !Array.isArray(lp.completedLevels)) {
+            console.warn('Saved levelProgress data is malformed. Resetting to default.');
+            return this._getDefaultState();
+        }
+
+        if (typeof state.selectedCharacter !== 'string' || !characterConfig[state.selectedCharacter]) {
+            console.warn(`Saved character "${state.selectedCharacter}" is invalid or no longer exists. Resetting to default character.`);
+            state.selectedCharacter = 'PinkMan'; // Reset only the character, keep progress
+        }
+
+        return state;
+
+      } catch (e) {
+        console.error("Failed to parse game state from localStorage. Data may be corrupted. Resetting to default.", e);
+        return this._getDefaultState();
+      }
   }
 
   saveProgress() {
@@ -66,7 +86,7 @@ export class GameState {
       console.log("Game progress has been reset.");
 
       // Reload the default state
-      const defaultState = this.loadProgress();
+      const defaultState = this._getDefaultState();
       this.levelProgress = defaultState.levelProgress;
       this.selectedCharacter = defaultState.selectedCharacter;
 
