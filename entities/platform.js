@@ -43,52 +43,6 @@ export class Platform {
     // Check vertical overlap with small tolerance (<= 10px)
     return pb >= pt && pb <= pt + 10;
   }
-
-  render(ctx, assets) {
-    try {
-      const terrainSprite = this.terrainType === 'sand' || this.terrainType === 'mud' || this.terrainType === 'ice'
-        ? assets.sand_mud_ice
-        : assets.block;
-
-      if (!terrainSprite) {
-        this.renderFallback(ctx);
-        return;
-      }
-
-      const config = this.spriteConfig[this.terrainType];
-      const fullTiles = Math.floor(this.width / this.tileSize);
-
-      for (let i = 0; i < fullTiles; i++) {
-        const tileX = this.x + i * this.tileSize;
-        ctx.drawImage(
-          terrainSprite,
-          config.srcX, config.srcY,
-          this.tileSize, this.tileSize,
-          tileX, this.y,
-          this.tileSize, this.tileSize
-        );
-      }
-
-    } catch (error) {
-      console.warn('Error rendering platform:', error);
-      this.renderFallback(ctx);
-    }
-  }
-
-  renderFallback(ctx) {
-    // Simple colored rectangle fallback
-    const colors = {
-      dirt: '#8B4513',
-      stone: '#696969',
-      wood: '#D2691E',
-      sand: '#F4A460',
-      mud: '#665A48',
-      ice: '#ADD8E6'
-    };
-
-    ctx.fillStyle = colors[this.terrainType] || '#808080';
-    ctx.fillRect(this.x, this.y, this.width, this.height);
-  }
 }
 
 // Level class to manage collections of platforms and game objectives
@@ -237,56 +191,6 @@ export class Level {
       }
     }
     return null;
-  }
-
-  render(ctx, assets, camera) {
-    for (let i = 0, len = this.platforms.length; i < len; ++i) {
-      const plat = this.platforms[i];
-      if (camera.isRectVisible(plat)) {
-        plat.render(ctx, assets);
-      }
-    }
-
-    if (this.trophy) {
-      this.updateTrophyAnimation(1 / 60);
-      this.renderTrophy(ctx, assets);
-    }
-  }
-
-  renderTrophy(ctx, assets) {
-    const trophy = this.trophy;
-    const spriteKey = 'trophy';
-    const sprite = assets[spriteKey];
-
-    if (!sprite) {
-      ctx.fillStyle = trophy.acquired ? 'silver' : 'gold';
-      if (trophy.inactive) {
-        ctx.fillStyle = 'gray'; 
-      }
-      ctx.beginPath();
-      ctx.arc(trophy.x, trophy.y, trophy.size / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'black';
-      ctx.font = '16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('🏆', trophy.x, trophy.y + 5);
-      return;
-    }
-
-    const frameWidth = sprite.width / trophy.frameCount;
-    const frameHeight = sprite.height;
-    const srcX = frameWidth * trophy.animationFrame;
-
-    if (trophy.inactive) {
-      ctx.globalAlpha = 0.5;
-    }
-
-    ctx.drawImage(
-      sprite, srcX, 0, frameWidth, frameHeight,
-      trophy.x - trophy.size / 2, trophy.y - trophy.size / 2,
-      trophy.size, trophy.size
-    );
-    ctx.globalAlpha = 1.0;
   }
 
   updateTrophyAnimation(dt) {

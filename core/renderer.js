@@ -1,3 +1,5 @@
+import { PLAYER_CONSTANTS } from '../entities/player.js';
+
 // the renderer file is responsible for rendering the game world, including the player and other entities.
 export class Renderer {
   constructor(ctx, canvas, assets) {
@@ -67,26 +69,160 @@ export class Renderer {
   renderScene(camera, level, player, collectedFruits, particles) {
     camera.apply(this.ctx);
 
-    // Optimization: Draw the entire pre-rendered background in a single operation.
     const backgroundCanvas = this._preRenderBackground(level);
     this.ctx.drawImage(backgroundCanvas, 0, 0);
 
-    level.render(this.ctx, this.assets, camera); // Renders platforms and trophy.
+    this.drawPlatforms(level.platforms, camera);
+    if (level.trophy) {
+        this.drawTrophy(level.trophy, camera);
+    }
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
-    player.render(this.ctx);
+    this.drawPlayer(player);
     this.drawParticles(particles, camera);
     this.drawCollectedFruits(collectedFruits, camera);
 
     camera.restore(this.ctx);
   }
 
-  // The 'fruits' array is now pre-filtered to only contain active fruits.
+  drawPlayer(player) {
+    try {
+      if (player.despawnAnimationFinished && player.state !== 'despawn') return;
+
+      const spriteKey = player.getSpriteKey();
+      const characterSprites = this.assets.characters[player.characterId];
+      let sprite = characterSprites?.[spriteKey] || this.assets[spriteKey];
+
+      if (!sprite) {
+        console.warn(`Sprite for ${spriteKey} (char: ${player.characterId}) not loaded.`);
+        this.ctx.fillStyle = '#FF00FF'; // Fallback
+        this.ctx.fillRect(player.x, player.y, player.width, player.height);
+        return;
+      }
+
+      const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[player.state] || 1;
+      const frameWidth = sprite.width / frameCount;
+      const srcX = frameWidth * player.animationFrame;
+
+      this.ctx.save();
+      if (player.direction === 'left') {
+        this.ctx.scale(-1, 1);
+        this.ctx.translate(-player.x - player.width, player.y);
+      } else {
+        this.ctx.translate(player.x, player.y);
+      }
+      
+      const isSpecialAnim = player.state === 'spawn' || player.state === 'despawn';
+      const renderWidth = isSpecialAnim ? player.spawnWidth : player.width;
+      const renderHeight = isSpecialAnim ? player.spawnHeight : player.height;
+      const renderX = isSpecialAnim ? -(player.spawnWidth - player.width) / 2 : 0;
+      const renderY = isSpecialAnim ? -(player.spawnHeight - player.height) / 2 : 0;
+      const drawOffsetX = (player.state === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
+
+      this.ctx.drawImage(
+        sprite,
+        srcX, 0, frameWidth, sprite.height,
+        drawOffsetX + renderX, renderY,
+        renderWidth, renderHeight
+      );
+
+      this.ctx.restore();
+    } catch (error) {
+      console.error('Error rendering player:', error);
+      this.ctx.fillStyle = '#FF00FF';
+      this.ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+  }
+  
+  drawPlatforms(platforms, camera) {
+    for (const platform of platforms) {
+        if (!camera.isRectVisible(platform)) {
+            continue;
+        }
+
+        try {
+            const terrainSprite = platform.terrainType === 'sand' || platform.terrainType === 'mud' || platform.terrainType === 'ice'
+              ? this.assets.sand_mud_ice
+              : this.assets.block;
+
+            const fallbackAndReturn = () => {
+                const colors = {
+                    dirt: '#8B4513', stone: '#696969', wood: '#D2691E',
+                    sand: '#F4A460', mud: '#665A48', ice: '#ADD8E6'
+                };
+                this.ctx.fillStyle = colors[platform.terrainType] || '#808080';
+                this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            };
+
+            if (!terrainSprite) {
+                fallbackAndReturn();
+                continue;
+            }
+
+            const config = platform.spriteConfig[platform.terrainType];
+            const fullTiles = Math.floor(platform.width / platform.tileSize);
+
+            for (let i = 0; i < fullTiles; i++) {
+                const tileX = platform.x + i * platform.tileSize;
+                this.ctx.drawImage(
+                    terrainSprite,
+                    config.srcX, config.srcY,
+                    platform.tileSize, platform.tileSize,
+                    tileX, platform.y,
+                    platform.tileSize, platform.tileSize
+                );
+            }
+        } catch (error) {
+            console.warn('Error rendering platform:', error);
+            // Fallback rendering
+            this.ctx.fillStyle = '#808080';
+            this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+        }
+    }
+  }
+  
+  drawTrophy(trophy, camera) {
+    if (!camera.isVisible(trophy.x - trophy.size / 2, trophy.y - trophy.size / 2, trophy.size, trophy.size)) {
+        return;
+    }
+  
+    const sprite = this.assets['trophy'];
+
+    if (!sprite) {
+      this.ctx.fillStyle = trophy.acquired ? 'silver' : 'gold';
+      if (trophy.inactive) {
+        this.ctx.fillStyle = 'gray'; 
+      }
+      this.ctx.beginPath();
+      this.ctx.arc(trophy.x, trophy.y, trophy.size / 2, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.fillStyle = 'black';
+      this.ctx.font = '16px sans-serif';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('🏆', trophy.x, trophy.y + 5);
+      return;
+    }
+
+    const frameWidth = sprite.width / trophy.frameCount;
+    const frameHeight = sprite.height;
+    const srcX = frameWidth * trophy.animationFrame;
+
+    if (trophy.inactive) {
+      this.ctx.globalAlpha = 0.5;
+    }
+
+    this.ctx.drawImage(
+      sprite, srcX, 0, frameWidth, frameHeight,
+      trophy.x - trophy.size / 2, trophy.y - trophy.size / 2,
+      trophy.size, trophy.size
+    );
+    this.ctx.globalAlpha = 1.0;
+  }
+
   drawFruits(fruits, camera) {
     for (let i = 0, len = fruits.length; i < len; i++) {
       const fruit = fruits[i];
 
-      // Culling: Don't draw objects that are off-screen
       if (!camera.isVisible(fruit.x - fruit.size / 2, fruit.y - fruit.size / 2, fruit.size, fruit.size)) {
         continue;
       }
@@ -94,7 +230,6 @@ export class Renderer {
       try {
         const img = this.assets[fruit.spriteKey];
         if (!img) {
-          // Fallback rendering for missing fruit sprite
           this.ctx.fillStyle = '#FF6B6B';
           this.ctx.beginPath();
           this.ctx.arc(fruit.x, fruit.y, fruit.size / 2, 0, Math.PI * 2);

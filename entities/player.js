@@ -305,53 +305,6 @@ export class Player {
     this.transitionTo('spawn');
   }
 
-  render(ctx) {
-    try {
-      if (this.despawnAnimationFinished && this.state !== 'despawn') return;
-
-      const spriteKey = this.getSpriteKey();
-      const characterSprites = this.assets.characters[this.characterId];
-      let sprite = characterSprites?.[spriteKey] || this.assets[spriteKey];
-
-      if (!sprite) {
-        console.warn(`Sprite for ${spriteKey} (char: ${this.characterId}) not loaded.`);
-        this.renderFallback(ctx);
-        return;
-      }
-
-      const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[this.state] || 1;
-      const frameWidth = sprite.width / frameCount;
-      const srcX = frameWidth * this.animationFrame;
-
-      ctx.save();
-      if (this.direction === 'left') {
-        ctx.scale(-1, 1);
-        ctx.translate(-this.x - this.width, this.y);
-      } else {
-        ctx.translate(this.x, this.y);
-      }
-      
-      const isSpecialAnim = this.state === 'spawn' || this.state === 'despawn';
-      const renderWidth = isSpecialAnim ? this.spawnWidth : this.width;
-      const renderHeight = isSpecialAnim ? this.spawnHeight : this.height;
-      const renderX = isSpecialAnim ? -(this.spawnWidth - this.width) / 2 : 0;
-      const renderY = isSpecialAnim ? -(this.spawnHeight - this.height) / 2 : 0;
-      const drawOffsetX = (this.state === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
-
-      ctx.drawImage(
-        sprite,
-        srcX, 0, frameWidth, sprite.height,
-        drawOffsetX + renderX, renderY,
-        renderWidth, renderHeight
-      );
-
-      ctx.restore();
-    } catch (error) {
-      console.error('Error rendering player:', error);
-      this.renderFallback(ctx);
-    }
-  }
-
   getSpriteKey() {
     const stateToSpriteMap = {
       idle: 'playerIdle', run: 'playerRun', jump: 'playerJump',
@@ -360,11 +313,6 @@ export class Player {
       despawn: 'playerDisappear',
     };
     return stateToSpriteMap[this.state] || 'playerIdle';
-  }
-
-  renderFallback(ctx) {
-    ctx.fillStyle = '#FF00FF';
-    ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 
   _updateTimers(dt) {
