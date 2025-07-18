@@ -9,75 +9,6 @@ import { PhysicsSystem } from './physics-system.js';
 import { Renderer } from './renderer.js';
 import { eventBus } from './event-bus.js';
 
-/**
- * Manages the lifecycle of particle objects to reduce garbage collection.
- * Particles are reused from a pool instead of being created and destroyed.
- */
-class ParticlePool {
-    constructor(initialSize = 100) {
-        this._pool = [];
-        this._active = [];
-
-        // Pre-populate the pool for efficiency.
-        for (let i = 0; i < initialSize; i++) {
-            this._pool.push({});
-        }
-    }
-
-    // The list of currently active particles.
-    get activeParticles() {
-        return this._active;
-    }
-
-    //Retrieves a particle from the pool, initializes it, and adds it to the active list.
-    get() {
-        let particle;
-        if (this._pool.length > 0) {
-            particle = this._pool.pop();
-        } else {
-            // Pool is empty, create a new object. This allows the pool to grow if needed.
-            particle = {};
-        }
-        this._active.push(particle);
-        return particle;
-    }
-
-
-    // Returns a particle to the pool, making it available for reuse.
-    release(particle) {
-        const index = this._active.indexOf(particle);
-        if (index !== -1) {
-            this._active.splice(index, 1);
-        }
-        this._pool.push(particle);
-    }
-
-    // Updates all active particles, releasing those whose lifetime has expired.
-    update(dt) {
-        for (let i = this._active.length - 1; i >= 0; i--) {
-            const p = this._active[i];
-            p.life -= dt;
-
-            if (p.life <= 0) {
-                this.release(p);
-            } else {
-                p.x += p.vx * dt;
-                p.y += p.vy * dt;
-                p.vy += 50 * dt; // Simple gravity
-                p.alpha = Math.max(0, p.life / p.initialLife);
-            }
-        }
-    }
-
-    // Returns all active particles to the pool.
-    clearActive() {
-        while (this._active.length > 0) {
-            this.release(this._active[0]);
-        }
-    }
-}
-
-
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds) {
     this.ctx = ctx;
@@ -104,10 +35,10 @@ export class Engine {
 
     this.gameState = new GameState(levelSections);
     
-    this.particleSystem = new ParticlePool();
     this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
     this.camera.snapToPlayer(this.player);
 
+    this.particles = [];
     this._setupEventSubscriptions();
   }
   
@@ -215,7 +146,7 @@ export class Engine {
     this.currentLevel = new Level(levelSections[sectionIndex].levels[levelIndex]);
     
     this.collectedFruits = [];
-    this.particleSystem.clearActive();
+    this.particles = [];
 
     this.lastCheckpoint = null;
     this.fruitsAtLastCheckpoint.clear();
@@ -262,7 +193,7 @@ export class Engine {
       );
 
       this.player.update(dt);
-      this.particleSystem.update(dt);
+      this.updateParticles(dt);
       
       this.camera.update(this.player, dt);
 
@@ -378,16 +309,33 @@ export class Engine {
             : (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3); 
 
         const speed = baseSpeed + Math.random() * 50;
-        const particle = this.particleSystem.get();
-        
-        particle.x = x;
-        particle.y = y;
-        particle.vx = Math.cos(angle) * speed;
-        particle.vy = Math.sin(angle) * speed;
-        particle.life = 0.4 + Math.random() * 0.3; 
-        particle.initialLife = particle.life;
-        particle.size = 4 + Math.random() * 4;
-        particle.alpha = 1.0;
+        const particle = {
+            x: x, y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 0.4 + Math.random() * 0.3, 
+            initialLife: 0,
+            size: 4 + Math.random() * 4,
+            alpha: 1.0
+        };
+        particle.initialLife = particle.life; 
+        this.particles.push(particle);
+    }
+  }
+
+  updateParticles(dt) {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i];
+        p.life -= dt;
+
+        if (p.life <= 0) {
+            this.particles.splice(i, 1);
+        } else {
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vy += 50 * dt; 
+            p.alpha = Math.max(0, p.life / p.initialLife); 
+        }
     }
   }
 
@@ -400,7 +348,7 @@ export class Engine {
         this.currentLevel,
         this.player,
         this.collectedFruits,
-        this.particleSystem.activeParticles
+        this.particles
       );
 
       this.hud.drawGameHUD(this.ctx);
