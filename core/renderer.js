@@ -64,59 +64,23 @@ export class Renderer {
     return offscreenCanvas;
   }
 
-  renderScene(camera, level, renderQueue) {
+  renderScene(camera, level, player, collectedFruits, particles) {
     camera.apply(this.ctx);
 
-    // 1. Draw the pre-rendered level background.
+    // Optimization: Draw the entire pre-rendered background in a single operation.
     const backgroundCanvas = this._preRenderBackground(level);
     this.ctx.drawImage(backgroundCanvas, 0, 0);
 
-    // 2. Render static level elements like platforms and the trophy.
-    level.render(this.ctx, this.assets, camera);
-
-    // 3. Render all dynamic objects from the unified render queue.
-    for (const item of renderQueue) {
-      if (!camera.isVisible(item.x, item.y, item.width, item.height)) {
-        continue;
-      }
-
-      let sprite = null;
-      if (item.characterId) {
-        sprite = this.assets.characters[item.characterId]?.[item.spriteKey];
-      }
-      if (!sprite) {
-        sprite = this.assets[item.spriteKey];
-      }
-
-      this.ctx.save();
-      
-      if (item.alpha !== undefined) {
-        this.ctx.globalAlpha = item.alpha;
-      }
-
-      let drawX = item.x;
-      if (item.direction === 'left') {
-        this.ctx.scale(-1, 1);
-        drawX = -(item.x + item.width);
-      }
-
-      const frameCount = item.frameCount || 1;
-      const frameWidth = sprite.width / frameCount;
-      const srcX = frameWidth * (item.frame || 0);
-
-      this.ctx.drawImage(
-        sprite,
-        srcX, 0, frameWidth, sprite.height,
-        drawX + (item.offsetX || 0), item.y + (item.offsetY || 0),
-        item.renderWidth || item.width, item.renderHeight || item.height
-      );
-
-      this.ctx.restore();
-    }
+    level.render(this.ctx, this.assets, camera); // Renders platforms and trophy.
+    this.drawFruits(level.getActiveFruits(), camera);
+    this.drawCheckpoints(level.checkpoints, camera);
+    player.render(this.ctx);
+    this.drawParticles(particles, camera);
+    this.drawCollectedFruits(collectedFruits, camera);
 
     camera.restore(this.ctx);
   }
-  
+
   // The 'fruits' array is now pre-filtered to only contain active fruits.
   drawFruits(fruits, camera) {
     for (let i = 0, len = fruits.length; i < len; i++) {

@@ -395,53 +395,12 @@ export class Engine {
     try {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      const renderQueue = [];
-
-      // Populate render queue from various game objects.
-      const playerRenderData = this.player.getRenderData();
-      if (playerRenderData) {
-        renderQueue.push(playerRenderData);
-      }
-      
-      for (const fruit of this.currentLevel.getActiveFruits()) {
-        renderQueue.push({
-          type: 'fruit',
-          x: fruit.x - fruit.size / 2, y: fruit.y - fruit.size / 2,
-          width: fruit.size, height: fruit.size,
-          spriteKey: fruit.spriteKey,
-          frame: fruit.frame,
-          frameCount: fruit.frameCount
-        });
-      }
-
-      for (const cp of this.currentLevel.checkpoints) {
-        let spriteKey, frame = cp.frame, frameCount = 1, state = cp.state;
-        switch(state) {
-          case 'inactive': spriteKey = 'checkpoint_inactive'; frame = 0; break;
-          case 'activating': spriteKey = 'checkpoint_activation'; frameCount = cp.frameCount; break;
-          case 'active':
-            spriteKey = 'checkpoint_active';
-            const activeFrameCount = 10;
-            const activeFrameSpeed = 0.1;
-            frame = Math.floor((performance.now() / 1000 / activeFrameSpeed) % activeFrameCount);
-            frameCount = activeFrameCount;
-            break;
-        }
-        if (spriteKey) renderQueue.push({ type: 'checkpoint', x: cp.x - cp.size / 2, y: cp.y - cp.size / 2, width: cp.size, height: cp.size, spriteKey, frame, frameCount });
-      }
-      
-      for (const p of this.particleSystem.activeParticles) {
-        renderQueue.push({ type: 'particle', x: p.x - p.size / 2, y: p.y - p.size / 2, width: p.size, height: p.size, spriteKey: 'dust_particle', alpha: p.alpha });
-      }
-
-      for (const collected of this.collectedFruits) {
-        renderQueue.push({ type: 'collected_fruit', x: collected.x - collected.size / 2, y: collected.y - collected.size / 2, width: collected.size, height: collected.size, spriteKey: 'fruit_collected', frame: collected.frame, frameCount: 6 });
-      }
-
       this.renderer.renderScene(
         this.camera,
         this.currentLevel,
-        renderQueue
+        this.player,
+        this.collectedFruits,
+        this.particleSystem.activeParticles
       );
 
       this.hud.drawGameHUD(this.ctx);
