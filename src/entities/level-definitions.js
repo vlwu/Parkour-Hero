@@ -1,5 +1,21 @@
-// Level configurations organized in sections for easy access and iteration
-// Each section is an object containing a name and an array of level configurations.
+export const characterConfig = { // Unlock a character every 10 levels
+  PinkMan: {
+    name: "Pink Man",
+    unlockRequirement: 0, // Default character
+  },
+  NinjaFrog: {
+    name: "Ninja Frog",
+    unlockRequirement: 10, 
+  },
+  MaskDude: {
+    name: "Mask Dude",
+    unlockRequirement: 20, 
+  },
+  VirtualGuy: {
+    name: "Virtual Guy",
+    unlockRequirement: 30, 
+  },
+};
 
 export const levelSections = [
   {
@@ -92,6 +108,7 @@ export const levelSections = [
       }
     ]
   },
+  /*
   {
     name: "Jungle Journey",
     levels: [
@@ -182,23 +199,5 @@ export const levelSections = [
       },
     ]
   }
+  */
 ];
-
-export const characterConfig = { // Unlock a character every 10 levels
-  PinkMan: {
-    name: "Pink Man",
-    unlockRequirement: 0, // Default character
-  },
-  NinjaFrog: {
-    name: "Ninja Frog",
-    unlockRequirement: 10, 
-  },
-  MaskDude: {
-    name: "Mask Dude",
-    unlockRequirement: 20, 
-  },
-  VirtualGuy: {
-    name: "Virtual Guy",
-    unlockRequirement: 30, 
-  },
-};

@@ -99,7 +99,7 @@ export class GameState {
   }
 
   unlockAllLevels() {
-      const totalLevels = this.levelSections.reduce((acc, section) => acc + section.levels.length, 0);
+      const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
       this.levelProgress.unlockedLevels[0] = totalLevels;
       this.levelProgress.completedLevels = []; // Clear and...
       for (let i=0; i < totalLevels; i++) { // ...mock completion
