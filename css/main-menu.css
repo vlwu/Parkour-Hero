@@ -1,0 +1,70 @@
+#main-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('../assets/Background/Blue.png');
+  background-size: cover;
+  background-position: center;
+  z-index: 500;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  font-family: 'Inter', sans-serif;
+}
+
+#main-menu-overlay.hidden {
+  display: none;
+}
+
+.main-menu-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.game-title {
+  font-size: 6em;
+  font-weight: bold;
+  margin: 0;
+  font-family: 'Impact', 'Arial Black', sans-serif;
+  letter-spacing: 2px;
+  -webkit-text-stroke: 2px black;
+}
+
+.main-menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 250px;
+}
+
+.main-menu-buttons button {
+  background-color: #007bff;
+  color: #fff;
+  border: 3px solid #0056b3;
+  padding: 15px 25px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1.5em;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 6px #004a99;
+  text-transform: uppercase;
+}
+
+.main-menu-buttons button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 8px #004a99;
+}
+
+.main-menu-buttons button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px #004a99;
+}

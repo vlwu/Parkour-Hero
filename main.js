@@ -94,7 +94,7 @@ let inputManager;
 let menuManager;
 
 loadAssets().then((assets) => {
-  console.log('Assets loaded successfully, starting game...');
+  console.log('Assets loaded successfully, preparing main menu...');
   
   try {
     engine = new Engine(ctx, canvas, assets, keybinds);
@@ -115,9 +115,11 @@ loadAssets().then((assets) => {
     // Initialize UI event listeners and set initial states
     menuManager.init();
     
-    engine.start();
-    
-    eventBus.publish('gameResumed'); // To set initial pause button state
+    // Listen for the request to start the game from the main menu
+    eventBus.subscribe('requestStartGame', () => {
+        engine.start();
+        document.querySelectorAll('.ingame-ui').forEach(el => el.classList.remove('hidden'));
+    });
     
     // Expose the unlock function to the window for easy debugging
     window.unlockAllLevels = () => {
@@ -139,7 +141,7 @@ loadAssets().then((assets) => {
     };
     console.log('Developer command available: Type `resetProgress()` in the console to reset all saved data.');
     
-    console.log('Game started successfully!');
+    console.log('Game is ready. Waiting for user to start from the main menu.');
   } catch (error) {
     console.error('Failed to start game engine:', error);
     

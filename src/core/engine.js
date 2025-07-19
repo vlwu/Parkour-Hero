@@ -17,6 +17,7 @@ export class Engine {
     this.keys = {};
     this.keybinds = initialKeybinds;
     this.isRunning = false;
+    this.gameHasStarted = false;
     this.pauseForMenu = false;
 
     this.lastCheckpoint = null; 
@@ -112,7 +113,9 @@ export class Engine {
   start() {
     if (this.isRunning) return;
     this.isRunning = true;
+    this.gameHasStarted = true;
     this.lastFrameTime = performance.now();
+    eventBus.publish('gameResumed');
     this.gameLoop();
   }
 
@@ -137,13 +140,13 @@ export class Engine {
     if (!this.isRunning) {
       this.isRunning = true;
       this.lastFrameTime = performance.now();
+      eventBus.publish('gameResumed');
       this.gameLoop();
     }
 
     if (this.player) {
       this.player.needsRespawn = false;
     }
-    eventBus.publish('gameResumed');
   }
 
   gameLoop(currentTime = performance.now()) {
@@ -191,7 +194,10 @@ export class Engine {
     this.camera.snapToPlayer(this.player);
 
     this.levelStartTime = performance.now();
-    this.resume();
+    
+    if (this.gameHasStarted) {
+        this.resume();
+    }
     eventBus.publish('levelLoaded', { gameState: this.gameState });
   }
 

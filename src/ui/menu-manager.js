@@ -2,6 +2,7 @@ import { eventBus } from '../utils/event-bus.js';
 import { SettingsMenu } from './settings-menu.js';
 import { LevelMenu } from './level-menu.js';
 import { CharacterMenu } from './character-menu.js';
+import { MainMenu } from './main-menu.js';
 import { formatTime, formatKeyForDisplay } from './ui-utils.js';
 
 export class MenuManager {
@@ -10,10 +11,12 @@ export class MenuManager {
     this.gameState = gameState;
     this.keybinds = keybinds;
     this.levelManager = null;
-    this.isGameRunning = true;
+    this.isGameRunning = false;
     this.isPausedForMenu = false;
+    this.gameHasStarted = false;
 
     // --- Instantiate Menu Handlers ---
+    this.mainMenu = new MainMenu();
     this.settingsMenu = new SettingsMenu(this.keybinds);
     this.levelMenu = new LevelMenu(this.gameState);
     this.characterMenu = new CharacterMenu(this.gameState, this.assets);
@@ -56,12 +59,17 @@ export class MenuManager {
   }
 
   init() {
+    this.mainMenu.init();
     this._setupEventListeners();
     this._setupEventSubscriptions();
     this.updateHowToPlayKeyDisplays();
   }
   
   _setupEventSubscriptions() {
+      eventBus.subscribe('requestStartGame', () => {
+          this.isGameRunning = true;
+          this.gameHasStarted = true;
+      });
       eventBus.subscribe('gamePaused', () => {
           this.isGameRunning = false;
           this.updatePauseButtonIcon();
@@ -87,6 +95,20 @@ export class MenuManager {
       });
       eventBus.subscribe('keybindsUpdated', () => {
           this.updateHowToPlayKeyDisplays();
+      });
+      eventBus.subscribe('requestModalOpen', ({ modal }) => {
+          this.mainMenu.hide();
+          switch (modal) {
+              case 'levels':
+                  this.toggleModal(this.levelsMenuModal, () => this.levelMenu.show());
+                  break;
+              case 'character':
+                  this.toggleModal(this.characterModal, () => this.characterMenu.show(), () => this.characterMenu.hide());
+                  break;
+              case 'settings':
+                  this.toggleModal(this.settingsModal, () => this.settingsMenu.show());
+                  break;
+          }
       });
   }
 
@@ -172,7 +194,9 @@ export class MenuManager {
       if (!this.isModalOpen()) {
         this.isPausedForMenu = false;
         eventBus.publish('allMenusClosed');
-        if (!this.gameState.showingLevelComplete) {
+        if (!this.gameHasStarted) {
+            this.mainMenu.show();
+        } else if (!this.gameState.showingLevelComplete) {
           eventBus.publish('requestResume');
         }
       }
@@ -184,7 +208,7 @@ export class MenuManager {
       if (openModal) {
           const onClose = openModal === this.characterModal ? () => this.characterMenu.hide() : null;
           this.toggleModal(openModal, null, onClose);
-      } else if (!this.gameState.showingLevelComplete) {
+      } else if (this.isGameRunning && !this.gameState.showingLevelComplete) {
           this.toggleModal(this.pauseModal);
       }
   }
