@@ -19,7 +19,7 @@ export const characterConfig = { // Unlock a character every 10 levels
 
 export const levelSections = [
   {
-    name: "Basic Mechanics",
+    name: "Mechanical Mastery",
     levels: [
       {
         name: "Level 1",
