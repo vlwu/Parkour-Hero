@@ -53,13 +53,13 @@
         <h3>Sound Settings</h3>
         <div class="setting-item">
           <label for="soundToggle">Sound:</label>
-          <button id="soundToggle" class="toggle-button sound-enabled">ON</button>
+          <button id="soundToggle" class="toggle-button sound-enabled"></button>
         </div>
         <div class="setting-item">
           <label for="volumeSlider">Global Volume:</label>
           <div class="volume-control">
             <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5" />
-            <span id="volumeValue">50%</span>
+            <span id="volumeValue"></span>
           </div>
         </div>
         <div class="setting-item">
@@ -73,19 +73,19 @@
         <div class="keybind-list">
           <div class="keybind-item">
             <label for="keybind-move-left">Move Left:</label>
-            <input type="text" id="keybind-move-left" data-action="moveLeft" readonly />
+            <div id="keybind-move-left" class="keybind-display" data-action="moveLeft"></div>
           </div>
           <div class="keybind-item">
             <label for="keybind-move-right">Move Right:</label>
-            <input type="text" id="keybind-move-right" data-action="moveRight" readonly />
+            <div id="keybind-move-right" class="keybind-display" data-action="moveRight"></div>
           </div>
           <div class="keybind-item">
             <label for="keybind-jump">Jump:</label>
-            <input type="text" id="keybind-jump" data-action="jump" readonly />
+            <div id="keybind-jump" class="keybind-display" data-action="jump"></div>
           </div>
           <div class="keybind-item">
             <label for="keybind-dash">Dash:</label>
-            <input type="text" id="keybind-dash" data-action="dash" readonly />
+            <div id="keybind-dash" class="keybind-display" data-action="dash"></div>
           </div>
         </div>
       </div>
@@ -112,31 +112,31 @@
   <div id="infoModal" class="modal-overlay hidden">
     <div class="modal-content">
       <button id="closeInfoModalButton" class="close-button" aria-label="Close Info"></button>
-       <h2>Info Section</h2>
+       <h2 id="info-title"></h2>
        
       <!-- How to Play -->
       <div class="settings-section">
-        <h3>How to Play</h3>
+        <h3 id="info-subtitle"></h3>
         <div class="how-to-play">
-          <p>Use the controls to navigate the world, collect all the fruit, and reach the trophy!</p>
-          <p>You can also jump off of most walls! While in the air, move against a wall to slide down it, then press the jump key again to wall jump away. </p>
-          <p>Note: You cannot cling to natural surfaces like dirt, sand, mud, or ice.</p>
+          <p id="htp-line-1"></p>
+          <p id="htp-line-2"></p>
+          <p id="htp-line-3"></p>
           <div class="keybind-list">
             <div class="keybind-item">
               <label>Move Left / Right:</label>
-              <span id="htp-left" class="key-display">A</span> / <span id="htp-right" class="key-display">D</span>
+              <span id="htp-left" class="key-display"></span> / <span id="htp-right" class="key-display"></span>
             </div>
             <div class="keybind-item">
               <label>Jump / Double Jump / Wall Jump:</label>
-              <span id="htp-jump" class="key-display">W</span>
+              <span id="htp-jump" class="key-display"></span>
             </div>
             <div class="keybind-item">
               <label>Dash:</label>
-              <span id="htp-dash" class="key-display">SPACE</span>
+              <span id="htp-dash" class="key-display"></span>
             </div>
              <div class="keybind-item">
               <label>Pause Game:</label>
-              <span class="key-display">ESC</span>
+              <span id="htp-pause" class="key-display"></span>
             </div>
           </div>
         </div>
@@ -161,12 +161,12 @@
   <!-- Pause Modal -->
   <div id="pauseModal" class="modal-overlay hidden">
       <div class="modal-content">
-          <h2>Game Paused</h2>
-          <p class="subtitle">Press ESC to resume</p>
+          <h2 id="pause-title"></h2>
+          <p id="pause-subtitle" class="subtitle"></p>
           <div class="stats-container">
-              <div id="pause-stats-fruits" class="stat-item">Fruits: 0 / 0</div>
-              <div id="pause-stats-deaths" class="stat-item">Deaths: 0</div>
-              <div id="pause-stats-time" class="stat-item">Time: 00:00.000</div>
+              <div id="pause-stats-fruits" class="stat-item"></div>
+              <div id="pause-stats-deaths" class="stat-item"></div>
+              <div id="pause-stats-time" class="stat-item"></div>
           </div>
           <div class="button-container">
               <button id="pause-resume-button" class="modal-image-button" aria-label="Resume">
@@ -185,10 +185,10 @@
   <!-- Level Complete Modal -->
   <div id="levelCompleteModal" class="modal-overlay hidden">
       <div class="modal-content">
-          <h2 id="level-complete-title">Level Complete!</h2>
+          <h2 id="level-complete-title"></h2>
           <div class="stats-container">
-              <div id="level-complete-deaths" class="stat-item">Deaths: 0</div>
-              <div id="level-complete-time" class="stat-item">Time Taken: 00:00.000</div>
+              <div id="level-complete-deaths" class="stat-item"></div>
+              <div id="level-complete-time" class="stat-item"></div>
           </div>
           <div class="button-container">
               <button id="lc-previous-button" class="modal-image-button" aria-label="Previous Level">

@@ -19,7 +19,7 @@ export class MenuManager {
     // --- Instantiate Menu Handlers ---
     this.mainMenu = new MainMenu(this.fontRenderer);
     this.settingsMenu = new SettingsMenu(this.keybinds, this.fontRenderer);
-    this.levelMenu = new LevelMenu(this.gameState);
+    this.levelMenu = new LevelMenu(this.gameState, this.fontRenderer);
     this.characterMenu = new CharacterMenu(this.gameState, this.assets, this.fontRenderer);
 
     // --- DOM Element Queries for Modals and Top-Level Buttons ---
@@ -38,7 +38,7 @@ export class MenuManager {
     this.characterButton = document.getElementById('characterButton');
     this.infoButton = document.getElementById('infoButton');
 
-    // Pause Modal Elements (Kept here as they are simple)
+    // Pause Modal Elements
     this.pauseResumeButton = document.getElementById('pause-resume-button');
     this.pauseRestartButton = document.getElementById('pause-restart-button');
     this.pauseMainMenuButton = document.getElementById('pause-main-menu-button');
@@ -54,6 +54,41 @@ export class MenuManager {
     this.lcRestartButton = document.getElementById('lc-restart-button');
     this.lcNextButton = document.getElementById('lc-next-button');
   }
+  
+  _renderToElement(element, text, options) {
+      if (!element || !this.fontRenderer) return;
+      element.innerHTML = '';
+      const canvas = this.fontRenderer.renderTextToCanvas(text, options);
+      if (canvas) {
+          canvas.style.imageRendering = 'pixelated';
+          element.appendChild(canvas);
+      }
+  }
+
+  _renderStaticModalText() {
+    // Pause Modal
+    this._renderToElement(document.getElementById('pause-title'), 'Game Paused', { scale: 3, color: 'white', outlineColor: 'black', outlineWidth: 1 });
+    this._renderToElement(document.getElementById('pause-subtitle'), 'Press ESC to resume', { scale: 1.5, color: '#ccc' });
+    
+    // Info Modal
+    this._renderToElement(document.getElementById('info-title'), 'Info Section', { scale: 3, color: 'white', outlineColor: 'black', outlineWidth: 1 });
+    this._renderToElement(document.getElementById('info-subtitle'), 'How to Play', { scale: 2, color: 'white', outlineColor: 'black', outlineWidth: 1 });
+    this._renderToElement(document.getElementById('htp-pause'), 'ESC', { scale: 1.5, color: 'white' });
+    
+    // Manual text wrapping for "How to Play" paragraphs
+    const htpLine1 = document.getElementById('htp-line-1');
+    const line1Text = ["Use the controls to navigate the world,", "collect all the fruit, and reach the trophy!"];
+    line1Text.forEach(line => this._renderToElement(htpLine1, line, { scale: 1.5, color: '#eee' }));
+
+    const htpLine2 = document.getElementById('htp-line-2');
+    const line2Text = ["You can also jump off of most walls! While in the air,", "move against a wall to slide down it, then press", "the jump key again to wall jump away."];
+    line2Text.forEach(line => this._renderToElement(htpLine2, line, { scale: 1.5, color: '#eee' }));
+
+    const htpLine3 = document.getElementById('htp-line-3');
+    const line3Text = ["Note: You cannot cling to natural surfaces", "like dirt, sand, mud, or ice."];
+    line3Text.forEach(line => this._renderToElement(htpLine3, line, { scale: 1.5, color: '#eee' }));
+  }
+
 
   setLevelManager(levelManager) { 
     this.levelManager = levelManager;
@@ -64,6 +99,7 @@ export class MenuManager {
     this._setupEventListeners();
     this._setupEventSubscriptions();
     this.updateHowToPlayKeyDisplays();
+    this._renderStaticModalText();
   }
   
   _setupEventSubscriptions() {
@@ -246,9 +282,9 @@ export class MenuManager {
 
   showLevelCompleteScreen(deaths, time) {
       this.allModals.forEach(m => m.classList.add('hidden'));
-      this.lcTitle.textContent = `Level Complete!`;
-      this.lcDeaths.textContent = `Deaths: ${deaths}`;
-      this.lcTime.textContent = formatTime(time);
+      this._renderToElement(this.lcTitle, 'Level Complete!', { scale: 3, color: 'white', outlineColor: 'black', outlineWidth: 1 });
+      this._renderToElement(this.lcDeaths, `Deaths: ${deaths}`, { scale: 1.8, color: 'white' });
+      this._renderToElement(this.lcTime, formatTime(time), { scale: 1.8, color: 'white' });
 
       if (this.levelManager) {
         this.lcNextButton.style.display = this.levelManager.hasNextLevel() ? 'inline-block' : 'none';
@@ -277,17 +313,18 @@ export class MenuManager {
   }
   
   updatePauseModalStats({ collectedFruits, totalFruits, deathCount, levelTime }) {
-    this.pauseStatsFruits.textContent = `Fruits: ${collectedFruits} / ${totalFruits}`;
-    this.pauseStatsDeaths.textContent = `Deaths: ${deathCount || 0}`;
-    this.pauseStatsTime.textContent = `Time: ${formatTime(levelTime)}`;
+    this._renderToElement(this.pauseStatsFruits, `Fruits: ${collectedFruits} / ${totalFruits}`, { scale: 1.8, color: 'white' });
+    this._renderToElement(this.pauseStatsDeaths, `Deaths: ${deathCount || 0}`, { scale: 1.8, color: 'white' });
+    this._renderToElement(this.pauseStatsTime, `Time: ${formatTime(levelTime)}`, { scale: 1.8, color: 'white' });
   }
   
   updateHowToPlayKeyDisplays() {
       try {
-          document.getElementById('htp-left').textContent = formatKeyForDisplay(this.keybinds.moveLeft);
-          document.getElementById('htp-right').textContent = formatKeyForDisplay(this.keybinds.moveRight);
-          document.getElementById('htp-jump').textContent = formatKeyForDisplay(this.keybinds.jump);
-          document.getElementById('htp-dash').textContent = formatKeyForDisplay(this.keybinds.dash);
+          const options = { scale: 1.5, color: 'white' };
+          this._renderToElement(document.getElementById('htp-left'), formatKeyForDisplay(this.keybinds.moveLeft), options);
+          this._renderToElement(document.getElementById('htp-right'), formatKeyForDisplay(this.keybinds.moveRight), options);
+          this._renderToElement(document.getElementById('htp-jump'), formatKeyForDisplay(this.keybinds.jump), options);
+          this._renderToElement(document.getElementById('htp-dash'), formatKeyForDisplay(this.keybinds.dash), options);
       } catch (error) {
           console.warn("Could not update 'How to Play' key displays.", error);
       }

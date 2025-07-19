@@ -2,14 +2,25 @@ import { eventBus } from '../utils/event-bus.js';
 import { levelSections } from '../entities/level-definitions.js';
 
 export class LevelMenu {
-    constructor(gameState) {
+    constructor(gameState, fontRenderer) {
         this.gameState = gameState;
+        this.fontRenderer = fontRenderer;
         this.levelSelectionContainer = document.getElementById('level-selection-container');
         
         eventBus.subscribe('gameStateUpdated', (newGameState) => {
             this.gameState = newGameState;
             this.populate();
         });
+    }
+
+    _renderToElement(element, text, options) {
+        if (!element || !this.fontRenderer) return;
+        element.innerHTML = '';
+        const canvas = this.fontRenderer.renderTextToCanvas(text, options);
+        if (canvas) {
+            canvas.style.imageRendering = 'pixelated';
+            element.appendChild(canvas);
+        }
     }
 
     show() {
@@ -24,14 +35,14 @@ export class LevelMenu {
             const sectionContainer = document.createElement('div');
             sectionContainer.classList.add('level-section-menu');
             const sectionTitle = document.createElement('h4');
-            sectionTitle.textContent = section.name;
+            this._renderToElement(sectionTitle, section.name, { scale: 1.8, color: 'white' });
             sectionContainer.appendChild(sectionTitle);
             const levelGrid = document.createElement('div');
             levelGrid.classList.add('level-grid');
             
             section.levels.forEach((_, levelIndex) => {
                 const button = document.createElement('button');
-                button.textContent = `${levelIndex + 1}`;
+                this._renderToElement(button, `${levelIndex + 1}`, { scale: 2, color: 'white' });
                 button.classList.add('level-button');
                 const isUnlocked = this.gameState.isLevelUnlocked(sectionIndex, levelIndex);
                 

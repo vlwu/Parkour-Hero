@@ -6,10 +6,11 @@ export class SettingsMenu {
     this.keybinds = keybinds;
     this.fontRenderer = fontRenderer;
     this.activeKeybindInput = null;
+    this.renderedHeaders = false;
 
     // --- DOM Element Queries ---
     this.settingsModal = document.getElementById('settingsModal');
-    this.keybindInputs = document.querySelectorAll('.keybind-item input');
+    this.keybindInputs = document.querySelectorAll('.keybind-item .keybind-display');
     this.soundToggle = document.getElementById('soundToggle');
     this.volumeSlider = document.getElementById('volumeSlider');
     this.volumeValue = document.getElementById('volumeValue');
@@ -22,13 +23,21 @@ export class SettingsMenu {
     this._setupEventListeners();
     eventBus.subscribe('soundSettingsChanged', (settings) => this.updateSoundSettingsDisplay(settings));
     eventBus.subscribe('statsUpdated', (stats) => this.updateSoundSettingsDisplay(stats));
-
-    if (this.fontRenderer) {
-      this.renderBitmapText();
-    }
+  }
+  
+  _renderToElement(element, text, options) {
+      if (!element || !this.fontRenderer) return;
+      element.innerHTML = '';
+      const canvas = this.fontRenderer.renderTextToCanvas(text, options);
+      if (canvas) {
+          canvas.style.imageRendering = 'pixelated';
+          element.appendChild(canvas);
+      }
   }
 
   renderBitmapText() {
+    if (this.renderedHeaders) return;
+
     this.settingsModal.querySelectorAll('h2, h3').forEach(el => {
         const text = el.textContent;
         if (!text) return;
@@ -52,8 +61,6 @@ export class SettingsMenu {
         const canvas = this.fontRenderer.renderTextToCanvas(text, {
             scale: 1.5,
             color: '#eee',
-            outlineColor: 'black',
-            outlineWidth: 1
         });
         if (canvas) {
             canvas.style.imageRendering = 'pixelated';
@@ -71,6 +78,7 @@ export class SettingsMenu {
             this.testSoundButton.appendChild(canvas);
         }
     }
+    this.renderedHeaders = true;
   }
 
   _setupEventListeners() {
@@ -85,9 +93,6 @@ export class SettingsMenu {
         this.volumeSlider.addEventListener('input', (e) => {
             const volume = parseFloat(e.target.value);
             eventBus.publish('setSoundVolume', { volume });
-            if (this.volumeValue) {
-                this.volumeValue.textContent = `${Math.round(volume * 100)}%`;
-            }
         });
     }
     if (this.testSoundButton) {
@@ -106,14 +111,18 @@ export class SettingsMenu {
   }
   
   show() {
+    if (this.fontRenderer) {
+      this.renderBitmapText();
+    }
     this.updateKeybindDisplay();
     // Sound display is updated via event subscription.
   }
 
   updateKeybindDisplay() {
+    const options = { scale: 1.5, color: 'white' };
     this.keybindInputs.forEach(input => {
         const action = input.dataset.action;
-        input.value = formatKeyForDisplay(this.keybinds[action]);
+        this._renderToElement(input, formatKeyForDisplay(this.keybinds[action]), options);
     });
   }
   
@@ -123,21 +132,11 @@ export class SettingsMenu {
           const text = stats.soundEnabled ? 'ON' : 'OFF';
           this.soundToggle.classList.toggle('sound-enabled', stats.soundEnabled);
           this.soundToggle.classList.toggle('sound-disabled', !stats.soundEnabled);
-
-          if (this.fontRenderer) {
-              this.soundToggle.innerHTML = ''; // Clear previous canvas
-              const canvas = this.fontRenderer.renderTextToCanvas(text, { scale: 1.5, color: 'white' });
-              if (canvas) {
-                  canvas.style.imageRendering = 'pixelated';
-                  this.soundToggle.appendChild(canvas);
-              }
-          } else {
-              this.soundToggle.textContent = text;
-          }
+          this._renderToElement(this.soundToggle, text, { scale: 1.5, color: 'white' });
       }
       if (this.volumeSlider && this.volumeValue) {
           this.volumeSlider.value = stats.soundVolume;
-          this.volumeValue.textContent = `${Math.round(stats.soundVolume * 100)}%`;
+          this._renderToElement(this.volumeValue, `${Math.round(stats.soundVolume * 100)}%`, { scale: 1.5, color: '#4CAF50' });
       }
       if (this.testSoundButton) {
           this.testSoundButton.disabled = !stats.soundEnabled;
@@ -147,10 +146,11 @@ export class SettingsMenu {
   startKeybindRemap(inputElement) {
     if (this.activeKeybindInput) {
         this.activeKeybindInput.classList.remove('active-rebind');
-        this.activeKeybindInput.value = formatKeyForDisplay(this.keybinds[this.activeKeybindInput.dataset.action]);
+        const action = this.activeKeybindInput.dataset.action;
+        this._renderToElement(this.activeKeybindInput, formatKeyForDisplay(this.keybinds[action]), { scale: 1.5, color: 'white' });
     }
     this.activeKeybindInput = inputElement;
-    inputElement.value = 'Press a key...';
+    this._renderToElement(inputElement, 'Press key...', { scale: 1.5, color: 'white' });
     inputElement.classList.add('active-rebind');
   }
 
