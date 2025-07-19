@@ -68,9 +68,11 @@ export class PhysicsSystem {
 
       } else {
         // Standard, non-slippery physics for all other surfaces
-        const currentMoveSpeed = (player.groundType === 'sand')
-          ? moveSpeed * PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER
-          : moveSpeed;
+        let currentMoveSpeed = moveSpeed;
+        // Apply sand penalty ONLY when the player is on the ground.
+        if (player.onGround && player.groundType === 'sand') {
+          currentMoveSpeed = moveSpeed * PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER;
+        }
         
         if (inputActions.moveLeft) {
           player.vx = -currentMoveSpeed;
