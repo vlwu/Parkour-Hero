@@ -132,6 +132,7 @@ export async function loadAssets() {
     background_green: 'assets/Background/Green.png',
     background_pink: 'assets/Background/Pink.png',
     background_purple: 'assets/Background/Purple.png',
+    background_red: 'assets/Background/Red.png',
     background_yellow: 'assets/Background/Yellow.png',
     block: 'assets/Terrain/Terrain.png',
     // Non-character-specific player sprites

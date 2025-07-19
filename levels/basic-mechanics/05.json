@@ -2,7 +2,7 @@
   "name": "Level 5: Colorful Blocks",
   "gridWidth": 30,
   "gridHeight": 15,
-  "background": "background_blue",
+  "background": "background_pink",
   "startPosition": {
     "x": 1.04,
     "y": 6.25

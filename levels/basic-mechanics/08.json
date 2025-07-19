@@ -2,7 +2,7 @@
   "name": "Level 8: Bottomless",
   "gridWidth": 28,
   "gridHeight": 15,
-  "background": "background_blue",
+  "background": "background_red",
   "startPosition": {
     "x": 1.04,
     "y": 6.25

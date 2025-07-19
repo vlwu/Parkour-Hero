@@ -2,7 +2,7 @@
   "name": "Level 7: Messy Stairway",
   "gridWidth": 27,
   "gridHeight": 15,
-  "background": "background_blue",
+  "background": "background_yellow",
   "startPosition": {
     "x": 1.04,
     "y": 11.46

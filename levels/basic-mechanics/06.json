@@ -2,7 +2,7 @@
   "name": "Level 6: Narrow Paths",
   "gridWidth": 27,
   "gridHeight": 15,
-  "background": "background_blue",
+  "background": "background_purple",
   "startPosition": {
     "x": 1.04,
     "y": 6.25
