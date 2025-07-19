@@ -1,26 +1,74 @@
 {
   "name": "Level 6: Narrow Paths",
-  "width": 1280, "height": 720,
-  "startPosition": { "x": 50, "y": 300 },
-  "platforms": [
-    { "x": 0, "y": 400, "width": 96, "height": 48, "terrainType": "dirt" },
-    { "x": 150, "y": 350, "width": 48, "height": 48, "terrainType": "stone" },
-    { "x": 250, "y": 300, "width": 48, "height": 48, "terrainType": "mud" },
-    { "x": 350, "y": 500, "width": 48, "height": 48, "terrainType": "sand" },
-    { "x": 450, "y": 250, "width": 48, "height": 48, "terrainType": "green_block" },
-    { "x": 600, "y": 400, "width": 48, "height": 48, "terrainType": "pink_dirt" },
-    { "x": 750, "y": 300, "width": 96, "height": 48, "terrainType": "ice" },
-    { "x": 950, "y": 200, "width": 144, "height": 48, "terrainType": "dirt" }
+  "gridWidth": 27,
+  "gridHeight": 15,
+  "background": "backgroundTile",
+  "startPosition": {
+    "x": 1.04,
+    "y": 6.25
+  },
+  "layout": [
+    "000000000000000000000000000",
+    "000000000000000000000000000",
+    "000000000000000000000000000",
+    "000000000000000000000000000",
+    "000000000000000000011100000",
+    "000000000400000000000000000",
+    "000008000000000990000000000",
+    "000200000000000000000000000",
+    "110000000000600000000000000",
+    "000000000000000000000000000",
+    "000000070000000000000000000",
+    "000000000000000000000000000",
+    "000000000000000000000000000",
+    "000000000000000000000000000",
+    "000000000000000000000000000"
   ],
-  "fruits": [
-    { "x": 180, "y": 300, "fruitType": "fruit_apple" },
-    { "x": 280, "y": 250, "fruitType": "fruit_bananas" },
-    { "x": 380, "y": 450, "fruitType": "fruit_cherries" },
-    { "x": 480, "y": 200, "fruitType": "fruit_kiwi" },
-    { "x": 630, "y": 350, "fruitType": "fruit_melon" },
-    { "x": 800, "y": 250, "fruitType": "fruit_orange" },
-    { "x": 950, "y": 300, "fruitType": "fruit_pineapple" },
-    { "x": 550, "y": 350, "fruitType": "fruit_strawberry" }
-  ],
-  "trophy": { "x": 1020, "y": 184 }
+  "objects": [
+    {
+      "type": "fruit_apple",
+      "x": 3.58,
+      "y": 5.85
+    },
+    {
+      "type": "fruit_bananas",
+      "x": 5.52,
+      "y": 5.02
+    },
+    {
+      "type": "fruit_cherries",
+      "x": 7.59,
+      "y": 9.09
+    },
+    {
+      "type": "fruit_kiwi",
+      "x": 10,
+      "y": 4.17
+    },
+    {
+      "type": "fruit_melon",
+      "x": 12.57,
+      "y": 7.06
+    },
+    {
+      "type": "fruit_orange",
+      "x": 16.07,
+      "y": 5.06
+    },
+    {
+      "type": "fruit_pineapple",
+      "x": 16.54,
+      "y": 1.98
+    },
+    {
+      "type": "fruit_strawberry",
+      "x": 10.61,
+      "y": 7.02
+    },
+    {
+      "type": "trophy",
+      "x": 21.25,
+      "y": 3.67
+    }
+  ]
 }

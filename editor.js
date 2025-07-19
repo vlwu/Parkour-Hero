@@ -555,7 +555,7 @@ function loadGridLevel(data) {
 function loadAndConvertOldLevel(data) {
     const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
     resetEditor(Math.ceil(data.width / TILE_SIZE), Math.ceil(data.height / TILE_SIZE));
-    levelNameInput.value = data.name + " (Converted)";
+    levelNameInput.value = data.name;
     backgroundInput.value = data.background || 'backgroundTile';
     const terrainToIdMap = {};
     for (const [id, def] of Object.entries(TILE_DEFINITIONS)) { terrainToIdMap[def.type] = id; }
