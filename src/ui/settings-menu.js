@@ -26,6 +26,7 @@ export class SettingsMenu {
     // Sound settings
     if (this.soundToggle) {
         this.soundToggle.addEventListener('click', () => {
+            eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
             eventBus.publish('toggleSound');
         });
     }
@@ -40,12 +41,16 @@ export class SettingsMenu {
     }
     if (this.testSoundButton) {
         this.testSoundButton.addEventListener('click', () => {
+            eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
             eventBus.publish('playSound', { key: 'jump', volume: 0.8 });
         });
     }
     // Keybinds
     this.keybindInputs.forEach(input => {
-        input.addEventListener('click', () => this.startKeybindRemap(input));
+        input.addEventListener('click', () => {
+            eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+            this.startKeybindRemap(input);
+        });
     });
   }
   

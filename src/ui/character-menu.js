@@ -67,6 +67,7 @@ export class CharacterMenu {
             } else {
                 selectButton.addEventListener('click', () => {
                     if (isSelected) return;
+                    eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
                     this.gameState.setSelectedCharacter(charId);
                     eventBus.publish('characterUpdated', charId);
                     this.populate();

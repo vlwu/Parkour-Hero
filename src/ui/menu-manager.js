@@ -114,13 +114,26 @@ export class MenuManager {
 
   _setupEventListeners() {
     // Top-level UI buttons now delegate to sub-modules
-    this.settingsButton.addEventListener('click', () => this.toggleModal(this.settingsModal, () => this.settingsMenu.show()));
-    this.levelsMenuButton.addEventListener('click', () => this.toggleModal(this.levelsMenuModal, () => this.levelMenu.show()));
-    this.characterButton.addEventListener('click', () => this.toggleModal(this.characterModal, () => this.characterMenu.show(), () => this.characterMenu.hide()));
-    this.infoButton.addEventListener('click', () => this.toggleModal(this.infoModal, () => this.updateHowToPlayKeyDisplays()));
+    this.settingsButton.addEventListener('click', () => {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      this.toggleModal(this.settingsModal, () => this.settingsMenu.show());
+    });
+    this.levelsMenuButton.addEventListener('click', () => {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      this.toggleModal(this.levelsMenuModal, () => this.levelMenu.show());
+    });
+    this.characterButton.addEventListener('click', () => {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      this.toggleModal(this.characterModal, () => this.characterMenu.show(), () => this.characterMenu.hide());
+    });
+    this.infoButton.addEventListener('click', () => {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      this.toggleModal(this.infoModal, () => this.updateHowToPlayKeyDisplays());
+    });
 
     // Special handler for the Pause/Resume button
     this.pauseButton.addEventListener('click', () => {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
       if (this.pauseButton.classList.contains('is-paused')) {
         const openModal = this.allModals.find(m => !m.classList.contains('hidden'));
         if (openModal) {
@@ -140,24 +153,41 @@ export class MenuManager {
         const closeButton = modal.querySelector('.close-button');
         if (closeButton) {
             const onClose = modal === this.characterModal ? () => this.characterMenu.hide() : null;
-            closeButton.addEventListener('click', () => this.toggleModal(modal, null, onClose));
+            closeButton.addEventListener('click', () => {
+                eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+                this.toggleModal(modal, null, onClose);
+            });
         }
     });
 
     // Pause Modal listeners
-    this.pauseResumeButton.addEventListener('click', () => this.toggleModal(this.pauseModal));
+    this.pauseResumeButton.addEventListener('click', () => {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      this.toggleModal(this.pauseModal);
+    });
     this.pauseRestartButton.addEventListener('click', () => {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
       eventBus.publish('requestLevelRestart');
     });
     this.pauseMainMenuButton.addEventListener('click', () => {
+        eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
         this.toggleModal(this.pauseModal);
         this.toggleModal(this.levelsMenuModal, () => this.levelMenu.show());
     });
 
     // Level Complete listeners
-    this.lcPreviousButton.addEventListener('click', () => this.handleLevelCompleteAction('previous'));
-    this.lcRestartButton.addEventListener('click', () => this.handleLevelCompleteAction('restart'));
-    this.lcNextButton.addEventListener('click', () => this.handleLevelCompleteAction('next'));
+    this.lcPreviousButton.addEventListener('click', () => {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      this.handleLevelCompleteAction('previous');
+    });
+    this.lcRestartButton.addEventListener('click', () => {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      this.handleLevelCompleteAction('restart');
+    });
+    this.lcNextButton.addEventListener('click', () => {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      this.handleLevelCompleteAction('next');
+    });
   }
 
   isModalOpen() {
