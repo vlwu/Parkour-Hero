@@ -1,4 +1,3 @@
-// src/entities/tile-definitions.js
 import { PLAYER_CONSTANTS } from "../utils/constants.js";
 
 export const TILE_DEFINITIONS = {
@@ -17,6 +16,5 @@ export const TILE_DEFINITIONS = {
 
   'A': { type: 'spike_up', solid: false, hazard: true, spriteKey: 'spike_two', description: 'A dangerous spike pointing upwards. Lethal to the touch.' },
 
-  'T': { type: 'trampoline', solid: true, hazard: false, spriteKey: 'trampoline_idle', interaction: 'bounce', description: 'A bouncy trampoline. Interacting with it will launch the player upwards.' },
   'F': { type: 'fire', solid: false, hazard: true, spriteKey: 'fire_on', interaction: 'fire_trap', description: 'A deadly fire trap. Avoid contact.' }
 };

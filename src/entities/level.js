@@ -35,6 +35,7 @@ export class Level {
     // initial positions are now defined in grid units for easy placement.
     this.fruits = [];
     this.checkpoints = [];
+    this.trampolines = [];
     this.trophy = null;
 
     (levelConfig.objects || []).forEach(obj => {
@@ -55,6 +56,16 @@ export class Level {
           state: 'inactive', frame: 0,
           frameCount: 26, frameSpeed: 0.07,
           frameTimer: 0, type: 'checkpoint'
+        });
+      } else if (obj.type === 'trampoline') {
+        this.trampolines.push({
+            x: worldX, y: worldY, size: 28,
+            state: 'idle', // 'idle', 'jumping'
+            frame: 0,
+            frameCount: 8, // Frames in the jump animation
+            frameSpeed: 0.05,
+            frameTimer: 0,
+            type: 'trampoline'
         });
       } else if (obj.type === 'trophy') {
         this.trophy = {
@@ -130,6 +141,22 @@ export class Level {
       }
     }
   }
+  
+  updateTrampolines(dt) {
+    for (const tramp of this.trampolines) {
+        if (tramp.state === 'jumping') {
+            tramp.frameTimer += dt;
+            if (tramp.frameTimer >= tramp.frameSpeed) {
+                tramp.frameTimer -= tramp.frameSpeed;
+                tramp.frame++;
+                if (tramp.frame >= tramp.frameCount) {
+                    tramp.frame = 0;
+                    tramp.state = 'idle'; // Animation finished
+                }
+            }
+        }
+    }
+  }
 
   collectFruit(fruit) {
     if (!fruit.collected) {
@@ -191,6 +218,12 @@ export class Level {
         cp.state = 'inactive';
         cp.frame = 0;
         cp.frameTimer = 0;
+    });
+    
+    this.trampolines.forEach(tramp => {
+        tramp.state = 'idle';
+        tramp.frame = 0;
+        tramp.frameTimer = 0;
     });
 
     if (this.trophy) {

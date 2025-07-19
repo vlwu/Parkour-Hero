@@ -36,7 +36,8 @@ const OBJECT_DESCRIPTIONS = {
     'fruit_melon': 'A standard collectible fruit.', 'fruit_orange': 'A standard collectible fruit.',
     'fruit_pineapple': 'A standard collectible fruit.', 'fruit_strawberry': 'A standard collectible fruit.',
     'trophy': 'The level\'s goal. Becomes active once all fruits are collected. Snaps to the ground.',
-    'checkpoint': 'Saves the player\'s progress. The player will respawn here upon death. Snaps to the ground.'
+    'checkpoint': 'Saves the player\'s progress. The player will respawn here upon death. Snaps to the ground.',
+    'trampoline': 'Bounces the player high into the air. Snaps to the ground.'
 };
 
 const PALETTE_ABBREVIATIONS = {
@@ -44,11 +45,11 @@ const PALETTE_ABBREVIATIONS = {
     'fruit_apple': 'APL', 'fruit_bananas': 'BAN', 'fruit_cherries': 'CHR',
     'fruit_kiwi': 'KWI', 'fruit_melon': 'MEL', 'fruit_orange': 'ORG',
     'fruit_pineapple': 'PNP', 'fruit_strawberry': 'STR',
-    'trophy': 'GOL', 'checkpoint': 'CHK',
+    'trophy': 'GOL', 'checkpoint': 'CHK', 'trampoline': 'TRP',
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
     'sand': 'SND', 'mud': 'MUD', 'ice': 'ICE', 'spike_up': 'SPK',
-    'trampoline': 'TRP', 'fire': 'FIR'
+    'fire': 'FIR'
 };
 
 // --- INITIALIZATION ---
@@ -204,7 +205,7 @@ function populatePalettes() {
     }
     
     // Objects
-    const objectTypes = [ 'player_spawn', 'fruit_apple', 'fruit_bananas', 'fruit_cherries', 'fruit_kiwi', 'fruit_melon', 'fruit_orange', 'fruit_pineapple', 'fruit_strawberry', 'checkpoint', 'trophy' ];
+    const objectTypes = [ 'player_spawn', 'fruit_apple', 'fruit_bananas', 'fruit_cherries', 'fruit_kiwi', 'fruit_melon', 'fruit_orange', 'fruit_pineapple', 'fruit_strawberry', 'checkpoint', 'trophy', 'trampoline' ];
     objectTypes.forEach(type => {
         const abbreviation = PALETTE_ABBREVIATIONS[type] || '???';
         const item = createPaletteItem('object', type, type.replace(/_/g, ' '), OBJECT_DESCRIPTIONS[type], abbreviation);
@@ -379,11 +380,12 @@ function paintCell(cell, tileId) {
 // --- DYNAMIC OBJECTS & PROPERTIES PANEL ---
 
 /**
- * Snaps "trophy" and "checkpoint" objects to the nearest solid platform below them.
+ * Snaps "trophy", "checkpoint", and "trampoline" objects to the nearest solid platform below them.
  * @param {object} obj The dynamic object to potentially snap.
  */
 function snapObjectToGround(obj) {
-    if (obj.type !== 'trophy' && obj.type !== 'checkpoint') {
+    const snappableTypes = ['trophy', 'checkpoint', 'trampoline'];
+    if (!snappableTypes.includes(obj.type)) {
         return;
     }
 
@@ -424,6 +426,7 @@ function getObjectSize(type) {
     if (type === 'checkpoint') return 64;
     if (type === 'trophy') return 32;
     if (type === 'player_spawn') return 32;
+    if (type === 'trampoline') return 28;
     return 28;
 }
 

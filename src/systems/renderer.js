@@ -64,6 +64,7 @@ export class Renderer {
     }
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
+    this.drawTrampolines(level.trampolines, camera);
     this.drawPlayer(player);
     this.drawParticles(particles, camera);
     this.drawCollectedFruits(collectedFruits, camera);
@@ -216,6 +217,43 @@ export class Renderer {
     }
   }
 
+  drawTrampolines(trampolines, camera) {
+    for (const tramp of trampolines) {
+        if (!camera.isRectVisible({x: tramp.x, y: tramp.y, width: tramp.size, height: tramp.size})) continue;
+
+        let sprite;
+        let srcX = 0;
+        let frameWidth;
+
+        if (tramp.state === 'jumping') {
+            sprite = this.assets.trampoline_jump;
+            if (sprite) {
+                frameWidth = sprite.width / tramp.frameCount;
+                srcX = tramp.frame * frameWidth;
+            }
+        } else { // idle
+            sprite = this.assets.trampoline_idle;
+            if (sprite) {
+                frameWidth = sprite.width; // Idle is a single frame
+            }
+        }
+
+        if (sprite && frameWidth > 0) {
+            this.ctx.drawImage(
+                sprite,
+                srcX, 0,
+                frameWidth, sprite.height,
+                tramp.x - tramp.size / 2, // Corrected X
+                tramp.y - tramp.size / 2, // Corrected Y
+                tramp.size, tramp.size
+            );
+        } else { // Fallback drawing
+            this.ctx.fillStyle = '#8e44ad';
+            this.ctx.fillRect(tramp.x - tramp.size / 2, tramp.y - tramp.size / 2, tramp.size, tramp.size);
+        }
+    }
+  }
+
   drawParticles(particles, camera) {
     if (particles.length === 0) return;
     this.ctx.save();
@@ -247,7 +285,6 @@ export class Renderer {
     for (const cp of checkpoints) {
       if (!camera.isRectVisible({x: cp.x, y: cp.y, width: cp.size, height: cp.size})) continue;
       let sprite, srcX = 0, frameWidth;
-      // ... (rest of checkpoint drawing logic is fine)
       switch(cp.state) {
         case 'inactive': sprite = this.assets.checkpoint_inactive; if (sprite) frameWidth = sprite.width; break;
         case 'activating': sprite = this.assets.checkpoint_activation; if (sprite) { frameWidth = sprite.width / cp.frameCount; srcX = cp.frame * frameWidth; } break;

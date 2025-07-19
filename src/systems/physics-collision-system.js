@@ -98,7 +98,12 @@ export class PhysicsSystem {
 
     // Apply vertical movement and check for collisions
     player.y += player.vy * dt;
-    this._handleVerticalCollisions(player, level);
+    const bounced = this._checkTrampolineBounce(player, level, dt);
+    if (!bounced) {
+      this._handleVerticalCollisions(player, level);
+    } else {
+      player.onGround = false; // Ensure onGround is false after bouncing
+    }
 
 
     // --- 3. CHECK LEVEL BOUNDS & OTHER INTERACTIONS ---
@@ -183,6 +188,42 @@ export class PhysicsSystem {
         return;
       }
     }
+  }
+  
+  _checkTrampolineBounce(player, level, dt) {
+    if (player.vy <= 0) {
+        return false; // Only bounce when falling onto it
+    }
+
+    for (const tramp of level.trampolines) {
+        const playerBottom = player.y + player.height;
+        const playerHorizontalCenter = player.x + player.width / 2;
+
+        const trampTop = tramp.y;
+        const trampLeft = tramp.x;
+        const trampRight = tramp.x + tramp.size;
+
+        // Check for horizontal overlap.
+        if (player.x + player.width > trampLeft && player.x < trampRight) {
+            const prevPlayerBottom = playerBottom - player.vy * dt;
+            
+            // Check if player's bottom has just crossed the trampoline's top surface.
+            if (playerBottom >= trampTop && prevPlayerBottom <= trampTop + 1) {
+                // --- BOUNCE LOGIC ---
+                tramp.state = 'jumping';
+                tramp.frame = 0;
+                tramp.frameTimer = 0;
+
+                player.y = trampTop - player.height; // Snap position
+                player.vy = -PLAYER_CONSTANTS.JUMP_FORCE * PLAYER_CONSTANTS.TRAMPOLINE_BOUNCE_MULTIPLIER;
+                player.jumpCount = 0; // Allow double jump after bounce
+                player.coyoteTimer = 0; // No coyote time after a bounce
+
+                return true; // Bounce occurred, stop further vertical checks.
+            }
+        }
+    }
+    return false;
   }
 
   _checkHazardCollisions(player, level) {

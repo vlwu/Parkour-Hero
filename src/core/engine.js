@@ -232,6 +232,7 @@ export class Engine {
       this.currentLevel.updateFruits(dt);
       this.currentLevel.updateTrophyAnimation(dt);
       this.currentLevel.updateCheckpoints(dt);
+      this.currentLevel.updateTrampolines(dt);
       
       this.collectedFruits = this.collectedFruits || [];
       for (const collected of this.collectedFruits) {
