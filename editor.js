@@ -1,4 +1,3 @@
-// editor.js
 import { TILE_DEFINITIONS } from './src/entities/tile-definitions.js';
 import { GRID_CONSTANTS } from './src/utils/constants.js';
 
