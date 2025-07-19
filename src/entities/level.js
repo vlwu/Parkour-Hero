@@ -82,13 +82,20 @@ export class Level {
     const gridX = Math.floor(worldX / GRID_CONSTANTS.TILE_SIZE);
     const gridY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE);
 
-    // Treat out-of-bounds as a solid wall to prevent falling out of the world.
-    if (gridX < 0 || gridX >= this.gridWidth || gridY < 0 || gridY >= this.gridHeight) {
-      return TILE_DEFINITIONS['1']; // Return a basic 'dirt' wall
+    // Create solid walls on the sides and top of the level.
+    if (gridX < 0 || gridX >= this.gridWidth || gridY < 0) {
+      return TILE_DEFINITIONS['1']; // Return a basic 'dirt' wall.
+    }
+    
+    // Allow falling through the bottom of the level.
+    if (gridY >= this.gridHeight) {
+      return TILE_DEFINITIONS['0']; // Return an empty tile.
     }
 
+    // Otherwise, return the actual tile from the grid.
     return this.tiles[gridY][gridX];
   }
+
 
   // --- Methods for Dynamic Objects (largely unchanged) ---
 

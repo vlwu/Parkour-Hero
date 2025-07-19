@@ -1,5 +1,5 @@
 {
-  "name": "Level 1: It's Too Easy (Converted)",
+  "name": "Level 1: It's Too Easy",
   "gridWidth": 28,
   "gridHeight": 15,
   "background": "backgroundTile",
@@ -27,33 +27,33 @@
   "objects": [
     {
       "type": "fruit_apple",
-      "x": 2.0833333333333335,
-      "y": 5.729166666666667
+      "x": 2.09,
+      "y": 5.73
     },
     {
       "type": "fruit_bananas",
-      "x": 7.8125,
+      "x": 7.81,
       "y": 6.25
     },
     {
       "type": "fruit_cherries",
       "x": 12.5,
-      "y": 5.208333333333333
+      "y": 5.21
     },
     {
       "type": "fruit_kiwi",
-      "x": 17.708333333333332,
-      "y": 4.166666666666667
+      "x": 17.71,
+      "y": 4.17
     },
     {
       "type": "fruit_melon",
-      "x": 20.833333333333332,
+      "x": 20.83,
       "y": 3.125
     },
     {
       "type": "fruit_orange",
       "x": 4.6875,
-      "y": 6.666666666666667
+      "y": 6.67
     },
     {
       "type": "fruit_pineapple",
@@ -63,12 +63,12 @@
     {
       "type": "fruit_strawberry",
       "x": 14.0625,
-      "y": 4.583333333333333
+      "y": 4.58
     },
     {
       "type": "trophy",
-      "x": 23.270833333333332,
-      "y": 6.7
+      "x": 23.27,
+      "y": 6.67
     }
   ]
 }

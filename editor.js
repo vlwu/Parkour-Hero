@@ -2,6 +2,9 @@
 import { TILE_DEFINITIONS } from './src/entities/tile-definitions.js';
 import { GRID_CONSTANTS } from './src/utils/constants.js';
 
+// --- UTILITY FUNCTIONS ---
+const round = (val) => Math.round(val * 100) / 100;
+
 // DOM Elements
 const gridContainer = document.getElementById('grid-container');
 const tilePaletteContainer = document.getElementById('tile-palette');
@@ -27,12 +30,13 @@ let currentPaintAction = null;
 
 // Data Maps for Editor
 const OBJECT_DESCRIPTIONS = {
+    'player_spawn': 'The player\'s starting position. Only one can be placed per level.',
     'fruit_apple': 'A standard collectible fruit.', 'fruit_bananas': 'A standard collectible fruit.',
     'fruit_cherries': 'A standard collectible fruit.', 'fruit_kiwi': 'A standard collectible fruit.',
     'fruit_melon': 'A standard collectible fruit.', 'fruit_orange': 'A standard collectible fruit.',
     'fruit_pineapple': 'A standard collectible fruit.', 'fruit_strawberry': 'A standard collectible fruit.',
-    'trophy': 'The level\'s goal. Becomes active once all fruits are collected.',
-    'checkpoint': 'Saves the player\'s progress. The player will respawn here upon death.'
+    'trophy': 'The level\'s goal. Becomes active once all fruits are collected. Snaps to the ground.',
+    'checkpoint': 'Saves the player\'s progress. The player will respawn here upon death. Snaps to the ground.'
 };
 
 // --- INITIALIZATION ---
@@ -100,6 +104,9 @@ function undo() {
             action.changes.forEach(c => paintCell(gridContainer.children[c.index], c.from));
             break;
         case 'place_object':
+            if (action.obj.type === 'player_spawn' && action.replaced) {
+                dynamicObjects.push(action.replaced);
+            }
             dynamicObjects = dynamicObjects.filter(o => o.id !== action.obj.id);
             if (selectedObject && selectedObject.id === action.obj.id) deselectObject();
             break;
@@ -128,6 +135,9 @@ function redo() {
             action.changes.forEach(c => paintCell(gridContainer.children[c.index], c.to));
             break;
         case 'place_object':
+            if (action.obj.type === 'player_spawn') {
+                dynamicObjects = dynamicObjects.filter(o => o.type !== 'player_spawn');
+            }
             dynamicObjects.push(action.obj);
             break;
         case 'delete_object':
@@ -155,9 +165,18 @@ function getPaletteColor(type) {
         case 'green_block': return '#28a745'; case 'sand': return '#F4A460';
         case 'mud': return '#5D4037'; case 'ice': return '#5DADE2';
         case 'spike_up': return '#e74c3c'; case 'trampoline': return '#8e44ad';
-        case 'fire': return '#f39c12'; case 'fruit_apple': case 'fruit_bananas':
-        case 'fruit_cherries': case 'fruit_kiwi': case 'fruit_melon': case 'fruit_orange':
-        case 'fruit_pineapple': case 'fruit_strawberry': return '#f1c40f';
+        case 'fire': return '#f39c12';
+        // Unique fruit colors
+        case 'fruit_apple': return '#e74c3c';
+        case 'fruit_bananas': return '#f1c40f';
+        case 'fruit_cherries': return '#c0392b';
+        case 'fruit_kiwi': return '#27ae60';
+        case 'fruit_melon': return '#1abc9c';
+        case 'fruit_orange': return '#e67e22';
+        case 'fruit_pineapple': return '#f39c12';
+        case 'fruit_strawberry': return '#d35400';
+        // Other objects
+        case 'player_spawn': return '#2980b9';
         case 'trophy': return '#F39C12'; case 'checkpoint': return '#17a2b8';
         case 'empty': return 'rgba(0,0,0,0.3)'; default: return '#34495e';
     }
@@ -170,7 +189,7 @@ function populatePalettes() {
         if (def.type === 'empty') { item.textContent = 'ERASE'; item.style.color = '#fff'; }
         tilePaletteContainer.appendChild(item);
     }
-    const objectTypes = [ 'fruit_apple', 'fruit_bananas', 'fruit_cherries', 'fruit_kiwi', 'fruit_melon', 'fruit_orange', 'fruit_pineapple', 'fruit_strawberry', 'checkpoint', 'trophy' ];
+    const objectTypes = [ 'player_spawn', 'fruit_apple', 'fruit_bananas', 'fruit_cherries', 'fruit_kiwi', 'fruit_melon', 'fruit_orange', 'fruit_pineapple', 'fruit_strawberry', 'checkpoint', 'trophy' ];
     objectTypes.forEach(type => {
         const item = createPaletteItem('object', type, type.replace(/_/g, ' '), OBJECT_DESCRIPTIONS[type]);
         item.style.backgroundColor = getPaletteColor(type);
@@ -279,7 +298,7 @@ function handleDocumentMouseMove(e) {
         const dx = (e.clientX - dragStartX) / GRID_CONSTANTS.TILE_SIZE;
         const dy = (e.clientY - dragStartY) / GRID_CONSTANTS.TILE_SIZE;
         draggedObject.x = dragInitialX + dx;
-        draggedObject.y = dragInitialY;
+        draggedObject.y = dragInitialY + dy;
         renderDynamicObjects();
     } else if (isPainting || isErasing) {
         if (e.target.classList.contains('grid-cell')) {
@@ -295,12 +314,24 @@ function handleDocumentMouseUp(e) {
         }
     }
     if (isDragging && draggedObject) {
-        const finalX = draggedObject.x, finalY = draggedObject.y;
-        draggedObject.x = dragInitialX; draggedObject.y = dragInitialY;
-        pushToHistory({ type: 'move_object', id: draggedObject.id, from: { x: dragInitialX, y: dragInitialY }, to: { x: finalX, y: finalY } });
-        draggedObject.x = finalX; draggedObject.y = finalY;
+        // Snap the object if applicable
+        snapObjectToGround(draggedObject);
+        
+        // Round final coordinates
+        const finalX = round(draggedObject.x);
+        const finalY = round(draggedObject.y);
+        
+        // Only push history if the object actually moved
+        if (dragInitialX !== finalX || dragInitialY !== finalY) {
+            pushToHistory({ type: 'move_object', id: draggedObject.id, from: { x: dragInitialX, y: dragInitialY }, to: { x: finalX, y: finalY } });
+        }
+        
+        // Apply final, snapped, and rounded position
+        draggedObject.x = finalX;
+        draggedObject.y = finalY;
+
         document.querySelector('.dynamic-object.dragging')?.classList.remove('dragging');
-        selectObject(draggedObject);
+        selectObject(draggedObject); // Re-select to update properties panel
     }
     isPainting = isErasing = isDragging = false;
     currentPaintAction = null; draggedObject = null;
@@ -323,15 +354,83 @@ function paintCell(cell, tileId) {
 
 // --- DYNAMIC OBJECTS & PROPERTIES PANEL ---
 
+/**
+ * Snaps "trophy" and "checkpoint" objects to the nearest solid platform below them.
+ * @param {object} obj The dynamic object to potentially snap.
+ */
+function snapObjectToGround(obj) {
+    if (obj.type !== 'trophy' && obj.type !== 'checkpoint') {
+        return;
+    }
+
+    const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+    const maxSnapPixels = TILE_SIZE * 1.5; // Max distance to look for a platform
+
+    const objCenterX_px = obj.x * TILE_SIZE;
+    const objCenterY_px = obj.y * TILE_SIZE;
+    const objBottomY_px = objCenterY_px + obj.size / 2;
+
+    const gridX = Math.floor(objCenterX_px / TILE_SIZE);
+    const startGridY = Math.floor(objBottomY_px / TILE_SIZE);
+
+    for (let y = startGridY; y < gridHeight && y < startGridY + 3; y++) {
+        if (y < 0) continue;
+        const index = y * gridWidth + gridX;
+        const cell = gridContainer.children[index];
+        if (!cell) continue;
+
+        const tileId = cell.dataset.tileId;
+        const tileDef = TILE_DEFINITIONS[tileId];
+
+        if (tileDef && tileDef.solid) {
+            const platformTop_px = y * TILE_SIZE;
+            const distance = platformTop_px - objBottomY_px;
+
+            if (distance >= -TILE_SIZE / 2 && distance < maxSnapPixels) {
+                const newCenterY_px = platformTop_px - obj.size / 2;
+                obj.y = newCenterY_px / TILE_SIZE;
+                return; // Snap complete
+            }
+        }
+    }
+}
+
+
 function getObjectSize(type) {
     if (type === 'checkpoint') return 64;
     if (type === 'trophy') return 32;
+    if (type === 'player_spawn') return 32;
     return 28;
 }
 
 function placeObject(pixelX, pixelY, type) {
-    const newObject = { id: nextObjectId++, type: type, x: pixelX / GRID_CONSTANTS.TILE_SIZE, y: pixelY / GRID_CONSTANTS.TILE_SIZE, size: getObjectSize(type) };
-    pushToHistory({ type: 'place_object', obj: JSON.parse(JSON.stringify(newObject)) });
+    let historyAction = { type: 'place_object' };
+    let replacedSpawn = null;
+    
+    // If placing a spawn point, remove the existing one first.
+    if (type === 'player_spawn') {
+        const existingSpawnIndex = dynamicObjects.findIndex(o => o.type === 'player_spawn');
+        if (existingSpawnIndex > -1) {
+            replacedSpawn = dynamicObjects.splice(existingSpawnIndex, 1)[0];
+            historyAction.replaced = replacedSpawn; // For undo
+        }
+    }
+    
+    const newObject = {
+        id: nextObjectId++,
+        type: type,
+        x: pixelX / GRID_CONSTANTS.TILE_SIZE,
+        y: pixelY / GRID_CONSTANTS.TILE_SIZE,
+        size: getObjectSize(type)
+    };
+    
+    snapObjectToGround(newObject);
+    newObject.x = round(newObject.x);
+    newObject.y = round(newObject.y);
+    
+    historyAction.obj = JSON.parse(JSON.stringify(newObject));
+    pushToHistory(historyAction);
+
     dynamicObjects.push(newObject);
     renderDynamicObjects();
     selectObject(newObject);
@@ -348,6 +447,15 @@ function renderDynamicObjects() {
         el.style.top = `${obj.y * GRID_CONSTANTS.TILE_SIZE - (obj.size / 2)}px`;
         el.title = obj.type; el.style.backgroundColor = getPaletteColor(obj.type);
         el.style.opacity = '0.8';
+        
+        // Add a visual indicator for the player spawn object
+        if (obj.type === 'player_spawn') {
+            el.innerHTML = '<span style="color: white; font-weight: bold; font-size: 18px;">P</span>';
+            el.style.display = 'flex';
+            el.style.justifyContent = 'center';
+            el.style.alignItems = 'center';
+        }
+        
         el.addEventListener('mousedown', (e) => { if (e.button === 0) { selectObject(obj, e); }});
         gridContainer.appendChild(el);
     });
@@ -355,7 +463,7 @@ function renderDynamicObjects() {
 
 function selectObject(obj) {
     selectedObject = obj;
-    propertiesPanel.innerHTML = `<h3 class="properties-title">${obj.type.replace(/_/g, ' ')} (ID: ${obj.id})</h3><label for="prop-x">Grid X:</label><input type="number" id="prop-x" step="0.1" value="${obj.x.toFixed(2)}"><label for="prop-y">Grid Y:</label><input type="number" id="prop-y" step="0.1" value="${obj.y.toFixed(2)}">`;
+    propertiesPanel.innerHTML = `<h3 class="properties-title">${obj.type.replace(/_/g, ' ')} (ID: ${obj.id})</h3><label for="prop-x">Grid X:</label><input type="number" id="prop-x" step="0.01" value="${obj.x.toFixed(2)}"><label for="prop-y">Grid Y:</label><input type="number" id="prop-y" step="0.01" value="${obj.y.toFixed(2)}">`;
     document.getElementById('prop-x').addEventListener('input', e => updateObjectProp(obj.id, 'x', parseFloat(e.target.value)));
     document.getElementById('prop-y').addEventListener('input', e => updateObjectProp(obj.id, 'y', parseFloat(e.target.value)));
     document.querySelectorAll('.dynamic-object').forEach(el => el.classList.remove('selected'));
@@ -374,7 +482,7 @@ function deselectObject() {
 function updateObjectProp(id, prop, value) {
     const obj = dynamicObjects.find(o => o.id === id);
     if (obj && !isNaN(value)) {
-        obj[prop] = value;
+        obj[prop] = round(value);
         renderDynamicObjects();
         const objEl = gridContainer.querySelector(`.dynamic-object[data-id='${id}']`);
         if (objEl) objEl.classList.add('selected');
@@ -384,6 +492,13 @@ function updateObjectProp(id, prop, value) {
 function deleteObject(id) {
     const objToDelete = dynamicObjects.find(o => o.id === id);
     if (!objToDelete) return;
+
+    // Prevent deleting the player spawn object directly, must be replaced
+    if (objToDelete.type === 'player_spawn') {
+        alert('Cannot delete Player Spawn. Place a new one to move it.');
+        return;
+    }
+
     pushToHistory({ type: 'delete_object', obj: JSON.parse(JSON.stringify(objToDelete)) });
     dynamicObjects = dynamicObjects.filter(obj => obj.id !== id);
     if (selectedObject && selectedObject.id === id) deselectObject();
@@ -416,8 +531,23 @@ function loadGridLevel(data) {
             if (gridContainer.children[index]) { paintCell(gridContainer.children[index], tileId); }
         });
     });
+    
+    // Load standard objects
     dynamicObjects = (data.objects || []).map((obj, i) => ({ ...obj, id: i, size: getObjectSize(obj.type) }));
     nextObjectId = dynamicObjects.length;
+
+    // Create the player spawn object from the level's startPosition
+    if (data.startPosition) {
+        const spawnObject = {
+            id: nextObjectId++,
+            type: 'player_spawn',
+            x: data.startPosition.x,
+            y: data.startPosition.y,
+            size: getObjectSize('player_spawn')
+        };
+        dynamicObjects.push(spawnObject);
+    }
+
     renderDynamicObjects();
     historyStack = []; redoStack = []; updateUndoRedoButtons();
 }
@@ -438,9 +568,14 @@ function loadAndConvertOldLevel(data) {
             const index = y * gridWidth + x; paintCell(gridContainer.children[index], tileId);
         }}
     });
+    
+    // Add player spawn from old format
+    placeObject(data.startPosition.x, data.startPosition.y, 'player_spawn');
+
     (data.fruits || []).forEach(obj => placeObject(obj.x, obj.y, obj.fruitType));
     (data.checkpoints || []).forEach(obj => placeObject(obj.x, obj.y, 'checkpoint'));
     if (data.trophy) placeObject(data.trophy.x, data.trophy.y, 'trophy');
+    
     renderDynamicObjects();
     historyStack = []; redoStack = []; updateUndoRedoButtons();
     alert(`Converted level "${data.name}". Review object placement and export.`);
@@ -452,11 +587,26 @@ function exportLevelJSON() {
         rowString += gridContainer.children[i].dataset.tileId;
         if ((i + 1) % gridWidth === 0) { layout.push(rowString); rowString = ''; }
     }
+    
+    // Find the player spawn object to define the start position
+    const playerSpawnObj = dynamicObjects.find(obj => obj.type === 'player_spawn');
+    const startPos = playerSpawnObj
+        ? { x: round(playerSpawnObj.x), y: round(playerSpawnObj.y) }
+        : { x: 1.5, y: gridHeight - 2.5 }; // Default fallback
+
+    // Filter out the player_spawn object from the final objects array
+    const finalObjects = dynamicObjects
+        .filter(obj => obj.type !== 'player_spawn')
+        .map(({ id, size, ...rest }) => ({...rest, x: round(rest.x), y: round(rest.y)}));
+    
     const exportData = {
         name: levelNameInput.value, gridWidth: gridWidth, gridHeight: gridHeight,
-        background: backgroundInput.value, startPosition: { x: 1.5, y: gridHeight - 2.5 },
-        layout: layout, objects: dynamicObjects.map(({ id, size, ...rest }) => rest)
+        background: backgroundInput.value, 
+        startPosition: startPos,
+        layout: layout, 
+        objects: finalObjects
     };
+
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
     const dlAnchorElem = document.createElement('a');
     dlAnchorElem.setAttribute("href", dataStr);
