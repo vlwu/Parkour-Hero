@@ -2,7 +2,7 @@
   "name": "Level 3: Celestial Ascent",
   "gridWidth": 28,
   "gridHeight": 63,
-  "background": "backgroundTile",
+  "background": "background_blue",
   "startPosition": {
     "x": 2.08,
     "y": 58.33

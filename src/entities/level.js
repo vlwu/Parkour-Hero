@@ -15,7 +15,7 @@ export class Level {
     this.gridHeight = levelConfig.gridHeight;
     this.width = this.gridWidth * GRID_CONSTANTS.TILE_SIZE;
     this.height = this.gridHeight * GRID_CONSTANTS.TILE_SIZE;
-    this.background = levelConfig.background || 'backgroundTile';
+    this.background = levelConfig.background || 'background_blue';
 
     // Convert player start position from grid units to world coordinates
     this.startPosition = {

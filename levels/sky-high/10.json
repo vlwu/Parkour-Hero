@@ -2,7 +2,7 @@
   "name": "Level 10: Defying Gravity",
   "gridWidth": 32,
   "gridHeight": 32,
-  "background": "backgroundTile",
+  "background": "background_blue",
   "startPosition": {
     "x": 2.08,
     "y": 27.08

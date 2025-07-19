@@ -126,7 +126,13 @@ const playerSpriteFiles = {
 export async function loadAssets() {
   const imagePaths = {
     // Canvas assets
-    backgroundTile: 'assets/Background/Blue.png',
+    background_blue: 'assets/Background/Blue.png',
+    background_brown: 'assets/Background/Brown.png',
+    background_gray: 'assets/Background/Gray.png',
+    background_green: 'assets/Background/Green.png',
+    background_pink: 'assets/Background/Pink.png',
+    background_purple: 'assets/Background/Purple.png',
+    background_yellow: 'assets/Background/Yellow.png',
     block: 'assets/Terrain/Terrain.png',
     // Non-character-specific player sprites
     playerAppear: 'assets/MainCharacters/Appearing.png',

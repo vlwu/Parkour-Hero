@@ -2,7 +2,7 @@
   "name": "Level 7: Precision Drops",
   "gridWidth": 27,
   "gridHeight": 42,
-  "background": "backgroundTile",
+  "background": "background_blue",
   "startPosition": {
     "x": 2.08,
     "y": 6.25

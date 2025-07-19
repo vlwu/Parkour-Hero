@@ -2,7 +2,7 @@
   "name": "Level 2: Big Drop",
   "gridWidth": 28,
   "gridHeight": 15,
-  "background": "backgroundTile",
+  "background": "background_brown",
   "startPosition": {
     "x": 1.5,
     "y": 6

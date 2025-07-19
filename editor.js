@@ -548,7 +548,7 @@ function handleFileLoad(e) {
 function loadGridLevel(data) {
     resetEditor(data.gridWidth, data.gridHeight);
     levelNameInput.value = data.name;
-    backgroundInput.value = data.background || 'backgroundTile';
+    backgroundInput.value = data.background || 'background_blue';
     data.layout.forEach((rowString, y) => {
         [...rowString].forEach((tileId, x) => {
             const index = y * gridWidth + x;
@@ -580,7 +580,7 @@ function loadAndConvertOldLevel(data) {
     const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
     resetEditor(Math.ceil(data.width / TILE_SIZE), Math.ceil(data.height / TILE_SIZE));
     levelNameInput.value = data.name + " (Converted)";
-    backgroundInput.value = data.background || 'backgroundTile';
+    backgroundInput.value = data.background || 'background_blue';
     const terrainToIdMap = {};
     for (const [id, def] of Object.entries(TILE_DEFINITIONS)) { terrainToIdMap[def.type] = id; }
     data.platforms.forEach(platform => {

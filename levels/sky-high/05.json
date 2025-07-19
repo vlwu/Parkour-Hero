@@ -2,7 +2,7 @@
   "name": "Level 5: Leaps of Faith",
   "gridWidth": 27,
   "gridHeight": 59,
-  "background": "backgroundTile",
+  "background": "background_blue",
   "startPosition": {
     "x": 22.92,
     "y": 54.17

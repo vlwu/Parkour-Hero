@@ -2,7 +2,7 @@
   "name": "Level 1: It's Too Easy",
   "gridWidth": 28,
   "gridHeight": 15,
-  "background": "backgroundTile",
+  "background": "background_blue",
   "startPosition": {
     "x": 1.5,
     "y": 6.5

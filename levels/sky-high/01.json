@@ -2,7 +2,7 @@
   "name": "Level 1: Cloud Rise",
   "gridWidth": 27,
   "gridHeight": 46,
-  "background": "backgroundTile",
+  "background": "background_blue",
   "startPosition": {
     "x": 2.08,
     "y": 40.63

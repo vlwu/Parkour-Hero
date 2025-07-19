@@ -2,7 +2,7 @@
   "name": "Level 3: Downs & Ups",
   "gridWidth": 30,
   "gridHeight": 15,
-  "background": "backgroundTile",
+  "background": "background_gray",
   "startPosition": {
     "x": 1.5,
     "y": 6.5

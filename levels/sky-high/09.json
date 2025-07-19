@@ -2,7 +2,7 @@
   "name": "Level 9: The Summit",
   "gridWidth": 27,
   "gridHeight": 42,
-  "background": "backgroundTile",
+  "background": "background_blue",
   "startPosition": {
     "x": 12.5,
     "y": 37.5
