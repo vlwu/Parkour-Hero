@@ -2,11 +2,13 @@ import { eventBus } from '../utils/event-bus.js';
 import { formatKeyForDisplay } from './ui-utils.js';
 
 export class SettingsMenu {
-  constructor(keybinds) {
+  constructor(keybinds, fontRenderer) {
     this.keybinds = keybinds;
+    this.fontRenderer = fontRenderer;
     this.activeKeybindInput = null;
 
     // --- DOM Element Queries ---
+    this.settingsModal = document.getElementById('settingsModal');
     this.keybindInputs = document.querySelectorAll('.keybind-item input');
     this.soundToggle = document.getElementById('soundToggle');
     this.volumeSlider = document.getElementById('volumeSlider');
@@ -20,6 +22,55 @@ export class SettingsMenu {
     this._setupEventListeners();
     eventBus.subscribe('soundSettingsChanged', (settings) => this.updateSoundSettingsDisplay(settings));
     eventBus.subscribe('statsUpdated', (stats) => this.updateSoundSettingsDisplay(stats));
+
+    if (this.fontRenderer) {
+      this.renderBitmapText();
+    }
+  }
+
+  renderBitmapText() {
+    this.settingsModal.querySelectorAll('h2, h3').forEach(el => {
+        const text = el.textContent;
+        if (!text) return;
+        el.textContent = '';
+        const canvas = this.fontRenderer.renderTextToCanvas(text, {
+            scale: el.tagName === 'H2' ? 3 : 2,
+            color: 'white',
+            outlineColor: 'black',
+            outlineWidth: 1
+        });
+        if (canvas) {
+            canvas.style.imageRendering = 'pixelated';
+            el.appendChild(canvas);
+        }
+    });
+
+    this.settingsModal.querySelectorAll('.setting-item label, .keybind-item label').forEach(el => {
+        const text = el.textContent;
+        if (!text) return;
+        el.textContent = '';
+        const canvas = this.fontRenderer.renderTextToCanvas(text, {
+            scale: 1.5,
+            color: '#eee',
+            outlineColor: 'black',
+            outlineWidth: 1
+        });
+        if (canvas) {
+            canvas.style.imageRendering = 'pixelated';
+            el.appendChild(canvas);
+        }
+    });
+      
+    if (this.testSoundButton) {
+        const text = this.testSoundButton.textContent;
+        this.testSoundButton.textContent = '';
+        const canvas = this.fontRenderer.renderTextToCanvas(text, { scale: 1.5, color: 'white' });
+        if (canvas) {
+            canvas.style.imageRendering = 'pixelated';
+            this.testSoundButton.style.padding = '10px';
+            this.testSoundButton.appendChild(canvas);
+        }
+    }
   }
 
   _setupEventListeners() {
@@ -69,9 +120,20 @@ export class SettingsMenu {
   updateSoundSettingsDisplay(stats) {
       if (!stats) return;
       if (this.soundToggle) {
-          this.soundToggle.textContent = stats.soundEnabled ? 'ON' : 'OFF';
+          const text = stats.soundEnabled ? 'ON' : 'OFF';
           this.soundToggle.classList.toggle('sound-enabled', stats.soundEnabled);
           this.soundToggle.classList.toggle('sound-disabled', !stats.soundEnabled);
+
+          if (this.fontRenderer) {
+              this.soundToggle.innerHTML = ''; // Clear previous canvas
+              const canvas = this.fontRenderer.renderTextToCanvas(text, { scale: 1.5, color: 'white' });
+              if (canvas) {
+                  canvas.style.imageRendering = 'pixelated';
+                  this.soundToggle.appendChild(canvas);
+              }
+          } else {
+              this.soundToggle.textContent = text;
+          }
       }
       if (this.volumeSlider && this.volumeValue) {
           this.volumeSlider.value = stats.soundVolume;

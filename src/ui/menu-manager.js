@@ -18,9 +18,9 @@ export class MenuManager {
 
     // --- Instantiate Menu Handlers ---
     this.mainMenu = new MainMenu(this.fontRenderer);
-    this.settingsMenu = new SettingsMenu(this.keybinds);
+    this.settingsMenu = new SettingsMenu(this.keybinds, this.fontRenderer);
     this.levelMenu = new LevelMenu(this.gameState);
-    this.characterMenu = new CharacterMenu(this.gameState, this.assets);
+    this.characterMenu = new CharacterMenu(this.gameState, this.assets, this.fontRenderer);
 
     // --- DOM Element Queries for Modals and Top-Level Buttons ---
     this.settingsModal = document.getElementById('settingsModal');

@@ -2,9 +2,11 @@ import { eventBus } from '../utils/event-bus.js';
 import { characterConfig } from '../entities/level-definitions.js';
 
 export class CharacterMenu {
-    constructor(gameState, assets) {
+    constructor(gameState, assets, fontRenderer) {
         this.gameState = gameState;
         this.assets = assets;
+        this.fontRenderer = fontRenderer;
+        this.headerRendered = false;
 
         this.characterModal = document.getElementById('characterModal');
         this.characterSelectionContainer = document.getElementById('character-selection-container');
@@ -19,7 +21,29 @@ export class CharacterMenu {
         });
     }
 
+    renderBitmapHeader() {
+        if (!this.fontRenderer || this.headerRendered) return;
+        
+        const title = document.querySelector('#characterModal .modal-content h2');
+        if (title && title.textContent) {
+            const text = title.textContent;
+            title.innerHTML = '';
+            const canvas = this.fontRenderer.renderTextToCanvas(text, {
+                scale: 3,
+                color: 'white',
+                outlineColor: 'black',
+                outlineWidth: 1
+            });
+            if (canvas) {
+                canvas.style.imageRendering = 'pixelated';
+                title.appendChild(canvas);
+                this.headerRendered = true;
+            }
+        }
+    }
+
     show() {
+        this.renderBitmapHeader();
         this.populate();
         if (!this.characterPreviewAnimationId) {
             this.characterPreviewAnimationId = requestAnimationFrame(t => this.animateCharacterPreviews(t));
@@ -47,32 +71,78 @@ export class CharacterMenu {
             if (!isUnlocked) card.classList.add('locked');
             if (isSelected) card.classList.add('selected');
     
+            // 1. Preview Canvas
+            const previewCanvas = document.createElement('canvas');
+            previewCanvas.className = 'char-canvas';
+            previewCanvas.dataset.charId = charId;
+            previewCanvas.width = 64;
+            previewCanvas.height = 64;
+
+            // 2. Character Name
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'char-name';
             const charNameFormatted = charId.replace(/([A-Z])/g, ' $1').trim();
+            const nameCanvas = this.fontRenderer.renderTextToCanvas(charNameFormatted, { scale: 2, color: 'white' });
+            if(nameCanvas) {
+                nameCanvas.style.imageRendering = 'pixelated';
+                nameDiv.appendChild(nameCanvas);
+            }
+
+            // 3. Unlock Requirement Text
+            const unlockDiv = document.createElement('div');
+            unlockDiv.className = 'char-unlock';
             const config = characterConfig[charId];
-            const unlockText = isUnlocked ? 'Available' : `Complete ${config.unlockRequirement} levels to unlock`;
-            let buttonContent = isSelected ? 'Selected' : 'Select';
-            if (!isUnlocked) {
-                buttonContent = `<svg class="lock-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"></path></svg> Locked`;
+            const unlockText = isUnlocked ? 'Available' : `Complete ${config.unlockRequirement} levels`;
+            const unlockCanvas = this.fontRenderer.renderTextToCanvas(unlockText, { scale: 1.5, color: '#ccc' });
+            if(unlockCanvas) {
+                unlockCanvas.style.imageRendering = 'pixelated';
+                unlockDiv.appendChild(unlockCanvas);
             }
-    
-            card.innerHTML = `
-                <canvas class="char-canvas" data-char-id="${charId}" width="64" height="64"></canvas>
-                <div class="char-name">${charNameFormatted}</div>
-                <div class.char-unlock">${unlockText}</div>
-                <button class="action-button select-button">${buttonContent}</button>
-            `;
-            const selectButton = card.querySelector('.select-button');
-            if (!isUnlocked) {
-                selectButton.disabled = true;
+            if (!isUnlocked) { // Add "to unlock" on a new line if locked
+                const unlockSubCanvas = this.fontRenderer.renderTextToCanvas("to unlock", { scale: 1.5, color: '#ccc' });
+                if (unlockSubCanvas) {
+                    unlockSubCanvas.style.imageRendering = 'pixelated';
+                    unlockDiv.appendChild(unlockSubCanvas);
+                }
+            }
+
+
+            // 4. Action Button
+            const selectButton = document.createElement('button');
+            selectButton.className = 'action-button select-button';
+            
+            if (isUnlocked) {
+                const buttonText = isSelected ? 'Selected' : 'Select';
+                const buttonCanvas = this.fontRenderer.renderTextToCanvas(buttonText, { scale: 2, color: 'white' });
+                if (buttonCanvas) {
+                    buttonCanvas.style.imageRendering = 'pixelated';
+                    selectButton.appendChild(buttonCanvas);
+                }
+                
+                if (!isSelected) {
+                    selectButton.addEventListener('click', () => {
+                        eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+                        this.gameState.setSelectedCharacter(charId);
+                        eventBus.publish('characterUpdated', charId);
+                        this.populate();
+                    });
+                }
             } else {
-                selectButton.addEventListener('click', () => {
-                    if (isSelected) return;
-                    eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
-                    this.gameState.setSelectedCharacter(charId);
-                    eventBus.publish('characterUpdated', charId);
-                    this.populate();
-                });
+                selectButton.disabled = true;
+                const lockIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                lockIcon.setAttribute('class', 'lock-icon');
+                lockIcon.setAttribute('viewBox', '0 0 24 24');
+                lockIcon.innerHTML = `<path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"></path>`;
+                
+                const buttonCanvas = this.fontRenderer.renderTextToCanvas("Locked", { scale: 2, color: 'white' });
+                selectButton.appendChild(lockIcon);
+                if (buttonCanvas) {
+                     buttonCanvas.style.imageRendering = 'pixelated';
+                    selectButton.appendChild(buttonCanvas);
+                }
             }
+
+            card.append(previewCanvas, nameDiv, unlockDiv, selectButton);
             this.characterSelectionContainer.appendChild(card);
         });
     }

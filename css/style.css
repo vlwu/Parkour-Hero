@@ -157,10 +157,12 @@ canvas {
 }
 
 .modal-content h2 {
-  color: #fff;
   margin-top: 0;
   margin-bottom: 25px;
-  font-size: 1.8em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
 }
 
 .modal-content .subtitle {
@@ -199,12 +201,13 @@ canvas {
 }
 
 .settings-section h3 {
-  color: #fff;
   margin-top: 0;
   margin-bottom: 20px;
-  font-size: 1.4em;
   border-bottom: 2px solid #666;
   padding-bottom: 10px;
+  display: flex;
+  align-items: center;
+  min-height: 28px;
 }
 
 /* Setting Items */
@@ -219,11 +222,10 @@ canvas {
 }
 
 .setting-item label {
-  font-size: 1.1em;
-  font-weight: bold;
-  color: #eee;
   flex-grow: 1;
   text-align: left;
+  display: flex;
+  align-items: center;
 }
 
 /* Toggle Button */
@@ -342,8 +344,6 @@ canvas {
 }
 
 .keybind-item label {
-  font-size: 1.1em;
-  font-weight: bold;
   margin-right: 15px;
   flex-grow: 1; 
   text-align: left;
@@ -491,18 +491,20 @@ canvas {
 }
 
 .character-card .char-name {
-  font-size: 1.2em;
-  font-weight: bold;
-  color: #fff;
+  min-height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .character-card .char-unlock {
-  font-size: 0.9em;
-  color: #ccc;
   min-height: 2.2em;
   display: flex;
   align-items: center;
   text-align: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .character-card .char-canvas {
@@ -518,6 +520,10 @@ canvas {
 
 .character-card .select-button {
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
 }
 
 .character-card.selected .select-button {
@@ -535,7 +541,6 @@ canvas {
   width: 16px;
   height: 16px;
   fill: #fff;
-  margin-right: 5px;
   vertical-align: middle;
 }
 
