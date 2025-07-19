@@ -66,7 +66,7 @@ export class MenuManager {
   }
   
   _setupEventSubscriptions() {
-      eventBus.subscribe('requestStartGame', () => {
+      eventBus.subscribe('gameStarted', () => {
           this.isGameRunning = true;
           this.gameHasStarted = true;
       });

@@ -39,12 +39,10 @@ export class Engine {
     this.particles = [];
     this.menuManager = null; // Will be set by main.js
     this._setupEventSubscriptions();
-    
-    // Initial level load
-    this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex);
   }
   
   _setupEventSubscriptions() {
+    eventBus.subscribe('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
     eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
     eventBus.subscribe('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
     eventBus.subscribe('requestResume', () => this.resume());

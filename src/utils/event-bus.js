@@ -1,10 +1,6 @@
 class EventBus {
   constructor() {
     this.events = {};
-    if (window.eventBus) {
-      return window.eventBus;
-    }
-    window.eventBus = this;
   }
 
   subscribe(eventName, callback) {
