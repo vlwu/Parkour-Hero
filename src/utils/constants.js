@@ -43,7 +43,6 @@ export const PLAYER_CONSTANTS = {
   }
 };
 
-// This is a good place for future constants
-export const GAME_CONSTANTS = {
-  // e.g., PHYSICS_TIMESTEP: 1 / 60
+export const GRID_CONSTANTS = {
+  TILE_SIZE: 48,
 };

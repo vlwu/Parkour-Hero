@@ -1,60 +1,96 @@
-import { SpatialHashGrid } from '../core/spatial-hash-grid.js';
-import { Platform } from './platform.js';
+import { TILE_DEFINITIONS } from './tile-definitions.js';
+import { GRID_CONSTANTS } from '../utils/constants.js';
 
-// Level class to manage collections of platforms and game objectives
+/**
+ * Manages the level's static tile-based geometry and dynamic objects.
+ * This class parses a grid-based level configuration and provides methods
+ * for the engine to interact with the world.
+ */
 export class Level {
   constructor(levelConfig) {
     this.name = levelConfig.name || 'Unnamed Level';
-    this.width = levelConfig.width || 1280;
-    this.height = levelConfig.height || 720;
+
+    // Establish grid and world dimensions
+    this.gridWidth = levelConfig.gridWidth;
+    this.gridHeight = levelConfig.gridHeight;
+    this.width = this.gridWidth * GRID_CONSTANTS.TILE_SIZE;
+    this.height = this.gridHeight * GRID_CONSTANTS.TILE_SIZE;
     this.background = levelConfig.background || 'backgroundTile';
-    this.completed = false;
-    this.startPosition = levelConfig.startPosition ? { ...levelConfig.startPosition } : { x: 100, y: 300 };
 
-    this.grid = new SpatialHashGrid(this.width, this.height, 128);
+    // Convert player start position from grid units to world coordinates
+    this.startPosition = {
+      x: levelConfig.startPosition.x * GRID_CONSTANTS.TILE_SIZE,
+      y: levelConfig.startPosition.y * GRID_CONSTANTS.TILE_SIZE,
+    };
 
-    this.platforms = levelConfig.platforms?.map(p => {
-        const platform = new Platform(p.x, p.y, p.width, p.height, p.terrainType);
-        this.grid.insert(platform);
-        return platform;
-    }) || [];
+    // --- Core Grid Parsing ---
+    // The old 'platforms' array and SpatialHashGrid are no longer needed.
+    // We parse the 'layout' array into a 2D array of rich tile objects.
+    this.tiles = levelConfig.layout.map(rowString =>
+      // Use the spread operator to easily iterate over the characters of the string
+      [...rowString].map(tileId => TILE_DEFINITIONS[tileId] || TILE_DEFINITIONS['0'])
+    );
 
-    this.fruits = levelConfig.fruits?.map(f => {
-      const fruit = {
-        x: f.x, y: f.y, size: 28,
-        spriteKey: f.fruitType, frame: 0,
-        frameCount: 17, frameSpeed: 0.07,
-        frameTimer: 0, collected: false,
-        type: 'fruit'
-      };
-      this.grid.insert(fruit);
-      return fruit;
-    }) || [];
+    // Dynamic objects are still managed as separate entities, but their
+    // initial positions are now defined in grid units for easy placement.
+    this.fruits = [];
+    this.checkpoints = [];
+    this.trophy = null;
+
+    (levelConfig.objects || []).forEach(obj => {
+      const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
+      const worldY = obj.y * GRID_CONSTANTS.TILE_SIZE;
+
+      if (obj.type.startsWith('fruit_')) {
+        this.fruits.push({
+          x: worldX, y: worldY, size: 28,
+          spriteKey: obj.type, frame: 0,
+          frameCount: 17, frameSpeed: 0.07,
+          frameTimer: 0, collected: false,
+          type: 'fruit' // Keep a generic type for collision systems
+        });
+      } else if (obj.type === 'checkpoint') {
+        this.checkpoints.push({
+          x: worldX, y: worldY, size: 64,
+          state: 'inactive', frame: 0,
+          frameCount: 26, frameSpeed: 0.07,
+          frameTimer: 0, type: 'checkpoint'
+        });
+      } else if (obj.type === 'trophy') {
+        this.trophy = {
+          x: worldX, y: worldY, size: 32,
+          frameCount: 8, animationFrame: 0,
+          animationTimer: 0, animationSpeed: 0.35,
+          acquired: false, inactive: true, contactMade: false,
+        };
+      }
+    });
 
     this.totalFruitCount = this.fruits.length;
     this.collectedFruitCount = 0;
-
-    this.checkpoints = levelConfig.checkpoints?.map(cp => {
-      const checkpoint = {
-        x: cp.x, y: cp.y, size: 64,
-        state: 'inactive', frame: 0,
-        frameCount: 26, frameSpeed: 0.07,
-        frameTimer: 0, type: 'checkpoint'
-      };
-      this.grid.insert(checkpoint);
-      return checkpoint;
-    }) || [];
-
-    this.trophy = null;
-    if (levelConfig.trophy) {
-      this.trophy = {
-        x: levelConfig.trophy.x, y: levelConfig.trophy.y, size: 32,
-        frameCount: 8, animationFrame: 0,
-        animationTimer: 0, animationSpeed: 0.35,
-        acquired: false, inactive: true, contactMade: false,
-      };
-    }
+    this.completed = false;
   }
+
+  /**
+   * Returns the tile definition object for a given world coordinate.
+   * This is the new cornerstone for all static collision detection.
+   * @param {number} worldX The x-position in pixels.
+   * @param {number} worldY The y-position in pixels.
+   * @returns {object} The tile definition from TILE_DEFINITIONS.
+   */
+  getTileAt(worldX, worldY) {
+    const gridX = Math.floor(worldX / GRID_CONSTANTS.TILE_SIZE);
+    const gridY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE);
+
+    // Treat out-of-bounds as a solid wall to prevent falling out of the world.
+    if (gridX < 0 || gridX >= this.gridWidth || gridY < 0 || gridY >= this.gridHeight) {
+      return TILE_DEFINITIONS['1']; // Return a basic 'dirt' wall
+    }
+
+    return this.tiles[gridY][gridX];
+  }
+
+  // --- Methods for Dynamic Objects (largely unchanged) ---
 
   updateCheckpoints(dt) {
     for (const cp of this.checkpoints) {
@@ -71,15 +107,13 @@ export class Level {
       }
     }
   }
-  
+
   getInactiveCheckpoints() {
-    if (!this.checkpoints.length) return [];
     return this.checkpoints.filter(cp => cp.state === 'inactive');
   }
 
   updateFruits(dt) {
-    for (let i = 0, len = this.fruits.length; i < len; ++i) {
-      const fruit = this.fruits[i];
+    for (const fruit of this.fruits) {
       if (!fruit.collected) {
         fruit.frameTimer += dt;
         if (fruit.frameTimer >= fruit.frameSpeed) {
@@ -95,18 +129,13 @@ export class Level {
       fruit.collected = true;
       this.collectedFruitCount++;
       if (this.trophy && this.allFruitsCollected()) {
-          this.trophy.inactive = false;
+        this.trophy.inactive = false;
       }
     }
   }
 
   getActiveFruits() {
-    if (!this.fruits.length) return [];
-    const result = [];
-    for (let i = 0, len = this.fruits.length; i < len; ++i) {
-      if (!this.fruits[i].collected) result.push(this.fruits[i]);
-    }
-    return result;
+    return this.fruits.filter(f => !f.collected);
   }
 
   getFruitCount() {
@@ -127,60 +156,35 @@ export class Level {
     }, 0);
   }
 
-  checkCollisionWithPlatforms(player) {
-    const potentialColliders = this.grid.query(player.x, player.y, player.width, player.height)
-      .filter(obj => obj.type === 'platform');
-      
-    for (const plat of potentialColliders) {
-      if (plat.collidesWith(player.x, player.y, player.width, player.height)) return plat;
-    }
-    return null;
-  }
-
-  checkGroundCollision(player) {
-    const potentialColliders = this.grid.query(player.x, player.y, player.width, player.height)
-      .filter(obj => obj.type === 'platform');
-      
-    for (const platform of potentialColliders) {
-      if (platform.isPlayerOnTop(player)) {
-        return platform;
-      }
-    }
-    return null;
-  }
-
   updateTrophyAnimation(dt) {
     const trophy = this.trophy;
-    if (!trophy) return;
+    if (!trophy || trophy.inactive || trophy.acquired) return;
 
-    if (!trophy.inactive && !trophy.acquired) {
-      trophy.animationTimer += dt;
-      if (trophy.animationTimer >= trophy.animationSpeed) {
-        trophy.animationTimer -= trophy.animationSpeed;
-        trophy.animationFrame = (trophy.animationFrame + 1) % trophy.frameCount;
-      }
+    trophy.animationTimer += dt;
+    if (trophy.animationTimer >= trophy.animationSpeed) {
+      trophy.animationTimer -= trophy.animationSpeed;
+      trophy.animationFrame = (trophy.animationFrame + 1) % trophy.frameCount;
     }
   }
 
   isCompleted() {
-    if (this.fruits.length && !this.fruits.every(f => f.collected)) return false;
+    if (this.fruits.length && !this.allFruitsCollected()) return false;
     return !this.trophy || this.trophy.acquired;
   }
 
   reset() {
-    for (let i = 0, len = this.fruits.length; i < len; ++i) {
-      this.fruits[i].collected = false;
-      this.fruits[i].frame = 0;
-      this.fruits[i].frameTimer = 0;
-    }
-    
+    this.fruits.forEach(fruit => {
+      fruit.collected = false;
+      fruit.frame = 0;
+      fruit.frameTimer = 0;
+    });
     this.collectedFruitCount = 0;
 
-    for (const cp of this.checkpoints) {
+    this.checkpoints.forEach(cp => {
         cp.state = 'inactive';
         cp.frame = 0;
         cp.frameTimer = 0;
-    }
+    });
 
     if (this.trophy) {
       this.trophy.acquired = false;
@@ -188,7 +192,6 @@ export class Level {
       this.trophy.animationFrame = 0;
       this.trophy.animationTimer = 0;
     }
-
     this.completed = false;
   }
 }

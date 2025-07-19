@@ -1,21 +1,18 @@
-import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, GRID_CONSTANTS } from '../utils/constants.js';
 import { eventBus } from '../utils/event-bus.js';
 
-// Physics and Collision detection/response system.
+/**
+ * Handles all physics calculations, collision detection, and collision response.
+ * This system is now tile-based for all static level geometry.
+ */
 export class PhysicsSystem {
   constructor() {
-    // No complex setup needed yet.
+    // No setup needed.
   }
 
-  // The main update method that now drives player movement.
   update(player, level, dt, inputActions) {
-    // --- 1. APPLY FORCES & VELOCITY ---
-
-    // Update player's internal timers for coyote time, dash cooldown etc.
+    // --- 1. APPLY FORCES & VELOCITY (Largely Unchanged) ---
     player._updateTimers(dt);
-
-    const prevX = player.x;
-    const prevY = player.y;
 
     if (player.isDashing) {
       player.dashTimer -= dt;
@@ -29,16 +26,12 @@ export class PhysicsSystem {
     const isClinging = player.currentState.name === 'cling';
     if (player.jumpBufferTimer > 0 && (player.onGround || player.coyoteTimer > 0 || isClinging)) {
       let jumpForce = PLAYER_CONSTANTS.JUMP_FORCE;
-
       if (isClinging) {
-        // This is the wall jump. Push the player away from the wall.
         player.vx = (player.direction === 'left' ? 1 : -1) * PLAYER_CONSTANTS.MOVE_SPEED;
-        // Flip the player's facing direction for animations and subsequent movement.
         player.direction = player.direction === 'left' ? 'right' : 'left';
       } else if (player.groundType === 'mud') {
         jumpForce *= PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER;
       }
-      
       player.vy = -jumpForce;
       player.jumpCount = 1;
       player.onGround = false;
@@ -49,31 +42,13 @@ export class PhysicsSystem {
 
     // Horizontal movement physics
     if (!player.isDashing && !player.isSpawning && !player.isDespawning) {
-      if (player.isOnIce) {
-        if (inputActions.moveLeft) {
-          player.vx -= PLAYER_CONSTANTS.ICE_ACCELERATION * dt;
-        } else if (inputActions.moveRight) {
-          player.vx += PLAYER_CONSTANTS.ICE_ACCELERATION * dt;
-        } else { // Apply friction
-          if (player.vx > 0) {
-            player.vx = Math.max(0, player.vx - PLAYER_CONSTANTS.ICE_FRICTION * dt);
-          } else if (player.vx < 0) {
-            player.vx = Math.min(0, player.vx + PLAYER_CONSTANTS.ICE_FRICTION * dt);
-          }
-        }
-        player.vx = Math.max(-PLAYER_CONSTANTS.MOVE_SPEED, Math.min(PLAYER_CONSTANTS.MOVE_SPEED, player.vx));
-      } else { // Standard movement
-        const moveSpeed = (player.groundType === 'sand')
-          ? PLAYER_CONSTANTS.MOVE_SPEED * PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER
-          : PLAYER_CONSTANTS.MOVE_SPEED;
-        if (inputActions.moveLeft) {
-          player.vx = -moveSpeed;
-        } else if (inputActions.moveRight) {
-          player.vx = moveSpeed;
-        } else {
-          player.vx = 0;
-        }
-      }
+      const moveSpeed = (player.groundType === 'sand')
+        ? PLAYER_CONSTANTS.MOVE_SPEED * PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER
+        : PLAYER_CONSTANTS.MOVE_SPEED;
+      
+      if (inputActions.moveLeft) player.vx = -moveSpeed;
+      else if (inputActions.moveRight) player.vx = moveSpeed;
+      else player.vx = 0;
     }
 
     // Vertical movement (gravity)
@@ -83,142 +58,152 @@ export class PhysicsSystem {
     player.vy = Math.min(player.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
 
 
-    // --- 2. BROAD-PHASE COLLISION DETECTION (Query the grid ONCE) ---
-    // Query a slightly larger area to ensure we get all potential colliders for both X and Y movement.
-    const queryWidth = player.width + Math.abs(player.vx * dt);
-    const queryHeight = player.height + Math.abs(player.vy * dt);
-    const potentialColliders = level.grid.query(player.x, player.y, queryWidth, queryHeight);
-    
-    const platformColliders = potentialColliders.filter(obj => obj.type === 'platform');
+    // --- 2. COLLISION DETECTION & RESPONSE (Completely Reworked) ---
+    // The SpatialHashGrid query is no longer needed for static platforms.
+    // We resolve movement on each axis independently.
 
-    // --- 3. NARROW-PHASE & COLLISION RESPONSE ---
-    
-    // Apply horizontal movement
+    // Apply horizontal movement and check for collisions
     player.x += player.vx * dt;
-    this._handleHorizontalCollisions(player, platformColliders, prevX);
+    this._handleHorizontalCollisions(player, level);
 
-    // Apply vertical movement
+    // Apply vertical movement and check for collisions
     player.y += player.vy * dt;
-    const groundPlatform = this._handleVerticalCollisions(player, platformColliders, prevY);
+    this._handleVerticalCollisions(player, level);
 
-    // Update player ground state based on collision results
-    player.onGround = !!groundPlatform;
-    player.groundType = player.onGround ? groundPlatform.terrainType : null;
-    player.isOnIce = player.groundType === 'ice';
 
-    if (player.onGround) {
-      player.jumpCount = 0;
-      player.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
-    }
-    
-    // --- 4. CHECK LEVEL BOUNDS & OTHER INTERACTIONS ---
-    
-    if (level && player.y > level.height + 50) {
+    // --- 3. CHECK LEVEL BOUNDS & OTHER INTERACTIONS ---
+    if (player.y > level.height + 50) {
       eventBus.publish('playerDied');
     }
     player.x = Math.max(0, Math.min(player.x, level.width - player.width));
 
-    // Check for non-platform collisions (fruits, checkpoints, etc.)
-    this._checkFruitCollisions(player, potentialColliders);
+    // Check for non-platform collisions using simple iteration.
+    // This is efficient enough as these are dynamic, non-grid objects.
+    this._checkHazardCollisions(player, level);
+    this._checkFruitCollisions(player, level);
     this._checkTrophyCollision(player, level.trophy);
-    this._checkCheckpointCollisions(player, potentialColliders);
+    this.checkCheckpointCollisions(player, level);
   }
-  
-  // --- Private Collision Resolution Methods (Moved from Player) ---
 
+  _handleHorizontalCollisions(player, level) {
+    player.isAgainstWall = false; // Reset wall state each frame
+    const tileSize = GRID_CONSTANTS.TILE_SIZE;
+    const isMovingRight = player.vx > 0;
+
+    if (player.vx === 0) return;
+
+    // Define the vertical range of tiles the player occupies
+    const topTile = Math.floor(player.y / tileSize);
+    const bottomTile = Math.floor((player.y + player.height - 1) / tileSize);
+
+    // Determine the horizontal tile to check
+    const checkX = isMovingRight ? player.x + player.width : player.x;
+    const tileX = Math.floor(checkX / tileSize);
+
+    for (let y = topTile; y <= bottomTile; y++) {
+      const tile = level.getTileAt(tileX * tileSize, y * tileSize);
+      if (tile && tile.solid) {
+        if (isMovingRight) {
+          player.x = tileX * tileSize - player.width;
+        } else { // Moving left
+          player.x = (tileX + 1) * tileSize;
+        }
+        player.vx = 0;
+        
+        // Wall cling logic can be refined here based on tile properties if needed
+        const unClimbableWalls = ['dirt', 'sand', 'mud', 'ice'];
+        if (!unClimbableWalls.includes(tile.type)) {
+            player.isAgainstWall = true;
+            if (!player.onGround && player.vy >= 0) {
+                player.transitionTo('cling');
+                player.vy = 30; // Slow slide
+            }
+        }
+        return; // Exit after the first collision is found and resolved
+      }
+    }
+  }
+
+  _handleVerticalCollisions(player, level) {
+    player.onGround = false; // Assume not on ground until proven otherwise
+    const tileSize = GRID_CONSTANTS.TILE_SIZE;
+    const isMovingDown = player.vy > 0;
+    
+    if (player.vy === 0) return;
+
+    // Define the horizontal range of tiles the player occupies
+    const leftTile = Math.floor(player.x / tileSize);
+    const rightTile = Math.floor((player.x + player.width - 1) / tileSize);
+
+    // Determine the vertical tile to check
+    const checkY = isMovingDown ? player.y + player.height : player.y;
+    const tileY = Math.floor(checkY / tileSize);
+
+    for (let x = leftTile; x <= rightTile; x++) {
+      const tile = level.getTileAt(x * tileSize, tileY * tileSize);
+      if (tile && tile.solid) {
+        if (isMovingDown) {
+          player.y = tileY * tileSize - player.height;
+          player.onGround = true;
+          player.jumpCount = 0;
+          player.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
+          player.groundType = tile.interaction || tile.type; // Update ground type for surface effects
+        } else { // Moving up
+          player.y = (tileY + 1) * tileSize;
+        }
+        player.vy = 0;
+        return; // Exit after the first collision is found and resolved
+      }
+    }
+  }
+
+  _checkHazardCollisions(player, level) {
+    // Check the four corners of the player's bounding box for hazard tiles
+    const checkPoints = [
+      { x: player.x, y: player.y },                                // Top-left
+      { x: player.x + player.width - 1, y: player.y },             // Top-right
+      { x: player.x, y: player.y + player.height - 1 },            // Bottom-left
+      { x: player.x + player.width - 1, y: player.y + player.height - 1 } // Bottom-right
+    ];
+
+    for (const point of checkPoints) {
+      const tile = level.getTileAt(point.x, point.y);
+      if (tile.hazard) {
+        eventBus.publish('playerDied');
+        return; // No need to check further
+      }
+    }
+  }
+
+  // AABB check helper for dynamic objects
   _isCollidingWith(player, other) {
     return (
-      player.x < other.x + other.width &&
+      player.x < other.x + (other.width || other.size) &&
       player.x + player.width > other.x &&
-      player.y < other.y + other.height &&
+      player.y < other.y + (other.height || other.size) &&
       player.y + player.height > other.y
     );
   }
-
-  _handleHorizontalCollisions(player, platforms, prevX) {
-    player.isAgainstWall = false; // Reset wall state
-    for (const platform of platforms) {
-      if (!this._isCollidingWith(player, platform)) continue;
-
-      const fromLeft = prevX + player.width <= platform.x;
-      const fromRight = prevX >= platform.x + platform.width;
-
-      if (fromLeft) player.x = platform.x - player.width;
-      else if (fromRight) player.x = platform.x + platform.width;
-      
-      player.vx = 0;
-      
-      const unClimbableWalls = ['dirt', 'sand', 'mud', 'ice'];
-      const isClimbable = !unClimbableWalls.includes(platform.terrainType);
-      
-      if (isClimbable) {
-        player.isAgainstWall = true;
-
-        // Handle wall cling/slide state
-        if (!player.onGround && player.vy >= 0) {
-          player.transitionTo('cling');
-          player.vy = 30; // Slow slide
-        }
-      }
-      return; // Stop after first collision
-    }
-  }
-
-  _handleVerticalCollisions(player, platforms, prevY) {
-    const GROUND_TOLERANCE = 1;
-    for (const platform of platforms) {
-      if (!this._isCollidingWith(player, platform)) continue;
-
-      const hitFromAbove = prevY + player.height <= platform.y + GROUND_TOLERANCE && player.vy >= 0;
-      const hitFromBelow = prevY >= platform.y + platform.height && player.vy < 0;
-
-      if (hitFromAbove) {
-        player.y = platform.y - player.height;
-        player.vy = 0;
-        return platform; // Return the platform we are standing on
-      }
-      if (hitFromBelow) {
-        player.y = platform.y + platform.height;
-        player.vy = 0; // Bonked head
-      }
-    }
-    return null; // No ground collision
-  }
   
-  // --- Other Collision Checks (Previously CollisionSystem) ---
-
-  _checkFruitCollisions(player, potentialColliders) {
-    const px = player.x, py = player.y, pw = player.width, ph = player.height;
-
-    for (const fruit of potentialColliders) {
-      if (fruit.type === 'fruit' && !fruit.collected) {
-        const fx = fruit.x - fruit.size / 2, fy = fruit.y - fruit.size / 2, fs = fruit.size;
-        if (px < fx + fs && px + pw > fx && py < fy + fs && py + ph > fy) {
-          eventBus.publish('fruitCollected', fruit);
-        }
+  _checkFruitCollisions(player, level) {
+    for (const fruit of level.getActiveFruits()) {
+      if (this._isCollidingWith(player, fruit)) {
+        eventBus.publish('fruitCollected', fruit);
       }
     }
   }
 
   _checkTrophyCollision(player, trophy) {
-    if (!trophy || trophy.acquired || trophy.inactive) {
-      return;
-    }
-    const px = player.x, py = player.y, pw = player.width, ph = player.height;
-    const tx = trophy.x - trophy.size / 2, ty = trophy.y - trophy.size / 2, ts = trophy.size;
-    if (px < tx + ts && px + pw > tx && py < ty + ts && py + ph > ty) {
+    if (!trophy || trophy.acquired || trophy.inactive) return;
+    if (this._isCollidingWith(player, trophy)) {
       eventBus.publish('trophyCollision');
     }
   }
   
-  _checkCheckpointCollisions(player, potentialColliders) {
-    const px = player.x, py = player.y, pw = player.width, ph = player.height;
-    for (const cp of potentialColliders) {
-      if (cp.type === 'checkpoint' && cp.state === 'inactive') {
-        const cpx = cp.x - cp.size / 2, cpy = cp.y - cp.size / 2, cps = cp.size;
-        if (px < cpx + cps && px + pw > cpx && py < cpy + cps && py + ph > cpy) {
-          eventBus.publish('checkpointActivated', cp);
-        }
+  checkCheckpointCollisions(player, level) {
+    for (const cp of level.getInactiveCheckpoints()) {
+      if (this._isCollidingWith(player, cp)) {
+        eventBus.publish('checkpointActivated', cp);
       }
     }
   }

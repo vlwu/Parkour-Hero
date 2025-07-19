@@ -1,23 +1,35 @@
 {
-  "name": "Level 1: It's Too Easy",
-  "width": 1320, "height": 720,
-  "startPosition": { "x": 50, "y": 300 },
-  "platforms": [
-    { "x": 0, "y": 400, "width": 192, "height": 48, "terrainType": "dirt" },
-    { "x": 300, "y": 350, "width": 144, "height": 48, "terrainType": "wood" },
-    { "x": 550, "y": 300, "width": 96, "height": 48, "terrainType": "stone" },
-    { "x": 750, "y": 250, "width": 192, "height": 48, "terrainType": "dirt" },
-    { "x": 1050, "y": 350, "width": 144, "height": 48, "terrainType": "wood" }
+  "name": "Level 1: Gridlocked",
+  "gridWidth": 28,
+  "gridHeight": 15,
+  "background": "backgroundTile",
+  "startPosition": { "x": 1.5, "y": 6.5 },
+  "layout": [
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000001111000000000",
+    "0000000000000000000000000000",
+    "0000000000022000000000000000",
+    "0000003330000000000000033300",
+    "0000000000000000000000000000",
+    "1111000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000"
   ],
-  "fruits": [
-    { "x": 100, "y": 275, "fruitType": "fruit_apple" },
-    { "x": 375, "y": 300, "fruitType": "fruit_bananas" },
-    { "x": 600, "y": 250, "fruitType": "fruit_cherries" },
-    { "x": 850, "y": 200, "fruitType": "fruit_kiwi" },
-    { "x": 1000, "y": 150, "fruitType": "fruit_melon" },
-    { "x": 225, "y": 320, "fruitType": "fruit_orange" },
-    { "x": 475, "y": 270, "fruitType": "fruit_pineapple" },
-    { "x": 675, "y": 220, "fruitType": "fruit_strawberry" }
-  ],
-  "trophy": { "x": 1125, "y": 334 }
+  "objects": [
+    { "type": "fruit_apple",      "x": 2.1,  "y": 8.5  },
+    { "type": "fruit_bananas",    "x": 7.8,  "y": 6.5  },
+    { "type": "fruit_cherries",   "x": 12.5, "y": 5.5  },
+    { "type": "fruit_kiwi",       "x": 17.7, "y": 4.5  },
+    { "type": "fruit_melon",      "x": 20.8, "y": 3.5  },
+    { "type": "fruit_orange",     "x": 4.7,  "y": 7.5  },
+    { "type": "fruit_pineapple",  "x": 9.9,  "y": 6.5  },
+    { "type": "fruit_strawberry", "x": 14.1, "y": 7.5  },
+    { "type": "trophy",           "x": 24,   "y": 6.5  }
+  ]
 }
