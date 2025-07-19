@@ -118,6 +118,10 @@ loadAssets().then((assets) => {
     // Listen for the request to start the game from the main menu
     eventBus.subscribe('requestStartGame', () => {
         engine.start();
+    });
+
+    // Listen for the engine actually starting to show the in-game UI
+    eventBus.subscribe('gameStarted', () => {
         document.querySelectorAll('.ingame-ui').forEach(el => el.classList.remove('hidden'));
     });
     

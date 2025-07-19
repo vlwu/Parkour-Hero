@@ -115,6 +115,7 @@ export class Engine {
     this.isRunning = true;
     this.gameHasStarted = true;
     this.lastFrameTime = performance.now();
+    eventBus.publish('gameStarted');
     eventBus.publish('gameResumed');
     this.gameLoop();
   }
@@ -197,6 +198,8 @@ export class Engine {
     
     if (this.gameHasStarted) {
         this.resume();
+    } else {
+        this.start();
     }
     eventBus.publish('levelLoaded', { gameState: this.gameState });
   }
