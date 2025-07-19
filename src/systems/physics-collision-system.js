@@ -11,7 +11,7 @@ export class PhysicsSystem {
   }
 
   update(player, level, dt, inputActions) {
-    // --- 1. APPLY FORCES & VELOCITY (Largely Unchanged) ---
+    // --- 1. APPLY FORCES & VELOCITY ---
     player._updateTimers(dt);
 
     if (player.isDashing) {
@@ -42,13 +42,44 @@ export class PhysicsSystem {
 
     // Horizontal movement physics
     if (!player.isDashing && !player.isSpawning && !player.isDespawning) {
-      const moveSpeed = (player.groundType === 'sand')
-        ? PLAYER_CONSTANTS.MOVE_SPEED * PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER
-        : PLAYER_CONSTANTS.MOVE_SPEED;
-      
-      if (inputActions.moveLeft) player.vx = -moveSpeed;
-      else if (inputActions.moveRight) player.vx = moveSpeed;
-      else player.vx = 0;
+      const moveSpeed = PLAYER_CONSTANTS.MOVE_SPEED;
+
+      if (player.onGround && player.groundType === 'ice') {
+        // Slippery physics for ice
+        const acceleration = PLAYER_CONSTANTS.ICE_ACCELERATION;
+        const friction = PLAYER_CONSTANTS.ICE_FRICTION;
+
+        if (inputActions.moveLeft) {
+          player.vx -= acceleration * dt;
+        } else if (inputActions.moveRight) {
+          player.vx += acceleration * dt;
+        } else {
+          // Apply friction if no input is given
+          if (player.vx > 0) {
+            player.vx -= friction * dt;
+            if (player.vx < 0) player.vx = 0;
+          } else if (player.vx < 0) {
+            player.vx += friction * dt;
+            if (player.vx > 0) player.vx = 0;
+          }
+        }
+        // Clamp velocity to the maximum speed
+        player.vx = Math.max(-moveSpeed, Math.min(moveSpeed, player.vx));
+
+      } else {
+        // Standard, non-slippery physics for all other surfaces
+        const currentMoveSpeed = (player.groundType === 'sand')
+          ? moveSpeed * PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER
+          : moveSpeed;
+        
+        if (inputActions.moveLeft) {
+          player.vx = -currentMoveSpeed;
+        } else if (inputActions.moveRight) {
+          player.vx = currentMoveSpeed;
+        } else {
+          player.vx = 0; // Instant stop for snappy controls
+        }
+      }
     }
 
     // Vertical movement (gravity)
@@ -58,10 +89,7 @@ export class PhysicsSystem {
     player.vy = Math.min(player.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
 
 
-    // --- 2. COLLISION DETECTION & RESPONSE (Completely Reworked) ---
-    // The SpatialHashGrid query is no longer needed for static platforms.
-    // We resolve movement on each axis independently.
-
+    // --- 2. COLLISION DETECTION & RESPONSE ---
     // Apply horizontal movement and check for collisions
     player.x += player.vx * dt;
     this._handleHorizontalCollisions(player, level);
@@ -77,8 +105,6 @@ export class PhysicsSystem {
     }
     player.x = Math.max(0, Math.min(player.x, level.width - player.width));
 
-    // Check for non-platform collisions using simple iteration.
-    // This is efficient enough as these are dynamic, non-grid objects.
     this._checkHazardCollisions(player, level);
     this._checkFruitCollisions(player, level);
     this._checkTrophyCollision(player, level.trophy);
@@ -110,7 +136,6 @@ export class PhysicsSystem {
         }
         player.vx = 0;
         
-        // Wall cling logic can be refined here based on tile properties if needed
         const unClimbableWalls = ['dirt', 'sand', 'mud', 'ice'];
         if (!unClimbableWalls.includes(tile.type)) {
             player.isAgainstWall = true;
@@ -119,23 +144,21 @@ export class PhysicsSystem {
                 player.vy = 30; // Slow slide
             }
         }
-        return; // Exit after the first collision is found and resolved
+        return; 
       }
     }
   }
 
   _handleVerticalCollisions(player, level) {
-    player.onGround = false; // Assume not on ground until proven otherwise
+    player.onGround = false; 
     const tileSize = GRID_CONSTANTS.TILE_SIZE;
     const isMovingDown = player.vy > 0;
     
     if (player.vy === 0) return;
 
-    // Define the horizontal range of tiles the player occupies
     const leftTile = Math.floor(player.x / tileSize);
     const rightTile = Math.floor((player.x + player.width - 1) / tileSize);
 
-    // Determine the vertical tile to check
     const checkY = isMovingDown ? player.y + player.height : player.y;
     const tileY = Math.floor(checkY / tileSize);
 
@@ -144,38 +167,39 @@ export class PhysicsSystem {
       if (tile && tile.solid) {
         if (isMovingDown) {
           player.y = tileY * tileSize - player.height;
-          player.onGround = true;
-          player.jumpCount = 0;
-          player.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
-          player.groundType = tile.interaction || tile.type; // Update ground type for surface effects
+          // Only reset ground-related properties if landing for the first time
+          if (!player.onGround) {
+            player.onGround = true;
+            player.jumpCount = 0;
+            player.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
+            player.groundType = tile.interaction || tile.type; 
+          }
         } else { // Moving up
           player.y = (tileY + 1) * tileSize;
         }
         player.vy = 0;
-        return; // Exit after the first collision is found and resolved
+        return;
       }
     }
   }
 
   _checkHazardCollisions(player, level) {
-    // Check the four corners of the player's bounding box for hazard tiles
     const checkPoints = [
-      { x: player.x, y: player.y },                                // Top-left
-      { x: player.x + player.width - 1, y: player.y },             // Top-right
-      { x: player.x, y: player.y + player.height - 1 },            // Bottom-left
-      { x: player.x + player.width - 1, y: player.y + player.height - 1 } // Bottom-right
+      { x: player.x, y: player.y },                                
+      { x: player.x + player.width - 1, y: player.y },             
+      { x: player.x, y: player.y + player.height - 1 },            
+      { x: player.x + player.width - 1, y: player.y + player.height - 1 } 
     ];
 
     for (const point of checkPoints) {
       const tile = level.getTileAt(point.x, point.y);
       if (tile.hazard) {
         eventBus.publish('playerDied');
-        return; // No need to check further
+        return;
       }
     }
   }
 
-  // AABB check helper for dynamic objects
   _isCollidingWith(player, other) {
     return (
       player.x < other.x + (other.width || other.size) &&
