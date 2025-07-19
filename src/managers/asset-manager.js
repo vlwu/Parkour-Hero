@@ -168,6 +168,7 @@ export async function loadAssets() {
   };
 
   const soundPaths = {
+    button_click: 'assets/Sounds/Button Click.mp3',
     jump: 'assets/Sounds/Player Jump.mp3',
     double_jump: 'assets/Sounds/Player Double Jump.mp3',
     collect: 'assets/Sounds/Fruit Collect.mp3',
