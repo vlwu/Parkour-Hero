@@ -177,6 +177,9 @@ export class Engine {
     this.lastCheckpoint = null;
     this.fruitsAtLastCheckpoint.clear();
     
+    // Stop any looping sounds from the previous player instance before creating a new one.
+    this.soundManager.stopAllLoops();
+
     this.player = new Player(
       this.currentLevel.startPosition.x,
       this.currentLevel.startPosition.y,

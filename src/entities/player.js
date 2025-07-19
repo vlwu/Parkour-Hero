@@ -89,6 +89,13 @@ class ClingState extends State {
 
 class SpawnState extends State {
   constructor() { super('spawn'); }
+  enter(player) {
+    // Stop any looping surface sounds from the previous life.
+    if (player.activeSurfaceSound) {
+      eventBus.publish('stopSoundLoop', { key: player.activeSurfaceSound });
+      player.activeSurfaceSound = null;
+    }
+  }
   update(player) {
     if (player.spawnComplete) {
       player.transitionTo('idle');
@@ -101,6 +108,11 @@ class DespawnState extends State {
   enter(player) {
     player.vx = 0;
     player.vy = 0;
+    // Stop any looping surface sounds as the player leaves the level.
+    if (player.activeSurfaceSound) {
+      eventBus.publish('stopSoundLoop', { key: player.activeSurfaceSound });
+      player.activeSurfaceSound = null;
+    }
   }
 }
 
