@@ -1,27 +1,74 @@
 {
   "name": "Level 9: Wayfinder",
-  "width": 1320,
-  "height": 720,
-  "startPosition": { "x": 50, "y": 200 },
-  "platforms": [
-    { "x": 0, "y": 300, "width": 96, "height": 48, "terrainType": "green_block" },
-    { "x": 150, "y": 200, "width": 48, "height": 48, "terrainType": "dirt" },
-    { "x": 250, "y": 350, "width": 48, "height": 48, "terrainType": "wood" },
-    { "x": 400, "y": 150, "width": 96, "height": 48, "terrainType": "mud" },
-    { "x": 600, "y": 250, "width": 48, "height": 48, "terrainType": "ice" },
-    { "x": 750, "y": 180, "width": 96, "height": 48, "terrainType": "orange_dirt" },
-    { "x": 950, "y": 300, "width": 48, "height": 48, "terrainType": "pink_dirt" },
-    { "x": 1100, "y": 220, "width": 144, "height": 48, "terrainType": "stone" }
+  "gridWidth": 28,
+  "gridHeight": 15,
+  "background": "backgroundTile",
+  "startPosition": {
+    "x": 1.04,
+    "y": 4.17
+  },
+  "layout": [
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000088000005500000000000",
+    "0001000000000000000000222000",
+    "0000000000009000000000000000",
+    "4400000000000000000600000000",
+    "0000030000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000"
   ],
-  "fruits": [
-    { "x": 180, "y": 150, "fruitType": "fruit_apple" },
-    { "x": 280, "y": 300, "fruitType": "fruit_bananas" },
-    { "x": 440, "y": 100, "fruitType": "fruit_cherries" },
-    { "x": 630, "y": 200, "fruitType": "fruit_kiwi" },
-    { "x": 790, "y": 130, "fruitType": "fruit_melon" },
-    { "x": 980, "y": 250, "fruitType": "fruit_orange" },
-    { "x": 1150, "y": 350, "fruitType": "fruit_pineapple" },
-    { "x": 500, "y": 300, "fruitType": "fruit_strawberry" }
-  ],
-  "trophy": { "x": 1170, "y": 204 }
+  "objects": [
+    {
+      "type": "fruit_apple",
+      "x": 3.75,
+      "y": 3.13
+    },
+    {
+      "type": "fruit_bananas",
+      "x": 5.83,
+      "y": 5.85
+    },
+    {
+      "type": "fruit_cherries",
+      "x": 9.17,
+      "y": 2.08
+    },
+    {
+      "type": "fruit_kiwi",
+      "x": 13.13,
+      "y": 4.17
+    },
+    {
+      "type": "fruit_melon",
+      "x": 16,
+      "y": 1.69
+    },
+    {
+      "type": "fruit_orange",
+      "x": 20.42,
+      "y": 5.21
+    },
+    {
+      "type": "fruit_pineapple",
+      "x": 21.8,
+      "y": 1.75
+    },
+    {
+      "type": "fruit_strawberry",
+      "x": 10.19,
+      "y": 5.44
+    },
+    {
+      "type": "trophy",
+      "x": 24.38,
+      "y": 3.67
+    }
+  ]
 }
