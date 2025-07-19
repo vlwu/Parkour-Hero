@@ -294,4 +294,45 @@ export class Renderer {
       else { this.ctx.fillStyle = 'purple'; this.ctx.fillRect(cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size); }
     }
   }
+
+  drawUI(ctx, buttons, hoveredButton, isRunning) {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Ensure we are in screen space
+
+    for (const button of buttons) {
+        if (!button.visible) continue;
+
+        let assetKey;
+        // Special case for the pause button's icon state
+        if (button.id === 'pause') {
+            assetKey = isRunning ? 'pause_icon' : 'play_icon';
+        } else {
+            assetKey = button.assetKey;
+        }
+
+        const sprite = this.assets[assetKey];
+        if (!sprite) continue;
+
+        let x = button.x;
+        let y = button.y;
+        let width = button.width;
+        let height = button.height;
+
+        const isHovered = hoveredButton && hoveredButton.id === button.id;
+        
+        // Apply hover effect
+        if (isHovered) {
+            const scale = 1.1;
+            width *= scale;
+            height *= scale;
+            x -= (width - button.width) / 2;
+            y -= (height - button.height) / 2;
+        }
+        
+        ctx.globalAlpha = isHovered ? 1.0 : 0.8;
+
+        ctx.drawImage(sprite, x, y, width, height);
+    }
+    ctx.restore();
+  }
 }

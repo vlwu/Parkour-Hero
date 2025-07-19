@@ -39,6 +39,23 @@ export class Engine {
 
     this.particles = [];
     this.menuManager = null; // Will be set by main.js
+
+    // --- BUTTON SIZE & POSITIONING ADJUSTMENT ---
+    const buttonSize = 32; // NEW: Define the size here
+    const rightPadding = 20;
+    const topPadding = 20;
+    const buttonGap = 10; // Space between each button
+    const buttonX = this.canvas.width - buttonSize - rightPadding;
+
+    this.uiButtons = [
+        { id: 'settings', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 0, width: buttonSize, height: buttonSize, assetKey: 'settings_icon', visible: false },
+        { id: 'pause', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 1, width: buttonSize, height: buttonSize, assetKey: 'pause_icon', visible: false },
+        { id: 'levels', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 2, width: buttonSize, height: buttonSize, assetKey: 'levels_icon', visible: false },
+        { id: 'character', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 3, width: buttonSize, height: buttonSize, assetKey: 'character_icon', visible: false },
+        { id: 'info', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 4, width: buttonSize, height: buttonSize, assetKey: 'info_icon', visible: false },
+    ];
+    this.hoveredButton = null;
+
     this._setupEventSubscriptions();
   }
   
@@ -58,6 +75,9 @@ export class Engine {
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
     eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
     eventBus.subscribe('allMenusClosed', () => this.pauseForMenu = false);
+    eventBus.subscribe('gameStarted', () => {
+        this.uiButtons.forEach(b => b.visible = true);
+    });
 
     // Subscriptions to handle decoupled input actions
     eventBus.subscribe('action_confirm_pressed', () => this._handleActionConfirm());
@@ -396,6 +416,30 @@ export class Engine {
     }
   }
 
+  handleMouseMove(x, y) {
+    this.hoveredButton = null;
+    for (const button of this.uiButtons) {
+        if (button.visible && x >= button.x && x <= button.x + button.width && y >= button.y && y <= button.y + button.height) {
+            this.hoveredButton = button;
+            break;
+        }
+    }
+  }
+
+  handleCanvasClick(x, y) {
+      let clickedButton = null;
+      for (const button of this.uiButtons) {
+          if (button.visible && x >= button.x && x <= button.x + button.width && y >= button.y && y <= button.y + button.height) {
+              clickedButton = button;
+              break;
+          }
+      }
+      if (clickedButton) {
+          eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+          eventBus.publish('ui_button_clicked', { buttonId: clickedButton.id });
+      }
+  }
+
   render() {
     try {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -409,6 +453,8 @@ export class Engine {
       );
 
       this.hud.drawGameHUD(this.ctx);
+
+      this.renderer.drawUI(this.ctx, this.uiButtons, this.hoveredButton, this.isRunning);
 
     } catch (error) {
       console.error('Error in render loop:', error);

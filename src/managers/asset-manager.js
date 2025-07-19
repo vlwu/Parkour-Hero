@@ -127,6 +127,12 @@ export async function loadAssets() {
   const imagePaths = {
     // UI assets
     font_spritesheet: 'assets/Menu/Text/Text (White) (8x10).png',
+    settings_icon: 'assets/Menu/Buttons/Settings.png',
+    pause_icon: 'assets/Menu/Buttons/Pause.png',
+    play_icon: 'assets/Menu/Buttons/Play.png',
+    levels_icon: 'assets/Menu/Buttons/Levels.png',
+    character_icon: 'assets/Menu/Buttons/Character.png',
+    info_icon: 'assets/Menu/Buttons/Info.png',
     // Canvas assets
     background_blue: 'assets/Background/Blue.png',
     background_brown: 'assets/Background/Brown.png',

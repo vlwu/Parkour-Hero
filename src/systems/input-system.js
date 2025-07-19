@@ -16,6 +16,7 @@ export class InputManager {
 
     // Mouse/Touch events
     this.canvas.addEventListener('click', this.handleCanvasClick.bind(this));
+    this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
     this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
@@ -70,7 +71,25 @@ export class InputManager {
     }
   }
 
+  _getMousePos(e) {
+      const rect = this.canvas.getBoundingClientRect();
+      const scaleX = this.canvas.width / rect.width;
+      const scaleY = this.canvas.height / rect.height;
+      return {
+          x: (e.clientX - rect.left) * scaleX,
+          y: (e.clientY - rect.top) * scaleY,
+      };
+  }
+
+  handleMouseMove(e) {
+      if (!this.engine) return;
+      const { x, y } = this._getMousePos(e);
+      this.engine.handleMouseMove(x, y);
+  }
+
   handleCanvasClick(e) {
-    // This method is required to prevent a startup error, but currently has no specific functionality.
+      if (!this.engine) return;
+      const { x, y } = this._getMousePos(e);
+      this.engine.handleCanvasClick(x, y);
   }
 }

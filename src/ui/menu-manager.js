@@ -32,12 +32,6 @@ export class MenuManager {
 
     this.allModals = [this.settingsModal, this.levelsMenuModal, this.characterModal, this.pauseModal, this.levelCompleteModal, this.infoModal];
 
-    this.settingsButton = document.getElementById('settingsButton');
-    this.pauseButton = document.getElementById('pauseButton');
-    this.levelsMenuButton = document.getElementById('levelsMenuButton');
-    this.characterButton = document.getElementById('characterButton');
-    this.infoButton = document.getElementById('infoButton');
-
     // Pause Modal Elements
     this.pauseResumeButton = document.getElementById('pause-resume-button');
     this.pauseRestartButton = document.getElementById('pause-restart-button');
@@ -109,12 +103,10 @@ export class MenuManager {
       });
       eventBus.subscribe('gamePaused', () => {
           this.isGameRunning = false;
-          this.updatePauseButtonIcon();
       });
       eventBus.subscribe('gameResumed', () => {
           this.isGameRunning = true;
           this.isPausedForMenu = false;
-          this.updatePauseButtonIcon();
       });
       eventBus.subscribe('levelComplete', ({ deaths, time }) => {
           this.showLevelCompleteScreen(deaths, time);
@@ -147,44 +139,10 @@ export class MenuManager {
                   break;
           }
       });
+      eventBus.subscribe('ui_button_clicked', ({ buttonId }) => this.handleUIButtonClick(buttonId));
   }
 
   _setupEventListeners() {
-    // Top-level UI buttons now delegate to sub-modules
-    this.settingsButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
-      this.toggleModal(this.settingsModal, () => this.settingsMenu.show());
-    });
-    this.levelsMenuButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
-      this.toggleModal(this.levelsMenuModal, () => this.levelMenu.show());
-    });
-    this.characterButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
-      this.toggleModal(this.characterModal, () => this.characterMenu.show(), () => this.characterMenu.hide());
-    });
-    this.infoButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
-      this.toggleModal(this.infoModal, () => this.updateHowToPlayKeyDisplays());
-    });
-
-    // Special handler for the Pause/Resume button
-    this.pauseButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
-      if (this.pauseButton.classList.contains('is-paused')) {
-        const openModal = this.allModals.find(m => !m.classList.contains('hidden'));
-        if (openModal) {
-          this.toggleModal(openModal, null, openModal === this.characterModal ? () => this.characterMenu.hide() : null);
-        } else {
-          if (!this.gameState.showingLevelComplete) {
-            eventBus.publish('requestResume');
-          }
-        }
-      } else {
-        this.toggleModal(this.pauseModal);
-      }
-    });
-
     // Modal close buttons (the 'X' in the corner)
     this.allModals.forEach(modal => {
         const closeButton = modal.querySelector('.close-button');
@@ -225,6 +183,38 @@ export class MenuManager {
       eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
       this.handleLevelCompleteAction('next');
     });
+  }
+
+  handleUIButtonClick(buttonId) {
+    switch (buttonId) {
+        case 'settings':
+            this.toggleModal(this.settingsModal, () => this.settingsMenu.show());
+            break;
+        case 'levels':
+            this.toggleModal(this.levelsMenuModal, () => this.levelMenu.show());
+            break;
+        case 'character':
+            this.toggleModal(this.characterModal, () => this.characterMenu.show(), () => this.characterMenu.hide());
+            break;
+        case 'info':
+            this.toggleModal(this.infoModal, () => this.updateHowToPlayKeyDisplays());
+            break;
+        case 'pause':
+            if (this.isGameRunning) {
+                // Game is running, so pause it and show the pause modal.
+                this.toggleModal(this.pauseModal);
+            } else {
+                // Game is paused. Clicking the "play" icon should close any open modal first.
+                const openModal = this.allModals.find(m => !m.classList.contains('hidden'));
+                if (openModal) {
+                    this.toggleModal(openModal, null, openModal === this.characterModal ? () => this.characterMenu.hide() : null);
+                } else if (!this.gameState.showingLevelComplete) {
+                    // If no modals are open and level is not complete, resume the game.
+                    eventBus.publish('requestResume');
+                }
+            }
+            break;
+    }
   }
 
   isModalOpen() {
@@ -300,16 +290,6 @@ export class MenuManager {
       if (this.levelManager) { 
         this.levelManager.handleLevelCompleteAction(action);
       }
-  }
-
-  updatePauseButtonIcon() {
-    if (this.isGameRunning) {
-        this.pauseButton.classList.remove('is-paused');
-        this.pauseButton.setAttribute('aria-label', 'Pause');
-    } else {
-        this.pauseButton.classList.add('is-paused');
-        this.pauseButton.setAttribute('aria-label', 'Resume');
-    }
   }
   
   updatePauseModalStats({ collectedFruits, totalFruits, deathCount, levelTime }) {
