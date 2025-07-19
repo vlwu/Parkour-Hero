@@ -96,36 +96,92 @@ export const levelSections = [
     name: "Jungle Journey",
     levels: [
       {
-        name: "Wall Jump Test Chamber",
-        width: 1280, height: 720,
-        startPosition: { x: 100, y: 600 },
-        platforms: [
-          // Floor
-          { x: 0, y: 680, width: 1280, height: 48, terrainType: 'dirt' },
-          
-          // First wall jump section
-          { x: 350, y: 400, width: 48, height: 288, terrainType: 'stone' },
-          { x: 550, y: 200, width: 48, height: 288, terrainType: 'stone' },
-          
-          // Landing platform
-          { x: 350, y: 150, width: 240, height: 48, terrainType: 'wood' },
-
-          // A non-climbable wall for testing
-          { x: 800, y: 400, width: 48, height: 288, terrainType: 'dirt' },
-          
-          // Trophy platform
-          { x: 1000, y: 632, width: 128, height: 48, terrainType: 'stone' },
-        ],
-        fruits: [
-          { x: 474, y: 100, fruitType: 'fruit_cherries' }
-        ],
-        checkpoints: [
-          { x: 1190, y: 640 }
-        ],
-        trophy: { x: 1064, y: 616 }
-      }
+        name: "Level 1",
+        jsonPath: "levels/jungle-journey/01.json"
+      },
+      {
+        name: "Level 2",
+        jsonPath: "levels/jungle-journey/02.json"
+      },
+      {
+        name: "Level 3",
+        jsonPath: "levels/jungle-journey/03.json"
+      },
+      {
+        name: "Level 4",
+        jsonPath: "levels/jungle-journey/04.json"
+      },
+      {
+        name: "Level 5",
+        jsonPath: "levels/jungle-journey/05.json"
+      },
+      {
+        name: "Level 6",
+        jsonPath: "levels/jungle-journey/06.json"
+      },
+      {
+        name: "Level 7",
+        jsonPath: "levels/jungle-journey/07.json"
+      },
+      {
+        name: "Level 8",
+        jsonPath: "levels/jungle-journey/01.json"
+      },
+      {
+        name: "Level 9",
+        jsonPath: "levels/jungle-journey/09.json"
+      },
+      {
+        name: "Level 10",
+        jsonPath: "levels/jungle-journey/10.json"
+      },
     ]
   },
+  {
+    name: "Virtual Reality",
+    levels: [
+      {
+        name: "Level 1",
+        jsonPath: "levels/virtual-reality/01.json"
+      },
+      {
+        name: "Level 2",
+        jsonPath: "levels/virtual-reality/02.json"
+      },
+      {
+        name: "Level 3",
+        jsonPath: "levels/virtual-reality/03.json"
+      },
+      {
+        name: "Level 4",
+        jsonPath: "levels/virtual-reality/04.json"
+      },
+      {
+        name: "Level 5",
+        jsonPath: "levels/virtual-reality/05.json"
+      },
+      {
+        name: "Level 6",
+        jsonPath: "levels/virtual-reality/06.json"
+      },
+      {
+        name: "Level 7",
+        jsonPath: "levels/virtual-reality/07.json"
+      },
+      {
+        name: "Level 8",
+        jsonPath: "levels/virtual-reality/01.json"
+      },
+      {
+        name: "Level 9",
+        jsonPath: "levels/virtual-reality/09.json"
+      },
+      {
+        name: "Level 10",
+        jsonPath: "levels/virtual-reality/10.json"
+      },
+    ]
+  }
 ];
 
 export const characterConfig = { // Unlock a character every 10 levels
