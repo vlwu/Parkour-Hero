@@ -21,26 +21,44 @@ export class CharacterMenu {
         });
     }
 
+    _renderToElement(element, text, options) {
+        if (!element || !this.fontRenderer) return;
+        element.innerHTML = '';
+        const canvas = this.fontRenderer.renderTextToCanvas(text, options);
+        if (canvas) {
+            canvas.style.imageRendering = 'pixelated';
+            element.appendChild(canvas);
+        }
+    }
+
     renderBitmapHeader() {
         if (!this.fontRenderer || this.headerRendered) return;
         
+        // Render main title H2
         const title = document.querySelector('#characterModal .modal-content h2');
         if (title && title.textContent) {
-            const text = title.textContent;
-            title.innerHTML = '';
-            const canvas = this.fontRenderer.renderTextToCanvas(text, {
+            this._renderToElement(title, title.textContent, {
                 scale: 3,
                 color: 'white',
                 outlineColor: 'black',
                 outlineWidth: 1
             });
-            if (canvas) {
-                canvas.style.imageRendering = 'pixelated';
-                title.appendChild(canvas);
-                this.headerRendered = true;
-            }
         }
+
+        // Render subtitle H3
+        const subtitle = document.querySelector('#characterModal .settings-section h3');
+        if (subtitle && subtitle.textContent) {
+            this._renderToElement(subtitle, subtitle.textContent, {
+                scale: 2,
+                color: 'white',
+                outlineColor: 'black',
+                outlineWidth: 1
+            });
+        }
+        
+        this.headerRendered = true;
     }
+
 
     show() {
         this.renderBitmapHeader();

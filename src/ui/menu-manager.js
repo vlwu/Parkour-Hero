@@ -64,6 +64,10 @@ export class MenuManager {
     this._renderToElement(document.getElementById('pause-title'), 'Game Paused', { scale: 3, color: 'white', outlineColor: 'black', outlineWidth: 1 });
     this._renderToElement(document.getElementById('pause-subtitle'), 'Press ESC to resume', { scale: 1.5, color: '#ccc' });
     
+    // Levels Menu Modal
+    this._renderToElement(document.querySelector('#levelsMenuModal h2'), 'Levels Menu', { scale: 3, color: 'white', outlineColor: 'black', outlineWidth: 1 });
+    this._renderToElement(document.querySelector('#levelsMenuModal h3'), 'Level Select', { scale: 2, color: 'white', outlineColor: 'black', outlineWidth: 1 });
+
     // Info Modal
     this._renderToElement(document.getElementById('info-title'), 'Info Section', { scale: 3, color: 'white', outlineColor: 'black', outlineWidth: 1 });
     this._renderToElement(document.getElementById('info-subtitle'), 'How to Play', { scale: 2, color: 'white', outlineColor: 'black', outlineWidth: 1 });
