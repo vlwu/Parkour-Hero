@@ -28,6 +28,10 @@
                     <input type="text" id="backgroundInput" value="backgroundTile">
                 </div>
                 <div class="tool-group">
+                    <button id="undoBtn" title="Undo (Ctrl+Z)" disabled>Undo</button>
+                    <button id="redoBtn" title="Redo (Ctrl+Y)" disabled>Redo</button>
+                </div>
+                <div class="tool-group">
                     <button id="newBtn">New 28x15</button>
                     <button id="resizeBtn">Resize</button>
                     <input type="file" id="loadFile" accept=".json" style="display: none;">
@@ -50,9 +54,9 @@
              <div id="instructions">
                 <h3>Instructions</h3>
                 <p><strong>Left-Click:</strong> Paint tiles or place objects.</p>
+                <p><strong>Drag Object:</strong> Left-click and drag to reposition.</p>
                 <p><strong>Right-Click:</strong> Erase tiles or objects.</p>
-                <p><strong>Load File:</strong> Loads both old format (for conversion) and new grid-based format levels.</p>
-                <p><strong>Export:</strong> Downloads the current layout as a game-ready JSON file.</p>
+                <p><strong>Undo/Redo:</strong> Use buttons or Ctrl+Z / Ctrl+Y.</p>
             </div>
         </div>
     </div>

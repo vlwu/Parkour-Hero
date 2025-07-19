@@ -1,23 +1,74 @@
 {
   "name": "Level 2: Big Drop",
-  "width": 1320, "height": 720,
-  "startPosition": { "x": 50, "y": 300 },
-  "platforms": [
-    { "x": 0, "y": 400, "width": 192, "height": 48, "terrainType": "dirt" },
-    { "x": 300, "y": 320, "width": 96, "height": 48, "terrainType": "stone" },
-    { "x": 450, "y": 240, "width": 144, "height": 48, "terrainType": "wood" },
-    { "x": 700, "y": 160, "width": 144, "height": 48, "terrainType": "dirt" },
-    { "x": 1000, "y": 600, "width": 144, "height": 48, "terrainType": "stone" }
+  "gridWidth": 28,
+  "gridHeight": 15,
+  "background": "backgroundTile",
+  "startPosition": {
+    "x": 1.5,
+    "y": 6
+  },
+  "layout": [
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000011100000000000",
+    "0000000000000000000000000000",
+    "0000000003330000000000000000",
+    "0000002200000000000000000000",
+    "0000000000000000000000000000",
+    "1111000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000",
+    "0000000000000000000022200000",
+    "0000000000000000000000000000",
+    "0000000000000000000000000000"
   ],
-  "fruits": [
-    { "x": 75, "y": 250, "fruitType": "fruit_apple" },
-    { "x": 340, "y": 270, "fruitType": "fruit_bananas" },
-    { "x": 525, "y": 190, "fruitType": "fruit_cherries" },
-    { "x": 800, "y": 110, "fruitType": "fruit_kiwi" },
-    { "x": 1000, "y": 100, "fruitType": "fruit_melon" },
-    { "x": 250, "y": 300, "fruitType": "fruit_orange" },
-    { "x": 650, "y": 110, "fruitType": "fruit_pineapple" },
-    { "x": 900, "y": 80, "fruitType": "fruit_strawberry" }
-  ],
-  "trophy": { "x": 1120, "y": 584 }
+  "objects": [
+    {
+      "type": "fruit_apple",
+      "x": 1.5625,
+      "y": 5.208333333333333
+    },
+    {
+      "type": "fruit_bananas",
+      "x": 7.0625,
+      "y": 5
+    },
+    {
+      "type": "fruit_cherries",
+      "x": 10.9375,
+      "y": 3.9583333333333335
+    },
+    {
+      "type": "fruit_kiwi",
+      "x": 16.666666666666668,
+      "y": 2.2916666666666665
+    },
+    {
+      "type": "fruit_melon",
+      "x": 20.833333333333332,
+      "y": 2.0833333333333335
+    },
+    {
+      "type": "fruit_orange",
+      "x": 5.208333333333333,
+      "y": 6.25
+    },
+    {
+      "type": "fruit_pineapple",
+      "x": 13.541666666666666,
+      "y": 2.2916666666666665
+    },
+    {
+      "type": "fruit_strawberry",
+      "x": 18.75,
+      "y": 1.6666666666666667
+    },
+    {
+      "type": "trophy",
+      "x": 21.5,
+      "y": 11.7
+    }
+  ]
 }

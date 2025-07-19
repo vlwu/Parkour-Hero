@@ -59,6 +59,8 @@ body {
     align-items: center;
     border-bottom: 2px solid var(--bg-main);
     flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .tool-group {
@@ -77,14 +79,20 @@ body {
     transition: background-color 0.2s;
 }
 
-#toolbar button:hover {
+#toolbar button:hover:not(:disabled) {
     background-color: #5c7a99;
+}
+
+#toolbar button:disabled {
+    background-color: #3e4d5c;
+    color: #7f8c8d;
+    cursor: not-allowed;
 }
 
 #toolbar button.primary-action {
     background-color: var(--accent-color);
 }
-#toolbar button.primary-action:hover {
+#toolbar button.primary-action:hover:not(:disabled) {
     background-color: #4aa3e0;
 }
 
@@ -169,7 +177,12 @@ body {
     background-position: center;
     box-sizing: border-box;
     border: 2px dashed transparent;
-    border-radius: 4px; /* A subtle radius works for all shapes */
+    border-radius: 4px;
+}
+.dynamic-object.dragging {
+    cursor: grabbing;
+    z-index: 1000;
+    opacity: 0.7 !important;
 }
 
 .dynamic-object:hover {
