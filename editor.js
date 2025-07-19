@@ -39,6 +39,18 @@ const OBJECT_DESCRIPTIONS = {
     'checkpoint': 'Saves the player\'s progress. The player will respawn here upon death. Snaps to the ground.'
 };
 
+const PALETTE_ABBREVIATIONS = {
+    'player_spawn': 'SPN',
+    'fruit_apple': 'APL', 'fruit_bananas': 'BAN', 'fruit_cherries': 'CHR',
+    'fruit_kiwi': 'KWI', 'fruit_melon': 'MEL', 'fruit_orange': 'ORG',
+    'fruit_pineapple': 'PNP', 'fruit_strawberry': 'STR',
+    'trophy': 'GOL', 'checkpoint': 'CHK',
+    'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
+    'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
+    'sand': 'SND', 'mud': 'MUD', 'ice': 'ICE', 'spike_up': 'SPK',
+    'trampoline': 'TRP', 'fire': 'FIR'
+};
+
 // --- INITIALIZATION ---
 
 function init() {
@@ -167,42 +179,54 @@ function getPaletteColor(type) {
         case 'spike_up': return '#e74c3c'; case 'trampoline': return '#8e44ad';
         case 'fire': return '#f39c12';
         // Unique fruit colors
-        case 'fruit_apple': return '#ff4f3bff';
+        case 'fruit_apple': return '#e74c3c';
         case 'fruit_bananas': return '#f1c40f';
-        case 'fruit_cherries': return '#720b00ff';
+        case 'fruit_cherries': return '#c0392b';
         case 'fruit_kiwi': return '#27ae60';
         case 'fruit_melon': return '#1abc9c';
         case 'fruit_orange': return '#e67e22';
         case 'fruit_pineapple': return '#f39c12';
         case 'fruit_strawberry': return '#d35400';
         // Other objects
-        case 'player_spawn': return '#ffffffff';
-        case 'trophy': return '#ffdc13ff'; case 'checkpoint': return '#313131ff';
+        case 'player_spawn': return '#2980b9';
+        case 'trophy': return '#F39C12'; case 'checkpoint': return '#17a2b8';
         case 'empty': return 'rgba(0,0,0,0.3)'; default: return '#34495e';
     }
 }
 
 function populatePalettes() {
+    // Tiles
     for (const [id, def] of Object.entries(TILE_DEFINITIONS)) {
-        const item = createPaletteItem('tile', id, def.type, def.description);
+        const abbreviation = PALETTE_ABBREVIATIONS[def.type] || '???';
+        const item = createPaletteItem('tile', id, def.type, def.description, abbreviation);
         item.style.backgroundColor = getPaletteColor(def.type);
-        if (def.type === 'empty') { item.textContent = 'ERASE'; item.style.color = '#fff'; }
         tilePaletteContainer.appendChild(item);
     }
+    
+    // Objects
     const objectTypes = [ 'player_spawn', 'fruit_apple', 'fruit_bananas', 'fruit_cherries', 'fruit_kiwi', 'fruit_melon', 'fruit_orange', 'fruit_pineapple', 'fruit_strawberry', 'checkpoint', 'trophy' ];
     objectTypes.forEach(type => {
-        const item = createPaletteItem('object', type, type.replace(/_/g, ' '), OBJECT_DESCRIPTIONS[type]);
+        const abbreviation = PALETTE_ABBREVIATIONS[type] || '???';
+        const item = createPaletteItem('object', type, type.replace(/_/g, ' '), OBJECT_DESCRIPTIONS[type], abbreviation);
         item.style.backgroundColor = getPaletteColor(type);
         objectPaletteContainer.appendChild(item);
     });
 }
 
-function createPaletteItem(type, id, title, description) {
+
+function createPaletteItem(type, id, title, description, abbreviation) {
     const item = document.createElement('div');
     item.className = 'palette-item';
     item.dataset.type = type;
     item.dataset.id = id;
     item.title = title;
+    
+    // Set the abbreviation text and style for readability
+    item.textContent = abbreviation;
+    item.style.color = '#fff';
+    item.style.textShadow = '1px 1px 2px rgba(0,0,0,0.7)';
+    item.style.fontSize = '12px';
+    
     item.addEventListener('click', () => {
         selectedPaletteItem = { type, id };
         updatePaletteSelection();
@@ -555,7 +579,7 @@ function loadGridLevel(data) {
 function loadAndConvertOldLevel(data) {
     const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
     resetEditor(Math.ceil(data.width / TILE_SIZE), Math.ceil(data.height / TILE_SIZE));
-    levelNameInput.value = data.name;
+    levelNameInput.value = data.name + " (Converted)";
     backgroundInput.value = data.background || 'backgroundTile';
     const terrainToIdMap = {};
     for (const [id, def] of Object.entries(TILE_DEFINITIONS)) { terrainToIdMap[def.type] = id; }
