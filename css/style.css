@@ -5,7 +5,7 @@ body {
   font-family: 'Inter', sans-serif; /* Using Inter font */
 }
 
-canvas {
+#gameCanvas {
   display: block;
   margin: auto;
   background-color: #222;
