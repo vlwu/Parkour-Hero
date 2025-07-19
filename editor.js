@@ -167,17 +167,17 @@ function getPaletteColor(type) {
         case 'spike_up': return '#e74c3c'; case 'trampoline': return '#8e44ad';
         case 'fire': return '#f39c12';
         // Unique fruit colors
-        case 'fruit_apple': return '#e74c3c';
+        case 'fruit_apple': return '#ff4f3bff';
         case 'fruit_bananas': return '#f1c40f';
-        case 'fruit_cherries': return '#c0392b';
+        case 'fruit_cherries': return '#720b00ff';
         case 'fruit_kiwi': return '#27ae60';
         case 'fruit_melon': return '#1abc9c';
         case 'fruit_orange': return '#e67e22';
         case 'fruit_pineapple': return '#f39c12';
         case 'fruit_strawberry': return '#d35400';
         // Other objects
-        case 'player_spawn': return '#2980b9';
-        case 'trophy': return '#F39C12'; case 'checkpoint': return '#17a2b8';
+        case 'player_spawn': return '#ffffffff';
+        case 'trophy': return '#ffdc13ff'; case 'checkpoint': return '#313131ff';
         case 'empty': return 'rgba(0,0,0,0.3)'; default: return '#34495e';
     }
 }
