@@ -2,9 +2,10 @@ import { eventBus } from '../utils/event-bus.js';
 import { formatKeyForDisplay } from './ui-utils.js';
 
 export class SettingsMenu {
-  constructor(keybinds, fontRenderer) {
+  constructor(keybinds, fontRenderer, soundManager) {
     this.keybinds = keybinds;
     this.fontRenderer = fontRenderer;
+    this.soundManager = soundManager;
     this.activeKeybindInput = null;
     this.renderedHeaders = false;
 
@@ -115,7 +116,11 @@ export class SettingsMenu {
       this.renderBitmapText();
     }
     this.updateKeybindDisplay();
-    // Sound display is updated via event subscription.
+
+    // The fix: Proactively update the display when the menu is shown.
+    if (this.soundManager) {
+        this.updateSoundSettingsDisplay(this.soundManager.getSettings());
+    }
   }
 
   updateKeybindDisplay() {

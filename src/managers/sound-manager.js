@@ -229,8 +229,8 @@ export class SoundManager {
 
   getSettings() {
     return {
-      enabled: this.settings.enabled,
-      volume: this.settings.volume,
+      soundEnabled: this.settings.enabled,
+      soundVolume: this.settings.volume,
       audioUnlocked: this.audioUnlocked,
     };
   }

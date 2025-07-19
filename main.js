@@ -102,7 +102,7 @@ loadAssets().then((assets) => {
     engine = new Engine(ctx, canvas, assets, keybinds, fontRenderer);
 
     // Initialize MenuManager to handle all DOM UI
-    menuManager = new MenuManager(assets, engine.gameState, keybinds, fontRenderer);
+    menuManager = new MenuManager(assets, engine.gameState, keybinds, fontRenderer, engine.soundManager);
     
     // Link the engine to the menu manager so they can communicate.
     engine.setMenuManager(menuManager);
