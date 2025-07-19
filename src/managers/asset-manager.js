@@ -178,6 +178,7 @@ export async function loadAssets() {
     sand_walk: 'assets/Sounds/Sand Walk.mp3',
     mud_run: 'assets/Sounds/Mud Run.mp3',
     ice_run: 'assets/Sounds/Ice Run.mp3',
+    trampoline_bounce: 'assets/Sounds/Boing.mp3',
   };
 
   console.log('Starting asset loading...');

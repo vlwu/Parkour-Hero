@@ -218,6 +218,8 @@ export class PhysicsSystem {
                 player.vy = -PLAYER_CONSTANTS.JUMP_FORCE * PLAYER_CONSTANTS.TRAMPOLINE_BOUNCE_MULTIPLIER;
                 player.jumpCount = 0; // Allow double jump after bounce
                 player.coyoteTimer = 0; // No coyote time after a bounce
+                player.transitionTo('jump');
+                eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0 });
 
                 return true; // Bounce occurred, stop further vertical checks.
             }
