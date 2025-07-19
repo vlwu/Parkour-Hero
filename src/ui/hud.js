@@ -1,8 +1,9 @@
 import { eventBus } from '../utils/event-bus.js';
 
 export class HUD {
-  constructor(canvas) {
+  constructor(canvas, fontRenderer) {
     this.canvas = canvas;
+    this.fontRenderer = fontRenderer;
     this.isVisible = true;
     this.stats = {
       levelName: 'Loading...',
@@ -24,7 +25,7 @@ export class HUD {
   }
 
   drawGameHUD(ctx) {
-    if (!this.isVisible) return;
+    if (!this.isVisible || !this.fontRenderer) return;
 
     try {
       ctx.save();
@@ -49,21 +50,21 @@ export class HUD {
         `Sound: ${soundEnabled ? 'On' : 'Off'} (${Math.round(soundVolume * 100)}%)`
       ];
 
-      ctx.font = '16px sans-serif';
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 2;
-      ctx.fillStyle = 'white';
-      ctx.textAlign = 'center';
-
       const lineHeight = 22;
-      const totalTextHeight = lines.length * lineHeight;
-      const startY = hudY + (hudHeight - totalTextHeight) / 2 + lineHeight - 6;
+      const startY = hudY + 15;
       const textX = hudX + hudWidth / 2;
+      
+      const fontOptions = {
+          scale: 1.6,
+          align: 'center',
+          color: 'white',
+          outlineColor: 'black',
+          outlineWidth: 1
+      };
 
       lines.forEach((text, index) => {
         const y = startY + index * lineHeight;
-        ctx.strokeText(text, textX, y);
-        ctx.fillText(text, textX, y);
+        this.fontRenderer.drawText(ctx, text, textX, y, fontOptions);
       });
 
       ctx.restore();

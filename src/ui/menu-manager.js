@@ -6,17 +6,18 @@ import { MainMenu } from './main-menu.js';
 import { formatTime, formatKeyForDisplay } from './ui-utils.js';
 
 export class MenuManager {
-  constructor(assets, gameState, keybinds) {
+  constructor(assets, gameState, keybinds, fontRenderer) {
     this.assets = assets;
     this.gameState = gameState;
     this.keybinds = keybinds;
+    this.fontRenderer = fontRenderer;
     this.levelManager = null;
     this.isGameRunning = false;
     this.isPausedForMenu = false;
     this.gameHasStarted = false;
 
     // --- Instantiate Menu Handlers ---
-    this.mainMenu = new MainMenu();
+    this.mainMenu = new MainMenu(this.fontRenderer);
     this.settingsMenu = new SettingsMenu(this.keybinds);
     this.levelMenu = new LevelMenu(this.gameState);
     this.characterMenu = new CharacterMenu(this.gameState, this.assets);

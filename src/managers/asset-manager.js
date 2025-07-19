@@ -125,6 +125,8 @@ const playerSpriteFiles = {
 
 export async function loadAssets() {
   const imagePaths = {
+    // UI assets
+    font_spritesheet: 'assets/Menu/Text/Text (White) (8x10).png',
     // Canvas assets
     background_blue: 'assets/Background/Blue.png',
     background_brown: 'assets/Background/Brown.png',

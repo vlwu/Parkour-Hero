@@ -3,6 +3,7 @@ import { loadAssets } from './src/managers/asset-manager.js';
 import { InputManager } from './src/systems/input-system.js';
 import { MenuManager } from './src/ui/menu-manager.js';
 import { eventBus } from './src/utils/event-bus.js';
+import { FontRenderer } from './src/ui/font-renderer.js';
 
 // Get canvas element and context
 const canvas = document.getElementById('gameCanvas');
@@ -97,10 +98,11 @@ loadAssets().then((assets) => {
   console.log('Assets loaded successfully, preparing main menu...');
   
   try {
-    engine = new Engine(ctx, canvas, assets, keybinds);
+    const fontRenderer = new FontRenderer(assets.font_spritesheet);
+    engine = new Engine(ctx, canvas, assets, keybinds, fontRenderer);
 
     // Initialize MenuManager to handle all DOM UI
-    menuManager = new MenuManager(assets, engine.gameState, keybinds);
+    menuManager = new MenuManager(assets, engine.gameState, keybinds, fontRenderer);
     
     // Link the engine to the menu manager so they can communicate.
     engine.setMenuManager(menuManager);

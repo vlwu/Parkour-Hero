@@ -9,10 +9,11 @@ import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
 
 export class Engine {
-  constructor(ctx, canvas, assets, initialKeybinds) {
+  constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
     this.ctx = ctx;
     this.canvas = canvas;
     this.assets = assets;
+    this.fontRenderer = fontRenderer;
     this.lastFrameTime = 0;
     this.keys = {};
     this.keybinds = initialKeybinds;
@@ -24,7 +25,7 @@ export class Engine {
     this.fruitsAtLastCheckpoint = new Set();
 
     this.camera = new Camera(canvas.width, canvas.height);
-    this.hud = new HUD(canvas);
+    this.hud = new HUD(canvas, this.fontRenderer);
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
     this.physicsSystem = new PhysicsSystem();
