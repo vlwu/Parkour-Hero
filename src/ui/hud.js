@@ -33,8 +33,8 @@ export class HUD {
 
       const hudX = 10;
       const hudY = 10;
-      const hudWidth = 280;
-      const hudHeight = 100;
+      const hudWidth = 320;
+      const hudHeight = 110;
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
@@ -45,7 +45,7 @@ export class HUD {
       
       const lines = [
         `${levelName}`,
-        `Fruits: ${collectedFruits} / ${totalFruits}`,
+        `Fruits: ${collectedFruits}/${totalFruits}`,
         `Deaths: ${deathCount || 0}`,
         `Sound: ${soundEnabled ? 'On' : 'Off'} (${Math.round(soundVolume * 100)}%)`
       ];
