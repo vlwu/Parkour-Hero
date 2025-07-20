@@ -89,11 +89,23 @@ export class Renderer {
       dash: 'playerDash', cling: 'playerCling', spawn: 'playerAppear',
       despawn: 'playerDisappear',
     };
+    
+    // Correctly select the sprite based on whether it's character-specific 
+    let sprite;
+    const spriteAssetKey = stateToSpriteMap[stateName];
 
-    let spriteAssetKey = charComp ? stateToSpriteMap[stateName] : renderable.spriteKey;
-    let sprite = charComp 
-        ? this.assets.characters[charComp.characterId]?.[spriteAssetKey] || this.assets.playerAppear
-        : this.assets[spriteAssetKey];
+    // Spawn and Despawn are non-character-specific animations
+    if (stateName === 'spawn' || stateName === 'despawn') {
+        sprite = this.assets[spriteAssetKey];
+    } 
+    // All other animations are character-specific
+    else if (charComp) {
+        sprite = this.assets.characters[charComp.characterId]?.[spriteAssetKey] || this.assets.playerIdle;
+    } 
+    // Fallback for any other renderable entities that aren't players
+    else {
+        sprite = this.assets[renderable.spriteKey];
+    }
         
     if (!sprite) { this.ctx.fillStyle = '#FF00FF'; this.ctx.fillRect(pos.x, pos.y, renderable.width, renderable.height); return; }
 
