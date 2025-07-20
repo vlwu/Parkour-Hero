@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { map } from 'lit/directives/map.js';
 import { characterConfig } from '../../entities/level-definitions.js';
 import './character-card.js';
+import './bitmap-text.js';
 
 export class CharacterMenu extends LitElement {
   static styles = css`
@@ -15,7 +16,10 @@ export class CharacterMenu extends LitElement {
       background-color: #333; padding: 30px; border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); color: #eee;
       text-align: center; position: relative; width: 90%;
-      max-width: 700px; max-height: 80vh; overflow-y: auto;
+      /* Increase max-width to better accommodate wider cards on larger screens */
+      max-width: 800px; 
+      max-height: 80vh; overflow-y: auto;
+      box-sizing: border-box; 
     }
     .close-button {
       position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
@@ -25,20 +29,28 @@ export class CharacterMenu extends LitElement {
       transition: transform 0.2s ease-in-out;
     }
     .close-button:hover { transform: scale(1.1); }
-    h2 { margin: 0 0 10px 0; font-size: 2.2em; }
-    h3 { margin: 0 0 25px 0; font-size: 1.5em; }
+    .title-container, .subtitle-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+    .subtitle-container {
+        margin-bottom: 25px;
+    }
     
     #character-selection-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
       gap: 20px;
       padding: 10px;
+      grid-auto-rows: 1fr;
     }
   `;
   
   static properties = {
       gameState: { type: Object },
       assets: { type: Object },
+      fontRenderer: { type: Object },
   };
   
   _dispatchClose() {
@@ -56,8 +68,12 @@ export class CharacterMenu extends LitElement {
         <div class="modal-overlay" @click=${this._dispatchClose}>
             <div class="modal-content" @click=${e => e.stopPropagation()}>
                 <button class="close-button" @click=${this._dispatchClose}></button>
-                <h2>Character Selection</h2>
-                <h3>Choose Your Hero!</h3>
+                <div class="title-container">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="Character Selection" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
+                </div>
+                <div class="subtitle-container">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="Choose Your Hero!" scale="2"></bitmap-text>
+                </div>
                 <div id="character-selection-container">
                     ${map(characterIds, (id) => html`
                         <character-card
@@ -65,6 +81,7 @@ export class CharacterMenu extends LitElement {
                             .idleSprite=${this.assets.characters[id]?.playerIdle}
                             .isLocked=${!this.gameState.isCharacterUnlocked(id)}
                             .isSelected=${this.gameState.selectedCharacter === id}
+                            .fontRenderer=${this.fontRenderer}
                         ></character-card>
                     `)}
                 </div>

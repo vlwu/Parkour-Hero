@@ -41,7 +41,6 @@ export class GameState {
 
         const state = JSON.parse(saved);
 
-        // Stricter validation for the parsed object
         if (typeof state !== 'object' || state === null) {
           console.warn('Saved game state is not an object. Resetting to default.');
           return this._getDefaultState();
@@ -55,7 +54,7 @@ export class GameState {
 
         if (typeof state.selectedCharacter !== 'string' || !characterConfig[state.selectedCharacter]) {
             console.warn(`Saved character "${state.selectedCharacter}" is invalid or no longer exists. Resetting to default character.`);
-            state.selectedCharacter = 'PinkMan'; // Reset only the character, keep progress
+            state.selectedCharacter = 'PinkMan';
         }
 
         return state;
@@ -84,12 +83,10 @@ export class GameState {
       localStorage.removeItem('parkourGameState');
       console.log("Game progress has been reset.");
 
-      // Reload the default state
       const defaultState = this._getDefaultState();
       this.levelProgress = defaultState.levelProgress;
       this.selectedCharacter = defaultState.selectedCharacter;
 
-      // Reset current level pointers
       this.currentSection = 0;
       this.currentLevelIndex = 0;
 
@@ -101,8 +98,8 @@ export class GameState {
   unlockAllLevels() {
       const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
       this.levelProgress.unlockedLevels[0] = totalLevels;
-      this.levelProgress.completedLevels = []; // Clear and...
-      for (let i=0; i < totalLevels; i++) { // ...mock completion
+      this.levelProgress.completedLevels = [];
+      for (let i=0; i < totalLevels; i++) {
           this.levelProgress.completedLevels.push(`temp-${i}`);
       }
       console.log(`%cAll ${totalLevels} levels have been unlocked!`, 'color: lightgreen; font-weight: bold;');
@@ -113,6 +110,8 @@ export class GameState {
     if (characterConfig[characterId]) {
       this.selectedCharacter = characterId;
       this.saveProgress();
+      
+      eventBus.publish('gameStateUpdated', this);
     }
   }
   
@@ -120,7 +119,6 @@ export class GameState {
     const config = characterConfig[characterId];
     if (!config) return false;
 
-    // The number of unique completed levels determines unlocks
     const completedCount = this.levelProgress.completedLevels.length;
     return completedCount >= config.unlockRequirement;
   }

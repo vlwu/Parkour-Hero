@@ -1,13 +1,20 @@
 import { LitElement, html, css } from 'lit';
 import { characterConfig } from '../../entities/level-definitions.js';
+import './bitmap-text.js';
 
 export class CharacterCard extends LitElement {
   static styles = css`
+    :host {
+      /* This allows the card to participate correctly in a flex/grid layout */
+      display: flex;
+    }
     .character-card {
       background-color: #555; border: 2px solid #777; border-radius: 8px;
       padding: 15px; display: flex; flex-direction: column;
       align-items: center; gap: 10px; transition: all 0.2s ease-in-out;
       position: relative;
+      width: 100%; /* Fill the grid cell */
+      box-sizing: border-box; /* Include padding in width calculation */
     }
     .character-card:not(.locked):hover { border-color: #007bff; transform: translateY(-3px); }
     .character-card.locked { opacity: 0.6; cursor: not-allowed; }
@@ -16,14 +23,26 @@ export class CharacterCard extends LitElement {
     .char-canvas {
       width: 64px; height: 64px; background-color: #444; border-radius: 6px;
       image-rendering: pixelated;
+      flex-shrink: 0; /* Prevent canvas from shrinking */
     }
-    .char-name { font-weight: bold; }
-    .char-unlock { font-size: 0.8em; color: #ccc; min-height: 2.4em; text-align: center; }
+    .char-name-container { 
+      /* Removed min-height. Let it size to the text. */
+      margin-top: 5px;
+    }
+    .char-unlock-container { 
+      /* Removed min-height. Let it size to the text. */
+      display: flex; flex-direction: column; 
+      justify-content: center; align-items: center;
+      flex-grow: 1; /* This is key: it will take up available space, pushing the button down */
+    }
     
     .select-button {
-      background-color: #007bff; color: #fff; border: none; padding: 10px 20px;
-      border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold;
+      background-color: #007bff; color: #fff; border: none; padding: 10px 15px;
+      border-radius: 6px; cursor: pointer; width: 100%;
       transition: background-color 0.2s;
+      display: flex; justify-content: center; align-items: center;
+      margin-top: auto; /* Push the button to the bottom of the card */
+      flex-shrink: 0; /* Prevent button from shrinking */
     }
     .select-button:hover:not(:disabled) { background-color: #0056b3; }
     
@@ -31,11 +50,14 @@ export class CharacterCard extends LitElement {
     .locked .select-button { background-color: #666; cursor: not-allowed; }
   `;
 
+  // ... (The rest of the component's JavaScript is unchanged) ...
+
   static properties = {
     characterId: { type: String },
     idleSprite: { type: Object },
     isLocked: { type: Boolean },
     isSelected: { type: Boolean },
+    fontRenderer: { type: Object },
   };
 
   constructor() {
@@ -99,16 +121,25 @@ export class CharacterCard extends LitElement {
   render() {
     const config = characterConfig[this.characterId];
     const classes = `character-card ${this.isLocked ? 'locked' : ''} ${this.isSelected ? 'selected' : ''}`;
+    const buttonText = this.isLocked ? 'Locked' : (this.isSelected ? 'Selected' : 'Select');
 
     return html`
       <div class=${classes}>
         <canvas class="char-canvas" width="64" height="64"></canvas>
-        <div class="char-name">${config.name}</div>
-        <div class="char-unlock">
-          ${this.isLocked ? `Complete ${config.unlockRequirement} levels to unlock` : 'Available'}
+        <div class="char-name-container">
+            <bitmap-text .fontRenderer=${this.fontRenderer} .text=${config.name} scale="2"></bitmap-text>
+        </div>
+        <div class="char-unlock-container">
+          ${this.isLocked 
+            ? html`
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Complete ${config.unlockRequirement} levels" scale="1.5" color="#ccc"></bitmap-text>
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="to unlock" scale="1.5" color="#ccc"></bitmap-text>
+              `
+            : html`<bitmap-text .fontRenderer=${this.fontRenderer} text="Available" scale="1.5" color="#ccc"></bitmap-text>`
+          }
         </div>
         <button class="select-button" @click=${this._handleSelect} ?disabled=${this.isLocked || this.isSelected}>
-          ${this.isLocked ? 'Locked' : (this.isSelected ? 'Selected' : 'Select')}
+          <bitmap-text .fontRenderer=${this.fontRenderer} .text=${buttonText} scale="1.8"></bitmap-text>
         </button>
       </div>
     `;

@@ -24,13 +24,17 @@ export class PauseModal extends LitElement {
       display: flex;
       justify-content: center;
     }
-    .subtitle { margin: 0 0 25px 0; color: #ccc; }
+    .subtitle-container {
+      margin: 0 0 25px 0;
+      display: flex;
+      justify-content: center;
+    }
     .stats-container {
         display: flex; flex-direction: column; align-items: center;
         gap: 12px; margin-bottom: 25px; padding: 15px;
         background-color: #444; border-radius: 8px;
     }
-    .stat-item { color: #fff; font-size: 1.2em; }
+    /* No styles needed for .stat-item anymore, as bitmap-text handles it */
     .button-container { display: flex; justify-content: center; gap: 15px; }
     .modal-image-button {
         background: transparent; border: none; padding: 0;
@@ -69,12 +73,21 @@ export class PauseModal extends LitElement {
             ></bitmap-text>
           </div>
           
-          <p class="subtitle">Press ESC to resume</p>
-          <div class="stats-container">
-            <div class="stat-item">Fruits: ${this.stats.collectedFruits}/${this.stats.totalFruits}</div>
-            <div class="stat-item">Deaths: ${this.stats.deathCount}</div>
-            <div class="stat-item">Time: ${formatTime(this.stats.levelTime)}</div>
+          <div class="subtitle-container">
+            <bitmap-text
+                .fontRenderer=${this.fontRenderer}
+                text="Press ESC to resume"
+                scale="1.5"
+                color="#ccc"
+              ></bitmap-text>
           </div>
+
+          <div class="stats-container">
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="Fruits: ${this.stats.collectedFruits}/${this.stats.totalFruits}" scale="1.8"></bitmap-text>
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="Deaths: ${this.stats.deathCount}" scale="1.8"></bitmap-text>
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="Time: ${formatTime(this.stats.levelTime)}" scale="1.8"></bitmap-text>
+          </div>
+          
           <div class="button-container">
             <button class="modal-image-button" title="Resume" @click=${() => this._dispatch('resume-game')}>
               <img src="/assets/Menu/Buttons/Play.png" alt="Resume">

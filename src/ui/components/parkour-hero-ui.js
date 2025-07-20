@@ -5,29 +5,41 @@ import './pause-modal.js';
 import './levels-menu.js';
 import './character-menu.js';
 import './info-modal.js';
+import './bitmap-text.js';
 
 export class ParkourHeroUI extends LitElement {
   static styles = css`
-    /* Styles for main menu from main-menu.css */
     .main-menu-overlay {
       position: fixed; inset: 0;
       background-image: url('/assets/Background/Main Menu.png');
       background-size: cover; background-position: center; z-index: 500;
       display: flex; justify-content: center; align-items: center;
-      flex-direction: column; color: white;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+      flex-direction: column;
     }
     .main-menu-container { display: flex; flex-direction: column; align-items: center; gap: 40px; }
-    .game-title { font-size: 6em; font-weight: bold; margin: 0; letter-spacing: 2px; -webkit-text-stroke: 2px black; }
+    
     .main-menu-buttons { display: flex; flex-direction: column; gap: 20px; width: 250px; }
     .main-menu-buttons button {
-      background-color: #007bff; color: #fff; border: 3px solid #0056b3;
-      padding: 15px 25px; border-radius: 12px; cursor: pointer; font-size: 1.5em;
-      font-weight: bold; transition: all 0.2s ease-in-out;
-      box-shadow: 0 6px #004a99; text-transform: uppercase;
+      background-color: #007bff; border: 3px solid #0056b3;
+      padding: 15px 25px; border-radius: 12px; cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 6px #004a99;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .main-menu-buttons button:hover { background-color: #0056b3; transform: translateY(-2px); box-shadow: 0 8px #004a99; }
     .main-menu-buttons button:active { transform: translateY(2px); box-shadow: 0 2px #004a99; }
+    
+    .placeholder-modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex; justify-content: center; align-items: center;
+      color: white; font-size: 2em;
+    }
+    .placeholder-content {
+        background: #333; padding: 40px; border-radius: 10px;
+    }
   `;
 
   static properties = {
@@ -133,10 +145,12 @@ export class ParkourHeroUI extends LitElement {
   
   _handleCharacterSelected(e) {
     const { characterId } = e.detail;
+    // FIX: Simply call the method. Do not manually update the state here.
+    // The GameState object will publish an event, which our listener will
+    // catch, triggering a proper re-render with the full instance.
     this.gameState.setSelectedCharacter(characterId);
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     eventBus.publish('characterUpdated', characterId);
-    this.gameState = { ...this.gameState };
   }
 
   render() {
@@ -147,15 +161,35 @@ export class ParkourHeroUI extends LitElement {
   }
   
   renderMainMenu() {
+    const buttonTexts = [
+      { text: 'Start Game', action: () => eventBus.publish('requestStartGame') },
+      { text: 'Levels', action: () => this._openModalFromMenu('levels') },
+      { text: 'Character', action: () => this._openModalFromMenu('character') },
+      { text: 'Settings', action: () => this._openModalFromMenu('settings') }
+    ];
+
     return html`
       <div class="main-menu-overlay">
         <div class="main-menu-container">
-          <h1 class="game-title">Parkour Hero</h1>
+          <bitmap-text
+            .fontRenderer=${this.fontRenderer}
+            text="Parkour Hero"
+            scale="9"
+            outlineColor="black"
+            outlineWidth="2"
+          ></bitmap-text>
           <div class="main-menu-buttons">
-            <button @click=${() => eventBus.publish('requestStartGame')}>Start Game</button>
-            <button @click=${() => this._openModalFromMenu('levels')}>Levels</button>
-            <button @click=${() => this._openModalFromMenu('character')}>Character</button>
-            <button @click=${() => this._openModalFromMenu('settings')}>Settings</button>
+            ${buttonTexts.map(btn => html`
+              <button @click=${btn.action}>
+                <bitmap-text
+                  .fontRenderer=${this.fontRenderer}
+                  text=${btn.text}
+                  scale="2.5"
+                  outlineColor="#004a99"
+                  outlineWidth="1"
+                ></bitmap-text>
+              </button>
+            `)}
           </div>
         </div>
       </div>
@@ -182,7 +216,7 @@ export class ParkourHeroUI extends LitElement {
                     ></levels-menu>`;
       case 'character':
         return html`<character-menu
-                      .gameState=${this.gameState} .assets=${this.assets}
+                      .gameState=${this.gameState} .assets=${this.assets} .fontRenderer=${this.fontRenderer}
                       @close-modal=${this._closeModal} @character-selected=${this._handleCharacterSelected}
                     ></character-menu>`;
       case 'info':
