@@ -73,8 +73,10 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('ui_button_clicked', this._handleUIButtonClick);
     eventBus.subscribe('statsUpdated', this._handleStatsUpdate);
     eventBus.subscribe('action_escape_pressed', this._handleEscapePress);
-    eventBus.subscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
+    
+    // This listener now sets the initial state and also catches updates from the engine
     eventBus.subscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
+    eventBus.subscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
     eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets);
   }
 
@@ -86,8 +88,8 @@ export class ParkourHeroUI extends LitElement {
     eventBus.unsubscribe('ui_button_clicked', this._handleUIButtonClick);
     eventBus.unsubscribe('statsUpdated', this._handleStatsUpdate);
     eventBus.unsubscribe('action_escape_pressed', this._handleEscapePress);
-    eventBus.unsubscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
     eventBus.unsubscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
+    eventBus.unsubscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
     eventBus.unsubscribe('assetsLoaded', (assets) => this.assets = assets);
   }
 
@@ -145,10 +147,16 @@ export class ParkourHeroUI extends LitElement {
   
   _handleCharacterSelected(e) {
     const { characterId } = e.detail;
-    // FIX: Simply call the method. Do not manually update the state here.
-    // The GameState object will publish an event, which our listener will
-    // catch, triggering a proper re-render with the full instance.
-    this.gameState.setSelectedCharacter(characterId);
+    
+    // FIX: Call the immutable method, which returns a new instance
+    const newGameState = this.gameState.setSelectedCharacter(characterId);
+    
+    // If the state actually changed, update our property and notify the game engine
+    if (newGameState !== this.gameState) {
+        this.gameState = newGameState;
+        eventBus.publish('gameStateUpdated', this.gameState);
+    }
+
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     eventBus.publish('characterUpdated', characterId);
   }
