@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build": "rimraf dist release && vite build",
+    "version": "npm run build"
   },
   "devDependencies": {
-    "vite": "^7.0.5"
+    "vite": "^7.0.5",
+    "rimraf": "^5.0.7",
+    "vite-plugin-zip-pack": "^1.1.2"
   },
   "dependencies": {
     "lit": "^3.1.3"
