@@ -23,10 +23,11 @@ export class GameplaySystem {
             case 'fruit':
                 eventBus.publish('fruitCollected', target);
                 break;
-            // FIX: Add a case for the new 'world_bottom' event.
             case 'world_bottom':
-            case 'hazard':
                 eventBus.publish('playerDied');
+                break;
+            case 'hazard':
+                eventBus.publish('playerTookDamage', { amount: 25 });
                 break;
             case 'trophy':
                 eventBus.publish('trophyCollision');

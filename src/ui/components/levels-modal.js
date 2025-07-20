@@ -20,6 +20,7 @@ export class LevelsMenu extends LitElement {
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); color: #eee;
       text-align: center; position: relative; width: 90%;
       max-width: 600px; max-height: 80vh; overflow-y: auto;
+      padding-bottom: 80px;
     }
     .close-button {
       position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
@@ -64,6 +65,24 @@ export class LevelsMenu extends LitElement {
     .level-button.current { border-color: #ffc107; box-shadow: 0 0 8px rgba(255, 193, 7, 0.7); }
     .level-button.locked { background-color: #444; color: #777; cursor: not-allowed; border-color: #666; }
     .level-button.locked svg { fill: #777; width: 24px; height: 24px; }
+
+    .footer-actions {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+    }
+    .footer-button {
+      background-color: #007bff; color: #fff; border: 2px solid #0056b3;
+      padding: 10px 20px; border-radius: 8px; cursor: pointer;
+      display: flex; justify-content: center; align-items: center;
+      transition: all 0.2s ease-in-out;
+    }
+    .footer-button:hover {
+      background-color: #0056b3;
+    }
   `;
 
   static properties = {
@@ -82,6 +101,11 @@ export class LevelsMenu extends LitElement {
       bubbles: true,
       composed: true
     }));
+  }
+  
+  _openStatsModal() {
+    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+    eventBus.publish('ui_button_clicked', { buttonId: 'stats' });
   }
 
   render() {
@@ -119,6 +143,11 @@ export class LevelsMenu extends LitElement {
                 </div>
               </div>
             `)}
+          </div>
+          <div class="footer-actions">
+            <button class="footer-button" @click=${this._openStatsModal}>
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="View Stats" scale="1.8"></bitmap-text>
+            </button>
           </div>
         </div>
       </div>

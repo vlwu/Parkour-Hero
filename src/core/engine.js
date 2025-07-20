@@ -21,8 +21,8 @@ import { InputSystemProcessor } from '../systems/input-system-processor.js';
 import { GameplaySystem } from '../systems/gameplay-system.js';
 import { PlayerStateSystem } from '../systems/player-state-system.js';
 import { MovementSystem } from '../systems/movement-system.js';
-// FIX: Add the missing import for StateComponent.
 import { StateComponent } from '../components/StateComponent.js';
+import { HealthComponent } from '../components/HealthComponent.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -83,6 +83,7 @@ export class Engine {
     eventBus.subscribe('keybindsUpdated', (newKeybinds) => this.updateKeybinds(newKeybinds));
     
     eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
+    eventBus.subscribe('playerTookDamage', (data) => this._onPlayerTookDamage(data));
     eventBus.subscribe('trophyCollision', () => this._onTrophyCollision());
     eventBus.subscribe('checkpointActivated', (cp) => this._onCheckpointActivated(cp));
     eventBus.subscribe('playerDied', () => this._onPlayerDied());
@@ -152,6 +153,7 @@ export class Engine {
     newState.currentSection = sectionIndex;
     newState.currentLevelIndex = levelIndex;
     this.gameState = newState;
+    this.gameState.incrementAttempts(sectionIndex, levelIndex);
     eventBus.publish('gameStateUpdated', this.gameState);
 
     this.collectedFruits = [];
@@ -178,7 +180,6 @@ export class Engine {
       this.levelTime = (performance.now() - this.levelStartTime) / 1000;
     }
 
-    // FIX: Add this call back to make the camera follow the player.
     this.camera.update(this.entityManager, this.playerEntityId, dt);
 
     const context = { 
@@ -198,6 +199,7 @@ export class Engine {
     }
     
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
+    const playerHealth = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) this._respawnPlayer();
 
     this.currentLevel.updateFruits(dt);
@@ -218,15 +220,20 @@ export class Engine {
     if (playerCtrl && playerCtrl.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
       playerCtrl.despawnAnimationFinished = false; 
       
-      const newGameState = this.gameState.onLevelComplete();
+      const runStats = {
+          deaths: playerCtrl.deathCount,
+          time: this.levelTime,
+      };
+      
+      const newGameState = this.gameState.onLevelComplete(runStats);
       if (newGameState !== this.gameState) {
           this.gameState = newGameState;
           eventBus.publish('gameStateUpdated', this.gameState);
           this.pause();
           
           eventBus.publish('levelComplete', { 
-              deaths: playerCtrl.deathCount, 
-              time: this.levelTime,
+              deaths: runStats.deaths, 
+              time: runStats.time,
               hasNextLevel: this.levelManager.hasNextLevel(),
               hasPreviousLevel: this.levelManager.hasPreviousLevel(),
           });
@@ -239,7 +246,23 @@ export class Engine {
       totalFruits: this.currentLevel.getTotalFruitCount(),
       deathCount: playerCtrl ? playerCtrl.deathCount : 0,
       levelTime: this.levelTime,
+      health: playerHealth ? playerHealth.currentHealth : 100,
+      maxHealth: playerHealth ? playerHealth.maxHealth : 100,
     });
+  }
+
+  _onPlayerTookDamage({ amount }) {
+      const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
+      const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
+      
+      if (health && playerCtrl && !playerCtrl.needsRespawn) {
+          health.currentHealth = Math.max(0, health.currentHealth - amount);
+          this.camera.shake(10, 0.4);
+          
+          if (health.currentHealth <= 0) {
+              this._onPlayerDied();
+          }
+      }
   }
 
   _onPlayerDied() {
@@ -262,9 +285,14 @@ export class Engine {
     const renderable = this.entityManager.getComponent(this.playerEntityId, RenderableComponent);
     const collision = this.entityManager.getComponent(this.playerEntityId, CollisionComponent);
     const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
+    const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
 
     pos.x = respawnPosition.x; pos.y = respawnPosition.y;
     vel.vx = 0; vel.vy = 0;
+
+    if (health) {
+        health.currentHealth = health.maxHealth;
+    }
 
     const currentDeathCount = playerCtrl.deathCount;
     this.entityManager.removeComponent(this.playerEntityId, PlayerControlledComponent);
@@ -290,6 +318,11 @@ export class Engine {
     this.currentLevel.collectFruit(fruit);
     eventBus.publish('playSound', { key: 'collect', volume: 0.8, channel: 'SFX' });
     this.collectedFruits.push({ x: fruit.x, y: fruit.y, size: fruit.size, frame: 0, frameSpeed: 0.1, frameTimer: 0, collectedFrameCount: 6 });
+
+    const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
+    if (health && health.currentHealth < health.maxHealth) {
+        health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 10);
+    }
   }
 
   _onCheckpointActivated(cp) {

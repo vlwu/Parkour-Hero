@@ -6,6 +6,7 @@ import './levels-modal.js';
 import './character-modal.js';
 import './info-modal.js';
 import './level-complete-modal.js';
+import './stats-modal.js';
 import './bitmap-text.js';
 
 export class ParkourHeroUI extends LitElement {
@@ -111,6 +112,9 @@ export class ParkourHeroUI extends LitElement {
     if (buttonId === 'pause') {
       if (this.activeModal) { this._closeModal(); } 
       else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
+    } else if (buttonId === 'stats') {
+        this.activeModal = 'stats';
+        eventBus.publish('menuOpened');
     } else {
       this.activeModal = buttonId;
       eventBus.publish('menuOpened');
@@ -209,7 +213,8 @@ export class ParkourHeroUI extends LitElement {
       { text: 'Start Game', action: () => eventBus.publish('requestStartGame') },
       { text: 'Levels', action: () => this._openModalFromMenu('levels') },
       { text: 'Character', action: () => this._openModalFromMenu('character') },
-      { text: 'Settings', action: () => this._openModalFromMenu('settings') }
+      { text: 'Settings', action: () => this._openModalFromMenu('settings') },
+      { text: 'Stats', action: () => this._openModalFromMenu('stats') }
     ];
 
     return html`
@@ -256,6 +261,12 @@ export class ParkourHeroUI extends LitElement {
                       .fontRenderer=${this.fontRenderer}
                       @close-modal=${this._closeModal}
                     ></info-modal>`;
+      case 'stats':
+        return html`<stats-modal
+                      .gameState=${this.gameState}
+                      .fontRenderer=${this.fontRenderer}
+                      @close-modal=${this._closeModal}
+                    ></stats-modal>`;
       default:
         return html``;
     }

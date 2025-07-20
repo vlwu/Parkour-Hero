@@ -19,6 +19,7 @@ export class GameState {
           this.showingLevelComplete = initialState.showingLevelComplete;
           this.levelProgress = initialState.levelProgress;
           this.selectedCharacter = initialState.selectedCharacter;
+          this.levelStats = initialState.levelStats;
       } else {
           this.currentSection = 0;
           this.currentLevelIndex = 0;
@@ -26,17 +27,21 @@ export class GameState {
           const savedState = this.loadProgress();
           this.levelProgress = savedState.levelProgress;
           this.selectedCharacter = savedState.selectedCharacter;
+          this.levelStats = savedState.levelStats;
+          this.ensureStatsForAllLevels();
       }
   }
 
   _clone() {
-      return new GameState(this);
+      const clonedState = JSON.parse(JSON.stringify(this));
+      return new GameState(clonedState);
   }
 
   _getDefaultState() {
     return {
       levelProgress: { unlockedLevels: [1], completedLevels: [] },
       selectedCharacter: 'PinkMan',
+      levelStats: {},
     };
   }
 
@@ -51,6 +56,9 @@ export class GameState {
         if (typeof state.selectedCharacter !== 'string' || !characterConfig[state.selectedCharacter]) {
             state.selectedCharacter = 'PinkMan';
         }
+        if (!state.levelStats || typeof state.levelStats !== 'object') {
+            state.levelStats = {};
+        }
         return state;
       } catch (e) {
         console.error("Failed to parse game state from localStorage. Resetting to default.", e);
@@ -63,6 +71,7 @@ export class GameState {
         const stateToSave = {
           levelProgress: this.levelProgress,
           selectedCharacter: this.selectedCharacter,
+          levelStats: this.levelStats,
         };
         localStorage.setItem('parkourGameState', JSON.stringify(stateToSave));
         console.log("Progress saved:", stateToSave);
@@ -80,8 +89,31 @@ export class GameState {
     }
     return this;
   }
+
+  ensureStatsForAllLevels() {
+    levelSections.forEach((section, sectionIndex) => {
+        section.levels.forEach((_, levelIndex) => {
+            const levelId = `${sectionIndex}-${levelIndex}`;
+            if (!this.levelStats[levelId]) {
+                this.levelStats[levelId] = {
+                    fastestTime: null,
+                    lowestDeaths: null,
+                    totalAttempts: 0,
+                };
+            }
+        });
+    });
+  }
+
+  incrementAttempts(sectionIndex, levelIndex) {
+    const levelId = `${sectionIndex}-${levelIndex}`;
+    if (this.levelStats[levelId]) {
+        this.levelStats[levelId].totalAttempts += 1;
+        this.saveProgress();
+    }
+  }
   
-  onLevelComplete() {
+  onLevelComplete(runStats) {
       const newState = this._clone();
       const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
 
@@ -99,8 +131,18 @@ export class GameState {
           }
       }
 
+      const currentStats = newState.levelStats[levelId];
+      if (currentStats) {
+          if (currentStats.fastestTime === null || runStats.time < currentStats.fastestTime) {
+              currentStats.fastestTime = runStats.time;
+          }
+          if (currentStats.lowestDeaths === null || runStats.deaths < currentStats.lowestDeaths) {
+              currentStats.lowestDeaths = runStats.deaths;
+          }
+      }
+
       newState.showingLevelComplete = true;
-      newState.saveProgress(); // The new state saves itself.
+      newState.saveProgress();
       eventBus.publish('playSound', { key: 'level_complete', volume: 1.0, channel: 'UI' });
       
       return newState;
@@ -129,8 +171,10 @@ export class GameState {
       const defaultState = this._getDefaultState();
       this.levelProgress = defaultState.levelProgress;
       this.selectedCharacter = defaultState.selectedCharacter;
+      this.levelStats = defaultState.levelStats;
       this.currentSection = 0;
       this.currentLevelIndex = 0;
+      this.ensureStatsForAllLevels();
     } catch (e) {
       console.error("Failed to reset game state in localStorage", e);
     }
