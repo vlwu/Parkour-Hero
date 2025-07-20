@@ -49,7 +49,6 @@ export class PhysicsSystem {
       this._handleVerticalCollisions(pos, vel, col, ctrl, level, dt);
     }
 
-    // Refresh coyote time every frame the player is on the ground.
     if (col.isGrounded) {
         ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
     }
@@ -81,18 +80,16 @@ export class PhysicsSystem {
     // --- JUMP INPUT HANDLING (REWORKED) ---
     const justPressedJump = actions.jump && !ctrl.jumpPressed;
 
-    // FIX: Buffer the jump if the key is held down, not just on the initial press.
     if (actions.jump) {
       ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
     }
-
-    // Primary jump action (ground, wall, coyote) uses the buffer.
-    if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0 || (col.isAgainstWall && !col.isGrounded))) {
+    
+    // FIX: Split jump logic: Ground/Coyote jumps are buffered, Wall/Double jumps require a fresh press.
+    
+    // 1. Ground and Coyote Jumps (use buffer)
+    if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0)) {
         let jumpForce = ctrl.jumpForce;
-        if (col.isAgainstWall && !col.isGrounded) {
-            vel.vx = (renderable.direction === 'left' ? 1 : -1) * ctrl.speed;
-            renderable.direction = renderable.direction === 'left' ? 'right' : 'left';
-        } else if (col.groundType === 'mud') {
+        if (col.groundType === 'mud') {
             jumpForce *= PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER;
         }
         vel.vy = -jumpForce;
@@ -101,17 +98,25 @@ export class PhysicsSystem {
         ctrl.coyoteTimer = 0;     // Consume coyote time
         eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
     }
-
-    // Double jump requires a fresh key press while in the air.
-    if (justPressedJump && ctrl.jumpCount === 1 && !col.isGrounded && !col.isAgainstWall) {
+    // 2. Wall Jump (requires a new press, no buffer)
+    else if (justPressedJump && col.isAgainstWall && !col.isGrounded) {
+        vel.vx = (renderable.direction === 'left' ? 1 : -1) * ctrl.speed;
+        renderable.direction = renderable.direction === 'left' ? 'right' : 'left';
+        vel.vy = -ctrl.jumpForce;
+        ctrl.jumpCount = 1;
+        eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
+    }
+    // 3. Double jump (requires a new press)
+    else if (justPressedJump && ctrl.jumpCount === 1 && !col.isGrounded && !col.isAgainstWall) {
       vel.vy = -ctrl.jumpForce;
       ctrl.jumpCount = 2;
-      ctrl.jumpBufferTimer = 0; // Consume buffer
+      ctrl.jumpBufferTimer = 0;
       this._setAnimationState(renderable, 'double_jump', ctrl);
       eventBus.publish('playSound', { key: 'double_jump', volume: 0.6, channel: 'SFX' });
       eventBus.publish('createParticles', { x: pos.x + col.width/2, y: pos.y + col.height, type: 'double_jump' });
     }
-    ctrl.jumpPressed = actions.jump; // Update for next frame's justPressedJump check
+    
+    ctrl.jumpPressed = actions.jump;
 
     // --- DASH INPUT HANDLING (unchanged) ---
     if (actions.dash && !ctrl.dashPressed && ctrl.dashCooldownTimer <= 0) {
@@ -255,6 +260,21 @@ export class PhysicsSystem {
   _handleVerticalCollisions(pos, vel, col, ctrl, level, dt) {
     const leftTile = Math.floor(pos.x / GRID_CONSTANTS.TILE_SIZE);
     const rightTile = Math.floor((pos.x + col.width - 1) / GRID_CONSTANTS.TILE_SIZE);
+    
+    // FIX: Add ceiling collision detection
+    if (vel.vy < 0) {
+        const tileY = Math.floor(pos.y / GRID_CONSTANTS.TILE_SIZE);
+        for (let x = leftTile; x <= rightTile; x++) {
+            const tile = level.getTileAt(x * GRID_CONSTANTS.TILE_SIZE, tileY * GRID_CONSTANTS.TILE_SIZE);
+            if (tile && tile.solid) {
+                pos.y = (tileY + 1) * GRID_CONSTANTS.TILE_SIZE;
+                vel.vy = 0; // Stop upward movement
+                return; // Exit after finding a ceiling collision
+            }
+        }
+    }
+
+    // Ground collision
     const checkY = pos.y + col.height;
     const tileY = Math.floor(checkY / GRID_CONSTANTS.TILE_SIZE);
     
@@ -271,7 +291,6 @@ export class PhysicsSystem {
             pos.y = tileTop - col.height;
             vel.vy = 0;
             col.isGrounded = true;
-            // FIX: Only reset jump count on the frame of landing.
             if (!wasGrounded) {
                 ctrl.jumpCount = 0;
             }
