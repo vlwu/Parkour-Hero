@@ -3,7 +3,8 @@ import { eventBus } from '../../utils/event-bus.js';
 import './settings-menu.js';
 import './pause-modal.js';
 import './levels-menu.js';
-import './character-menu.js'; // <-- Import the new component
+import './character-menu.js';
+import './info-modal.js'; 
 
 export class ParkourHeroUI extends LitElement {
   static styles = css`
@@ -27,17 +28,6 @@ export class ParkourHeroUI extends LitElement {
     }
     .main-menu-buttons button:hover { background-color: #0056b3; transform: translateY(-2px); box-shadow: 0 8px #004a99; }
     .main-menu-buttons button:active { transform: translateY(2px); box-shadow: 0 2px #004a99; }
-    
-    /* Simple placeholder style */
-    .placeholder-modal {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex; justify-content: center; align-items: center;
-      color: white; font-size: 2em;
-    }
-    .placeholder-content {
-        background: #333; padding: 40px; border-radius: 10px;
-    }
   `;
 
   static properties = {
@@ -71,7 +61,7 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('action_escape_pressed', this._handleEscapePress);
     eventBus.subscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
     eventBus.subscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
-    eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets); // <-- Get the assets
+    eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets);
   }
 
   disconnectedCallback() {
@@ -141,10 +131,9 @@ export class ParkourHeroUI extends LitElement {
   
   _handleCharacterSelected(e) {
     const { characterId } = e.detail;
-    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     this.gameState.setSelectedCharacter(characterId);
+    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     eventBus.publish('characterUpdated', characterId);
-    // Force a re-render by updating the state object reference
     this.gameState = { ...this.gameState };
   }
 
@@ -194,12 +183,10 @@ export class ParkourHeroUI extends LitElement {
                       @close-modal=${this._closeModal} @character-selected=${this._handleCharacterSelected}
                     ></character-menu>`;
       case 'info':
-        return html`
-         <div class="placeholder-modal" @click=${this._closeModal}>
-            <div class="placeholder-content" @click=${(e) => e.stopPropagation()}>
-                Info Modal (To Be Implemented) <br> <button @click=${this._closeModal}>Close</button>
-            </div>
-          </div>`;
+        return html`<info-modal
+                      .keybinds=${this.keybinds}
+                      @close-modal=${this._closeModal}
+                    ></info-modal>`;
       default:
         return html``;
     }
