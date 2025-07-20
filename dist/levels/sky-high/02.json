@@ -4,7 +4,7 @@
   "gridHeight": 53,
   "background": "background_blue",
   "startPosition": {
-    "x": 13.33,
+    "x": 13,
     "y": 47.92
   },
   "layout": [
@@ -112,6 +112,11 @@
       "type": "trophy",
       "x": 21.79,
       "y": 9.67
+    },
+    {
+      "type": "trampoline",
+      "x": 13,
+      "y": 49.71
     }
   ]
 }
