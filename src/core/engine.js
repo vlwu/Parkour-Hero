@@ -53,8 +53,7 @@ export class Engine {
     this.levelTime = 0;
     this.currentLevel = null;
     this.collectedFruits = [];
-    this.menuManager = null;
-
+    
     this._setupEventSubscriptions();
   }
   
@@ -62,8 +61,7 @@ export class Engine {
     eventBus.subscribe('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
     eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
     eventBus.subscribe('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
-    eventBus.subscribe('requestResume', () => this.resume());
-    eventBus.subscribe('requestPause', () => this.pause());
+    eventBus.subscribe('requestTogglePause', () => this.togglePause());
     eventBus.subscribe('keybindsUpdated', (newKeybinds) => this.updateKeybinds(newKeybinds));
     
     eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
@@ -73,24 +71,15 @@ export class Engine {
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
     eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
     eventBus.subscribe('allMenusClosed', () => this.pauseForMenu = false);
-    
-    eventBus.subscribe('action_confirm_pressed', () => this._handleActionConfirm());
-    eventBus.subscribe('action_restart_pressed', () => this._handleActionRestart());
-    eventBus.subscribe('action_next_pressed', () => this._handleActionNext());
-    eventBus.subscribe('action_previous_pressed', () => this._handleActionPrevious());
   }
 
-  _handleActionConfirm() {
-    if (this.gameState.showingLevelComplete) {
-      this.menuManager.handleLevelCompleteAction(this.levelManager.hasNextLevel() ? 'next' : 'restart');
-    }
+  togglePause() {
+      if (this.isRunning) {
+          this.pause();
+      } else if (!this.pauseForMenu && !this.gameState.showingLevelComplete) {
+          this.resume();
+      }
   }
-
-  _handleActionRestart() { if (this.gameState.showingLevelComplete) this.menuManager.handleLevelCompleteAction('restart'); }
-  _handleActionNext() { if (this.gameState.showingLevelComplete && this.levelManager.hasNextLevel()) this.menuManager.handleLevelCompleteAction('next'); }
-  _handleActionPrevious() { if (this.gameState.showingLevelComplete && this.levelManager.hasPreviousLevel()) this.menuManager.handleLevelCompleteAction('previous'); }
-  
-  setMenuManager(menuManager) { this.menuManager = menuManager; this.menuManager.setLevelManager(this.levelManager); }
 
   updatePlayerCharacter(newCharId) {
     if (this.playerEntityId === null) return;
@@ -99,6 +88,7 @@ export class Engine {
   }
 
   updateKeybinds(newKeybinds) { this.keybinds = { ...newKeybinds }; }
+  
   start() { if (this.isRunning) return; this.isRunning = true; this.gameHasStarted = true; this.lastFrameTime = performance.now(); eventBus.publish('gameStarted'); eventBus.publish('gameResumed'); this.gameLoop(); }
   stop() { this.isRunning = false; this.soundManager.stopAll(); }
 
@@ -112,7 +102,7 @@ export class Engine {
   }
 
   resume() {
-    if (this.pauseForMenu || this.isRunning) return;
+    if (this.pauseForMenu || this.isRunning || !this.gameHasStarted) return;
     this.isRunning = true;
     this.lastFrameTime = performance.now();
     eventBus.publish('gameResumed');
@@ -155,6 +145,8 @@ export class Engine {
   }
 
   update(dt) {
+    if (!this.currentLevel) return;
+
     if (this.isRunning && !this.gameState.showingLevelComplete) {
       this.levelTime = (performance.now() - this.levelStartTime) / 1000;
     }
@@ -173,7 +165,7 @@ export class Engine {
     for(const system of this.systems) system.update(dt, context);
     
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
-    if (playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) this._respawnPlayer();
+    if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) this._respawnPlayer();
 
     this.currentLevel.updateFruits(dt);
     this.currentLevel.updateTrophyAnimation(dt);
@@ -190,7 +182,7 @@ export class Engine {
         }
     }
 
-    if (playerCtrl.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
+    if (playerCtrl && playerCtrl.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
       this.gameState.onLevelComplete();
       playerCtrl.despawnAnimationFinished = false; 
       eventBus.publish('levelComplete', { deaths: playerCtrl.deathCount, time: this.levelTime });
@@ -280,11 +272,12 @@ export class Engine {
   }
   
   render(dt) {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      this.renderer.drawScrollingBackground(this.currentLevel, dt);
-      this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager, this.collectedFruits);
-      this.particleSystem.render(this.ctx, this.camera);
-      this.hud.drawGameHUD(this.ctx);
-      this.uiSystem.render(this.ctx, this.isRunning);
+    if (!this.currentLevel) return;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.renderer.drawScrollingBackground(this.currentLevel, dt);
+    this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager, this.collectedFruits);
+    this.particleSystem.render(this.ctx, this.camera);
+    this.hud.drawGameHUD(this.ctx);
+    this.uiSystem.render(this.ctx, this.isRunning);
   }
 }

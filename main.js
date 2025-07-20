@@ -1,10 +1,11 @@
 import { Engine } from './src/core/engine.js';
 import { loadAssets } from './src/managers/asset-manager.js';
 import { InputManager } from './src/systems/input-system.js';
-import { MenuManager } from './src/ui/menu-manager.js';
+// REMOVE: import { MenuManager } from './src/ui/menu-manager.js';
 import { eventBus } from './src/utils/event-bus.js';
 import { FontRenderer } from './src/ui/font-renderer.js';
 import { inputState } from './src/systems/input-state.js';
+import './src/ui/ui-main.js'; // <-- NEW: Import the UI entry point
 
 // Get canvas element and context
 const canvas = document.getElementById('gameCanvas');
@@ -100,7 +101,7 @@ let keybinds = {
 // Load assets and start the game
 let engine;
 let inputManager;
-let menuManager;
+// REMOVE: let menuManager;
 
 loadAssets().then((assets) => {
   console.log('Assets loaded successfully, preparing main menu...');
@@ -109,18 +110,15 @@ loadAssets().then((assets) => {
     const fontRenderer = new FontRenderer(assets.font_spritesheet);
     engine = new Engine(ctx, canvas, assets, keybinds, fontRenderer);
 
-    // Initialize MenuManager to handle all DOM UI
-    menuManager = new MenuManager(assets, engine.gameState, keybinds, fontRenderer, engine.soundManager);
+    // REMOVED: All MenuManager initialization logic
     
     // Link the engine to the menu manager so they can communicate.
-    engine.setMenuManager(menuManager);
+    // REMOVED: engine.setMenuManager(menuManager);
 
     // Initialize the now-independent InputManager.
-    // The `inputState` singleton is initialized automatically on import.
     inputManager = new InputManager();
     
-    // Initialize UI event listeners and set initial states
-    menuManager.init();
+    // The old menu manager init is gone. The Lit component handles its own initialization.
     
     // Listen for the request to start the game from the main menu
     eventBus.subscribe('requestStartGame', () => {
