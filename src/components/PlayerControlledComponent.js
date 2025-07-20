@@ -19,7 +19,9 @@ export class PlayerControlledComponent {
         needsRespawn = false,
         deathCount = 0,
         activeSurfaceSound = null,
-        surfaceParticleTimer = 0
+        surfaceParticleTimer = 0,
+        jumpPressed = false, 
+        dashPressed = false  
     } = {}) {
         this.speed = speed;
         this.jumpForce = jumpForce;
@@ -41,6 +43,10 @@ export class PlayerControlledComponent {
         this.isDespawning = isDespawning;
         this.despawnAnimationFinished = despawnAnimationFinished;
         this.needsRespawn = needsRespawn;
+        
+        // Input "edge-case" tracking
+        this.jumpPressed = jumpPressed;
+        this.dashPressed = dashPressed;
         
         // Stats & Sounds
         this.deathCount = deathCount;

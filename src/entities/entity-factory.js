@@ -10,6 +10,7 @@ import { StateComponent } from '../components/StateComponent.js';
 
 /**
  * Creates a player entity and adds its components to the entity manager.
+ * This function acts as a "recipe" for what a player entity is.
  * @param {EntityManager} entityManager The entity manager instance.
  * @param {number} x The initial x-position.
  * @param {number} y The initial y-position.
@@ -40,10 +41,9 @@ export function createPlayer(entityManager, x, y, characterId) {
         height: PLAYER_CONSTANTS.HEIGHT,
     }));
     
-    // Add the new components required for the refactored systems.
+    // Add the components required for the refactored systems.
     entityManager.addComponent(playerEntityId, new InputComponent());
     entityManager.addComponent(playerEntityId, new StateComponent('spawn'));
-
 
     return playerEntityId;
 }

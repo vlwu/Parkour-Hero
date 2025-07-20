@@ -1,0 +1,175 @@
+import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { eventBus } from '../utils/event-bus.js';
+import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
+import { PositionComponent } from '../components/PositionComponent.js';
+import { VelocityComponent } from '../components/VelocityComponent.js';
+import { CollisionComponent } from '../components/CollisionComponent.js';
+import { RenderableComponent } from '../components/RenderableComponent.js';
+import { InputComponent } from '../components/InputComponent.js';
+import { StateComponent } from '../components/StateComponent.js';
+
+/**
+ * Manages the state of player-controlled entities.
+ * This includes handling the Finite State Machine (FSM), responding to input
+ * to trigger state transitions (like jumping and dashing), and updating animations.
+ */
+export class PlayerStateSystem {
+    constructor() {}
+
+    update(dt, { entityManager }) {
+        const entities = entityManager.query([
+            PlayerControlledComponent, PositionComponent, VelocityComponent, CollisionComponent,
+            RenderableComponent, InputComponent, StateComponent
+        ]);
+
+        for (const entityId of entities) {
+            const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+            const pos = entityManager.getComponent(entityId, PositionComponent);
+            const vel = entityManager.getComponent(entityId, VelocityComponent);
+            const col = entityManager.getComponent(entityId, CollisionComponent);
+            const renderable = entityManager.getComponent(entityId, RenderableComponent);
+            const input = entityManager.getComponent(entityId, InputComponent);
+            const state = entityManager.getComponent(entityId, StateComponent);
+
+            this._updateTimers(dt, ctrl);
+            this._handleInput(input, pos, vel, ctrl, col, renderable, state);
+            this._updateFSM(vel, ctrl, col, renderable, state);
+            this._updateAnimation(dt, ctrl, renderable);
+            
+            if (col.isGrounded) {
+                ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
+            }
+        }
+    }
+
+    _updateTimers(dt, ctrl) {
+        if (ctrl.jumpBufferTimer > 0) ctrl.jumpBufferTimer -= dt;
+        if (ctrl.coyoteTimer > 0) ctrl.coyoteTimer -= dt;
+        if (ctrl.dashCooldownTimer > 0) ctrl.dashCooldownTimer -= dt;
+    }
+
+    _handleInput(input, pos, vel, ctrl, col, renderable, state) {
+        if (ctrl.isSpawning || ctrl.isDashing || ctrl.isDespawning) {
+            return;
+        }
+
+        if (input.moveLeft) renderable.direction = 'left';
+        else if (input.moveRight) renderable.direction = 'right';
+
+        const justPressedJump = input.jump && !ctrl.jumpPressed;
+
+        if (input.jump) {
+            ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
+        }
+
+        if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0)) {
+            const jumpForce = ctrl.jumpForce * (col.groundType === 'mud' ? PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER : 1);
+            vel.vy = -jumpForce;
+            ctrl.jumpCount = 1;
+            ctrl.jumpBufferTimer = 0;
+            ctrl.coyoteTimer = 0;
+            eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
+        } else if (justPressedJump && col.isAgainstWall && !col.isGrounded) {
+            vel.vx = (renderable.direction === 'left' ? 1 : -1) * ctrl.speed;
+            renderable.direction = renderable.direction === 'left' ? 'right' : 'left';
+            vel.vy = -ctrl.jumpForce;
+            ctrl.jumpCount = 1;
+            eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
+        } else if (justPressedJump && ctrl.jumpCount === 1 && !col.isGrounded && !col.isAgainstWall) {
+            vel.vy = -ctrl.jumpForce;
+            ctrl.jumpCount = 2;
+            ctrl.jumpBufferTimer = 0;
+            this._setAnimationState(renderable, state, 'double_jump', ctrl);
+            eventBus.publish('playSound', { key: 'double_jump', volume: 0.6, channel: 'SFX' });
+            eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'double_jump' });
+        }
+
+        ctrl.jumpPressed = input.jump;
+
+        if (input.dash && !ctrl.dashPressed && ctrl.dashCooldownTimer <= 0) {
+            ctrl.isDashing = true;
+            ctrl.dashTimer = ctrl.dashDuration;
+            vel.vx = renderable.direction === 'right' ? ctrl.dashSpeed : -ctrl.dashSpeed;
+            vel.vy = 0;
+            ctrl.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN;
+            this._setAnimationState(renderable, state, 'dash', ctrl);
+            eventBus.publish('playSound', { key: 'dash', volume: 0.7, channel: 'SFX' });
+            eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: 'dash', direction: renderable.direction });
+        }
+        ctrl.dashPressed = input.dash;
+        
+        if (ctrl.isDashing) {
+            ctrl.dashTimer -= dt;
+            if (ctrl.dashTimer <= 0) ctrl.isDashing = false;
+        }
+    }
+
+    _updateFSM(vel, ctrl, col, renderable, state) {
+        const currentState = state.currentState;
+        if (currentState === 'spawn' || currentState === 'despawn') return;
+
+        if (ctrl.isDashing) {
+            if (currentState !== 'dash') this._setAnimationState(renderable, state, 'dash', ctrl);
+            return;
+        }
+
+        if (col.isAgainstWall && !col.isGrounded && vel.vy >= 0) {
+            if (currentState !== 'cling') this._setAnimationState(renderable, state, 'cling', ctrl);
+        } else if (!col.isGrounded) {
+            if (vel.vy < 0 && currentState !== 'jump' && currentState !== 'double_jump') {
+                this._setAnimationState(renderable, state, 'jump', ctrl);
+            } else if (vel.vy >= 0 && currentState !== 'fall') {
+                this._setAnimationState(renderable, state, 'fall', ctrl);
+            }
+        } else {
+            if (Math.abs(vel.vx) > 1) {
+                if (currentState !== 'run') this._setAnimationState(renderable, state, 'run', ctrl);
+            } else {
+                if (currentState !== 'idle') this._setAnimationState(renderable, state, 'idle', ctrl);
+            }
+        }
+    }
+
+    _setAnimationState(renderable, state, newState, ctrl) {
+        if (state.currentState !== newState) {
+            state.currentState = newState;
+            renderable.animationState = newState;
+            renderable.animationFrame = 0;
+            renderable.animationTimer = 0;
+            if (newState === 'cling') {
+                ctrl.jumpCount = 1;
+            } else if (newState === 'idle' || newState === 'run') {
+                ctrl.jumpCount = 0;
+            }
+        }
+    }
+
+    _updateAnimation(dt, ctrl, renderable) {
+        renderable.animationTimer += dt;
+        const stateName = renderable.animationState;
+        const speed = (stateName === 'spawn' || stateName === 'despawn') ? PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED : PLAYER_CONSTANTS.ANIMATION_SPEED;
+        if (renderable.animationTimer < speed) return;
+        
+        renderable.animationTimer -= speed;
+        const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
+        renderable.animationFrame++;
+        
+        if (stateName === 'spawn' || stateName === 'despawn') {
+            if (renderable.animationFrame >= frameCount) {
+                renderable.animationFrame = frameCount - 1;
+                if (stateName === 'spawn') {
+                    ctrl.isSpawning = false;
+                    ctrl.spawnComplete = true;
+                    renderable.width = PLAYER_CONSTANTS.WIDTH;
+                    renderable.height = PLAYER_CONSTANTS.HEIGHT;
+                }
+                if (stateName === 'despawn') {
+                    ctrl.isDespawning = false;
+                    ctrl.despawnAnimationFinished = true;
+                }
+            }
+        } else {
+            renderable.animationFrame %= frameCount;
+        }
+    }
+}

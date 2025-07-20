@@ -8,7 +8,6 @@ import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ParticleSystem } from '../systems/particle-system.js';
 import { UISystem } from '../ui/ui-system.js';
-import { inputState } from '../systems/input-state.js';
 import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
@@ -18,10 +17,11 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
 import { PLAYER_CONSTANTS } from '../utils/constants.js';
-// Import the new systems
 import { InputSystemProcessor } from '../systems/input-system-processor.js';
-import { PlayerSystem } from '../systems/player-system.js';
 import { GameplaySystem } from '../systems/gameplay-system.js';
+
+import { PlayerStateSystem } from '../systems/player-state-system.js';
+import { MovementSystem } from '../systems/movement-system.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -52,18 +52,19 @@ export class Engine {
 
     // --- System Instantiation ---
     this.inputSystemProcessor = new InputSystemProcessor();
-    this.playerSystem = new PlayerSystem(); // Temporary player logic system
-    this.collisionSystem = new CollisionSystem();
-    this.gameplaySystem = new GameplaySystem(); // Handles game rules
+    this.playerStateSystem = new PlayerStateSystem(); // Manages player FSM and animations.
+    this.movementSystem = new MovementSystem();     // Applies physics forces.
+    this.collisionSystem = new CollisionSystem();   // Moves entities and detects collisions.
+    this.gameplaySystem = new GameplaySystem();     // Handles game rules.
     this.particleSystem = new ParticleSystem(assets);
     this.uiSystem = new UISystem(canvas, assets);
 
     // --- System Execution Order ---
     this.systems = [
         this.inputSystemProcessor,      // 1. Read hardware input into components.
-        this.playerSystem,              // 2. Apply player-specific logic, physics, and state changes.
-        this.collisionSystem,           // 3. Move entities and resolve/report tile collisions.
-        this.gameplaySystem,            // 4. Act on collision events (event-driven).
+        this.playerStateSystem,         // 2. Determine entity state from input and world.
+        this.movementSystem,            // 3. Apply physics forces based on state.
+        this.collisionSystem,           // 4. Move entities and resolve/report collisions.
         this.particleSystem,            // 5. Update visual effects.
         this.uiSystem,                  // 6. Update UI buttons.
     ];
@@ -77,6 +78,7 @@ export class Engine {
   }
   
   _setupEventSubscriptions() {
+    this.gameplaySystem.engine = this; // Give gameplay system a reference to the engine for now
     eventBus.subscribe('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
     eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
     eventBus.subscribe('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
@@ -190,8 +192,6 @@ export class Engine {
     };
 
     for(const system of this.systems) {
-      // The gameplay system is purely event-driven and doesn't need an update call.
-      if (system instanceof GameplaySystem) continue;
       system.update(dt, context);
     }
     
