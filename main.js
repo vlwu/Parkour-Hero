@@ -101,7 +101,6 @@ let keybinds = {
 // Load assets and start the game
 let engine;
 let inputManager;
-// REMOVE: let menuManager;
 
 loadAssets().then((assets) => {
   console.log('Assets loaded successfully, preparing main menu...');
@@ -110,15 +109,10 @@ loadAssets().then((assets) => {
     const fontRenderer = new FontRenderer(assets.font_spritesheet);
     engine = new Engine(ctx, canvas, assets, keybinds, fontRenderer);
 
-    // REMOVED: All MenuManager initialization logic
-    
-    // Link the engine to the menu manager so they can communicate.
-    // REMOVED: engine.setMenuManager(menuManager);
+    eventBus.publish('assetsLoaded', assets);
 
     // Initialize the now-independent InputManager.
     inputManager = new InputManager();
-    
-    // The old menu manager init is gone. The Lit component handles its own initialization.
     
     // Listen for the request to start the game from the main menu
     eventBus.subscribe('requestStartGame', () => {

@@ -3,6 +3,7 @@ import { eventBus } from '../../utils/event-bus.js';
 import './settings-menu.js';
 import './pause-modal.js';
 import './levels-menu.js';
+import './character-menu.js'; // <-- Import the new component
 
 export class ParkourHeroUI extends LitElement {
   static styles = css`
@@ -46,6 +47,7 @@ export class ParkourHeroUI extends LitElement {
     soundSettings: { type: Object, state: true },
     currentStats: { type: Object, state: true },
     gameState: { type: Object, state: true },
+    assets: { type: Object, state: true },
   };
 
   constructor() {
@@ -56,6 +58,7 @@ export class ParkourHeroUI extends LitElement {
     this.soundSettings = { soundEnabled: true, soundVolume: 0.5 };
     this.currentStats = {};
     this.gameState = null;
+    this.assets = null;
   }
 
   connectedCallback() {
@@ -66,10 +69,9 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('ui_button_clicked', this._handleUIButtonClick);
     eventBus.subscribe('statsUpdated', this._handleStatsUpdate);
     eventBus.subscribe('action_escape_pressed', this._handleEscapePress);
-    
-    // FIX: Assign the instance directly, don't create a shallow copy
     eventBus.subscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
     eventBus.subscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
+    eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets); // <-- Get the assets
   }
 
   disconnectedCallback() {
@@ -80,9 +82,9 @@ export class ParkourHeroUI extends LitElement {
     eventBus.unsubscribe('ui_button_clicked', this._handleUIButtonClick);
     eventBus.unsubscribe('statsUpdated', this._handleStatsUpdate);
     eventBus.unsubscribe('action_escape_pressed', this._handleEscapePress);
-    
     eventBus.unsubscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
     eventBus.unsubscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
+    eventBus.unsubscribe('assetsLoaded', (assets) => this.assets = assets);
   }
 
   _handleStartGame = () => {
@@ -97,12 +99,8 @@ export class ParkourHeroUI extends LitElement {
 
   _handleUIButtonClick = ({ buttonId }) => {
     if (buttonId === 'pause') {
-      if (this.activeModal) {
-        this._closeModal();
-      } else if (this.gameHasStarted) {
-        this.activeModal = 'pause';
-        eventBus.publish('menuOpened');
-      }
+      if (this.activeModal) { this._closeModal(); } 
+      else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
     } else {
       this.activeModal = buttonId;
       eventBus.publish('menuOpened');
@@ -110,12 +108,8 @@ export class ParkourHeroUI extends LitElement {
   };
 
   _handleEscapePress = () => {
-    if (this.activeModal) {
-      this._closeModal();
-    } else if (this.gameHasStarted) {
-      this.activeModal = 'pause';
-      eventBus.publish('menuOpened');
-    }
+    if (this.activeModal) { this._closeModal(); }
+    else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
   };
 
   _handleKeybindChange = (e) => {
@@ -127,10 +121,7 @@ export class ParkourHeroUI extends LitElement {
   _closeModal = () => {
     const wasOpen = this.activeModal !== null;
     this.activeModal = this.gameHasStarted ? null : 'main-menu';
-
-    if (wasOpen && this.gameHasStarted) {
-        eventBus.publish('allMenusClosed');
-    }
+    if (wasOpen && this.gameHasStarted) { eventBus.publish('allMenusClosed'); }
   }
   
   _openModalFromMenu(modalName) {
@@ -139,20 +130,22 @@ export class ParkourHeroUI extends LitElement {
   }
 
   // --- Modal Event Handlers ---
-  _handleRestart() {
-    this._closeModal();
-    eventBus.publish('requestLevelRestart');
-  }
-
-  _handleOpenLevelsMenu() {
-    this.activeModal = 'levels';
-  }
-
+  _handleRestart() { this._closeModal(); eventBus.publish('requestLevelRestart'); }
+  _handleOpenLevelsMenu() { this.activeModal = 'levels'; }
+  
   _handleLevelSelected(e) {
     const { sectionIndex, levelIndex } = e.detail;
-    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     this._closeModal();
     eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
+  }
+  
+  _handleCharacterSelected(e) {
+    const { characterId } = e.detail;
+    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+    this.gameState.setSelectedCharacter(characterId);
+    eventBus.publish('characterUpdated', characterId);
+    // Force a re-render by updating the state object reference
+    this.gameState = { ...this.gameState };
   }
 
   render() {
@@ -182,38 +175,29 @@ export class ParkourHeroUI extends LitElement {
     switch (this.activeModal) {
       case 'settings':
         return html`<settings-menu 
-                      .keybinds=${this.keybinds}
-                      .soundSettings=${this.soundSettings}
-                      @close-modal=${this._closeModal}
-                      @keybind-changed=${this._handleKeybindChange}
+                      .keybinds=${this.keybinds} .soundSettings=${this.soundSettings}
+                      @close-modal=${this._closeModal} @keybind-changed=${this._handleKeybindChange}
                     ></settings-menu>`;
       case 'pause':
         return html`<pause-modal
                       .stats=${this.currentStats}
-                      @resume-game=${this._closeModal}
-                      @restart-level=${this._handleRestart}
-                      @open-levels-menu=${this._handleOpenLevelsMenu}
+                      @resume-game=${this._closeModal} @restart-level=${this._handleRestart} @open-levels-menu=${this._handleOpenLevelsMenu}
                     ></pause-modal>`;
       case 'levels':
         return html`<levels-menu
                       .gameState=${this.gameState}
-                      @close-modal=${this._closeModal}
-                      @level-selected=${this._handleLevelSelected}
+                      @close-modal=${this._closeModal} @level-selected=${this._handleLevelSelected}
                     ></levels-menu>`;
       case 'character':
-        return html`
-         <div class="placeholder-modal" @click=${this._closeModal}>
-            <div class="placeholder-content" @click=${(e) => e.stopPropagation()}>
-                Character Menu (To Be Implemented) <br>
-                <button @click=${this._closeModal}>Close</button>
-            </div>
-          </div>`;
+        return html`<character-menu
+                      .gameState=${this.gameState} .assets=${this.assets}
+                      @close-modal=${this._closeModal} @character-selected=${this._handleCharacterSelected}
+                    ></character-menu>`;
       case 'info':
         return html`
          <div class="placeholder-modal" @click=${this._closeModal}>
             <div class="placeholder-content" @click=${(e) => e.stopPropagation()}>
-                Info Modal (To Be Implemented) <br>
-                <button @click=${this._closeModal}>Close</button>
+                Info Modal (To Be Implemented) <br> <button @click=${this._closeModal}>Close</button>
             </div>
           </div>`;
       default:
