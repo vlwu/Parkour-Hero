@@ -42,8 +42,8 @@ export class Engine {
     this.soundManager.loadSounds(assets);
     this.renderer = new Renderer(ctx, canvas, assets);
     this.gameState = new GameState();
-
     eventBus.publish('gameStateUpdated', this.gameState);
+
     this.levelManager = new LevelManager(this.gameState); 
 
     this.physicsSystem = new PhysicsSystem();
@@ -71,7 +71,6 @@ export class Engine {
     eventBus.subscribe('playerDied', () => this._onPlayerDied());
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
     
-    // Simplified pause logic
     eventBus.subscribe('menuOpened', () => {
         this.pauseForMenu = true;
         this.pause();
@@ -80,6 +79,9 @@ export class Engine {
         this.pauseForMenu = false;
         this.resume();
     });
+    
+    // The engine listens for gameState updates to keep its own reference fresh
+    eventBus.subscribe('gameStateUpdated', (newState) => this.gameState = newState);
   }
 
   updatePlayerCharacter(newCharId) {
@@ -122,12 +124,21 @@ export class Engine {
   }
 
   loadLevel(sectionIndex, levelIndex) {
+    this.levelManager.gameState = this.gameState; // Ensure level manager has the latest state
     const newLevel = this.levelManager.loadLevel(sectionIndex, levelIndex);
     if (!newLevel) { this.stop(); return; }
     
     this.currentLevel = newLevel;
     this.pauseForMenu = false;
-    this.gameState.showingLevelComplete = false;
+    
+    // Create a new GameState instance for the new level
+    const newState = new GameState(this.gameState);
+    newState.showingLevelComplete = false;
+    newState.currentSection = sectionIndex;
+    newState.currentLevelIndex = levelIndex;
+    this.gameState = newState;
+    eventBus.publish('gameStateUpdated', this.gameState);
+
     this.collectedFruits = [];
     this.lastCheckpoint = null;
     this.fruitsAtLastCheckpoint.clear();
@@ -184,9 +195,23 @@ export class Engine {
     }
 
     if (playerCtrl && playerCtrl.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
-      this.gameState.onLevelComplete();
       playerCtrl.despawnAnimationFinished = false; 
-      eventBus.publish('levelComplete', { deaths: playerCtrl.deathCount, time: this.levelTime });
+      
+      // FIX: Handle the new immutable state flow
+      const newGameState = this.gameState.onLevelComplete();
+      if (newGameState !== this.gameState) {
+          this.gameState = newGameState;
+          eventBus.publish('gameStateUpdated', this.gameState); // Inform UI about the state change
+          this.pause(); // Pause the game
+          
+          // Publish the specific event for the modal with stats
+          eventBus.publish('levelComplete', { 
+              deaths: playerCtrl.deathCount, 
+              time: this.levelTime,
+              hasNextLevel: this.levelManager.hasNextLevel(),
+              hasPreviousLevel: this.levelManager.hasPreviousLevel(),
+          });
+      }
     }
 
     eventBus.publish('statsUpdated', {

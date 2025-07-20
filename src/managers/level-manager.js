@@ -6,6 +6,9 @@ export class LevelManager {
   constructor(gameState) {
     this.gameState = gameState;
     this.levelSections = levelSections;
+
+    eventBus.subscribe('requestNextLevel', () => this.goToNextLevel());
+    eventBus.subscribe('requestPreviousLevel', () => this.goToPreviousLevel());
   }
 
   /**
@@ -43,6 +46,30 @@ export class LevelManager {
   hasPreviousLevel() {
     const { currentSection, currentLevelIndex } = this.gameState;
     return currentLevelIndex > 0 || currentSection > 0;
+  }
+
+  goToNextLevel() {
+      if (!this.hasNextLevel()) return;
+      let { currentSection, currentLevelIndex } = this.gameState;
+      if (currentLevelIndex + 1 < this.levelSections[currentSection].levels.length) {
+          currentLevelIndex++;
+      } else if (currentSection + 1 < this.levelSections.length) {
+          currentSection++;
+          currentLevelIndex = 0;
+      }
+      eventBus.publish('requestLevelLoad', { sectionIndex: currentSection, levelIndex: currentLevelIndex });
+  }
+
+  goToPreviousLevel() {
+      if (!this.hasPreviousLevel()) return;
+      let { currentSection, currentLevelIndex } = this.gameState;
+      if (currentLevelIndex > 0) {
+          currentLevelIndex--;
+      } else if (currentSection > 0) {
+          currentSection--;
+          currentLevelIndex = this.levelSections[currentSection].levels.length - 1;
+      }
+      eventBus.publish('requestLevelLoad', { sectionIndex: currentSection, levelIndex: currentLevelIndex });
   }
 
   /**

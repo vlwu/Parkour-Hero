@@ -5,6 +5,7 @@ import './pause-modal.js';
 import './levels-menu.js';
 import './character-menu.js';
 import './info-modal.js';
+import './level-complete-modal.js'; 
 import './bitmap-text.js';
 
 export class ParkourHeroUI extends LitElement {
@@ -51,6 +52,7 @@ export class ParkourHeroUI extends LitElement {
     gameState: { type: Object, state: true },
     assets: { type: Object, state: true },
     fontRenderer: { type: Object },
+    levelCompleteStats: { type: Object, state: true },
   };
 
   constructor() {
@@ -63,6 +65,7 @@ export class ParkourHeroUI extends LitElement {
     this.gameState = null;
     this.assets = null;
     this.fontRenderer = null;
+    this.levelCompleteStats = null;
   }
 
   connectedCallback() {
@@ -73,11 +76,10 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('ui_button_clicked', this._handleUIButtonClick);
     eventBus.subscribe('statsUpdated', this._handleStatsUpdate);
     eventBus.subscribe('action_escape_pressed', this._handleEscapePress);
-    
-    // This listener now sets the initial state and also catches updates from the engine
     eventBus.subscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
     eventBus.subscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
     eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets);
+    eventBus.subscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
   }
 
   disconnectedCallback() {
@@ -91,6 +93,13 @@ export class ParkourHeroUI extends LitElement {
     eventBus.unsubscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
     eventBus.unsubscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
     eventBus.unsubscribe('assetsLoaded', (assets) => this.assets = assets);
+    eventBus.unsubscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
+  }
+
+  // New handler to hide the level complete screen when a new level starts
+  _handleLevelLoad = ({ gameState }) => {
+      this.gameState = gameState;
+      this.levelCompleteStats = null;
   }
 
   _handleStartGame = () => {
@@ -148,7 +157,6 @@ export class ParkourHeroUI extends LitElement {
   _handleCharacterSelected(e) {
     const { characterId } = e.detail;
     
-    // FIX: Call the immutable method, which returns a new instance
     const newGameState = this.gameState.setSelectedCharacter(characterId);
     
     // If the state actually changed, update our property and notify the game engine
@@ -161,7 +169,35 @@ export class ParkourHeroUI extends LitElement {
     eventBus.publish('characterUpdated', characterId);
   }
 
+  _handleLevelAction(action) {
+      this.levelCompleteStats = null; // Hide the modal first
+      const { currentSection, currentLevelIndex } = this.gameState;
+
+      if (action === 'restart') {
+          eventBus.publish('requestLevelRestart');
+      } else if (action === 'next') {
+          eventBus.publish('requestNextLevel'); // A new, cleaner event
+      } else if (action === 'previous') {
+          eventBus.publish('requestPreviousLevel'); // A new, cleaner event
+      }
+  }
+
   render() {
+    // The level complete modal takes priority over all other UI
+    if (this.levelCompleteStats) {
+      return html`
+        <level-complete-modal
+          .stats=${this.levelCompleteStats}
+          .hasNextLevel=${this.levelCompleteStats.hasNextLevel}
+          .hasPreviousLevel=${this.levelCompleteStats.hasPreviousLevel}
+          .fontRenderer=${this.fontRenderer}
+          @next-level=${() => this._handleLevelAction('next')}
+          @restart-level=${() => this._handleLevelAction('restart')}
+          @previous-level=${() => this._handleLevelAction('previous')}
+        ></level-complete-modal>
+      `;
+    }
+
     if (this.activeModal === 'main-menu' && !this.gameHasStarted) {
       return this.renderMainMenu();
     }
