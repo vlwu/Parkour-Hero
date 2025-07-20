@@ -4,6 +4,7 @@ import { InputManager } from './src/systems/input-system.js';
 import { MenuManager } from './src/ui/menu-manager.js';
 import { eventBus } from './src/utils/event-bus.js';
 import { FontRenderer } from './src/ui/font-renderer.js';
+import { inputState } from './src/systems/input-state.js';
 
 // Get canvas element and context
 const canvas = document.getElementById('gameCanvas');
@@ -107,12 +108,9 @@ loadAssets().then((assets) => {
     // Link the engine to the menu manager so they can communicate.
     engine.setMenuManager(menuManager);
 
-    // Initialize the InputManager, passing the MenuManager for UI context
-    inputManager = new InputManager(
-      engine,
-      canvas,
-      menuManager
-    );
+    // Initialize the now-independent InputManager.
+    // The `inputState` singleton is initialized automatically on import.
+    inputManager = new InputManager();
     
     // Initialize UI event listeners and set initial states
     menuManager.init();

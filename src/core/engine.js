@@ -9,6 +9,7 @@ import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ParticleSystem } from '../systems/particle-system.js';
 import { UISystem } from '../ui/ui-system.js';
+import { inputState } from '../systems/input-state.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -17,7 +18,6 @@ export class Engine {
     this.assets = assets;
     this.fontRenderer = fontRenderer;
     this.lastFrameTime = 0;
-    this.keys = {};
     this.keybinds = initialKeybinds;
     this.isRunning = false;
     this.gameHasStarted = false;
@@ -64,6 +64,9 @@ export class Engine {
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
     eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
     eventBus.subscribe('allMenusClosed', () => this.pauseForMenu = false);
+    eventBus.subscribe('gameStarted', () => {
+        this.uiButtons.forEach(b => b.visible = true);
+    });
 
     eventBus.subscribe('action_confirm_pressed', () => this._handleActionConfirm());
     eventBus.subscribe('action_restart_pressed', () => this._handleActionRestart());
@@ -208,10 +211,10 @@ export class Engine {
     const canProcessGameplayInput = this.isRunning && !this.pauseForMenu && !this.gameState.showingLevelComplete;
 
     const inputActions = {
-      moveLeft: canProcessGameplayInput && (this.keys[this.keybinds.moveLeft] || false),
-      moveRight: canProcessGameplayInput && (this.keys[this.keybinds.moveRight] || false),
-      jump: canProcessGameplayInput && (this.keys[this.keybinds.jump] || false),
-      dash: canProcessGameplayInput && (this.keys[this.keybinds.dash] || false),
+      moveLeft: canProcessGameplayInput && (inputState.isKeyDown(this.keybinds.moveLeft)),
+      moveRight: canProcessGameplayInput && (inputState.isKeyDown(this.keybinds.moveRight)),
+      jump: canProcessGameplayInput && (inputState.isKeyDown(this.keybinds.jump)),
+      dash: canProcessGameplayInput && (inputState.isKeyDown(this.keybinds.dash)),
     };
 
     this.player.handleInput(inputActions);
@@ -225,10 +228,13 @@ export class Engine {
         camera: this.camera,
         isRunning: this.isRunning
     };
-
-    for(const system of this.systems) {
-        system.update(dt, context);
-    }
+    
+    // The physics system needs the updated context.
+    this.physicsSystem.update(dt, context);
+    
+    // Other systems might just need dt.
+    this.particleSystem.update(dt, context);
+    this.uiSystem.update(dt, context);
     
     if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
       this._respawnPlayer();

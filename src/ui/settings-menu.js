@@ -24,6 +24,15 @@ export class SettingsMenu {
     this._setupEventListeners();
     eventBus.subscribe('soundSettingsChanged', (settings) => this.updateSoundSettingsDisplay(settings));
     eventBus.subscribe('statsUpdated', (stats) => this.updateSoundSettingsDisplay(stats));
+    
+    // NEW: Subscribe to raw key events to handle remapping internally.
+    eventBus.subscribe('key_down', ({ rawEvent }) => {
+        if (this.isRemapping()) {
+            rawEvent.preventDefault();
+            rawEvent.stopPropagation();
+            this.setKeybind(rawEvent);
+        }
+    });
   }
   
   _renderToElement(element, text, options) {

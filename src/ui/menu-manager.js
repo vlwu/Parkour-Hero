@@ -144,6 +144,9 @@ export class MenuManager {
           }
       });
       eventBus.subscribe('ui_button_clicked', ({ buttonId }) => this.handleUIButtonClick(buttonId));
+      
+      // NEW: Listen for the specific escape key action.
+      eventBus.subscribe('action_escape_pressed', () => this.handleEscape());
   }
 
   _setupEventListeners() {
@@ -311,17 +314,6 @@ export class MenuManager {
           this._renderToElement(document.getElementById('htp-dash'), formatKeyForDisplay(this.keybinds.dash), options);
       } catch (error) {
           console.warn("Could not update 'How to Play' key displays.", error);
-      }
-  }
-
-  // --- Facade methods for InputManager ---
-  isRemapping() {
-      return this.settingsMenu.isRemapping();
-  }
-
-  setKeybind(e) {
-      if (this.isRemapping()) {
-          this.settingsMenu.setKeybind(e);
       }
   }
 }
