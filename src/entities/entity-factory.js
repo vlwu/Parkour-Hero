@@ -1,0 +1,42 @@
+import { PositionComponent } from '../components/PositionComponent.js';
+import { VelocityComponent } from '../components/VelocityComponent.js';
+import { RenderableComponent } from '../components/RenderableComponent.js';
+import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
+import { CollisionComponent } from '../components/CollisionComponent.js';
+import { CharacterComponent } from '../components/CharacterComponent.js';
+import { PLAYER_CONSTANTS } from '../utils/constants.js';
+
+/**
+ * Creates a player entity and adds its components to the entity manager.
+ * @param {EntityManager} entityManager The entity manager instance.
+ * @param {number} x The initial x-position.
+ * @param {number} y The initial y-position.
+ * @param {string} characterId The ID for the selected character.
+ * @returns {number} The ID of the newly created player entity.
+ */
+export function createPlayer(entityManager, x, y, characterId) {
+    const playerEntityId = entityManager.createEntity();
+
+    entityManager.addComponent(playerEntityId, new PositionComponent(x, y));
+    entityManager.addComponent(playerEntityId, new VelocityComponent());
+    entityManager.addComponent(playerEntityId, new CharacterComponent(characterId));
+
+    // Player starts in the 'spawn' state
+    entityManager.addComponent(playerEntityId, new RenderableComponent({
+        spriteKey: null, // Sprite key is now derived in the renderer
+        width: PLAYER_CONSTANTS.SPAWN_WIDTH,
+        height: PLAYER_CONSTANTS.SPAWN_HEIGHT,
+        animationState: 'spawn',
+    }));
+    
+    entityManager.addComponent(playerEntityId, new PlayerControlledComponent());
+    
+    entityManager.addComponent(playerEntityId, new CollisionComponent({
+        type: 'dynamic',
+        solid: true,
+        width: PLAYER_CONSTANTS.WIDTH,
+        height: PLAYER_CONSTANTS.HEIGHT,
+    }));
+
+    return playerEntityId;
+}

@@ -142,7 +142,7 @@ export class GameState {
           this.saveProgress();
       }
 
-      eventBus.publish('playSound', { key: 'level_complete', volume: 1.0 });
+      eventBus.publish('playSound', { key: 'level_complete', volume: 1.0, channel: 'UI' });
       this.showingLevelComplete = true;
       eventBus.publish('requestPause');
   }
