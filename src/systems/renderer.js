@@ -9,56 +9,82 @@ export class Renderer {
     this.ctx = ctx;
     this.canvas = canvas;
     this.assets = assets;
-    this.backgroundCanvasCache = new Map();
+    this.backgroundCache = new Map(); // Cache for pre-rendered background canvases
+    this.backgroundOffset = { x: 0, y: 0 };
   }
 
-  // Pre-rendering the background is a great optimization and remains unchanged.
+  // --- EFFICIENT BACKGROUND RENDERING ---
   _preRenderBackground(level) {
-    const bgKey = level.background;
-    if (this.backgroundCanvasCache.has(bgKey)) {
-      const cachedData = this.backgroundCanvasCache.get(bgKey);
-      if (cachedData.width === level.width && cachedData.height === level.height) {
-        return cachedData.canvas;
-      }
-    }
-
-    const bg = this.assets[bgKey];
-    const offscreenCanvas = document.createElement('canvas');
-    offscreenCanvas.width = level.width;
-    offscreenCanvas.height = level.height;
-    const offscreenCtx = offscreenCanvas.getContext('2d');
-
-    if (!bg || !bg.complete || bg.naturalWidth === 0) {
-      const gradient = offscreenCtx.createLinearGradient(0, 0, 0, offscreenCanvas.height);
-      gradient.addColorStop(0, '#87CEEB');
-      gradient.addColorStop(1, '#98FB98');
-      offscreenCtx.fillStyle = gradient;
-      offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-    } else {
-      const pattern = offscreenCtx.createPattern(bg, 'repeat');
-      offscreenCtx.fillStyle = pattern;
-      offscreenCtx.fillRect(0, 0, level.width, level.height);
+    const bgAssetKey = level.background;
+    
+    // If we have already pre-rendered this background, return the cached canvas
+    if (this.backgroundCache.has(bgAssetKey)) {
+        return this.backgroundCache.get(bgAssetKey);
     }
     
-    this.backgroundCanvasCache.set(bgKey, {
-        canvas: offscreenCanvas,
-        width: level.width,
-        height: level.height
-    });
+    const bg = this.assets[bgAssetKey];
+    if (!bg || !bg.complete || bg.naturalWidth === 0) {
+        return null; // Asset not ready or invalid
+    }
+
+    // Create an offscreen canvas that is larger than the screen to allow for scrolling
+    // without seeing the edges. Tiling it once in each direction is sufficient.
+    const offscreenCanvas = document.createElement('canvas');
+    const offscreenCtx = offscreenCanvas.getContext('2d');
+    offscreenCanvas.width = this.canvas.width + bg.width;
+    offscreenCanvas.height = this.canvas.height + bg.height;
+
+    // Create the pattern ONCE and fill the offscreen canvas with it
+    const pattern = offscreenCtx.createPattern(bg, 'repeat');
+    offscreenCtx.fillStyle = pattern;
+    offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+    
+    // Store the pre-rendered canvas in the cache
+    this.backgroundCache.set(bgAssetKey, offscreenCanvas);
+    console.log(`Successfully pre-rendered and cached background: ${bgAssetKey}`);
     return offscreenCanvas;
+  }
+  
+  drawScrollingBackground(level, dt) {
+    // Get the pre-rendered background from the cache
+    const bgCanvas = this._preRenderBackground(level);
+
+    if (!bgCanvas) {
+      // Draw a solid color if the background isn't available
+      this.ctx.fillStyle = '#87CEEB';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      return;
+    }
+
+    // Update the scroll offset based on time
+    const scroll = level.backgroundScroll;
+    this.backgroundOffset.x += scroll.x * dt;
+    this.backgroundOffset.y += scroll.y * dt;
+
+    // Use modulo to ensure the offset loops seamlessly
+    const offsetX = this.backgroundOffset.x % bgCanvas.width;
+    const offsetY = this.backgroundOffset.y % bgCanvas.height;
+
+    // Draw the pre-rendered canvas to the screen at the calculated offset
+    this.ctx.drawImage(bgCanvas, offsetX, offsetY, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
+    
+    // Draw a second copy if the offset causes a gap
+    if (offsetX > 0) {
+        this.ctx.drawImage(bgCanvas, offsetX - bgCanvas.width, offsetY, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
+    }
+    if (offsetY > 0) {
+        this.ctx.drawImage(bgCanvas, offsetX, offsetY - bgCanvas.height, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
+    }
+    if (offsetX > 0 && offsetY > 0) {
+        this.ctx.drawImage(bgCanvas, offsetX - bgCanvas.width, offsetY - bgCanvas.height, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
+    }
   }
 
   renderScene(camera, level, player, collectedFruits, particles) {
     camera.apply(this.ctx);
 
-    // 1. Draw the pre-rendered background
-    const backgroundCanvas = this._preRenderBackground(level);
-    this.ctx.drawImage(backgroundCanvas, 0, 0);
-
-    // 2. Draw the new tile-based level geometry
     this.drawTileGrid(level, camera);
 
-    // 3. Draw all dynamic objects (these methods are mostly unchanged)
     if (level.trophy) {
         this.drawTrophy(level.trophy, camera);
     }
@@ -72,37 +98,27 @@ export class Renderer {
     camera.restore(this.ctx);
   }
   
-  /**
-   * Draws the static tile grid, culling to only what is visible by the camera.
-   * This method replaces the old `drawPlatforms` method.
-   * @param {Level} level The level object containing the tile grid.
-   * @param {Camera} camera The camera object for culling.
-   */
   drawTileGrid(level, camera) {
     const tileSize = GRID_CONSTANTS.TILE_SIZE;
     
-    // Calculate the range of tiles visible in the camera's viewport
     const startCol = Math.floor(camera.x / tileSize);
     const endCol = Math.ceil((camera.x + camera.width) / tileSize);
     const startRow = Math.floor(camera.y / tileSize);
     const endRow = Math.ceil((camera.y + camera.height) / tileSize);
 
-    // Loop only over the visible tiles
     for (let y = startRow; y < endRow; y++) {
       for (let x = startCol; x < endCol; x++) {
-        // Ensure we don't try to draw tiles outside the level's bounds
         if (x < 0 || x >= level.gridWidth || y < 0 || y >= level.gridHeight) {
           continue;
         }
 
         const tile = level.tiles[y][x];
         if (tile.type === 'empty') {
-          continue; // Don't draw empty space
+          continue;
         }
 
         const sprite = this.assets[tile.spriteKey];
         if (!sprite) {
-          // Fallback drawing if an asset is missing
           this.ctx.fillStyle = 'magenta';
           this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
           continue;
@@ -111,27 +127,20 @@ export class Renderer {
         const screenX = x * tileSize;
         const screenY = y * tileSize;
 
-        // Handle tiles from a shared spritesheet vs. individual sprite images
         if (tile.spriteConfig) {
             this.ctx.drawImage(
               sprite,
               tile.spriteConfig.srcX, tile.spriteConfig.srcY,
-              tileSize, tileSize, // Source dimensions from spritesheet
+              tileSize, tileSize,
               screenX, screenY,
-              tileSize, tileSize  // Destination dimensions on canvas
+              tileSize, tileSize
             );
         } else {
-            // Draw the whole image for tiles that have their own asset file
             this.ctx.drawImage(sprite, screenX, screenY, tileSize, tileSize);
         }
       }
     }
   }
-
-
-  // --- DYNAMIC OBJECT RENDERING (Unchanged) ---
-  // The logic for drawing the player, fruits, particles, etc., does not need to change
-  // as they are still dynamic, coordinate-based objects.
 
   drawPlayer(player) {
     try {
@@ -143,7 +152,7 @@ export class Renderer {
       let sprite = characterSprites?.[spriteKey] || this.assets[spriteKey];
 
       if (!sprite) {
-        this.ctx.fillStyle = '#FF00FF'; // Fallback
+        this.ctx.fillStyle = '#FF00FF';
         this.ctx.fillRect(player.x, player.y, player.width, player.height);
         return;
       }
@@ -188,7 +197,7 @@ export class Renderer {
     }
   
     const sprite = this.assets['trophy'];
-    if (!sprite) { /* ... fallback drawing ... */ return; }
+    if (!sprite) { return; }
 
     const frameWidth = sprite.width / trophy.frameCount;
     const srcX = frameWidth * trophy.animationFrame;
@@ -206,7 +215,7 @@ export class Renderer {
     for (const fruit of fruits) {
       if (!camera.isRectVisible({x: fruit.x - fruit.size/2, y: fruit.y - fruit.size/2, width: fruit.size, height: fruit.size})) continue;
       const img = this.assets[fruit.spriteKey];
-      if (!img) { /* ... fallback drawing ... */ continue; }
+      if (!img) { continue; }
       const frameWidth = img.width / fruit.frameCount;
       const srcX = frameWidth * fruit.frame;
       this.ctx.drawImage(
@@ -231,10 +240,10 @@ export class Renderer {
                 frameWidth = sprite.width / tramp.frameCount;
                 srcX = tramp.frame * frameWidth;
             }
-        } else { // idle
+        } else {
             sprite = this.assets.trampoline_idle;
             if (sprite) {
-                frameWidth = sprite.width; // Idle is a single frame
+                frameWidth = sprite.width;
             }
         }
 
@@ -243,11 +252,11 @@ export class Renderer {
                 sprite,
                 srcX, 0,
                 frameWidth, sprite.height,
-                tramp.x - tramp.size / 2, // Corrected X
-                tramp.y - tramp.size / 2, // Corrected Y
+                tramp.x - tramp.size / 2,
+                tramp.y - tramp.size / 2,
                 tramp.size, tramp.size
             );
-        } else { // Fallback drawing
+        } else {
             this.ctx.fillStyle = '#8e44ad';
             this.ctx.fillRect(tramp.x - tramp.size / 2, tramp.y - tramp.size / 2, tramp.size, tramp.size);
         }
@@ -297,13 +306,12 @@ export class Renderer {
 
   drawUI(ctx, buttons, hoveredButton, isRunning) {
     ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0); // Ensure we are in screen space
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     for (const button of buttons) {
         if (!button.visible) continue;
 
         let assetKey;
-        // Special case for the pause button's icon state
         if (button.id === 'pause') {
             assetKey = isRunning ? 'pause_icon' : 'play_icon';
         } else {
@@ -320,7 +328,6 @@ export class Renderer {
 
         const isHovered = hoveredButton && hoveredButton.id === button.id;
         
-        // Apply hover effect
         if (isHovered) {
             const scale = 1.1;
             width *= scale;

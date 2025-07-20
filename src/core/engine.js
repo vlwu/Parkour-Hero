@@ -35,16 +35,15 @@ export class Engine {
 
     this.levelStartTime = 0;
     this.levelTime = 0;
-    this.currentLevel = null; // Will be set by loadLevel
+    this.currentLevel = null;
 
     this.particles = [];
-    this.menuManager = null; // Will be set by main.js
+    this.menuManager = null;
 
-    // --- BUTTON SIZE & POSITIONING ADJUSTMENT ---
-    const buttonSize = 64; // NEW: Define the size here
+    const buttonSize = 64;
     const rightPadding = 20;
     const topPadding = 20;
-    const buttonGap = 10; // Space between each button
+    const buttonGap = 10;
     const buttonX = this.canvas.width - buttonSize - rightPadding;
 
     this.uiButtons = [
@@ -79,14 +78,12 @@ export class Engine {
         this.uiButtons.forEach(b => b.visible = true);
     });
 
-    // Subscriptions to handle decoupled input actions
     eventBus.subscribe('action_confirm_pressed', () => this._handleActionConfirm());
     eventBus.subscribe('action_restart_pressed', () => this._handleActionRestart());
     eventBus.subscribe('action_next_pressed', () => this._handleActionNext());
     eventBus.subscribe('action_previous_pressed', () => this._handleActionPrevious());
   }
 
-  // Action handlers that check game state before acting
   _handleActionConfirm() {
     if (this.gameState.showingLevelComplete) {
       const action = this.levelManager.hasNextLevel() ? 'next' : 'restart';
@@ -114,14 +111,12 @@ export class Engine {
 
   setMenuManager(menuManager) {
       this.menuManager = menuManager;
-      // Pass the level manager to the menu manager so it can check hasNextLevel, etc.
       this.menuManager.setLevelManager(this.levelManager); 
   }
 
   updatePlayerCharacter(newCharId) {
     if (this.player) {
       this.player.characterId = newCharId || this.gameState.selectedCharacter;
-      console.log(`Character skin changed to: ${this.player.characterId}`);
     }
   }
 
@@ -178,29 +173,25 @@ export class Engine {
     this.lastFrameTime = currentTime;
 
     this.update(deltaTime);
-    this.render();
+    this.render(deltaTime);
 
     requestAnimationFrame((time) => this.gameLoop(time));
   }
 
   loadLevel(sectionIndex, levelIndex) {
-    // Delegate level creation
     const newLevel = this.levelManager.loadLevel(sectionIndex, levelIndex);
     if (!newLevel) {
-      this.stop(); // Halt the game if level loading fails critically
+      this.stop();
       return;
     }
     this.currentLevel = newLevel;
-
     this.pauseForMenu = false;
     this.gameState.showingLevelComplete = false;
-    
     this.collectedFruits = [];
     this.particles = [];
     this.lastCheckpoint = null;
     this.fruitsAtLastCheckpoint.clear();
     
-    // Stop any looping sounds from the previous player instance before creating a new one.
     this.soundManager.stopAllLoops();
 
     this.player = new Player(
@@ -224,76 +215,61 @@ export class Engine {
   }
 
   update(dt) {
-    try {
-      if (this.isRunning && !this.gameState.showingLevelComplete) {
-        this.levelTime = (performance.now() - this.levelStartTime) / 1000;
-      }
+    if (this.isRunning && !this.gameState.showingLevelComplete) {
+      this.levelTime = (performance.now() - this.levelStartTime) / 1000;
+    }
 
-      // Explicitly check if the game is in a state to process player input for gameplay actions.
-      const canProcessGameplayInput = this.isRunning && !this.pauseForMenu && !this.gameState.showingLevelComplete;
+    const canProcessGameplayInput = this.isRunning && !this.pauseForMenu && !this.gameState.showingLevelComplete;
 
-      const inputActions = {
-        moveLeft: canProcessGameplayInput && (this.keys[this.keybinds.moveLeft] || false),
-        moveRight: canProcessGameplayInput && (this.keys[this.keybinds.moveRight] || false),
-        jump: canProcessGameplayInput && (this.keys[this.keybinds.jump] || false),
-        dash: canProcessGameplayInput && (this.keys[this.keybinds.dash] || false),
-      };
+    const inputActions = {
+      moveLeft: canProcessGameplayInput && (this.keys[this.keybinds.moveLeft] || false),
+      moveRight: canProcessGameplayInput && (this.keys[this.keybinds.moveRight] || false),
+      jump: canProcessGameplayInput && (this.keys[this.keybinds.jump] || false),
+      dash: canProcessGameplayInput && (this.keys[this.keybinds.dash] || false),
+    };
 
-      this.player.handleInput(inputActions);
-      
-      this.physicsSystem.update(
-        this.player,
-        this.currentLevel,
-        dt,
-        inputActions
-      );
+    this.player.handleInput(inputActions);
+    this.physicsSystem.update(this.player, this.currentLevel, dt, inputActions);
+    this.player.update(dt);
+    this.updateParticles(dt);
+    this.camera.update(this.player, dt);
 
-      this.player.update(dt);
-      this.updateParticles(dt);
-      
-      this.camera.update(this.player, dt);
+    if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
+      this._respawnPlayer();
+    }
 
-      if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
-        this._respawnPlayer();
-      }
-
-      this.currentLevel.updateFruits(dt);
-      this.currentLevel.updateTrophyAnimation(dt);
-      this.currentLevel.updateCheckpoints(dt);
-      this.currentLevel.updateTrampolines(dt);
-      
-      this.collectedFruits = this.collectedFruits || [];
-      for (const collected of this.collectedFruits) {
+    this.currentLevel.updateFruits(dt);
+    this.currentLevel.updateTrophyAnimation(dt);
+    this.currentLevel.updateCheckpoints(dt);
+    this.currentLevel.updateTrampolines(dt);
+    
+    for (let i = this.collectedFruits.length - 1; i >= 0; i--) {
+        const collected = this.collectedFruits[i];
         collected.frameTimer += dt;
         if (collected.frameTimer >= collected.frameSpeed) {
-          collected.frameTimer = 0;
-          collected.frame++;
-          if (collected.frame >= collected.collectedFrameCount) {
-            collected.done = true;
-          }
+            collected.frameTimer = 0;
+            collected.frame++;
+            if (collected.frame >= collected.collectedFrameCount) {
+                this.collectedFruits.splice(i, 1);
+            }
         }
-      }
-      this.collectedFruits = this.collectedFruits.filter(f => !f.done);
-
-      if (this.player.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
-        this.gameState.onLevelComplete();
-        this.player.despawnAnimationFinished = false; 
-        eventBus.publish('levelComplete', { deaths: this.player.deathCount, time: this.levelTime });
-      }
-
-      eventBus.publish('statsUpdated', {
-        levelName: this.currentLevel.name,
-        collectedFruits: this.currentLevel.getFruitCount(),
-        totalFruits: this.currentLevel.getTotalFruitCount(),
-        deathCount: this.player.deathCount,
-        levelTime: this.levelTime,
-        soundEnabled: this.soundManager.settings.enabled,
-        soundVolume: this.soundManager.settings.volume
-      });
-
-    } catch (error) {
-      console.error('Error in update loop:', error);
     }
+
+    if (this.player.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
+      this.gameState.onLevelComplete();
+      this.player.despawnAnimationFinished = false; 
+      eventBus.publish('levelComplete', { deaths: this.player.deathCount, time: this.levelTime });
+    }
+
+    eventBus.publish('statsUpdated', {
+      levelName: this.currentLevel.name,
+      collectedFruits: this.currentLevel.getFruitCount(),
+      totalFruits: this.currentLevel.getTotalFruitCount(),
+      deathCount: this.player.deathCount,
+      levelTime: this.levelTime,
+      soundEnabled: this.soundManager.settings.enabled,
+      soundVolume: this.soundManager.settings.volume
+    });
   }
 
   _onPlayerDied() {
@@ -357,7 +333,6 @@ export class Engine {
   }
   
   createParticles(x, y, type, direction = 'right') {
-    let count, baseSpeed, particleConfig;
     const particleConfigs = {
         dash: { count: 10, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
         double_jump: { count: 7, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
@@ -366,37 +341,32 @@ export class Engine {
         ice: { count: 2, baseSpeed: 25, spriteKey: 'ice_particle', life: 0.4, gravity: 20 }
     };
     
-    particleConfig = particleConfigs[type];
-    if (!particleConfig) return;
+    const config = particleConfigs[type];
+    if (!config) return;
 
-    count = particleConfig.count;
-    baseSpeed = particleConfig.baseSpeed;
-
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < config.count; i++) {
         let angle;
         if (type === 'dash') {
             angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
         } else if (type === 'double_jump') {
             angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
-        } else { // For sand, mud, ice - a little poof upwards
+        } else {
             angle = - (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 4);
         }
         
-        const speed = baseSpeed + Math.random() * (baseSpeed * 0.5);
-        const life = particleConfig.life + Math.random() * 0.3;
+        const speed = config.baseSpeed + Math.random() * (config.baseSpeed * 0.5);
+        const life = config.life + Math.random() * 0.3;
         
-        const particle = {
+        this.particles.push({
             x: x, y: y,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            life: life,
-            initialLife: life,
+            life: life, initialLife: life,
             size: 5 + Math.random() * 4,
             alpha: 1.0,
-            spriteKey: particleConfig.spriteKey,
-            gravity: particleConfig.gravity
-        };
-        this.particles.push(particle);
+            spriteKey: config.spriteKey,
+            gravity: config.gravity
+        });
     }
   }
 
@@ -440,10 +410,13 @@ export class Engine {
       }
   }
 
-  render() {
-    try {
+  render(dt) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+      // 1. Draw background first, in screen space (unaffected by camera)
+      this.renderer.drawScrollingBackground(this.currentLevel, dt);
+
+      // 2. Draw the main game world (affected by camera zoom and pan)
       this.renderer.renderScene(
         this.camera,
         this.currentLevel,
@@ -452,15 +425,8 @@ export class Engine {
         this.particles
       );
 
+      // 3. Draw UI overlays, also in screen space
       this.hud.drawGameHUD(this.ctx);
-
       this.renderer.drawUI(this.ctx, this.uiButtons, this.hoveredButton, this.isRunning);
-
-    } catch (error) {
-      console.error('Error in render loop:', error);
-      this.ctx.fillStyle = 'red';
-      this.ctx.font = '20px sans-serif';
-      this.ctx.fillText('Rendering Error - Check Console', 10, 30);
-    }
   }
 }
