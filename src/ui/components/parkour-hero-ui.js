@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { eventBus } from '../../utils/event-bus.js';
 import './settings-menu.js';
+import './pause-modal.js'; // <-- Import the new component
 
 export class ParkourHeroUI extends LitElement {
   static styles = css`
@@ -42,6 +43,7 @@ export class ParkourHeroUI extends LitElement {
     gameHasStarted: { type: Boolean, state: true },
     keybinds: { type: Object, state: true },
     soundSettings: { type: Object, state: true },
+    currentStats: { type: Object, state: true },
   };
 
   constructor() {
@@ -50,6 +52,7 @@ export class ParkourHeroUI extends LitElement {
     this.gameHasStarted = false;
     this.keybinds = { moveLeft: 'a', moveRight: 'd', jump: 'w', dash: ' ' };
     this.soundSettings = { soundEnabled: true, soundVolume: 0.5 };
+    this.currentStats = {};
   }
 
   connectedCallback() {
@@ -58,6 +61,8 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.subscribe('keybindsUpdated', this._handleKeybindsUpdate);
     eventBus.subscribe('ui_button_clicked', this._handleUIButtonClick);
+    eventBus.subscribe('statsUpdated', this._handleStatsUpdate);
+    eventBus.subscribe('action_escape_pressed', this._handleEscapePress); // <-- Listen for Escape
   }
 
   disconnectedCallback() {
@@ -66,6 +71,8 @@ export class ParkourHeroUI extends LitElement {
     eventBus.unsubscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.unsubscribe('keybindsUpdated', this._handleKeybindsUpdate);
     eventBus.unsubscribe('ui_button_clicked', this._handleUIButtonClick);
+    eventBus.unsubscribe('statsUpdated', this._handleStatsUpdate);
+    eventBus.unsubscribe('action_escape_pressed', this._handleEscapePress);
   }
 
   _handleStartGame = () => {
@@ -74,23 +81,32 @@ export class ParkourHeroUI extends LitElement {
     eventBus.publish('allMenusClosed');
   };
 
-  _handleSoundUpdate = (settings) => {
-    this.soundSettings = { ...settings };
-  };
-
-  _handleKeybindsUpdate = (keybinds) => {
-    this.keybinds = { ...keybinds };
-  }
+  _handleSoundUpdate = (settings) => { this.soundSettings = { ...settings }; };
+  _handleKeybindsUpdate = (keybinds) => { this.keybinds = { ...keybinds }; };
+  _handleStatsUpdate = (stats) => { this.currentStats = { ...stats }; };
 
   _handleUIButtonClick = ({ buttonId }) => {
-      // The pause button is special, it toggles the game's running state
-      if (buttonId === 'pause') {
-          eventBus.publish('requestTogglePause');
-          return;
+    if (buttonId === 'pause') {
+      if (this.activeModal === 'pause') {
+        this._closeModal();
+      } else if (this.activeModal === null && this.gameHasStarted) {
+        this.activeModal = 'pause';
+        eventBus.publish('menuOpened');
       }
-      // All other buttons just open their respective modals
+    } else {
       this.activeModal = buttonId;
-      eventBus.publish('menuOpened'); // Tell the engine to pause
+      eventBus.publish('menuOpened');
+    }
+  };
+
+  // NEW: Handle the Escape key press
+  _handleEscapePress = () => {
+    if (this.activeModal) {
+      this._closeModal();
+    } else if (this.gameHasStarted) {
+      this.activeModal = 'pause';
+      eventBus.publish('menuOpened');
+    }
   };
 
   _handleKeybindChange = (e) => {
@@ -100,18 +116,31 @@ export class ParkourHeroUI extends LitElement {
   };
   
   _closeModal = () => {
+    const wasOpen = this.activeModal !== null;
     if (!this.gameHasStarted) {
       this.activeModal = 'main-menu';
     } else {
       this.activeModal = null;
     }
-    eventBus.publish('allMenusClosed');
+    // Only publish if a modal was actually closed
+    if (wasOpen && this.gameHasStarted) {
+        eventBus.publish('allMenusClosed');
+    }
   }
   
-  // Event handler for main menu buttons
   _openModalFromMenu(modalName) {
       eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       this.activeModal = modalName;
+  }
+
+  // --- Pause Modal Event Handlers ---
+  _handleRestart() {
+    this._closeModal();
+    eventBus.publish('requestLevelRestart');
+  }
+
+  _handleOpenLevelsMenu() {
+    this.activeModal = 'levels'; // Switch modals directly
   }
 
   render() {
@@ -146,13 +175,18 @@ export class ParkourHeroUI extends LitElement {
                       @close-modal=${this._closeModal}
                       @keybind-changed=${this._handleKeybindChange}
                     ></settings-menu>`;
-      // FIX: Added placeholders for other modals
+      case 'pause':
+        return html`<pause-modal
+                      .stats=${this.currentStats}
+                      @resume-game=${this._closeModal}
+                      @restart-level=${this._handleRestart}
+                      @open-levels-menu=${this._handleOpenLevelsMenu}
+                    ></pause-modal>`;
       case 'levels':
         return html`
           <div class="placeholder-modal" @click=${this._closeModal}>
             <div class="placeholder-content" @click=${(e) => e.stopPropagation()}>
-                Levels Menu (To Be Implemented)
-                <br>
+                Levels Menu (To Be Implemented) <br>
                 <button @click=${this._closeModal}>Close</button>
             </div>
           </div>`;
@@ -160,8 +194,7 @@ export class ParkourHeroUI extends LitElement {
         return html`
          <div class="placeholder-modal" @click=${this._closeModal}>
             <div class="placeholder-content" @click=${(e) => e.stopPropagation()}>
-                Character Menu (To Be Implemented)
-                <br>
+                Character Menu (To Be Implemented) <br>
                 <button @click=${this._closeModal}>Close</button>
             </div>
           </div>`;
@@ -169,8 +202,7 @@ export class ParkourHeroUI extends LitElement {
         return html`
          <div class="placeholder-modal" @click=${this._closeModal}>
             <div class="placeholder-content" @click=${(e) => e.stopPropagation()}>
-                Info Modal (To Be Implemented)
-                <br>
+                Info Modal (To Be Implemented) <br>
                 <button @click=${this._closeModal}>Close</button>
             </div>
           </div>`;

@@ -61,8 +61,6 @@ export class Engine {
     eventBus.subscribe('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
     eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
     eventBus.subscribe('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
-    // Listen for a single toggle event
-    eventBus.subscribe('requestTogglePause', () => this.togglePause()); 
     eventBus.subscribe('keybindsUpdated', (newKeybinds) => this.updateKeybinds(newKeybinds));
     
     eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
@@ -70,6 +68,8 @@ export class Engine {
     eventBus.subscribe('checkpointActivated', (cp) => this._onCheckpointActivated(cp));
     eventBus.subscribe('playerDied', () => this._onPlayerDied());
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
+    
+    // Simplified pause logic
     eventBus.subscribe('menuOpened', () => {
         this.pauseForMenu = true;
         this.pause();
@@ -78,14 +78,6 @@ export class Engine {
         this.pauseForMenu = false;
         this.resume();
     });
-  }
-
-  togglePause() {
-      if (this.isRunning) {
-          this.pause();
-      } else if (!this.pauseForMenu && !this.gameState.showingLevelComplete) {
-          this.resume();
-      }
   }
 
   updatePlayerCharacter(newCharId) {
@@ -109,7 +101,7 @@ export class Engine {
   }
 
   resume() {
-    if (this.pauseForMenu || this.isRunning || !this.gameHasStarted) return;
+    if (this.pauseForMenu || this.isRunning || !this.gameHasStarted || this.gameState.showingLevelComplete) return;
     this.isRunning = true;
     this.lastFrameTime = performance.now();
     eventBus.publish('gameResumed');
@@ -201,8 +193,6 @@ export class Engine {
       totalFruits: this.currentLevel.getTotalFruitCount(),
       deathCount: playerCtrl ? playerCtrl.deathCount : 0,
       levelTime: this.levelTime,
-      soundEnabled: this.soundManager.settings.enabled,
-      soundVolume: this.soundManager.settings.volume
     });
   }
 

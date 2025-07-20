@@ -1,0 +1,81 @@
+import { LitElement, html, css } from 'lit';
+import { formatTime } from '../ui-utils.js';
+
+export class PauseModal extends LitElement {
+  static styles = css`
+    :host {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 200;
+    }
+    .modal-content {
+      background-color: #333; padding: 30px; border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); color: #eee;
+      text-align: center; position: relative; width: 90%;
+      max-width: 500px;
+    }
+    h2 { margin: 0 0 10px 0; font-size: 2.5em; }
+    .subtitle { margin: 0 0 25px 0; color: #ccc; }
+    .stats-container {
+        display: flex; flex-direction: column; align-items: center;
+        gap: 12px; margin-bottom: 25px; padding: 15px;
+        background-color: #444; border-radius: 8px;
+    }
+    .stat-item { color: #fff; font-size: 1.2em; }
+    .button-container { display: flex; justify-content: center; gap: 15px; }
+    .modal-image-button {
+        background: transparent; border: none; padding: 0;
+        cursor: pointer; width: 48px; height: 48px;
+        transition: transform 0.2s ease-in-out;
+    }
+    .modal-image-button:hover { transform: scale(1.1); }
+    .modal-image-button img { width: 100%; height: 100%; }
+  `;
+
+  static properties = {
+    stats: { type: Object },
+  };
+
+  constructor() {
+    super();
+    this.stats = { collectedFruits: 0, totalFruits: 0, deathCount: 0, levelTime: 0 };
+  }
+
+  // Dispatch custom events that the parent component will handle
+  _dispatch(eventName) {
+    this.dispatchEvent(new CustomEvent(eventName, { bubbles: true, composed: true }));
+  }
+
+  render() {
+    return html`
+      <div class="modal-overlay">
+        <div class="modal-content">
+          <h2>Game Paused</h2>
+          <p class="subtitle">Press ESC to resume</p>
+          <div class="stats-container">
+            <div class="stat-item">Fruits: ${this.stats.collectedFruits}/${this.stats.totalFruits}</div>
+            <div class="stat-item">Deaths: ${this.stats.deathCount}</div>
+            <div class="stat-item">Time: ${formatTime(this.stats.levelTime)}</div>
+          </div>
+          <div class="button-container">
+            <button class="modal-image-button" title="Resume" @click=${() => this._dispatch('resume-game')}>
+              <img src="/assets/Menu/Buttons/Play.png" alt="Resume">
+            </button>
+            <button class="modal-image-button" title="Restart" @click=${() => this._dispatch('restart-level')}>
+              <img src="/assets/Menu/Buttons/Restart.png" alt="Restart">
+            </button>
+            <button class="modal-image-button" title="Levels Menu" @click=${() => this._dispatch('open-levels-menu')}>
+              <img src="/assets/Menu/Buttons/Levels.png" alt="Main Menu">
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+customElements.define('pause-modal', PauseModal);
