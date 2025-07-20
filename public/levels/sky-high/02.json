@@ -2,7 +2,7 @@
   "name": "Level 2: Sky Climb",
   "gridWidth": 27,
   "gridHeight": 53,
-  "background": "background_blue",
+  "background": "background_brown",
   "startPosition": {
     "x": 13,
     "y": 47.92

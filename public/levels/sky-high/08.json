@@ -2,7 +2,7 @@
   "name": "Level 8: Final Ascent",
   "gridWidth": 30,
   "gridHeight": 73,
-  "background": "background_blue",
+  "background": "background_yellow",
   "startPosition": {
     "x": 2.04,
     "y": 68.38

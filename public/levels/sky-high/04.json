@@ -2,7 +2,7 @@
   "name": "Level 4: Dash Gauntlet",
   "gridWidth": 30,
   "gridHeight": 42,
-  "background": "background_blue",
+  "background": "background_green",
   "startPosition": {
     "x": 2.3,
     "y": 37.5
