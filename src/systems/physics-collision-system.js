@@ -10,7 +10,7 @@ export class PhysicsSystem {
     // No setup needed.
   }
 
-  update(player, level, dt, inputActions) {
+  update(dt, { player, level, inputActions }) {
     // --- 1. APPLY FORCES & VELOCITY ---
     player._updateTimers(dt);
 

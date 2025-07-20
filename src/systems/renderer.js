@@ -81,7 +81,7 @@ export class Renderer {
     this.ctx.drawImage(bgCanvas, sx, sy, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
   }
 
-  renderScene(camera, level, player, collectedFruits, particles) {
+  renderScene(camera, level, player, collectedFruits) {
     camera.apply(this.ctx);
 
     this.drawTileGrid(level, camera);
@@ -93,7 +93,6 @@ export class Renderer {
     this.drawCheckpoints(level.checkpoints, camera);
     this.drawTrampolines(level.trampolines, camera);
     this.drawPlayer(player);
-    this.drawParticles(particles, camera);
     this.drawCollectedFruits(collectedFruits, camera);
 
     camera.restore(this.ctx);
@@ -264,18 +263,6 @@ export class Renderer {
     }
   }
 
-  drawParticles(particles, camera) {
-    if (particles.length === 0) return;
-    this.ctx.save();
-    for (const p of particles) {
-        const sprite = this.assets[p.spriteKey] || this.assets.dust_particle;
-        if (!sprite || !camera.isVisible(p.x, p.y, p.size, p.size)) continue;
-        this.ctx.globalAlpha = p.alpha;
-        this.ctx.drawImage(sprite, p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-    }
-    this.ctx.restore();
-  }
-
   drawCollectedFruits(collectedArr, camera) {
     const sprite = this.assets['fruit_collected'];
     if (!sprite) return;
@@ -303,44 +290,5 @@ export class Renderer {
       if (sprite && frameWidth > 0) { this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size); } 
       else { this.ctx.fillStyle = 'purple'; this.ctx.fillRect(cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size); }
     }
-  }
-
-  drawUI(ctx, buttons, hoveredButton, isRunning) {
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-    for (const button of buttons) {
-        if (!button.visible) continue;
-
-        let assetKey;
-        if (button.id === 'pause') {
-            assetKey = isRunning ? 'pause_icon' : 'play_icon';
-        } else {
-            assetKey = button.assetKey;
-        }
-
-        const sprite = this.assets[assetKey];
-        if (!sprite) continue;
-
-        let x = button.x;
-        let y = button.y;
-        let width = button.width;
-        let height = button.height;
-
-        const isHovered = hoveredButton && hoveredButton.id === button.id;
-        
-        if (isHovered) {
-            const scale = 1.1;
-            width *= scale;
-            height *= scale;
-            x -= (width - button.width) / 2;
-            y -= (height - button.height) / 2;
-        }
-        
-        ctx.globalAlpha = isHovered ? 1.0 : 0.8;
-
-        ctx.drawImage(sprite, x, y, width, height);
-    }
-    ctx.restore();
   }
 }

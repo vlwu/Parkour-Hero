@@ -7,6 +7,8 @@ import { PhysicsSystem } from '../systems/physics-collision-system.js';
 import { Renderer } from '../systems/renderer.js';
 import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
+import { ParticleSystem } from '../systems/particle-system.js';
+import { UISystem } from '../ui/ui-system.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -28,32 +30,21 @@ export class Engine {
     this.hud = new HUD(canvas, this.fontRenderer);
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
-    this.physicsSystem = new PhysicsSystem();
     this.renderer = new Renderer(ctx, canvas, assets);
     this.gameState = new GameState();
     this.levelManager = new LevelManager(this.gameState); 
 
+    // --- Systems ---
+    this.physicsSystem = new PhysicsSystem();
+    this.particleSystem = new ParticleSystem(assets);
+    this.uiSystem = new UISystem(canvas, assets);
+    this.systems = [this.physicsSystem, this.particleSystem, this.uiSystem];
+
     this.levelStartTime = 0;
     this.levelTime = 0;
     this.currentLevel = null;
-
-    this.particles = [];
+    this.collectedFruits = [];
     this.menuManager = null;
-
-    const buttonSize = 64;
-    const rightPadding = 20;
-    const topPadding = 20;
-    const buttonGap = 10;
-    const buttonX = this.canvas.width - buttonSize - rightPadding;
-
-    this.uiButtons = [
-        { id: 'settings', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 0, width: buttonSize, height: buttonSize, assetKey: 'settings_icon', visible: false },
-        { id: 'pause', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 1, width: buttonSize, height: buttonSize, assetKey: 'pause_icon', visible: false },
-        { id: 'levels', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 2, width: buttonSize, height: buttonSize, assetKey: 'levels_icon', visible: false },
-        { id: 'character', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 3, width: buttonSize, height: buttonSize, assetKey: 'character_icon', visible: false },
-        { id: 'info', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 4, width: buttonSize, height: buttonSize, assetKey: 'info_icon', visible: false },
-    ];
-    this.hoveredButton = null;
 
     this._setupEventSubscriptions();
   }
@@ -69,14 +60,10 @@ export class Engine {
     eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
     eventBus.subscribe('trophyCollision', () => this._onTrophyCollision());
     eventBus.subscribe('checkpointActivated', (cp) => this._onCheckpointActivated(cp));
-    eventBus.subscribe('createParticles', ({x, y, type, direction}) => this.createParticles(x, y, type, direction));
     eventBus.subscribe('playerDied', () => this._onPlayerDied());
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
     eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
     eventBus.subscribe('allMenusClosed', () => this.pauseForMenu = false);
-    eventBus.subscribe('gameStarted', () => {
-        this.uiButtons.forEach(b => b.visible = true);
-    });
 
     eventBus.subscribe('action_confirm_pressed', () => this._handleActionConfirm());
     eventBus.subscribe('action_restart_pressed', () => this._handleActionRestart());
@@ -188,7 +175,6 @@ export class Engine {
     this.pauseForMenu = false;
     this.gameState.showingLevelComplete = false;
     this.collectedFruits = [];
-    this.particles = [];
     this.lastCheckpoint = null;
     this.fruitsAtLastCheckpoint.clear();
     
@@ -229,11 +215,21 @@ export class Engine {
     };
 
     this.player.handleInput(inputActions);
-    this.physicsSystem.update(this.player, this.currentLevel, dt, inputActions);
     this.player.update(dt);
-    this.updateParticles(dt);
     this.camera.update(this.player, dt);
 
+    const context = {
+        player: this.player,
+        level: this.currentLevel,
+        inputActions: inputActions,
+        camera: this.camera,
+        isRunning: this.isRunning
+    };
+
+    for(const system of this.systems) {
+        system.update(dt, context);
+    }
+    
     if (this.player.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) {
       this._respawnPlayer();
     }
@@ -332,101 +328,25 @@ export class Engine {
     }
   }
   
-  createParticles(x, y, type, direction = 'right') {
-    const particleConfigs = {
-        dash: { count: 10, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
-        double_jump: { count: 7, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
-        sand: { count: 2, baseSpeed: 20, spriteKey: 'sand_particle', life: 0.5, gravity: 120 },
-        mud: { count: 2, baseSpeed: 15, spriteKey: 'mud_particle', life: 0.6, gravity: 100 },
-        ice: { count: 2, baseSpeed: 25, spriteKey: 'ice_particle', life: 0.4, gravity: 20 }
-    };
-    
-    const config = particleConfigs[type];
-    if (!config) return;
-
-    for (let i = 0; i < config.count; i++) {
-        let angle;
-        if (type === 'dash') {
-            angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
-        } else if (type === 'double_jump') {
-            angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
-        } else {
-            angle = - (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 4);
-        }
-        
-        const speed = config.baseSpeed + Math.random() * (config.baseSpeed * 0.5);
-        const life = config.life + Math.random() * 0.3;
-        
-        this.particles.push({
-            x: x, y: y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            life: life, initialLife: life,
-            size: 5 + Math.random() * 4,
-            alpha: 1.0,
-            spriteKey: config.spriteKey,
-            gravity: config.gravity
-        });
-    }
-  }
-
-  updateParticles(dt) {
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-        const p = this.particles[i];
-        p.life -= dt;
-
-        if (p.life <= 0) {
-            this.particles.splice(i, 1);
-        } else {
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
-            p.vy += (p.gravity || 50) * dt; 
-            p.alpha = Math.max(0, p.life / p.initialLife); 
-        }
-    }
-  }
-
-  handleMouseMove(x, y) {
-    this.hoveredButton = null;
-    for (const button of this.uiButtons) {
-        if (button.visible && x >= button.x && x <= button.x + button.width && y >= button.y && y <= button.y + button.height) {
-            this.hoveredButton = button;
-            break;
-        }
-    }
-  }
-
-  handleCanvasClick(x, y) {
-      let clickedButton = null;
-      for (const button of this.uiButtons) {
-          if (button.visible && x >= button.x && x <= button.x + button.width && y >= button.y && y <= button.y + button.height) {
-              clickedButton = button;
-              break;
-          }
-      }
-      if (clickedButton) {
-          eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
-          eventBus.publish('ui_button_clicked', { buttonId: clickedButton.id });
-      }
-  }
-
   render(dt) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      // 1. Draw background first, in screen space (unaffected by camera)
+      // 1. Draw scrolling background
       this.renderer.drawScrollingBackground(this.currentLevel, dt);
 
-      // 2. Draw the main game world (affected by camera zoom and pan)
+      // 2. Draw the main game world (player, level, etc.)
       this.renderer.renderScene(
         this.camera,
         this.currentLevel,
         this.player,
-        this.collectedFruits,
-        this.particles
+        this.collectedFruits
       );
 
-      // 3. Draw UI overlays, also in screen space
+      // 3. Render systems that draw on top of the world (e.g., particles)
+      this.particleSystem.render(this.ctx, this.camera);
+      
+      // 4. Render UI overlays in screen space
       this.hud.drawGameHUD(this.ctx);
-      this.renderer.drawUI(this.ctx, this.uiButtons, this.hoveredButton, this.isRunning);
+      this.uiSystem.render(this.ctx, this.isRunning);
   }
 }
