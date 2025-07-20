@@ -20,8 +20,8 @@ export class Camera {
     
     // Dead zone in WORLD units, so it scales with the zoom
     this.deadZone = {
-      x: this.width * 0.3,  // 30% of world view width
-      y: this.height * 0.3  // 30% of world view height
+      x: this.width * 0.2,  // 20% of world view width
+      y: this.height * 0.2  // 20% of world view height
     };
     
     // Camera limits - prevent showing areas outside the level
