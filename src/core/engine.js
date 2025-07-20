@@ -42,6 +42,8 @@ export class Engine {
     this.soundManager.loadSounds(assets);
     this.renderer = new Renderer(ctx, canvas, assets);
     this.gameState = new GameState();
+
+    eventBus.publish('gameStateUpdated', this.gameState);
     this.levelManager = new LevelManager(this.gameState); 
 
     this.physicsSystem = new PhysicsSystem();
