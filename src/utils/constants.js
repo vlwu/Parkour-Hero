@@ -12,6 +12,12 @@ export const PLAYER_CONSTANTS = {
   GRAVITY: 1200,        // downward acceleration
   MAX_FALL_SPEED: 500,  // terminal velocity
 
+  // Fall Damage
+  FALL_DAMAGE_MIN_VELOCITY: 600, // vy threshold to start taking damage
+  FALL_DAMAGE_MAX_VELOCITY: 900, // vy at which max damage is taken
+  FALL_DAMAGE_MIN_AMOUNT: 5,     // min HP damage
+  FALL_DAMAGE_MAX_AMOUNT: 20,    // max HP damage
+
   // Dash
   DASH_SPEED: 500,
   DASH_DURATION: 0.2,   // seconds

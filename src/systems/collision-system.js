@@ -15,10 +15,8 @@ export class CollisionSystem {
         const vel = entityManager.getComponent(entityId, VelocityComponent);
         const col = entityManager.getComponent(entityId, CollisionComponent);
 
-        // FIX: Check for out-of-bounds *before* other collisions and stop processing.
         if (pos.y > level.height + 50) {
             eventBus.publish('collisionEvent', { type: 'world_bottom', entityId, entityManager });
-            // 'continue' will skip the rest of the loop for this entity, as it's out of bounds.
             continue; 
         }
 
@@ -28,7 +26,7 @@ export class CollisionSystem {
         pos.y += vel.vy * dt;
         const bounced = this._checkTrampolineBounce(pos, vel, col, level, dt);
         if (!bounced) {
-            this._handleVerticalCollisions(pos, vel, col, level, dt);
+            this._handleVerticalCollisions(pos, vel, col, level, dt, entityId);
         }
 
         pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
@@ -58,7 +56,22 @@ export class CollisionSystem {
     col.isAgainstWall = false;
   }
 
-  _handleVerticalCollisions(pos, vel, col, level, dt) {
+  _calculateAndApplyFallDamage(velocity) {
+    const { 
+        FALL_DAMAGE_MIN_VELOCITY, 
+        FALL_DAMAGE_MAX_VELOCITY, 
+        FALL_DAMAGE_MIN_AMOUNT, 
+        FALL_DAMAGE_MAX_AMOUNT 
+    } = PLAYER_CONSTANTS;
+
+    const clampedVelocity = Math.max(FALL_DAMAGE_MIN_VELOCITY, Math.min(velocity, FALL_DAMAGE_MAX_VELOCITY));
+    const progress = (clampedVelocity - FALL_DAMAGE_MIN_VELOCITY) / (FALL_DAMAGE_MAX_VELOCITY - FALL_DAMAGE_MIN_VELOCITY);
+    const damage = Math.round(FALL_DAMAGE_MIN_AMOUNT + progress * (FALL_DAMAGE_MAX_AMOUNT - FALL_DAMAGE_MIN_AMOUNT));
+    
+    eventBus.publish('playerTookDamage', { amount: damage });
+  }
+
+  _handleVerticalCollisions(pos, vel, col, level, dt, entityId) {
     const leftTile = Math.floor(pos.x / GRID_CONSTANTS.TILE_SIZE);
     const rightTile = Math.floor((pos.x + col.width - 1) / GRID_CONSTANTS.TILE_SIZE);
     
@@ -86,6 +99,11 @@ export class CollisionSystem {
         const playerBottom = pos.y + col.height;
 
         if (playerBottom >= tileTop && (playerBottom - vel.vy * dt) <= tileTop + 1) {
+            const landingVelocity = vel.vy;
+            if (landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY) {
+                this._calculateAndApplyFallDamage(landingVelocity);
+            }
+            
             pos.y = tileTop - col.height;
             vel.vy = 0;
             col.isGrounded = true;
