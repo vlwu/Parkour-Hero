@@ -20,6 +20,7 @@ export class PlayerControlledComponent {
         deathCount = 0,
         activeSurfaceSound = null,
         surfaceParticleTimer = 0,
+        jumpParticleTimer = 0,
         jumpPressed = false, 
         dashPressed = false  
     } = {}) {
@@ -34,6 +35,7 @@ export class PlayerControlledComponent {
         this.dashTimer = dashTimer;
         this.dashCooldownTimer = dashCooldownTimer;
         this.surfaceParticleTimer = surfaceParticleTimer;
+        this.jumpParticleTimer = jumpParticleTimer;
 
         // States
         this.jumpCount = jumpCount;

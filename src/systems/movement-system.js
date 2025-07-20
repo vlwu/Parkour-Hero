@@ -87,10 +87,27 @@ export class MovementSystem {
 
         if (onGroundAndMoving) {
             ctrl.surfaceParticleTimer += dt;
-            if (ctrl.surfaceParticleTimer >= 0.1) {
+            const particleInterval = (col.groundType === 'sand' || col.groundType === 'mud') ? 0.1 : 0.15;
+            
+            if (ctrl.surfaceParticleTimer >= particleInterval) {
                 ctrl.surfaceParticleTimer = 0;
-                const particleType = { 'sand': 'sand', 'mud': 'mud', 'ice': 'ice' }[col.groundType];
-                if (particleType) eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: particleType });
+                
+                let particleType;
+                switch (col.groundType) {
+                    case 'sand': particleType = 'sand'; break;
+                    case 'mud': particleType = 'mud'; break;
+                    case 'ice': particleType = 'ice'; break;
+                    default:
+                        // Create dust for any other solid ground type.
+                        if (col.groundType) { 
+                            particleType = 'walk_dust';
+                        }
+                        break;
+                }
+
+                if (particleType) {
+                    eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: particleType });
+                }
             }
         }
     }

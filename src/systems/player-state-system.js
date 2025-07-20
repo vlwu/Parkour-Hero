@@ -35,10 +35,29 @@ export class PlayerStateSystem {
             this._handleInput(dt, input, pos, vel, ctrl, col, renderable, state);
             this._updateFSM(vel, ctrl, col, renderable, state);
             this._updateAnimation(dt, ctrl, renderable, state);
+            this._handleJumpTrail(dt, pos, col, ctrl, state);
             
             if (col.isGrounded) {
                 ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
             }
+        }
+    }
+    
+    _handleJumpTrail(dt, pos, col, ctrl, state) {
+        // Only create a trail during the initial ascent of a single jump.
+        if (state.currentState === 'jump' && ctrl.jumpCount === 1) {
+            ctrl.jumpParticleTimer -= dt;
+            if (ctrl.jumpParticleTimer <= 0) {
+                ctrl.jumpParticleTimer = 0.05; // Emit a particle every 50ms.
+                eventBus.publish('createParticles', { 
+                    x: pos.x + col.width / 2, 
+                    y: pos.y + col.height, // From the player's feet.
+                    type: 'jump_trail' 
+                });
+            }
+        } else {
+            // Reset the timer when not in the correct state to ensure it's ready for the next jump.
+            ctrl.jumpParticleTimer = 0;
         }
     }
 
