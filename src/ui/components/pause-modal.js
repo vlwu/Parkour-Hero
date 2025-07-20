@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { formatTime } from '../ui-utils.js';
+import './bitmap-text.js';
 
 export class PauseModal extends LitElement {
   static styles = css`
@@ -18,7 +19,11 @@ export class PauseModal extends LitElement {
       text-align: center; position: relative; width: 90%;
       max-width: 500px;
     }
-    h2 { margin: 0 0 10px 0; font-size: 2.5em; }
+    .title-container {
+      margin: 0 0 10px 0;
+      display: flex;
+      justify-content: center;
+    }
     .subtitle { margin: 0 0 25px 0; color: #ccc; }
     .stats-container {
         display: flex; flex-direction: column; align-items: center;
@@ -38,6 +43,7 @@ export class PauseModal extends LitElement {
 
   static properties = {
     stats: { type: Object },
+    fontRenderer: { type: Object },
   };
 
   constructor() {
@@ -45,7 +51,6 @@ export class PauseModal extends LitElement {
     this.stats = { collectedFruits: 0, totalFruits: 0, deathCount: 0, levelTime: 0 };
   }
 
-  // Dispatch custom events that the parent component will handle
   _dispatch(eventName) {
     this.dispatchEvent(new CustomEvent(eventName, { bubbles: true, composed: true }));
   }
@@ -54,7 +59,16 @@ export class PauseModal extends LitElement {
     return html`
       <div class="modal-overlay">
         <div class="modal-content">
-          <h2>Game Paused</h2>
+          <div class="title-container">
+            <bitmap-text
+              .fontRenderer=${this.fontRenderer}
+              text="Game Paused"
+              scale="3"
+              outlineColor="black"
+              outlineWidth="2"
+            ></bitmap-text>
+          </div>
+          
           <p class="subtitle">Press ESC to resume</p>
           <div class="stats-container">
             <div class="stat-item">Fruits: ${this.stats.collectedFruits}/${this.stats.totalFruits}</div>

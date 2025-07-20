@@ -4,7 +4,7 @@ import './settings-menu.js';
 import './pause-modal.js';
 import './levels-menu.js';
 import './character-menu.js';
-import './info-modal.js'; 
+import './info-modal.js';
 
 export class ParkourHeroUI extends LitElement {
   static styles = css`
@@ -38,6 +38,7 @@ export class ParkourHeroUI extends LitElement {
     currentStats: { type: Object, state: true },
     gameState: { type: Object, state: true },
     assets: { type: Object, state: true },
+    fontRenderer: { type: Object },
   };
 
   constructor() {
@@ -49,6 +50,7 @@ export class ParkourHeroUI extends LitElement {
     this.currentStats = {};
     this.gameState = null;
     this.assets = null;
+    this.fontRenderer = null;
   }
 
   connectedCallback() {
@@ -170,6 +172,7 @@ export class ParkourHeroUI extends LitElement {
       case 'pause':
         return html`<pause-modal
                       .stats=${this.currentStats}
+                      .fontRenderer=${this.fontRenderer}
                       @resume-game=${this._closeModal} @restart-level=${this._handleRestart} @open-levels-menu=${this._handleOpenLevelsMenu}
                     ></pause-modal>`;
       case 'levels':

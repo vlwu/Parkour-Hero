@@ -1,24 +1,20 @@
 import { Engine } from './src/core/engine.js';
 import { loadAssets } from './src/managers/asset-manager.js';
 import { InputManager } from './src/systems/input-system.js';
-// REMOVE: import { MenuManager } from './src/ui/menu-manager.js';
 import { eventBus } from './src/utils/event-bus.js';
 import { FontRenderer } from './src/ui/font-renderer.js';
 import { inputState } from './src/systems/input-state.js';
-import './src/ui/ui-main.js'; // <-- NEW: Import the UI entry point
+import './src/ui/ui-main.js';
 
-// Get canvas element and context
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Check if canvas is available
 if (!canvas || !ctx) {
   console.error('Canvas not found or context not available');
   document.body.innerHTML = '<h1>Error: Canvas not supported</h1>';
   throw new Error('Canvas not available');
 }
 
-// Disable image smoothing for crisp pixel art
 ctx.imageSmoothingEnabled = false;
 
 const BASE_WIDTH = 1920;
@@ -29,7 +25,6 @@ canvas.height = BASE_HEIGHT;
 
 console.log(`Canvas initialized: ${BASE_WIDTH}x${BASE_HEIGHT}`);
 
-// Maintain 16:9 aspect ratio and center canvas
 function resizeCanvas() {
   try {
     const aspectRatio = 16 / 9;
@@ -44,7 +39,6 @@ function resizeCanvas() {
       height = width / aspectRatio;
     }
 
-    // Ensure the final display size is an integer to prevent sub-pixel rendering artifacts.
     const finalWidth = Math.floor(width);
     const finalHeight = Math.floor(height);
 
@@ -60,11 +54,9 @@ function resizeCanvas() {
   }
 }
 
-// Set up resize listener
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Add loading indicator
 function showLoadingIndicator() {
   ctx.fillStyle = '#222';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -87,10 +79,8 @@ function showLoadingIndicator() {
   ctx.fillRect(barX, barY, barWidth * 0.1, barHeight);
 }
 
-// Show initial loading screen
 showLoadingIndicator();
 
-// Default keybinds remain the source of truth for initialization
 let keybinds = {
   moveLeft: 'a',
   moveRight: 'd',
@@ -98,7 +88,6 @@ let keybinds = {
   dash: ' ',
 };
 
-// Load assets and start the game
 let engine;
 let inputManager;
 
@@ -111,15 +100,18 @@ loadAssets().then((assets) => {
 
     eventBus.publish('assetsLoaded', assets);
 
-    // Initialize the now-independent InputManager.
+    // Inject the FontRenderer instance into the already-rendered UI component
+    const uiRoot = document.querySelector('parkour-hero-ui');
+    if (uiRoot) {
+        uiRoot.fontRenderer = fontRenderer;
+    }
+
     inputManager = new InputManager();
     
-    // Listen for the request to start the game from the main menu
     eventBus.subscribe('requestStartGame', () => {
         engine.start();
     });
 
-    // Expose the unlock function to the window for easy debugging
     window.unlockAllLevels = () => {
         if (engine && engine.gameState) {
             engine.gameState.unlockAllLevels();
@@ -128,7 +120,6 @@ loadAssets().then((assets) => {
     };
     console.log('Developer command available: Type `unlockAllLevels()` in the console to unlock all levels.');
     
-    // Expose the reset function to the window for easy debugging
     window.resetProgress = () => {
         if (engine && engine.gameState) {
             engine.gameState.resetProgress();
@@ -168,7 +159,6 @@ loadAssets().then((assets) => {
   ctx.fillText('Check console for details', canvas.width / 2, canvas.height / 2 + 20);
 });
 
-// Global error handling
 window.addEventListener('error', (event) => {
   console.error('Global error:', event.error);
 });
