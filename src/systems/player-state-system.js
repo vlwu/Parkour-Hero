@@ -32,7 +32,7 @@ export class PlayerStateSystem {
             const state = entityManager.getComponent(entityId, StateComponent);
 
             this._updateTimers(dt, ctrl);
-            this._handleInput(input, pos, vel, ctrl, col, renderable, state);
+            this._handleInput(dt, input, pos, vel, ctrl, col, renderable, state);
             this._updateFSM(vel, ctrl, col, renderable, state);
             this._updateAnimation(dt, ctrl, renderable, state);
             
@@ -47,9 +47,6 @@ export class PlayerStateSystem {
         if (ctrl.coyoteTimer > 0) ctrl.coyoteTimer -= dt;
         if (ctrl.dashCooldownTimer > 0) ctrl.dashCooldownTimer -= dt;
 
-        // FIX: The active dash timer logic is moved here.
-        // This function is called every frame, ensuring the dash timer
-        // always counts down when active.
         if (ctrl.isDashing) {
             ctrl.dashTimer -= dt;
             if (ctrl.dashTimer <= 0) {
@@ -58,7 +55,7 @@ export class PlayerStateSystem {
         }
     }
 
-    _handleInput(input, pos, vel, ctrl, col, renderable, state) {
+    _handleInput(dt, input, pos, vel, ctrl, col, renderable, state) {
         if (ctrl.isSpawning || ctrl.isDashing || ctrl.isDespawning) {
             return;
         }
@@ -72,10 +69,13 @@ export class PlayerStateSystem {
             ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
         }
 
-        if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0)) {
+        // FIX: Add 'ctrl.jumpCount === 0' to this condition. This is the crucial change.
+        // It ensures a ground jump can only execute if the player has not already jumped.
+        // This stops the repeated execution that was causing the FPS drop and sound spam.
+        if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0) && ctrl.jumpCount === 0) {
             const jumpForce = ctrl.jumpForce * (col.groundType === 'mud' ? PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER : 1);
             vel.vy = -jumpForce;
-            ctrl.jumpCount = 1;
+            ctrl.jumpCount = 1; // Set jumpCount to 1, preventing this block from running again until the player lands.
             ctrl.jumpBufferTimer = 0;
             ctrl.coyoteTimer = 0;
             eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
@@ -107,8 +107,6 @@ export class PlayerStateSystem {
             eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: 'dash', direction: renderable.direction });
         }
         ctrl.dashPressed = input.dash;
-        
-        // FIX: The timer logic that was here has been REMOVED.
     }
 
     _updateFSM(vel, ctrl, col, renderable, state) {
@@ -152,6 +150,7 @@ export class PlayerStateSystem {
             if (newState === 'cling') {
                 ctrl.jumpCount = 1;
             } else if (newState === 'idle' || newState === 'run') {
+                // This is where jumpCount gets reset, allowing the player to jump again.
                 ctrl.jumpCount = 0;
             }
         }
