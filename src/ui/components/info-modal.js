@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { formatKeyForDisplay } from '../ui-utils.js';
+import { eventBus } from '../../utils/event-bus.js';
 import './bitmap-text.js';
 
 export class InfoModal extends LitElement {
@@ -64,6 +65,7 @@ export class InfoModal extends LitElement {
   };
 
   _dispatchClose() {
+    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     this.dispatchEvent(new CustomEvent('close-modal', { bubbles: true, composed: true }));
   }
 

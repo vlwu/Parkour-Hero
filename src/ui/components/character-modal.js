@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { map } from 'lit/directives/map.js';
 import { characterConfig } from '../../entities/level-definitions.js';
+import { eventBus } from '../../utils/event-bus.js';
 import './character-card.js';
 import './bitmap-text.js';
 
@@ -54,6 +55,7 @@ export class CharacterMenu extends LitElement {
   };
   
   _dispatchClose() {
+    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     this.dispatchEvent(new CustomEvent('close-modal', { bubbles: true, composed: true }));
   }
 

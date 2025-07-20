@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { eventBus } from '../../utils/event-bus.js';
 import './settings-modal.js';
 import './pause-modal.js';
-import './levels-menu.js';
+import './levels-modal.js';
 import './character-modal.js';
 import './info-modal.js';
 import './level-complete-modal.js';
