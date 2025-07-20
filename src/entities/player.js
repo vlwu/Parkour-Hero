@@ -43,7 +43,7 @@ class JumpState extends State {
 class DoubleJumpState extends State {
     constructor() { super('double_jump'); }
     enter(player) {
-        eventBus.publish('playSound', { key: 'double_jump', volume: 0.6 });
+        eventBus.publish('playSound', { key: 'double_jump', volume: 0.6, channel: 'SFX' });
         eventBus.publish('createParticles', { x: player.getCenterX(), y: player.y + player.height, type: 'double_jump' });
     }
     update(player) {
@@ -65,7 +65,7 @@ class FallState extends State {
 class DashState extends State {
   constructor() { super('dash'); }
   enter(player) {
-      eventBus.publish('playSound', { key: 'dash', volume: 0.7 });
+      eventBus.publish('playSound', { key: 'dash', volume: 0.7, channel: 'SFX' });
       eventBus.publish('createParticles', { x: player.getCenterX(), y: player.getCenterY(), type: 'dash', direction: player.direction });
   }
   update(player) {
@@ -357,7 +357,7 @@ export class Player {
             eventBus.publish('stopSoundLoop', { key: this.activeSurfaceSound });
         }
         if (requiredSound) {
-            eventBus.publish('startSoundLoop', { key: requiredSound });
+            eventBus.publish('startSoundLoop', { key: requiredSound, channel: 'SFX' });
         }
         this.activeSurfaceSound = requiredSound;
     }

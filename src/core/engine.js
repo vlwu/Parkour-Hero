@@ -64,10 +64,7 @@ export class Engine {
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
     eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
     eventBus.subscribe('allMenusClosed', () => this.pauseForMenu = false);
-    eventBus.subscribe('gameStarted', () => {
-        this.uiButtons.forEach(b => b.visible = true);
-    });
-
+    
     eventBus.subscribe('action_confirm_pressed', () => this._handleActionConfirm());
     eventBus.subscribe('action_restart_pressed', () => this._handleActionRestart());
     eventBus.subscribe('action_next_pressed', () => this._handleActionNext());
@@ -132,7 +129,8 @@ export class Engine {
   pause() {
       if (!this.isRunning) return;
       this.isRunning = false;
-      this.soundManager.stopAll();
+      // Pause gameplay sounds but leave UI sounds playing
+      this.soundManager.stopAll({ except: ['UI'] });
       if (this.player) {
         this.player.needsRespawn = false;
       }
@@ -181,7 +179,7 @@ export class Engine {
     this.lastCheckpoint = null;
     this.fruitsAtLastCheckpoint.clear();
     
-    this.soundManager.stopAllLoops();
+    this.soundManager.stopAll();
 
     this.player = new Player(
       this.currentLevel.startPosition.x,
@@ -229,10 +227,7 @@ export class Engine {
         isRunning: this.isRunning
     };
     
-    // The physics system needs the updated context.
     this.physicsSystem.update(dt, context);
-    
-    // Other systems might just need dt.
     this.particleSystem.update(dt, context);
     this.uiSystem.update(dt, context);
     
@@ -294,13 +289,13 @@ export class Engine {
     this.currentLevel.recalculateCollectedFruits();
     this.player.respawn(respawnPosition);
     this.camera.shake(15, 0.5);
-    eventBus.publish('playSound', { key: 'death_sound', volume: 0.3 });
+    eventBus.publish('playSound', { key: 'death_sound', volume: 0.3, channel: 'SFX' });
     this.player.needsRespawn = false;
   }
 
   _onFruitCollected(fruit) {
     this.currentLevel.collectFruit(fruit);
-    eventBus.publish('playSound', { key: 'collect', volume: 0.8 });
+    eventBus.publish('playSound', { key: 'collect', volume: 0.8, channel: 'SFX' });
 
     this.collectedFruits.push({
       x: fruit.x, y: fruit.y, size: fruit.size, frame: 0,
@@ -311,7 +306,7 @@ export class Engine {
   _onCheckpointActivated(cp) {
       cp.state = 'activating';
       this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; 
-      eventBus.publish('playSound', { key: 'checkpoint_activated', volume: 1 });
+      eventBus.publish('playSound', { key: 'checkpoint_activated', volume: 1, channel: 'UI' });
 
       this.fruitsAtLastCheckpoint.clear();
       this.currentLevel.fruits.forEach((fruit, index) => {

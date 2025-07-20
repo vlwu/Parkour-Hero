@@ -50,7 +50,7 @@ export class LevelMenu {
                     if (this.gameState.isLevelCompleted(sectionIndex, levelIndex)) button.classList.add('completed');
                     if (this.gameState.currentSection === sectionIndex && this.gameState.currentLevelIndex === levelIndex) button.classList.add('current');
                     button.addEventListener('click', () => {
-                        eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+                        eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
                         eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
                     });
                 } else {

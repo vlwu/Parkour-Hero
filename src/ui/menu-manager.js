@@ -144,8 +144,6 @@ export class MenuManager {
           }
       });
       eventBus.subscribe('ui_button_clicked', ({ buttonId }) => this.handleUIButtonClick(buttonId));
-      
-      // NEW: Listen for the specific escape key action.
       eventBus.subscribe('action_escape_pressed', () => this.handleEscape());
   }
 
@@ -156,7 +154,7 @@ export class MenuManager {
         if (closeButton) {
             const onClose = modal === this.characterModal ? () => this.characterMenu.hide() : null;
             closeButton.addEventListener('click', () => {
-                eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+                eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
                 this.toggleModal(modal, null, onClose);
             });
         }
@@ -164,30 +162,30 @@ export class MenuManager {
 
     // Pause Modal listeners
     this.pauseResumeButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       this.toggleModal(this.pauseModal);
     });
     this.pauseRestartButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       eventBus.publish('requestLevelRestart');
     });
     this.pauseMainMenuButton.addEventListener('click', () => {
-        eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+        eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
         this.toggleModal(this.pauseModal);
         this.toggleModal(this.levelsMenuModal, () => this.levelMenu.show());
     });
 
     // Level Complete listeners
     this.lcPreviousButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       this.handleLevelCompleteAction('previous');
     });
     this.lcRestartButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       this.handleLevelCompleteAction('restart');
     });
     this.lcNextButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       this.handleLevelCompleteAction('next');
     });
   }

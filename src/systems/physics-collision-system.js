@@ -37,7 +37,7 @@ export class PhysicsSystem {
       player.onGround = false;
       player.jumpBufferTimer = 0;
       player.coyoteTimer = 0;
-      eventBus.publish('playSound', { key: 'jump', volume: 0.8 });
+      eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
     }
 
     // Horizontal movement physics
@@ -219,7 +219,7 @@ export class PhysicsSystem {
                 player.jumpCount = 0; // Allow double jump after bounce
                 player.coyoteTimer = 0; // No coyote time after a bounce
                 player.transitionTo('jump');
-                eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0 });
+                eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0, channel: 'SFX' });
 
                 return true; // Bounce occurred, stop further vertical checks.
             }

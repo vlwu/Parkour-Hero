@@ -25,7 +25,6 @@ export class SettingsMenu {
     eventBus.subscribe('soundSettingsChanged', (settings) => this.updateSoundSettingsDisplay(settings));
     eventBus.subscribe('statsUpdated', (stats) => this.updateSoundSettingsDisplay(stats));
     
-    // NEW: Subscribe to raw key events to handle remapping internally.
     eventBus.subscribe('key_down', ({ rawEvent }) => {
         if (this.isRemapping()) {
             rawEvent.preventDefault();
@@ -95,7 +94,7 @@ export class SettingsMenu {
     // Sound settings
     if (this.soundToggle) {
         this.soundToggle.addEventListener('click', () => {
-            eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+            eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
             eventBus.publish('toggleSound');
         });
     }
@@ -107,14 +106,14 @@ export class SettingsMenu {
     }
     if (this.testSoundButton) {
         this.testSoundButton.addEventListener('click', () => {
-            eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
-            eventBus.publish('playSound', { key: 'jump', volume: 0.8 });
+            eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+            eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'UI' });
         });
     }
     // Keybinds
     this.keybindInputs.forEach(input => {
         input.addEventListener('click', () => {
-            eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+            eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
             this.startKeybindRemap(input);
         });
     });
@@ -126,7 +125,6 @@ export class SettingsMenu {
     }
     this.updateKeybindDisplay();
 
-    // The fix: Proactively update the display when the menu is shown.
     if (this.soundManager) {
         this.updateSoundSettingsDisplay(this.soundManager.getSettings());
     }

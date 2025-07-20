@@ -16,23 +16,23 @@ export class MainMenu {
     }
 
     this.startButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       this.hide();
       eventBus.publish('requestStartGame');
     });
 
     this.levelsButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       eventBus.publish('requestModalOpen', { modal: 'levels' });
     });
 
     this.characterButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       eventBus.publish('requestModalOpen', { modal: 'character' });
     });
     
     this.settingsButton.addEventListener('click', () => {
-      eventBus.publish('playSound', { key: 'button_click', volume: 0.8 });
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       eventBus.publish('requestModalOpen', { modal: 'settings' });
     });
   }
