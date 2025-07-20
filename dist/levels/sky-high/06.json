@@ -2,7 +2,7 @@
   "name": "Level 6: Zigging and Zagging",
   "gridWidth": 28,
   "gridHeight": 67,
-  "background": "background_blue",
+  "background": "background_purple",
   "startPosition": {
     "x": 3.13,
     "y": 62.5
