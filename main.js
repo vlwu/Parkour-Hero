@@ -16,8 +16,8 @@ if (!canvas || !ctx) {
   throw new Error('Canvas not available');
 }
 
-const BASE_WIDTH = 1280;
-const BASE_HEIGHT = 720;
+const BASE_WIDTH = 1920;
+const BASE_HEIGHT = 1080;
 
 canvas.width = BASE_WIDTH;
 canvas.height = BASE_HEIGHT;

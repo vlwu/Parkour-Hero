@@ -41,7 +41,7 @@ export class Engine {
     this.menuManager = null; // Will be set by main.js
 
     // --- BUTTON SIZE & POSITIONING ADJUSTMENT ---
-    const buttonSize = 40; // NEW: Define the size here
+    const buttonSize = 64; // NEW: Define the size here
     const rightPadding = 20;
     const topPadding = 20;
     const buttonGap = 10; // Space between each button

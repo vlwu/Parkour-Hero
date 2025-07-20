@@ -41,7 +41,7 @@ export class HUD {
       ];
       
       const fontOptions = {
-          scale: 1.6,
+          scale: 2.5, 
           align: 'center',
           color: 'white',
           outlineColor: 'black',
@@ -57,11 +57,12 @@ export class HUD {
         }
       });
       
-      const horizontalPadding = 30;
+      // Adjusted padding and height for the larger font and resolution
+      const horizontalPadding = 40;
       const hudX = 10;
       const hudY = 10;
       const hudWidth = maxWidth + horizontalPadding;
-      const hudHeight = 110;
+      const hudHeight = 180; // Increased height
 
       // --- DRAWING ---
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -69,8 +70,9 @@ export class HUD {
       ctx.roundRect(hudX, hudY, hudWidth, hudHeight, 10);
       ctx.fill();
 
-      const lineHeight = 22;
-      const startY = hudY + 15;
+      // Adjusted line height and starting position for the new scale
+      const lineHeight = 35; 
+      const startY = hudY + 25; 
       const textX = hudX + hudWidth / 2;
       
       lines.forEach((text, index) => {

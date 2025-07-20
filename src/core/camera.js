@@ -1,6 +1,6 @@
 export class Camera {
   constructor(canvasWidth, canvasHeight) {
-    this.zoom = 1.25; // Zoom factor. > 1 zooms in, < 1 zooms out.
+    this.zoom = 1.8; // Zoom factor. > 1 zooms in, < 1 zooms out.
     this.viewportWidth = canvasWidth;
     this.viewportHeight = canvasHeight;
     
