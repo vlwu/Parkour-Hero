@@ -46,38 +46,39 @@ export class Renderer {
   }
   
   drawScrollingBackground(level, dt) {
-    // Get the pre-rendered background from the cache
+    // Get the pre-rendered background from the cache.
     const bgCanvas = this._preRenderBackground(level);
 
-    if (!bgCanvas) {
-      // Draw a solid color if the background isn't available
+    // Also get the original background asset to know its dimensions for tiling calculations.
+    const bg = this.assets[level.background];
+
+    if (!bgCanvas || !bg || !bg.complete || bg.naturalWidth === 0) {
+      // Draw a solid color if the background isn't available or ready.
       this.ctx.fillStyle = '#87CEEB';
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       return;
     }
 
-    // Update the scroll offset based on time
+    // Update the scroll offset based on time.
     const scroll = level.backgroundScroll;
     this.backgroundOffset.x += scroll.x * dt;
     this.backgroundOffset.y += scroll.y * dt;
 
-    // Use modulo to ensure the offset loops seamlessly
-    const offsetX = this.backgroundOffset.x % bgCanvas.width;
-    const offsetY = this.backgroundOffset.y % bgCanvas.height;
-
-    // Draw the pre-rendered canvas to the screen at the calculated offset
-    this.ctx.drawImage(bgCanvas, offsetX, offsetY, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
+    // Use the original background's dimensions for the modulo operation to ensure scrolling loops correctly.
+    const bgWidth = bg.width;
+    const bgHeight = bg.height;
     
-    // Draw a second copy if the offset causes a gap
-    if (offsetX > 0) {
-        this.ctx.drawImage(bgCanvas, offsetX - bgCanvas.width, offsetY, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
-    }
-    if (offsetY > 0) {
-        this.ctx.drawImage(bgCanvas, offsetX, offsetY - bgCanvas.height, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
-    }
-    if (offsetX > 0 && offsetY > 0) {
-        this.ctx.drawImage(bgCanvas, offsetX - bgCanvas.width, offsetY - bgCanvas.height, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
-    }
+    // Calculate the source 'x' and 'y' coordinates for slicing from the pre-rendered canvas.
+    // The `(a % n + n) % n` pattern ensures the result is always a positive remainder, providing
+    // a consistent, looping coordinate within the dimensions of the background tile.
+    const sx = (this.backgroundOffset.x % bgWidth + bgWidth) % bgWidth;
+    const sy = (this.backgroundOffset.y % bgHeight + bgHeight) % bgHeight;
+
+    // The `bgCanvas` is intentionally created larger than the screen (`canvas.width + bg.width`).
+    // This allows us to select a `canvas.width` x `canvas.height` slice starting from our
+    // calculated `(sx, sy)`. This single slice contains the correctly tiled and wrapped background view.
+    // Drawing it once to the main canvas at (0,0) is efficient and fixes the previous overlap bug.
+    this.ctx.drawImage(bgCanvas, sx, sy, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
   }
 
   renderScene(camera, level, player, collectedFruits, particles) {
