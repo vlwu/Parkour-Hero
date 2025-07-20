@@ -2,7 +2,7 @@ import { Camera } from './camera.js';
 import { SoundManager } from '../managers/sound-manager.js';
 import { HUD } from '../ui/hud.js';
 import { GameState } from '../managers/game-state.js';
-import { PhysicsSystem } from '../systems/physics-collision-system.js';
+import { CollisionSystem } from '../systems/collision-system.js';
 import { Renderer } from '../systems/renderer.js';
 import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
@@ -18,6 +18,10 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
 import { PLAYER_CONSTANTS } from '../utils/constants.js';
+// Import the new systems
+import { InputSystemProcessor } from '../systems/input-system-processor.js';
+import { PlayerSystem } from '../systems/player-system.js';
+import { GameplaySystem } from '../systems/gameplay-system.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -46,10 +50,23 @@ export class Engine {
 
     this.levelManager = new LevelManager(this.gameState); 
 
-    this.physicsSystem = new PhysicsSystem();
+    // --- System Instantiation ---
+    this.inputSystemProcessor = new InputSystemProcessor();
+    this.playerSystem = new PlayerSystem(); // Temporary player logic system
+    this.collisionSystem = new CollisionSystem();
+    this.gameplaySystem = new GameplaySystem(); // Handles game rules
     this.particleSystem = new ParticleSystem(assets);
     this.uiSystem = new UISystem(canvas, assets);
-    this.systems = [this.physicsSystem, this.particleSystem, this.uiSystem];
+
+    // --- System Execution Order ---
+    this.systems = [
+        this.inputSystemProcessor,      // 1. Read hardware input into components.
+        this.playerSystem,              // 2. Apply player-specific logic, physics, and state changes.
+        this.collisionSystem,           // 3. Move entities and resolve/report tile collisions.
+        this.gameplaySystem,            // 4. Act on collision events (event-driven).
+        this.particleSystem,            // 5. Update visual effects.
+        this.uiSystem,                  // 6. Update UI buttons.
+    ];
 
     this.levelStartTime = 0;
     this.levelTime = 0;
@@ -80,7 +97,6 @@ export class Engine {
         this.resume();
     });
     
-    // The engine listens for gameState updates to keep its own reference fresh
     eventBus.subscribe('gameStateUpdated', (newState) => this.gameState = newState);
   }
 
@@ -124,14 +140,13 @@ export class Engine {
   }
 
   loadLevel(sectionIndex, levelIndex) {
-    this.levelManager.gameState = this.gameState; // Ensure level manager has the latest state
+    this.levelManager.gameState = this.gameState;
     const newLevel = this.levelManager.loadLevel(sectionIndex, levelIndex);
     if (!newLevel) { this.stop(); return; }
     
     this.currentLevel = newLevel;
     this.pauseForMenu = false;
     
-    // Create a new GameState instance for the new level
     const newState = new GameState(this.gameState);
     newState.showingLevelComplete = false;
     newState.currentSection = sectionIndex;
@@ -163,18 +178,22 @@ export class Engine {
       this.levelTime = (performance.now() - this.levelStartTime) / 1000;
     }
 
-    const canProcessGameplayInput = this.isRunning && !this.pauseForMenu && !this.gameState.showingLevelComplete;
-    const inputActions = {
-      moveLeft: canProcessGameplayInput && inputState.isKeyDown(this.keybinds.moveLeft),
-      moveRight: canProcessGameplayInput && inputState.isKeyDown(this.keybinds.moveRight),
-      jump: canProcessGameplayInput && inputState.isKeyDown(this.keybinds.jump),
-      dash: canProcessGameplayInput && inputState.isKeyDown(this.keybinds.dash),
+    const context = { 
+        entityManager: this.entityManager, 
+        playerEntityId: this.playerEntityId, 
+        level: this.currentLevel, 
+        camera: this.camera, 
+        isRunning: this.isRunning, 
+        gameState: this.gameState,
+        keybinds: this.keybinds,
+        dt, 
     };
 
-    this.camera.update(this.entityManager, this.playerEntityId, dt);
-
-    const context = { entityManager: this.entityManager, playerEntityId: this.playerEntityId, level: this.currentLevel, inputActions, camera: this.camera, isRunning: this.isRunning, dt, };
-    for(const system of this.systems) system.update(dt, context);
+    for(const system of this.systems) {
+      // The gameplay system is purely event-driven and doesn't need an update call.
+      if (system instanceof GameplaySystem) continue;
+      system.update(dt, context);
+    }
     
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) this._respawnPlayer();
@@ -197,14 +216,12 @@ export class Engine {
     if (playerCtrl && playerCtrl.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
       playerCtrl.despawnAnimationFinished = false; 
       
-      // FIX: Handle the new immutable state flow
       const newGameState = this.gameState.onLevelComplete();
       if (newGameState !== this.gameState) {
           this.gameState = newGameState;
-          eventBus.publish('gameStateUpdated', this.gameState); // Inform UI about the state change
-          this.pause(); // Pause the game
+          eventBus.publish('gameStateUpdated', this.gameState);
+          this.pause();
           
-          // Publish the specific event for the modal with stats
           eventBus.publish('levelComplete', { 
               deaths: playerCtrl.deathCount, 
               time: this.levelTime,
@@ -242,15 +259,18 @@ export class Engine {
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     const renderable = this.entityManager.getComponent(this.playerEntityId, RenderableComponent);
     const collision = this.entityManager.getComponent(this.playerEntityId, CollisionComponent);
+    const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
 
     pos.x = respawnPosition.x; pos.y = respawnPosition.y;
     vel.vx = 0; vel.vy = 0;
 
     const currentDeathCount = playerCtrl.deathCount;
+    // Reset the component to its default state
     this.entityManager.removeComponent(this.playerEntityId, PlayerControlledComponent);
     this.entityManager.addComponent(this.playerEntityId, new PlayerControlledComponent({ deathCount: currentDeathCount }));
     
     renderable.animationState = 'spawn';
+    state.currentState = 'spawn';
     renderable.animationFrame = 0;
     renderable.animationTimer = 0;
     renderable.direction = 'right';
@@ -283,11 +303,13 @@ export class Engine {
   _onTrophyCollision() {
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     const renderable = this.entityManager.getComponent(this.playerEntityId, RenderableComponent);
+    const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
     if (playerCtrl && !playerCtrl.isDespawning) {
       this.currentLevel.trophy.acquired = true;
       this.camera.shake(8, 0.3);
       playerCtrl.isDespawning = true;
       renderable.animationState = 'despawn';
+      state.currentState = 'despawn';
       renderable.animationFrame = 0;
       renderable.animationTimer = 0;
       renderable.width = PLAYER_CONSTANTS.SPAWN_WIDTH;

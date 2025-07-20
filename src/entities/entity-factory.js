@@ -5,6 +5,8 @@ import { PlayerControlledComponent } from '../components/PlayerControlledCompone
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
 import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { InputComponent } from '../components/InputComponent.js';
+import { StateComponent } from '../components/StateComponent.js';
 
 /**
  * Creates a player entity and adds its components to the entity manager.
@@ -37,6 +39,11 @@ export function createPlayer(entityManager, x, y, characterId) {
         width: PLAYER_CONSTANTS.WIDTH,
         height: PLAYER_CONSTANTS.HEIGHT,
     }));
+    
+    // Add the new components required for the refactored systems.
+    entityManager.addComponent(playerEntityId, new InputComponent());
+    entityManager.addComponent(playerEntityId, new StateComponent('spawn'));
+
 
     return playerEntityId;
 }
