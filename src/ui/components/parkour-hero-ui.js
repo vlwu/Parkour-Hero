@@ -5,7 +5,7 @@ import './pause-modal.js';
 import './levels-menu.js';
 import './character-menu.js';
 import './info-modal.js';
-import './level-complete-modal.js'; 
+import './level-complete-modal.js';
 import './bitmap-text.js';
 
 export class ParkourHeroUI extends LitElement {
@@ -31,16 +31,6 @@ export class ParkourHeroUI extends LitElement {
     }
     .main-menu-buttons button:hover { background-color: #0056b3; transform: translateY(-2px); box-shadow: 0 8px #004a99; }
     .main-menu-buttons button:active { transform: translateY(2px); box-shadow: 0 2px #004a99; }
-    
-    .placeholder-modal {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex; justify-content: center; align-items: center;
-      color: white; font-size: 2em;
-    }
-    .placeholder-content {
-        background: #333; padding: 40px; border-radius: 10px;
-    }
   `;
 
   static properties = {
@@ -76,27 +66,27 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('ui_button_clicked', this._handleUIButtonClick);
     eventBus.subscribe('statsUpdated', this._handleStatsUpdate);
     eventBus.subscribe('action_escape_pressed', this._handleEscapePress);
+    eventBus.subscribe('levelLoaded', this._handleLevelLoad);
     eventBus.subscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
-    eventBus.subscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
     eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets);
     eventBus.subscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    // It's good practice to unsubscribe from all events to prevent memory leaks
     eventBus.unsubscribe('requestStartGame', this._handleStartGame);
     eventBus.unsubscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.unsubscribe('keybindsUpdated', this._handleKeybindsUpdate);
     eventBus.unsubscribe('ui_button_clicked', this._handleUIButtonClick);
     eventBus.unsubscribe('statsUpdated', this._handleStatsUpdate);
     eventBus.unsubscribe('action_escape_pressed', this._handleEscapePress);
+    eventBus.unsubscribe('levelLoaded', this._handleLevelLoad);
     eventBus.unsubscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
-    eventBus.unsubscribe('levelLoaded', ({ gameState }) => this.gameState = gameState);
     eventBus.unsubscribe('assetsLoaded', (assets) => this.assets = assets);
     eventBus.unsubscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
   }
 
-  // New handler to hide the level complete screen when a new level starts
   _handleLevelLoad = ({ gameState }) => {
       this.gameState = gameState;
       this.levelCompleteStats = null;
@@ -123,6 +113,7 @@ export class ParkourHeroUI extends LitElement {
   };
 
   _handleEscapePress = () => {
+    if (this.levelCompleteStats) return; // Don't let escape close the level complete screen
     if (this.activeModal) { this._closeModal(); }
     else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
   };
@@ -144,7 +135,6 @@ export class ParkourHeroUI extends LitElement {
       this.activeModal = modalName;
   }
 
-  // --- Modal Event Handlers ---
   _handleRestart() { this._closeModal(); eventBus.publish('requestLevelRestart'); }
   _handleOpenLevelsMenu() { this.activeModal = 'levels'; }
   
@@ -156,34 +146,23 @@ export class ParkourHeroUI extends LitElement {
   
   _handleCharacterSelected(e) {
     const { characterId } = e.detail;
-    
     const newGameState = this.gameState.setSelectedCharacter(characterId);
-    
-    // If the state actually changed, update our property and notify the game engine
     if (newGameState !== this.gameState) {
         this.gameState = newGameState;
         eventBus.publish('gameStateUpdated', this.gameState);
     }
-
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     eventBus.publish('characterUpdated', characterId);
   }
 
   _handleLevelAction(action) {
-      this.levelCompleteStats = null; // Hide the modal first
-      const { currentSection, currentLevelIndex } = this.gameState;
-
-      if (action === 'restart') {
-          eventBus.publish('requestLevelRestart');
-      } else if (action === 'next') {
-          eventBus.publish('requestNextLevel'); // A new, cleaner event
-      } else if (action === 'previous') {
-          eventBus.publish('requestPreviousLevel'); // A new, cleaner event
-      }
+      this.levelCompleteStats = null;
+      if (action === 'restart') { eventBus.publish('requestLevelRestart'); }
+      else if (action === 'next') { eventBus.publish('requestNextLevel'); }
+      else if (action === 'previous') { eventBus.publish('requestPreviousLevel'); }
   }
 
   render() {
-    // The level complete modal takes priority over all other UI
     if (this.levelCompleteStats) {
       return html`
         <level-complete-modal
@@ -216,22 +195,12 @@ export class ParkourHeroUI extends LitElement {
       <div class="main-menu-overlay">
         <div class="main-menu-container">
           <bitmap-text
-            .fontRenderer=${this.fontRenderer}
-            text="Parkour Hero"
-            scale="9"
-            outlineColor="black"
-            outlineWidth="2"
+            .fontRenderer=${this.fontRenderer} text="Parkour Hero" scale="9" outlineColor="black" outlineWidth="2"
           ></bitmap-text>
           <div class="main-menu-buttons">
             ${buttonTexts.map(btn => html`
               <button @click=${btn.action}>
-                <bitmap-text
-                  .fontRenderer=${this.fontRenderer}
-                  text=${btn.text}
-                  scale="2.5"
-                  outlineColor="#004a99"
-                  outlineWidth="1"
-                ></bitmap-text>
+                <bitmap-text .fontRenderer=${this.fontRenderer} text=${btn.text} scale="2.5" outlineColor="#004a99" outlineWidth="1"></bitmap-text>
               </button>
             `)}
           </div>
@@ -244,18 +213,17 @@ export class ParkourHeroUI extends LitElement {
     switch (this.activeModal) {
       case 'settings':
         return html`<settings-menu 
-                      .keybinds=${this.keybinds} .soundSettings=${this.soundSettings}
+                      .keybinds=${this.keybinds} .soundSettings=${this.soundSettings} .fontRenderer=${this.fontRenderer}
                       @close-modal=${this._closeModal} @keybind-changed=${this._handleKeybindChange}
                     ></settings-menu>`;
       case 'pause':
         return html`<pause-modal
-                      .stats=${this.currentStats}
-                      .fontRenderer=${this.fontRenderer}
+                      .stats=${this.currentStats} .fontRenderer=${this.fontRenderer}
                       @resume-game=${this._closeModal} @restart-level=${this._handleRestart} @open-levels-menu=${this._handleOpenLevelsMenu}
                     ></pause-modal>`;
       case 'levels':
         return html`<levels-menu
-                      .gameState=${this.gameState}
+                      .gameState=${this.gameState} .fontRenderer=${this.fontRenderer}
                       @close-modal=${this._closeModal} @level-selected=${this._handleLevelSelected}
                     ></levels-menu>`;
       case 'character':
@@ -266,6 +234,7 @@ export class ParkourHeroUI extends LitElement {
       case 'info':
         return html`<info-modal
                       .keybinds=${this.keybinds}
+                      .fontRenderer=${this.fontRenderer}
                       @close-modal=${this._closeModal}
                     ></info-modal>`;
       default:

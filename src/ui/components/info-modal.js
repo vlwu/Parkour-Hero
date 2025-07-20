@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { formatKeyForDisplay } from '../ui-utils.js';
+import './bitmap-text.js';
 
 export class InfoModal extends LitElement {
   static styles = css`
@@ -26,8 +27,16 @@ export class InfoModal extends LitElement {
       transition: transform 0.2s ease-in-out;
     }
     .close-button:hover { transform: scale(1.1); }
-    h2 { margin: 0 0 10px 0; font-size: 2.2em; }
-    h3 { margin: 0 0 20px 0; font-size: 1.5em; border-bottom: 2px solid #666; padding-bottom: 10px; }
+    .title-container, .subtitle-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+    .subtitle-container {
+        border-bottom: 2px solid #666;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
     .settings-section { padding: 20px; background-color: #444; border-radius: 8px; border: 1px solid #555; }
     .how-to-play p { line-height: 1.6; margin-bottom: 20px; text-align: left; }
     .keybind-list { display: flex; flex-direction: column; gap: 15px; }
@@ -39,13 +48,19 @@ export class InfoModal extends LitElement {
     .key-display-container { display: flex; gap: 5px; align-items: center; }
     .key-display {
       background-color: #666; color: #fff; border: 1px solid #777;
-      padding: 5px 10px; border-radius: 6px; text-align: center;
-      font-weight: bold; min-width: 20px;
+      border-radius: 6px; text-align: center;
+      min-width: 20px;
+      /* Ensure container for bitmap text has a size */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 5px 8px;
     }
   `;
 
   static properties = {
     keybinds: { type: Object },
+    fontRenderer: { type: Object },
   };
 
   _dispatchClose() {
@@ -59,34 +74,56 @@ export class InfoModal extends LitElement {
       <div class="modal-overlay" @click=${this._dispatchClose}>
         <div class="modal-content" @click=${e => e.stopPropagation()}>
           <button class="close-button" @click=${this._dispatchClose}></button>
-          <h2>Info Section</h2>
+          
+          <div class="title-container">
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="Info Section" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
+          </div>
+
           <div class="settings-section">
-            <h3>How to Play</h3>
+            <div class="subtitle-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="How to Play" scale="2"></bitmap-text>
+            </div>
+            
             <div class="how-to-play">
               <p>Use the controls to navigate the world, collect all the fruit, and reach the trophy!</p>
               <p>You can also jump off of most walls! While in the air, move against a wall to slide down it, then press the jump key again to wall jump away.</p>
               <p><strong>Note:</strong> You cannot cling to natural surfaces like dirt, sand, mud, or ice.</p>
               <div class="keybind-list">
+                
                 <div class="keybind-item">
                   <label>Move Left / Right:</label>
                   <div class="key-display-container">
-                    <span class="key-display">${formatKeyForDisplay(this.keybinds.moveLeft)}</span>
+                    <div class="key-display">
+                        <bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.moveLeft)} scale="1.5"></bitmap-text>
+                    </div>
                     <span>/</span>
-                    <span class="key-display">${formatKeyForDisplay(this.keybinds.moveRight)}</span>
+                    <div class="key-display">
+                        <bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.moveRight)} scale="1.5"></bitmap-text>
+                    </div>
                   </div>
                 </div>
+
                 <div class="keybind-item">
                   <label>Jump / Double Jump / Wall Jump:</label>
-                  <span class="key-display">${formatKeyForDisplay(this.keybinds.jump)}</span>
+                  <div class="key-display">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.jump)} scale="1.5"></bitmap-text>
+                  </div>
                 </div>
+
                 <div class="keybind-item">
                   <label>Dash:</label>
-                  <span class="key-display">${formatKeyForDisplay(this.keybinds.dash)}</span>
+                  <div class="key-display">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.dash)} scale="1.5"></bitmap-text>
+                  </div>
                 </div>
+
                 <div class="keybind-item">
                   <label>Pause Game:</label>
-                  <span class="key-display">ESC</span>
+                  <div class="key-display">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="ESC" scale="1.5"></bitmap-text>
+                  </div>
                 </div>
+
               </div>
             </div>
           </div>
