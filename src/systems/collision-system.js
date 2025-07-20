@@ -4,7 +4,7 @@ import { PositionComponent } from '../components/PositionComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 
-export class CollisionSystem { 
+export class CollisionSystem {
   constructor() {}
 
   update(dt, { entityManager, level }) {
@@ -15,23 +15,21 @@ export class CollisionSystem {
         const vel = entityManager.getComponent(entityId, VelocityComponent);
         const col = entityManager.getComponent(entityId, CollisionComponent);
 
-        // --- Core Movement and Collision Resolution ---
-        // This is the sole remaining responsibility of this system.
-
         pos.x += vel.vx * dt;
         this._handleHorizontalCollisions(pos, vel, col, level);
 
         pos.y += vel.vy * dt;
-        const bounced = this._checkTrampolineBounce(pos, vel, col, level); // Trampoline is a special tile interaction
+        // FIX: Pass 'dt' to _checkTrampolineBounce
+        const bounced = this._checkTrampolineBounce(pos, vel, col, level, dt);
         if (!bounced) {
             this._handleVerticalCollisions(pos, vel, col, level, dt);
         }
 
-        // Keep entity within world bounds (horizontally)
+        if (pos.y > level.height + 50) {
+            eventBus.publish('collisionEvent', { type: 'world_bottom', entityId, entityManager });
+        }
         pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
 
-        // --- Collision Detection and Event Publishing ---
-        // Detect collisions and publish generic events for the GameplaySystem to interpret.
         this._checkHazardCollisions(pos, col, level, entityId, entityManager);
         this._checkFruitCollisions(pos, col, level, entityId, entityManager);
         this._checkTrophyCollision(pos, col, level.trophy, entityId, entityManager);
@@ -39,7 +37,6 @@ export class CollisionSystem {
     }
   }
 
-  // --- Tile Collision Logic (Unchanged) ---
   _handleHorizontalCollisions(pos, vel, col, level) {
     if (vel.vx === 0) { col.isAgainstWall = false; return; }
     const topTile = Math.floor(pos.y / GRID_CONSTANTS.TILE_SIZE);
@@ -77,7 +74,6 @@ export class CollisionSystem {
     const checkY = pos.y + col.height;
     const tileY = Math.floor(checkY / GRID_CONSTANTS.TILE_SIZE);
     
-    let wasGrounded = col.isGrounded;
     col.isGrounded = false;
 
     for (let x = leftTile; x <= rightTile; x++) {
@@ -97,20 +93,15 @@ export class CollisionSystem {
     }
   }
 
-  // --- Dynamic Object Collision Logic (Modified to publish generic events) ---
-
-  _checkTrampolineBounce(pos, vel, col, level) {
+  // FIX: Accept 'dt' as a parameter.
+  _checkTrampolineBounce(pos, vel, col, level, dt) {
     if (vel.vy <= 0) return false;
     for (const tramp of level.trampolines) {
         const playerBottom = pos.y + col.height;
         if (pos.x + col.width > tramp.x && pos.x < tramp.x + tramp.size) {
             if (playerBottom >= tramp.y && (playerBottom - vel.vy * dt) <= tramp.y + 1) {
-                // This is a special case where the tile interaction directly affects physics.
-                // We will leave it here for now, as it's a direct physics response.
                 tramp.state = 'jumping'; tramp.frame = 0; tramp.frameTimer = 0;
                 pos.y = tramp.y - col.height;
-                // Note: This direct manipulation of velocity based on player constants
-                // is something we will address in the next phase.
                 vel.vy = -PLAYER_CONSTANTS.JUMP_FORCE * PLAYER_CONSTANTS.TRAMPOLINE_BOUNCE_MULTIPLIER;
                 eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0, channel: 'SFX' });
                 return true;

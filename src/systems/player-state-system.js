@@ -32,9 +32,10 @@ export class PlayerStateSystem {
             const state = entityManager.getComponent(entityId, StateComponent);
 
             this._updateTimers(dt, ctrl);
-            this._handleInput(input, pos, vel, ctrl, col, renderable, state);
+            // FIX: Pass 'dt' into _handleInput for timer calculations.
+            this._handleInput(dt, input, pos, vel, ctrl, col, renderable, state);
             this._updateFSM(vel, ctrl, col, renderable, state);
-            this._updateAnimation(dt, ctrl, renderable);
+            this._updateAnimation(dt, ctrl, renderable, state);
             
             if (col.isGrounded) {
                 ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
@@ -48,7 +49,8 @@ export class PlayerStateSystem {
         if (ctrl.dashCooldownTimer > 0) ctrl.dashCooldownTimer -= dt;
     }
 
-    _handleInput(input, pos, vel, ctrl, col, renderable, state) {
+    // FIX: Accept 'dt' as a parameter.
+    _handleInput(dt, input, pos, vel, ctrl, col, renderable, state) {
         if (ctrl.isSpawning || ctrl.isDashing || ctrl.isDespawning) {
             return;
         }
@@ -106,6 +108,13 @@ export class PlayerStateSystem {
 
     _updateFSM(vel, ctrl, col, renderable, state) {
         const currentState = state.currentState;
+
+        // FIX: Add this block to handle the transition *out* of the spawn state.
+        if (currentState === 'spawn' && ctrl.spawnComplete) {
+            this._setAnimationState(renderable, state, 'idle', ctrl);
+            return; // Exit early to let the new state take over on the next frame.
+        }
+
         if (currentState === 'spawn' || currentState === 'despawn') return;
 
         if (ctrl.isDashing) {
@@ -144,7 +153,7 @@ export class PlayerStateSystem {
         }
     }
 
-    _updateAnimation(dt, ctrl, renderable) {
+    _updateAnimation(dt, ctrl, renderable, state) {
         renderable.animationTimer += dt;
         const stateName = renderable.animationState;
         const speed = (stateName === 'spawn' || stateName === 'despawn') ? PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED : PLAYER_CONSTANTS.ANIMATION_SPEED;
@@ -159,7 +168,8 @@ export class PlayerStateSystem {
                 renderable.animationFrame = frameCount - 1;
                 if (stateName === 'spawn') {
                     ctrl.isSpawning = false;
-                    ctrl.spawnComplete = true;
+                    ctrl.spawnComplete = true; // Flag that the animation is done.
+                    // FIX: This now correctly changes the size after spawning.
                     renderable.width = PLAYER_CONSTANTS.WIDTH;
                     renderable.height = PLAYER_CONSTANTS.HEIGHT;
                 }
