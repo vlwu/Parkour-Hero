@@ -61,7 +61,8 @@ export class Engine {
     eventBus.subscribe('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
     eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
     eventBus.subscribe('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
-    eventBus.subscribe('requestTogglePause', () => this.togglePause());
+    // Listen for a single toggle event
+    eventBus.subscribe('requestTogglePause', () => this.togglePause()); 
     eventBus.subscribe('keybindsUpdated', (newKeybinds) => this.updateKeybinds(newKeybinds));
     
     eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
@@ -69,8 +70,14 @@ export class Engine {
     eventBus.subscribe('checkpointActivated', (cp) => this._onCheckpointActivated(cp));
     eventBus.subscribe('playerDied', () => this._onPlayerDied());
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
-    eventBus.subscribe('menuOpened', () => this.pauseForMenu = true);
-    eventBus.subscribe('allMenusClosed', () => this.pauseForMenu = false);
+    eventBus.subscribe('menuOpened', () => {
+        this.pauseForMenu = true;
+        this.pause();
+    });
+    eventBus.subscribe('allMenusClosed', () => {
+        this.pauseForMenu = false;
+        this.resume();
+    });
   }
 
   togglePause() {

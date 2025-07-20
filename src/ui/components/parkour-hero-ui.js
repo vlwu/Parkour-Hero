@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { eventBus } from '../../utils/event-bus.js';
-import './settings-menu.js'; // Ensure the settings menu is imported
+import './settings-menu.js';
 
 export class ParkourHeroUI extends LitElement {
   static styles = css`
@@ -24,6 +24,17 @@ export class ParkourHeroUI extends LitElement {
     }
     .main-menu-buttons button:hover { background-color: #0056b3; transform: translateY(-2px); box-shadow: 0 8px #004a99; }
     .main-menu-buttons button:active { transform: translateY(2px); box-shadow: 0 2px #004a99; }
+    
+    /* Simple placeholder style */
+    .placeholder-modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex; justify-content: center; align-items: center;
+      color: white; font-size: 2em;
+    }
+    .placeholder-content {
+        background: #333; padding: 40px; border-radius: 10px;
+    }
   `;
 
   static properties = {
@@ -47,7 +58,6 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.subscribe('keybindsUpdated', this._handleKeybindsUpdate);
     eventBus.subscribe('ui_button_clicked', this._handleUIButtonClick);
-    eventBus.subscribe('requestModalOpen', ({ modal }) => this.activeModal = modal);
   }
 
   disconnectedCallback() {
@@ -56,7 +66,6 @@ export class ParkourHeroUI extends LitElement {
     eventBus.unsubscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.unsubscribe('keybindsUpdated', this._handleKeybindsUpdate);
     eventBus.unsubscribe('ui_button_clicked', this._handleUIButtonClick);
-    eventBus.unsubscribe('requestModalOpen', ({ modal }) => this.activeModal = modal);
   }
 
   _handleStartGame = () => {
@@ -74,12 +83,14 @@ export class ParkourHeroUI extends LitElement {
   }
 
   _handleUIButtonClick = ({ buttonId }) => {
-    if (buttonId === 'pause') {
-      eventBus.publish('requestTogglePause');
-    } else {
+      // The pause button is special, it toggles the game's running state
+      if (buttonId === 'pause') {
+          eventBus.publish('requestTogglePause');
+          return;
+      }
+      // All other buttons just open their respective modals
       this.activeModal = buttonId;
-      eventBus.publish('menuOpened');
-    }
+      eventBus.publish('menuOpened'); // Tell the engine to pause
   };
 
   _handleKeybindChange = (e) => {
@@ -89,8 +100,18 @@ export class ParkourHeroUI extends LitElement {
   };
   
   _closeModal = () => {
+    if (!this.gameHasStarted) {
+      this.activeModal = 'main-menu';
+    } else {
       this.activeModal = null;
-      eventBus.publish('allMenusClosed');
+    }
+    eventBus.publish('allMenusClosed');
+  }
+  
+  // Event handler for main menu buttons
+  _openModalFromMenu(modalName) {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+      this.activeModal = modalName;
   }
 
   render() {
@@ -107,9 +128,9 @@ export class ParkourHeroUI extends LitElement {
           <h1 class="game-title">Parkour Hero</h1>
           <div class="main-menu-buttons">
             <button @click=${() => eventBus.publish('requestStartGame')}>Start Game</button>
-            <button @click=${() => this.activeModal = 'levels'}>Levels</button>
-            <button @click=${() => this.activeModal = 'character'}>Character</button>
-            <button @click=${() => this.activeModal = 'settings'}>Settings</button>
+            <button @click=${() => this._openModalFromMenu('levels')}>Levels</button>
+            <button @click=${() => this._openModalFromMenu('character')}>Character</button>
+            <button @click=${() => this._openModalFromMenu('settings')}>Settings</button>
           </div>
         </div>
       </div>
@@ -125,12 +146,34 @@ export class ParkourHeroUI extends LitElement {
                       @close-modal=${this._closeModal}
                       @keybind-changed=${this._handleKeybindChange}
                     ></settings-menu>`;
+      // FIX: Added placeholders for other modals
       case 'levels':
-        // Placeholder for the next step
-        return html`<div>Levels Menu (To Be Implemented) <button @click=${this._closeModal}>Close</button></div>`;
+        return html`
+          <div class="placeholder-modal" @click=${this._closeModal}>
+            <div class="placeholder-content" @click=${(e) => e.stopPropagation()}>
+                Levels Menu (To Be Implemented)
+                <br>
+                <button @click=${this._closeModal}>Close</button>
+            </div>
+          </div>`;
       case 'character':
-        // Placeholder for the next step
-        return html`<div>Character Menu (To Be Implemented) <button @click=${this._closeModal}>Close</button></div>`;
+        return html`
+         <div class="placeholder-modal" @click=${this._closeModal}>
+            <div class="placeholder-content" @click=${(e) => e.stopPropagation()}>
+                Character Menu (To Be Implemented)
+                <br>
+                <button @click=${this._closeModal}>Close</button>
+            </div>
+          </div>`;
+      case 'info':
+        return html`
+         <div class="placeholder-modal" @click=${this._closeModal}>
+            <div class="placeholder-content" @click=${(e) => e.stopPropagation()}>
+                Info Modal (To Be Implemented)
+                <br>
+                <button @click=${this._closeModal}>Close</button>
+            </div>
+          </div>`;
       default:
         return html``;
     }

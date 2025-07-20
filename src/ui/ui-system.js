@@ -12,12 +12,13 @@ export class UISystem {
         const buttonGap = 10;
         const buttonX = this.canvas.width - buttonSize - rightPadding;
 
+        // FIX: Uncommented the missing button definitions
         this.uiButtons = [
             { id: 'settings', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 0, width: buttonSize, height: buttonSize, assetKey: 'settings_icon', visible: false },
             { id: 'pause', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 1, width: buttonSize, height: buttonSize, assetKey: 'pause_icon', visible: false },
-            // { id: 'levels', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 2, width: buttonSize, height: buttonSize, assetKey: 'levels_icon', visible: false },
-            // { id: 'character', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 3, width: buttonSize, height: buttonSize, assetKey: 'character_icon', visible: false },
-            // { id: 'info', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 4, width: buttonSize, height: buttonSize, assetKey: 'info_icon', visible: false },
+            { id: 'levels', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 2, width: buttonSize, height: buttonSize, assetKey: 'levels_icon', visible: false },
+            { id: 'character', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 3, width: buttonSize, height: buttonSize, assetKey: 'character_icon', visible: false },
+            { id: 'info', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 4, width: buttonSize, height: buttonSize, assetKey: 'info_icon', visible: false },
         ];
         
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
@@ -50,7 +51,6 @@ export class UISystem {
     handleCanvasClick(e) {
         if (this.hoveredButton) {
             eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
-            // The UI component will listen for this event
             eventBus.publish('ui_button_clicked', { buttonId: this.hoveredButton.id });
         }
     }
