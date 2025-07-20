@@ -90,6 +90,11 @@ export class ParkourHeroUI extends LitElement {
   _handleLevelLoad = ({ gameState }) => {
       this.gameState = gameState;
       this.levelCompleteStats = null;
+      // FIX: Ensure the UI knows the game has started when a level loads.
+      if (!this.gameHasStarted) {
+          this.gameHasStarted = true;
+      }
+      this.activeModal = null;
   }
 
   _handleStartGame = () => {
@@ -140,7 +145,9 @@ export class ParkourHeroUI extends LitElement {
   
   _handleLevelSelected(e) {
     const { sectionIndex, levelIndex } = e.detail;
-    this._closeModal();
+    // FIX: When a level is selected, whether from the main menu or pause menu,
+    // we simply publish the request. The engine and the `_handleLevelLoad`
+    // callback will handle the state transitions.
     eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
   }
   
@@ -163,6 +170,7 @@ export class ParkourHeroUI extends LitElement {
   }
 
   render() {
+    // Level complete modal always takes top priority
     if (this.levelCompleteStats) {
       return html`
         <level-complete-modal
@@ -177,13 +185,26 @@ export class ParkourHeroUI extends LitElement {
       `;
     }
 
-    if (this.activeModal === 'main-menu' && !this.gameHasStarted) {
-      return this.renderMainMenu();
+    // FIX: Reworked rendering logic for the main menu and modals
+    // If the game has NOT started, render the main menu screen.
+    // Any active modal will be rendered on top of it.
+    if (!this.gameHasStarted) {
+      return html`
+        <div class="main-menu-overlay">
+          ${this.activeModal === 'main-menu'
+            ? this.renderMainMenuContent()
+            : this.renderActiveModal()
+          }
+        </div>
+      `;
     }
+    
+    // If the game HAS started, only render the active modal (without the main menu background).
     return this.renderActiveModal();
   }
   
-  renderMainMenu() {
+  // FIX: Created a new method for just the main menu's content.
+  renderMainMenuContent() {
     const buttonTexts = [
       { text: 'Start Game', action: () => eventBus.publish('requestStartGame') },
       { text: 'Levels', action: () => this._openModalFromMenu('levels') },
@@ -192,18 +213,16 @@ export class ParkourHeroUI extends LitElement {
     ];
 
     return html`
-      <div class="main-menu-overlay">
-        <div class="main-menu-container">
-          <bitmap-text
-            .fontRenderer=${this.fontRenderer} text="Parkour Hero" scale="9" outlineColor="black" outlineWidth="2"
-          ></bitmap-text>
-          <div class="main-menu-buttons">
-            ${buttonTexts.map(btn => html`
-              <button @click=${btn.action}>
-                <bitmap-text .fontRenderer=${this.fontRenderer} text=${btn.text} scale="2.5" outlineColor="#004a99" outlineWidth="1"></bitmap-text>
-              </button>
-            `)}
-          </div>
+      <div class="main-menu-container">
+        <bitmap-text
+          .fontRenderer=${this.fontRenderer} text="Parkour Hero" scale="9" outlineColor="black" outlineWidth="2"
+        ></bitmap-text>
+        <div class="main-menu-buttons">
+          ${buttonTexts.map(btn => html`
+            <button @click=${btn.action}>
+              <bitmap-text .fontRenderer=${this.fontRenderer} text=${btn.text} scale="2.5" outlineColor="#004a99" outlineWidth="1"></bitmap-text>
+            </button>
+          `)}
         </div>
       </div>
     `;
