@@ -14,9 +14,40 @@ import { StateComponent } from '../components/StateComponent.js';
  * to trigger state transitions (like jumping and dashing), and updating animations.
  */
 export class PlayerStateSystem {
-    constructor() {}
+    constructor() {
+        eventBus.subscribe('playerTookDamage', (e) => this.handleDamageTaken(e));
+        this.damageEvents = [];
+    }
+    
+    handleDamageTaken(event) {
+        this.damageEvents.push(event);
+    }
+
+    _processDamageEvents(entityManager) {
+        if (this.damageEvents.length === 0) return;
+        
+        const entities = entityManager.query([PlayerControlledComponent, RenderableComponent, StateComponent]);
+
+        for (const event of this.damageEvents) {
+            for (const entityId of entities) {
+                const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+                const renderable = entityManager.getComponent(entityId, RenderableComponent);
+                const state = entityManager.getComponent(entityId, StateComponent);
+                
+                if (event.source === 'fall' && !ctrl.isHit) {
+                    ctrl.isHit = true;
+                    ctrl.hitStunTimer = PLAYER_CONSTANTS.HIT_STUN_DURATION;
+                    this._setAnimationState(renderable, state, 'hit', ctrl);
+                }
+            }
+        }
+        
+        this.damageEvents = [];
+    }
 
     update(dt, { entityManager }) {
+        this._processDamageEvents(entityManager);
+
         const entities = entityManager.query([
             PlayerControlledComponent, PositionComponent, VelocityComponent, CollisionComponent,
             RenderableComponent, InputComponent, StateComponent
@@ -44,19 +75,17 @@ export class PlayerStateSystem {
     }
     
     _handleJumpTrail(dt, pos, col, ctrl, state) {
-        // Only create a trail during the initial ascent of a single jump.
         if (state.currentState === 'jump' && ctrl.jumpCount === 1) {
             ctrl.jumpParticleTimer -= dt;
             if (ctrl.jumpParticleTimer <= 0) {
-                ctrl.jumpParticleTimer = 0.05; // Emit a particle every 50ms.
+                ctrl.jumpParticleTimer = 0.05;
                 eventBus.publish('createParticles', { 
                     x: pos.x + col.width / 2, 
-                    y: pos.y + col.height, // From the player's feet.
+                    y: pos.y + col.height,
                     type: 'jump_trail' 
                 });
             }
         } else {
-            // Reset the timer when not in the correct state to ensure it's ready for the next jump.
             ctrl.jumpParticleTimer = 0;
         }
     }
@@ -65,6 +94,13 @@ export class PlayerStateSystem {
         if (ctrl.jumpBufferTimer > 0) ctrl.jumpBufferTimer -= dt;
         if (ctrl.coyoteTimer > 0) ctrl.coyoteTimer -= dt;
         if (ctrl.dashCooldownTimer > 0) ctrl.dashCooldownTimer -= dt;
+
+        if (ctrl.isHit) {
+            ctrl.hitStunTimer -= dt;
+            if (ctrl.hitStunTimer <= 0) {
+                ctrl.isHit = false;
+            }
+        }
 
         if (ctrl.isDashing) {
             ctrl.dashTimer -= dt;
@@ -75,7 +111,7 @@ export class PlayerStateSystem {
     }
 
     _handleInput(dt, input, pos, vel, ctrl, col, renderable, state) {
-        if (ctrl.isSpawning || ctrl.isDashing || ctrl.isDespawning) {
+        if (ctrl.isSpawning || ctrl.isDashing || ctrl.isDespawning || ctrl.isHit) {
             return;
         }
 
@@ -88,13 +124,10 @@ export class PlayerStateSystem {
             ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
         }
 
-        // FIX: Add 'ctrl.jumpCount === 0' to this condition. This is the crucial change.
-        // It ensures a ground jump can only execute if the player has not already jumped.
-        // This stops the repeated execution that was causing the FPS drop and sound spam.
         if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0) && ctrl.jumpCount === 0) {
             const jumpForce = ctrl.jumpForce * (col.groundType === 'mud' ? PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER : 1);
             vel.vy = -jumpForce;
-            ctrl.jumpCount = 1; // Set jumpCount to 1, preventing this block from running again until the player lands.
+            ctrl.jumpCount = 1;
             ctrl.jumpBufferTimer = 0;
             ctrl.coyoteTimer = 0;
             eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
@@ -137,6 +170,15 @@ export class PlayerStateSystem {
         }
 
         if (currentState === 'spawn' || currentState === 'despawn') return;
+        
+        if (ctrl.isHit) {
+            if (currentState !== 'hit') this._setAnimationState(renderable, state, 'hit', ctrl);
+            return;
+        }
+        
+        if (currentState === 'hit' && !ctrl.isHit) {
+             this._setAnimationState(renderable, state, 'idle', ctrl);
+        }
 
         if (ctrl.isDashing) {
             if (currentState !== 'dash') this._setAnimationState(renderable, state, 'dash', ctrl);
@@ -169,7 +211,6 @@ export class PlayerStateSystem {
             if (newState === 'cling') {
                 ctrl.jumpCount = 1;
             } else if (newState === 'idle' || newState === 'run') {
-                // This is where jumpCount gets reset, allowing the player to jump again.
                 ctrl.jumpCount = 0;
             }
         }
@@ -185,9 +226,9 @@ export class PlayerStateSystem {
         const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
         renderable.animationFrame++;
         
-        if (stateName === 'spawn' || stateName === 'despawn') {
+        if (stateName === 'spawn' || stateName === 'despawn' || stateName === 'hit') {
             if (renderable.animationFrame >= frameCount) {
-                renderable.animationFrame = frameCount - 1;
+                renderable.animationFrame = frameCount - 1; // Hold on the last frame
                 if (stateName === 'spawn') {
                     ctrl.isSpawning = false;
                     ctrl.spawnComplete = true;

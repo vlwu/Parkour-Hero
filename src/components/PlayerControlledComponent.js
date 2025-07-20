@@ -10,8 +10,10 @@ export class PlayerControlledComponent {
         coyoteTimer = 0,
         dashTimer = 0,
         dashCooldownTimer = 0,
+        hitStunTimer = 0,
         jumpCount = 0,
         isDashing = false,
+        isHit = false,
         isSpawning = true,
         spawnComplete = false,
         isDespawning = false,
@@ -34,12 +36,14 @@ export class PlayerControlledComponent {
         this.coyoteTimer = coyoteTimer;
         this.dashTimer = dashTimer;
         this.dashCooldownTimer = dashCooldownTimer;
+        this.hitStunTimer = hitStunTimer;
         this.surfaceParticleTimer = surfaceParticleTimer;
         this.jumpParticleTimer = jumpParticleTimer;
 
         // States
         this.jumpCount = jumpCount;
         this.isDashing = isDashing;
+        this.isHit = isHit;
         this.isSpawning = isSpawning;
         this.spawnComplete = spawnComplete;
         this.isDespawning = isDespawning;

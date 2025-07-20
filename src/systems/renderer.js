@@ -87,7 +87,7 @@ export class Renderer {
       idle: 'playerIdle', run: 'playerRun', jump: 'playerJump',
       double_jump: 'playerDoubleJump', fall: 'playerFall',
       dash: 'playerDash', cling: 'playerCling', spawn: 'playerAppear',
-      despawn: 'playerDisappear',
+      despawn: 'playerDisappear', hit: 'playerHit',
     };
     
     // Correctly select the sprite based on whether it's character-specific 

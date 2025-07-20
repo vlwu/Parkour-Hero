@@ -37,7 +37,10 @@ export class MovementSystem {
     }
 
     _applyHorizontalMovement(dt, input, vel, col, ctrl) {
-        if (ctrl.isDashing) return; // Dashing overrides normal movement
+        if (ctrl.isDashing || ctrl.isHit) {
+            if (ctrl.isHit) vel.vx = 0;
+            return;
+        }
 
         if (col.isGrounded && col.groundType === 'ice') {
             const acc = PLAYER_CONSTANTS.ICE_ACCELERATION;
@@ -64,7 +67,7 @@ export class MovementSystem {
     }
 
     _applyVerticalMovement(dt, vel, col, ctrl) {
-        if (!ctrl.isDashing) {
+        if (!ctrl.isDashing && !ctrl.isHit) {
             vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
         }
 
@@ -76,7 +79,7 @@ export class MovementSystem {
     }
 
     _updateSurfaceEffects(dt, pos, vel, col, ctrl) {
-        const onGroundAndMoving = col.isGrounded && Math.abs(vel.vx) > 1 && !ctrl.isDashing;
+        const onGroundAndMoving = col.isGrounded && Math.abs(vel.vx) > 1 && !ctrl.isDashing && !ctrl.isHit;
         const requiredSound = onGroundAndMoving ? { 'sand': 'sand_walk', 'mud': 'mud_run', 'ice': 'ice_run' }[col.groundType] : null;
 
         if (requiredSound !== ctrl.activeSurfaceSound) {
@@ -98,7 +101,6 @@ export class MovementSystem {
                     case 'mud': particleType = 'mud'; break;
                     case 'ice': particleType = 'ice'; break;
                     default:
-                        // Create dust for any other solid ground type.
                         if (col.groundType) { 
                             particleType = 'walk_dust';
                         }

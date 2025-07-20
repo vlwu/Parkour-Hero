@@ -68,7 +68,7 @@ export class CollisionSystem {
     const progress = (clampedVelocity - FALL_DAMAGE_MIN_VELOCITY) / (FALL_DAMAGE_MAX_VELOCITY - FALL_DAMAGE_MIN_VELOCITY);
     const damage = Math.round(FALL_DAMAGE_MIN_AMOUNT + progress * (FALL_DAMAGE_MAX_AMOUNT - FALL_DAMAGE_MIN_AMOUNT));
     
-    eventBus.publish('playerTookDamage', { amount: damage });
+    eventBus.publish('playerTookDamage', { amount: damage, source: 'fall' });
   }
 
   _handleVerticalCollisions(pos, vel, col, level, dt, entityId) {

@@ -10,10 +10,10 @@ export const PLAYER_CONSTANTS = {
   MOVE_SPEED: 200,      // pixels/s
   JUMP_FORCE: 400,      // upward velocity impulse
   GRAVITY: 1200,        // downward acceleration
-  MAX_FALL_SPEED: 500,  // terminal velocity
+  MAX_FALL_SPEED: 600,  // terminal velocity
 
   // Fall Damage
-  FALL_DAMAGE_MIN_VELOCITY: 600, // vy threshold to start taking damage
+  FALL_DAMAGE_MIN_VELOCITY: 550, // vy threshold to start taking damage
   FALL_DAMAGE_MAX_VELOCITY: 900, // vy at which max damage is taken
   FALL_DAMAGE_MIN_AMOUNT: 5,     // min HP damage
   FALL_DAMAGE_MAX_AMOUNT: 20,    // max HP damage
@@ -26,6 +26,7 @@ export const PLAYER_CONSTANTS = {
   // Timers
   COYOTE_TIME: 0.1,     // seconds
   JUMP_BUFFER_TIME: 0.15, // seconds
+  HIT_STUN_DURATION: 0.2, // seconds
 
   // Surface Modifiers
   SAND_MOVE_MULTIPLIER: 0.5,
@@ -47,6 +48,7 @@ export const PLAYER_CONSTANTS = {
     cling: 5,
     spawn: 7,
     despawn: 7,
+    hit: 7,
   }
 };
 

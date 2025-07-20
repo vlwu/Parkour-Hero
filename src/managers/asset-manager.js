@@ -121,6 +121,7 @@ const playerSpriteFiles = {
     playerFall: 'fall.png',
     playerDash: 'dash.png',
     playerCling: 'wall_jump.png',
+    playerHit: 'hit.png',
 };
 
 export async function loadAssets() {
