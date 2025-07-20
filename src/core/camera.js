@@ -1,19 +1,24 @@
 export class Camera {
   constructor(canvasWidth, canvasHeight) {
-    this.x = 0;
-    this.y = 0;
-    this.width = canvasWidth;
-    this.height = canvasHeight;
+    this.zoom = 1.25; // Zoom factor. > 1 zooms in, < 1 zooms out.
+    this.viewportWidth = canvasWidth;
+    this.viewportHeight = canvasHeight;
+    
+    // Camera's view dimensions in WORLD units, adjusted for zoom
+    this.width = this.viewportWidth / this.zoom;
+    this.height = this.viewportHeight / this.zoom;
     
     // Level boundaries - will be set by updateLevelBounds
-    this.levelWidth = canvasWidth;
-    this.levelHeight = canvasHeight;
+    this.levelWidth = this.width;
+    this.levelHeight = this.height;
     
     // Camera follow settings
     this.followSpeed = 5; // How fast camera catches up to player (higher = faster)
+    
+    // Dead zone in WORLD units, so it scales with the zoom
     this.deadZone = {
-      x: canvasWidth * 0.3,  // 30% of screen width
-      y: canvasHeight * 0.3  // 30% of screen height
+      x: this.width * 0.3,  // 30% of world view width
+      y: this.height * 0.3  // 30% of world view height
     };
     
     // Camera limits - prevent showing areas outside the level
@@ -35,23 +40,25 @@ export class Camera {
     this.targetY = 0;
     
     console.log('Camera initialized:', {
-      viewport: `${canvasWidth}x${canvasHeight}`
+      viewport: `${this.viewportWidth}x${this.viewportHeight}`,
+      zoom: this.zoom,
+      worldView: `${this.width}x${this.height}`
     });
   }
 
   // Update camera position to follow the player
   update(player, deltaTime) {
-    // Calculate the center of the screen in world coordinates
-    const screenCenterX = this.x + this.width / 2;
-    const screenCenterY = this.y + this.height / 2;
+    // Calculate the center of the camera's view in world coordinates
+    const cameraCenterX = this.x + this.width / 2;
+    const cameraCenterY = this.y + this.height / 2;
     
     // Calculate player center
     const playerCenterX = player.getCenterX();
     const playerCenterY = player.getCenterY();
     
-    // Calculate distance from screen center to player
-    const distanceX = playerCenterX - screenCenterX;
-    const distanceY = playerCenterY - screenCenterY;
+    // Calculate distance from camera center to player
+    const distanceX = playerCenterX - cameraCenterX;
+    const distanceY = playerCenterY - cameraCenterY;
     
     // Only move camera if player is outside the dead zone
     let moveX = 0;
@@ -123,6 +130,9 @@ export class Camera {
   // Apply camera transformation to the rendering context
   apply(ctx) {
     ctx.save();
+    // Apply zoom first, which scales the entire coordinate system
+    ctx.scale(this.zoom, this.zoom);
+    // Then translate to the camera's position (with shake)
     ctx.translate(
       -Math.round(this.x + this.shakeX), 
       -Math.round(this.y + this.shakeY)
@@ -134,19 +144,19 @@ export class Camera {
     ctx.restore();
   }
 
-  // Convert screen coordinates to world coordinates
+  // Convert screen coordinates to world coordinates, accounting for zoom
   screenToWorld(screenX, screenY) {
     return {
-      x: screenX + this.x,
-      y: screenY + this.y
+      x: (screenX / this.zoom) + this.x,
+      y: (screenY / this.zoom) + this.y
     };
   }
 
-  // Convert world coordinates to screen coordinates
+  // Convert world coordinates to screen coordinates, accounting for zoom
   worldToScreen(worldX, worldY) {
     return {
-      x: worldX - this.x,
-      y: worldY - this.y
+      x: (worldX - this.x) * this.zoom,
+      y: (worldY - this.y) * this.zoom
     };
   }
 
@@ -188,8 +198,9 @@ export class Camera {
   updateLevelBounds(levelWidth, levelHeight) {
     this.levelWidth = levelWidth;
     this.levelHeight = levelHeight;
-    this.maxX = Math.max(0, levelWidth - this.width);
-    this.maxY = Math.max(0, levelHeight - this.height);
+    // maxX/Y are now correctly calculated based on the zoomed world-view size
+    this.maxX = Math.max(0, this.levelWidth - this.width);
+    this.maxY = Math.max(0, this.levelHeight - this.height);
     
     // Re-apply bounds to current position
     this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
@@ -227,26 +238,32 @@ export class Camera {
     // Don't apply camera transform for debug UI
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     
-    // Draw dead zone
+    // Draw dead zone in SCREEN coordinates
+    const dzScreenX = this.deadZone.x * this.zoom;
+    const dzScreenY = this.deadZone.y * this.zoom;
+    const viewportCenterX = this.viewportWidth / 2;
+    const viewportCenterY = this.viewportHeight / 2;
+
     ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
     ctx.lineWidth = 2;
     ctx.strokeRect(
-      this.width / 2 - this.deadZone.x,
-      this.height / 2 - this.deadZone.y,
-      this.deadZone.x * 2,
-      this.deadZone.y * 2
+      viewportCenterX - dzScreenX,
+      viewportCenterY - dzScreenY,
+      dzScreenX * 2,
+      dzScreenY * 2
     );
     
-    // Draw camera info
+    // Draw camera info text relative to viewport height
+    const textYStart = this.viewportHeight - 100;
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(10, this.height - 100, 200, 80);
+    ctx.fillRect(10, textYStart, 200, 80);
     
     ctx.fillStyle = 'white';
     ctx.font = '12px monospace';
-    ctx.fillText(`Camera: ${Math.round(this.x)}, ${Math.round(this.y)}`, 15, this.height - 80);
-    ctx.fillText(`Target: ${Math.round(this.targetX)}, ${Math.round(this.targetY)}`, 15, this.height - 65);
-    ctx.fillText(`Shake: ${Math.round(this.shakeX)}, ${Math.round(this.shakeY)}`, 15, this.height - 50);
-    ctx.fillText(`Bounds: ${this.maxX}x${this.maxY}`, 15, this.height - 35);
+    ctx.fillText(`Camera: ${Math.round(this.x)}, ${Math.round(this.y)}`, 15, textYStart + 20);
+    ctx.fillText(`Target: ${Math.round(this.targetX)}, ${Math.round(this.targetY)}`, 15, textYStart + 35);
+    ctx.fillText(`Shake: ${Math.round(this.shakeX)}, ${Math.round(this.shakeY)}`, 15, textYStart + 50);
+    ctx.fillText(`Bounds: ${this.maxX}x${this.maxY}`, 15, textYStart + 65);
     
     ctx.restore();
   }
