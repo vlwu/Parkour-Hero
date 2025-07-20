@@ -278,7 +278,7 @@ export class MenuManager {
       this.allModals.forEach(m => m.classList.add('hidden'));
       this._renderToElement(this.lcTitle, 'Level Complete!', { scale: 3, color: 'white', outlineColor: 'black', outlineWidth: 1 });
       this._renderToElement(this.lcDeaths, `Deaths: ${deaths}`, { scale: 1.8, color: 'white' });
-      this._renderToElement(this.lcTime, formatTime(time), { scale: 1.8, color: 'white' });
+      this._renderToElement(this.lcTime, `Time: ${formatTime(time)}`, { scale: 1.8, color: 'white' });
 
       if (this.levelManager) {
         this.lcNextButton.style.display = this.levelManager.hasNextLevel() ? 'inline-block' : 'none';
@@ -297,7 +297,7 @@ export class MenuManager {
   }
   
   updatePauseModalStats({ collectedFruits, totalFruits, deathCount, levelTime }) {
-    this._renderToElement(this.pauseStatsFruits, `Fruits: ${collectedFruits} / ${totalFruits}`, { scale: 1.8, color: 'white' });
+    this._renderToElement(this.pauseStatsFruits, `Fruits: ${collectedFruits}/${totalFruits}`, { scale: 1.8, color: 'white' });
     this._renderToElement(this.pauseStatsDeaths, `Deaths: ${deathCount || 0}`, { scale: 1.8, color: 'white' });
     this._renderToElement(this.pauseStatsTime, `Time: ${formatTime(levelTime)}`, { scale: 1.8, color: 'white' });
   }
