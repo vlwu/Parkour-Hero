@@ -14,7 +14,7 @@ export const PLAYER_CONSTANTS = {
 
   // Fall Damage
   FALL_DAMAGE_MIN_VELOCITY: 550, // vy threshold to start taking damage
-  FALL_DAMAGE_MAX_VELOCITY: 900, // vy at which max damage is taken
+  FALL_DAMAGE_MAX_VELOCITY: 700, // vy at which max damage is taken
   FALL_DAMAGE_MIN_AMOUNT: 5,     // min HP damage
   FALL_DAMAGE_MAX_AMOUNT: 20,    // max HP damage
 
@@ -38,6 +38,8 @@ export const PLAYER_CONSTANTS = {
   // Animation
   ANIMATION_SPEED: 0.06,
   SPAWN_ANIMATION_SPEED: 0.08,
+  HIT_ANIMATION_SPEED: 0.09,
+  
   ANIMATION_FRAMES: {
     idle: 11,
     run: 12,

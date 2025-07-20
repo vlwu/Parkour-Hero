@@ -257,7 +257,7 @@ export class Engine {
       
       if (health && playerCtrl && !playerCtrl.needsRespawn) {
           health.currentHealth = Math.max(0, health.currentHealth - amount);
-          this.camera.shake(10, 0.4);
+          this.camera.shake(8, 0.3);
           
           if (health.currentHealth <= 0) {
               this._onPlayerDied();

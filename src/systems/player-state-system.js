@@ -219,7 +219,16 @@ export class PlayerStateSystem {
     _updateAnimation(dt, ctrl, renderable, state) {
         renderable.animationTimer += dt;
         const stateName = renderable.animationState;
-        const speed = (stateName === 'spawn' || stateName === 'despawn') ? PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED : PLAYER_CONSTANTS.ANIMATION_SPEED;
+
+        let speed;
+        if (stateName === 'spawn' || stateName === 'despawn') {
+            speed = PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED;
+        } else if (stateName === 'hit') {
+            speed = PLAYER_CONSTANTS.HIT_ANIMATION_SPEED;
+        } else {
+            speed = PLAYER_CONSTANTS.ANIMATION_SPEED;
+        }
+
         if (renderable.animationTimer < speed) return;
         
         renderable.animationTimer -= speed;
