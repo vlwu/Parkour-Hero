@@ -92,7 +92,7 @@ export class Renderer {
 
     let spriteAssetKey = charComp ? stateToSpriteMap[stateName] : renderable.spriteKey;
     let sprite = charComp 
-        ? this.assets.characters[charComp.characterId]?.[spriteAssetKey] || this.assets[spriteAssetKey]
+        ? this.assets.characters[charComp.characterId]?.[spriteAssetKey] || this.assets.playerAppear
         : this.assets[spriteAssetKey];
         
     if (!sprite) { this.ctx.fillStyle = '#FF00FF'; this.ctx.fillRect(pos.x, pos.y, renderable.width, renderable.height); return; }
@@ -102,21 +102,28 @@ export class Renderer {
     const srcX = frameWidth * renderable.animationFrame;
 
     this.ctx.save();
-    if (renderable.direction === 'left') {
-      this.ctx.scale(-1, 1);
-      this.ctx.translate(-pos.x - renderable.width, pos.y);
-    } else {
-      this.ctx.translate(pos.x, pos.y);
-    }
     
     const isSpecialAnim = stateName === 'spawn' || stateName === 'despawn';
-    const renderX = isSpecialAnim ? -(PLAYER_CONSTANTS.SPAWN_WIDTH - PLAYER_CONSTANTS.WIDTH) / 2 : 0;
-    const renderY = isSpecialAnim ? -(PLAYER_CONSTANTS.SPAWN_HEIGHT - PLAYER_CONSTANTS.HEIGHT) / 2 : 0;
+    
+    // Calculate the render position. For special animations, this needs to be offset
+    // to keep the final player position (center of the animation) consistent.
+    const renderX = isSpecialAnim ? pos.x - (renderable.width - PLAYER_CONSTANTS.WIDTH) / 2 : pos.x;
+    const renderY = isSpecialAnim ? pos.y - (renderable.height - PLAYER_CONSTANTS.HEIGHT) / 2 : pos.y;
+    
+    if (renderable.direction === 'left') {
+      this.ctx.scale(-1, 1);
+      // Adjust translation for the flipped canvas context
+      this.ctx.translate(-renderX - renderable.width, renderY);
+    } else {
+      this.ctx.translate(renderX, renderY);
+    }
+    
+    // The offset is now applied within the translated context, so it's simpler.
     const drawOffsetX = (stateName === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
 
     this.ctx.drawImage(
       sprite, srcX, 0, frameWidth, sprite.height,
-      drawOffsetX + renderX, renderY,
+      drawOffsetX, 0, // Draw at the origin of the translated context
       renderable.width, renderable.height
     );
     this.ctx.restore();

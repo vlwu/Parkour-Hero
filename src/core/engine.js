@@ -231,12 +231,13 @@ export class Engine {
     vel.vx = 0; vel.vy = 0;
 
     const currentDeathCount = playerCtrl.deathCount;
-    Object.assign(playerCtrl, new PlayerControlledComponent());
-    playerCtrl.deathCount = currentDeathCount;
+    this.entityManager.removeComponent(this.playerEntityId, PlayerControlledComponent);
+    this.entityManager.addComponent(this.playerEntityId, new PlayerControlledComponent({ deathCount: currentDeathCount }));
     
     renderable.animationState = 'spawn';
     renderable.animationFrame = 0;
     renderable.animationTimer = 0;
+    renderable.direction = 'right';
     renderable.width = PLAYER_CONSTANTS.SPAWN_WIDTH;
     renderable.height = PLAYER_CONSTANTS.SPAWN_HEIGHT;
 
