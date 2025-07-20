@@ -4,7 +4,7 @@ import { PositionComponent } from '../components/PositionComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 
-export class PhysicsSystem { // Note: You should rename this class and file to CollisionSystem
+export class CollisionSystem { 
   constructor() {}
 
   update(dt, { entityManager, level }) {
