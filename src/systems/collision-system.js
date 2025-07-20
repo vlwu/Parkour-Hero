@@ -15,19 +15,22 @@ export class CollisionSystem {
         const vel = entityManager.getComponent(entityId, VelocityComponent);
         const col = entityManager.getComponent(entityId, CollisionComponent);
 
+        // FIX: Check for out-of-bounds *before* other collisions and stop processing.
+        if (pos.y > level.height + 50) {
+            eventBus.publish('collisionEvent', { type: 'world_bottom', entityId, entityManager });
+            // 'continue' will skip the rest of the loop for this entity, as it's out of bounds.
+            continue; 
+        }
+
         pos.x += vel.vx * dt;
         this._handleHorizontalCollisions(pos, vel, col, level);
 
         pos.y += vel.vy * dt;
-        // FIX: Pass 'dt' to _checkTrampolineBounce
         const bounced = this._checkTrampolineBounce(pos, vel, col, level, dt);
         if (!bounced) {
             this._handleVerticalCollisions(pos, vel, col, level, dt);
         }
 
-        if (pos.y > level.height + 50) {
-            eventBus.publish('collisionEvent', { type: 'world_bottom', entityId, entityManager });
-        }
         pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
 
         this._checkHazardCollisions(pos, col, level, entityId, entityManager);
@@ -93,7 +96,6 @@ export class CollisionSystem {
     }
   }
 
-  // FIX: Accept 'dt' as a parameter.
   _checkTrampolineBounce(pos, vel, col, level, dt) {
     if (vel.vy <= 0) return false;
     for (const tramp of level.trampolines) {

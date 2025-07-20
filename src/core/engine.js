@@ -19,9 +19,10 @@ import { CharacterComponent } from '../components/CharacterComponent.js';
 import { PLAYER_CONSTANTS } from '../utils/constants.js';
 import { InputSystemProcessor } from '../systems/input-system-processor.js';
 import { GameplaySystem } from '../systems/gameplay-system.js';
-
 import { PlayerStateSystem } from '../systems/player-state-system.js';
 import { MovementSystem } from '../systems/movement-system.js';
+// FIX: Add the missing import for StateComponent.
+import { StateComponent } from '../components/StateComponent.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -50,23 +51,21 @@ export class Engine {
 
     this.levelManager = new LevelManager(this.gameState); 
 
-    // --- System Instantiation ---
     this.inputSystemProcessor = new InputSystemProcessor();
-    this.playerStateSystem = new PlayerStateSystem(); // Manages player FSM and animations.
-    this.movementSystem = new MovementSystem();     // Applies physics forces.
-    this.collisionSystem = new CollisionSystem();   // Moves entities and detects collisions.
-    this.gameplaySystem = new GameplaySystem();     // Handles game rules.
+    this.playerStateSystem = new PlayerStateSystem();
+    this.movementSystem = new MovementSystem();
+    this.collisionSystem = new CollisionSystem();
+    this.gameplaySystem = new GameplaySystem();
     this.particleSystem = new ParticleSystem(assets);
     this.uiSystem = new UISystem(canvas, assets);
 
-    // --- System Execution Order ---
     this.systems = [
-        this.inputSystemProcessor,      // 1. Read hardware input into components.
-        this.playerStateSystem,         // 2. Determine entity state from input and world.
-        this.movementSystem,            // 3. Apply physics forces based on state.
-        this.collisionSystem,           // 4. Move entities and resolve/report collisions.
-        this.particleSystem,            // 5. Update visual effects.
-        this.uiSystem,                  // 6. Update UI buttons.
+        this.inputSystemProcessor,
+        this.playerStateSystem,
+        this.movementSystem,
+        this.collisionSystem,
+        this.particleSystem,
+        this.uiSystem,
     ];
 
     this.levelStartTime = 0;
@@ -78,7 +77,6 @@ export class Engine {
   }
   
   _setupEventSubscriptions() {
-    this.gameplaySystem.engine = this; // Give gameplay system a reference to the engine for now
     eventBus.subscribe('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
     eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
     eventBus.subscribe('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
@@ -180,6 +178,9 @@ export class Engine {
       this.levelTime = (performance.now() - this.levelStartTime) / 1000;
     }
 
+    // FIX: Add this call back to make the camera follow the player.
+    this.camera.update(this.entityManager, this.playerEntityId, dt);
+
     const context = { 
         entityManager: this.entityManager, 
         playerEntityId: this.playerEntityId, 
@@ -191,6 +192,7 @@ export class Engine {
         dt, 
     };
 
+    // The GameplaySystem is purely event-driven and is not part of the main update loop.
     for(const system of this.systems) {
       system.update(dt, context);
     }
@@ -265,7 +267,6 @@ export class Engine {
     vel.vx = 0; vel.vy = 0;
 
     const currentDeathCount = playerCtrl.deathCount;
-    // Reset the component to its default state
     this.entityManager.removeComponent(this.playerEntityId, PlayerControlledComponent);
     this.entityManager.addComponent(this.playerEntityId, new PlayerControlledComponent({ deathCount: currentDeathCount }));
     
