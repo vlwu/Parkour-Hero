@@ -49,6 +49,11 @@ export class PhysicsSystem {
       this._handleVerticalCollisions(pos, vel, col, ctrl, level, dt);
     }
 
+    // Refresh coyote time every frame the player is on the ground.
+    if (col.isGrounded) {
+        ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
+    }
+
     if (pos.y > level.height + 50) eventBus.publish('playerDied');
     pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
 
@@ -73,13 +78,18 @@ export class PhysicsSystem {
     if (actions.moveLeft) renderable.direction = 'left';
     else if (actions.moveRight) renderable.direction = 'right';
 
-    if (actions.jump && !ctrl.jumpPressed) {
+    // --- JUMP INPUT HANDLING (REWORKED) ---
+    const justPressedJump = actions.jump && !ctrl.jumpPressed;
+
+    // FIX: Buffer the jump if the key is held down, not just on the initial press.
+    if (actions.jump) {
       ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
     }
 
-    if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0 || col.isAgainstWall)) {
+    // Primary jump action (ground, wall, coyote) uses the buffer.
+    if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0 || (col.isAgainstWall && !col.isGrounded))) {
         let jumpForce = ctrl.jumpForce;
-        if (col.isAgainstWall) {
+        if (col.isAgainstWall && !col.isGrounded) {
             vel.vx = (renderable.direction === 'left' ? 1 : -1) * ctrl.speed;
             renderable.direction = renderable.direction === 'left' ? 'right' : 'left';
         } else if (col.groundType === 'mud') {
@@ -87,21 +97,23 @@ export class PhysicsSystem {
         }
         vel.vy = -jumpForce;
         ctrl.jumpCount = 1;
-        ctrl.jumpBufferTimer = 0;
-        ctrl.coyoteTimer = 0;
+        ctrl.jumpBufferTimer = 0; // Consume buffer
+        ctrl.coyoteTimer = 0;     // Consume coyote time
         eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
     }
 
-    if (actions.jump && !ctrl.jumpPressed && ctrl.jumpCount === 1 && !col.isGrounded && !col.isAgainstWall) {
+    // Double jump requires a fresh key press while in the air.
+    if (justPressedJump && ctrl.jumpCount === 1 && !col.isGrounded && !col.isAgainstWall) {
       vel.vy = -ctrl.jumpForce;
       ctrl.jumpCount = 2;
-      ctrl.jumpBufferTimer = 0;
+      ctrl.jumpBufferTimer = 0; // Consume buffer
       this._setAnimationState(renderable, 'double_jump', ctrl);
       eventBus.publish('playSound', { key: 'double_jump', volume: 0.6, channel: 'SFX' });
       eventBus.publish('createParticles', { x: pos.x + col.width/2, y: pos.y + col.height, type: 'double_jump' });
     }
-    ctrl.jumpPressed = actions.jump;
+    ctrl.jumpPressed = actions.jump; // Update for next frame's justPressedJump check
 
+    // --- DASH INPUT HANDLING (unchanged) ---
     if (actions.dash && !ctrl.dashPressed && ctrl.dashCooldownTimer <= 0) {
       ctrl.isDashing = true;
       ctrl.dashTimer = ctrl.dashDuration;
@@ -259,9 +271,9 @@ export class PhysicsSystem {
             pos.y = tileTop - col.height;
             vel.vy = 0;
             col.isGrounded = true;
+            // FIX: Only reset jump count on the frame of landing.
             if (!wasGrounded) {
                 ctrl.jumpCount = 0;
-                ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
             }
             col.groundType = tile.interaction || tile.type; 
             return;
