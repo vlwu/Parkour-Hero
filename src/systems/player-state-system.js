@@ -32,8 +32,7 @@ export class PlayerStateSystem {
             const state = entityManager.getComponent(entityId, StateComponent);
 
             this._updateTimers(dt, ctrl);
-            // FIX: Pass 'dt' into _handleInput for timer calculations.
-            this._handleInput(dt, input, pos, vel, ctrl, col, renderable, state);
+            this._handleInput(input, pos, vel, ctrl, col, renderable, state);
             this._updateFSM(vel, ctrl, col, renderable, state);
             this._updateAnimation(dt, ctrl, renderable, state);
             
@@ -47,10 +46,19 @@ export class PlayerStateSystem {
         if (ctrl.jumpBufferTimer > 0) ctrl.jumpBufferTimer -= dt;
         if (ctrl.coyoteTimer > 0) ctrl.coyoteTimer -= dt;
         if (ctrl.dashCooldownTimer > 0) ctrl.dashCooldownTimer -= dt;
+
+        // FIX: The active dash timer logic is moved here.
+        // This function is called every frame, ensuring the dash timer
+        // always counts down when active.
+        if (ctrl.isDashing) {
+            ctrl.dashTimer -= dt;
+            if (ctrl.dashTimer <= 0) {
+                ctrl.isDashing = false;
+            }
+        }
     }
 
-    // FIX: Accept 'dt' as a parameter.
-    _handleInput(dt, input, pos, vel, ctrl, col, renderable, state) {
+    _handleInput(input, pos, vel, ctrl, col, renderable, state) {
         if (ctrl.isSpawning || ctrl.isDashing || ctrl.isDespawning) {
             return;
         }
@@ -100,19 +108,15 @@ export class PlayerStateSystem {
         }
         ctrl.dashPressed = input.dash;
         
-        if (ctrl.isDashing) {
-            ctrl.dashTimer -= dt;
-            if (ctrl.dashTimer <= 0) ctrl.isDashing = false;
-        }
+        // FIX: The timer logic that was here has been REMOVED.
     }
 
     _updateFSM(vel, ctrl, col, renderable, state) {
         const currentState = state.currentState;
 
-        // FIX: Add this block to handle the transition *out* of the spawn state.
         if (currentState === 'spawn' && ctrl.spawnComplete) {
             this._setAnimationState(renderable, state, 'idle', ctrl);
-            return; // Exit early to let the new state take over on the next frame.
+            return; 
         }
 
         if (currentState === 'spawn' || currentState === 'despawn') return;
@@ -168,8 +172,7 @@ export class PlayerStateSystem {
                 renderable.animationFrame = frameCount - 1;
                 if (stateName === 'spawn') {
                     ctrl.isSpawning = false;
-                    ctrl.spawnComplete = true; // Flag that the animation is done.
-                    // FIX: This now correctly changes the size after spawning.
+                    ctrl.spawnComplete = true;
                     renderable.width = PLAYER_CONSTANTS.WIDTH;
                     renderable.height = PLAYER_CONSTANTS.HEIGHT;
                 }
