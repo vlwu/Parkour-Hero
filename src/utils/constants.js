@@ -38,8 +38,8 @@ export const PLAYER_CONSTANTS = {
   // Animation
   ANIMATION_SPEED: 0.06,
   SPAWN_ANIMATION_SPEED: 0.08,
-  HIT_ANIMATION_SPEED: 0.09,
-  
+  HIT_ANIMATION_SPEED: 0.1,
+
   ANIMATION_FRAMES: {
     idle: 11,
     run: 12,
