@@ -289,13 +289,13 @@ export class Engine {
     this.currentLevel.recalculateCollectedFruits();
     this.player.respawn(respawnPosition);
     this.camera.shake(15, 0.5);
-    eventBus.publish('playSound', { key: 'death_sound', volume: 0.3, channel: 'SFX' });
+    eventBus.publish('playSound', { key: 'death_sound', volume: 0.5, channel: 'SFX' });
     this.player.needsRespawn = false;
   }
 
   _onFruitCollected(fruit) {
     this.currentLevel.collectFruit(fruit);
-    eventBus.publish('playSound', { key: 'collect', volume: 0.8, channel: 'SFX' });
+    eventBus.publish('playSound', { key: 'collect', volume: 0.3, channel: 'SFX' });
 
     this.collectedFruits.push({
       x: fruit.x, y: fruit.y, size: fruit.size, frame: 0,
