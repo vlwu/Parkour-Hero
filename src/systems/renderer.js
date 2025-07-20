@@ -105,25 +105,21 @@ export class Renderer {
     
     const isSpecialAnim = stateName === 'spawn' || stateName === 'despawn';
     
-    // Calculate the render position. For special animations, this needs to be offset
-    // to keep the final player position (center of the animation) consistent.
     const renderX = isSpecialAnim ? pos.x - (renderable.width - PLAYER_CONSTANTS.WIDTH) / 2 : pos.x;
     const renderY = isSpecialAnim ? pos.y - (renderable.height - PLAYER_CONSTANTS.HEIGHT) / 2 : pos.y;
     
     if (renderable.direction === 'left') {
       this.ctx.scale(-1, 1);
-      // Adjust translation for the flipped canvas context
       this.ctx.translate(-renderX - renderable.width, renderY);
     } else {
       this.ctx.translate(renderX, renderY);
     }
     
-    // The offset is now applied within the translated context, so it's simpler.
     const drawOffsetX = (stateName === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
 
     this.ctx.drawImage(
       sprite, srcX, 0, frameWidth, sprite.height,
-      drawOffsetX, 0, // Draw at the origin of the translated context
+      drawOffsetX, 0,
       renderable.width, renderable.height
     );
     this.ctx.restore();
@@ -142,8 +138,15 @@ export class Renderer {
         const sprite = this.assets[tile.spriteKey];
         if (!sprite) { this.ctx.fillStyle = 'magenta'; this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize); continue; }
         const screenX = x * tileSize, screenY = y * tileSize;
-        if (tile.spriteConfig) this.ctx.drawImage(sprite, tile.spriteConfig.srcX, tile.spriteConfig.srcY, tileSize, tileSize, screenX, screenY, tileSize, tileSize);
-        else this.ctx.drawImage(sprite, screenX, screenY, tileSize, tileSize);
+        
+        // Overdraw each tile by 1 pixel to prevent seams from browser anti-aliasing at non-integer devicePixelRatios.
+        const drawSize = tileSize + 1;
+        
+        if (tile.spriteConfig) {
+            this.ctx.drawImage(sprite, tile.spriteConfig.srcX, tile.spriteConfig.srcY, tileSize, tileSize, screenX, screenY, drawSize, drawSize);
+        } else {
+            this.ctx.drawImage(sprite, screenX, screenY, drawSize, drawSize);
+        }
       }
     }
   }

@@ -17,6 +17,9 @@ if (!canvas || !ctx) {
   throw new Error('Canvas not available');
 }
 
+// Disable image smoothing for crisp pixel art
+ctx.imageSmoothingEnabled = false;
+
 const BASE_WIDTH = 1920;
 const BASE_HEIGHT = 1080;
 
@@ -40,13 +43,17 @@ function resizeCanvas() {
       height = width / aspectRatio;
     }
 
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    canvas.style.position = 'absolute';
-    canvas.style.left = `${(window.innerWidth - width) / 2}px`;
-    canvas.style.top = `${(window.innerHeight - height) / 2}px`;
+    // Ensure the final display size is an integer to prevent sub-pixel rendering artifacts.
+    const finalWidth = Math.floor(width);
+    const finalHeight = Math.floor(height);
 
-    console.log(`Canvas resized to: ${width}x${height} (display size)`);
+    canvas.style.width = `${finalWidth}px`;
+    canvas.style.height = `${finalHeight}px`;
+    canvas.style.position = 'absolute';
+    canvas.style.left = `${(window.innerWidth - finalWidth) / 2}px`;
+    canvas.style.top = `${(window.innerHeight - finalHeight) / 2}px`;
+
+    console.log(`Canvas resized to: ${finalWidth}x${finalHeight} (display size)`);
   } catch (error) {
     console.error('Error resizing canvas:', error);
   }
