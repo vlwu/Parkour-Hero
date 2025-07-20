@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { map } from 'lit/directives/map.js';
 import { levelSections } from '../../entities/level-definitions.js';
+import './bitmap-text.js';
 
 export class LevelsMenu extends LitElement {
   static styles = css`
@@ -27,7 +28,12 @@ export class LevelsMenu extends LitElement {
       transition: transform 0.2s ease-in-out;
     }
     .close-button:hover { transform: scale(1.1); }
-    h2 { margin: 0 0 25px 0; font-size: 2.2em; }
+    
+    .title-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 25px;
+    }
     
     #level-selection-container {
       display: flex; flex-direction: column; gap: 20px; padding: 10px;
@@ -35,9 +41,10 @@ export class LevelsMenu extends LitElement {
     .level-section-menu {
       background-color: #3a3a3a; border-radius: 8px; padding: 15px; border: 1px solid #4a4a4a;
     }
-    .level-section-menu h4 {
-      margin: 0 0 15px 0; color: #fff; border-bottom: 2px solid #555;
-      padding-bottom: 10px; font-size: 1.2em; text-align: left;
+    .section-title-container {
+      margin: 0 0 15px 0;
+      border-bottom: 2px solid #555;
+      padding-bottom: 10px;
     }
     .level-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 15px;
@@ -60,6 +67,7 @@ export class LevelsMenu extends LitElement {
 
   static properties = {
     gameState: { type: Object },
+    fontRenderer: { type: Object },
   };
 
   _dispatchClose() {
@@ -83,11 +91,15 @@ export class LevelsMenu extends LitElement {
       <div class="modal-overlay" @click=${this._dispatchClose}>
         <div class="modal-content" @click=${e => e.stopPropagation()}>
           <button class="close-button" @click=${this._dispatchClose}></button>
-          <h2>Levels Menu</h2>
+          <div class="title-container">
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="Levels Menu" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
+          </div>
           <div id="level-selection-container">
             ${map(levelSections, (section, sectionIndex) => html`
               <div class="level-section-menu">
-                <h4>${section.name}</h4>
+                <div class="section-title-container">
+                  <bitmap-text .fontRenderer=${this.fontRenderer} text=${section.name} scale="2"></bitmap-text>
+                </div>
                 <div class="level-grid">
                   ${map(section.levels, (_, levelIndex) => {
                     const isUnlocked = this.gameState.isLevelUnlocked(sectionIndex, levelIndex);

@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { map } from 'lit/directives/map.js';
 import { eventBus } from '../../utils/event-bus.js';
 import './keybind-display.js';
+import './bitmap-text.js';
 
 export class SettingsMenu extends LitElement {
   static styles = css`
@@ -28,25 +29,51 @@ export class SettingsMenu extends LitElement {
       transition: transform 0.2s ease-in-out;
     }
     .close-button:hover { transform: scale(1.1); }
-    h2 { margin: 0 0 25px 0; font-size: 2.2em; }
-    h3 { margin: 0 0 20px 0; font-size: 1.5em; border-bottom: 2px solid #666; padding-bottom: 10px; }
+    
+    .title-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 25px;
+    }
+    .section-title-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #666;
+        padding-bottom: 10px;
+    }
+
     .settings-section { margin-bottom: 30px; padding: 20px; background-color: #444; border-radius: 8px; border: 1px solid #555; }
     .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background-color: #555; border-radius: 6px; }
-    .setting-item label { flex-grow: 1; text-align: left; }
-    .toggle-button { border: 2px solid #777; padding: 8px 16px; border-radius: 6px; cursor: pointer; min-width: 60px; transition: all 0.2s ease-in-out; }
+    .setting-item .label-container { flex-grow: 1; text-align: left; }
+    
+    .toggle-button { 
+        border: 2px solid #777; padding: 8px 16px; border-radius: 6px; cursor: pointer;
+        min-width: 70px; transition: all 0.2s ease-in-out;
+        display: flex; justify-content: center; align-items: center;
+    }
     .toggle-button.sound-enabled { background-color: #4CAF50; border-color: #45a049; }
     .toggle-button.sound-disabled { background-color: #f44336; border-color: #d32f2f; }
+    
     .volume-control { display: flex; align-items: center; gap: 10px; }
-    .action-button { background-color: #007bff; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1em; }
-    .action-button:hover { background-color: #0056b3; }
+    
+    .action-button { 
+        background-color: #007bff; color: #fff; border: none; padding: 10px 20px;
+        border-radius: 6px; cursor: pointer;
+        display: flex; justify-content: center; align-items: center;
+    }
+    .action-button:hover:not(:disabled) { background-color: #0056b3; }
+    .action-button:disabled { background-color: #666; cursor: not-allowed; opacity: 0.7; }
+
     .keybind-list { display: flex; flex-direction: column; gap: 15px; }
     .keybind-item { display: flex; justify-content: space-between; align-items: center; background-color: #555; padding: 12px 15px; border-radius: 8px; }
-    .keybind-item label { margin-right: 15px; flex-grow: 1; text-align: left; }
+    .keybind-item .label-container { margin-right: 15px; flex-grow: 1; text-align: left; }
   `;
 
   static properties = {
     keybinds: { type: Object },
     soundSettings: { type: Object },
+    fontRenderer: { type: Object },
   };
 
   _dispatchClose() {
@@ -69,7 +96,7 @@ export class SettingsMenu extends LitElement {
   }
 
   render() {
-    if (!this.keybinds || !this.soundSettings) {
+    if (!this.keybinds || !this.soundSettings || !this.fontRenderer) {
       return html``;
     }
     const keybindActions = Object.keys(this.keybinds);
@@ -78,37 +105,54 @@ export class SettingsMenu extends LitElement {
       <div class="modal-overlay" @click=${this._dispatchClose}>
         <div class="modal-content" @click=${e => e.stopPropagation()}>
           <button class="close-button" @click=${this._dispatchClose}></button>
-          <h2>Game Settings</h2>
+          
+          <div class="title-container">
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="Game Settings" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
+          </div>
 
           <div class="settings-section">
-            <h3>Sound Settings</h3>
+            <div class="section-title-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Sound Settings" scale="2.2"></bitmap-text>
+            </div>
+            
             <div class="setting-item">
-              <label>Sound:</label>
+              <div class="label-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Sound:" scale="1.8"></bitmap-text>
+              </div>
               <button @click=${this._toggleSound} class="toggle-button ${this.soundSettings.soundEnabled ? 'sound-enabled' : 'sound-disabled'}">
-                ${this.soundSettings.soundEnabled ? 'ON' : 'OFF'}
+                <bitmap-text .fontRenderer=${this.fontRenderer} text=${this.soundSettings.soundEnabled ? 'ON' : 'OFF'} scale="1.8"></bitmap-text>
               </button>
             </div>
             <div class="setting-item">
-              <label>Global Volume:</label>
+              <div class="label-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Global Volume:" scale="1.8"></bitmap-text>
+              </div>
               <div class="volume-control">
                 <input type="range" min="0" max="1" step="0.1" .value=${this.soundSettings.soundVolume} @input=${this._setVolume} />
-                <span>${Math.round(this.soundSettings.soundVolume * 100)}%</span>
+                <bitmap-text .fontRenderer=${this.fontRenderer} text=${`${Math.round(this.soundSettings.soundVolume * 100)}%`} scale="1.8"></bitmap-text>
               </div>
             </div>
              <div class="setting-item">
-                <button @click=${this._testSound} class="action-button" ?disabled=${!this.soundSettings.soundEnabled}>Test Sound</button>
+                <button @click=${this._testSound} class="action-button" ?disabled=${!this.soundSettings.soundEnabled}>
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="Test Sound" scale="1.8"></bitmap-text>
+                </button>
              </div>
           </div>
 
           <div class="settings-section">
-            <h3>Keybind Settings</h3>
+            <div class="section-title-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Keybind Settings" scale="2.2"></bitmap-text>
+            </div>
             <div class="keybind-list">
               ${map(keybindActions, (action) => html`
                 <div class="keybind-item">
-                  <label>${action.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</label>
+                  <div class="label-container">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text=${action.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} scale="1.8"></bitmap-text>
+                  </div>
                   <keybind-display
                     .action=${action}
                     .currentKey=${this.keybinds[action]}
+                    .fontRenderer=${this.fontRenderer}
                   ></keybind-display>
                 </div>
               `)}

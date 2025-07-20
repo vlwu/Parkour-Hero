@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { formatKeyForDisplay } from '../ui-utils.js';
 import { eventBus } from '../../utils/event-bus.js';
+import './bitmap-text.js';
 
 export class KeybindDisplay extends LitElement {
   static styles = css`
@@ -13,6 +14,11 @@ export class KeybindDisplay extends LitElement {
       cursor: pointer;
       text-align: center;
       transition: all 0.2s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 20px;
+      box-sizing: border-box;
     }
     .keybind-display:hover {
       background-color: #777;
@@ -28,6 +34,7 @@ export class KeybindDisplay extends LitElement {
     action: { type: String },
     currentKey: { type: String },
     isRemapping: { type: Boolean, state: true },
+    fontRenderer: { type: Object },
   };
 
   constructor() {
@@ -77,7 +84,11 @@ export class KeybindDisplay extends LitElement {
         class="keybind-display ${this.isRemapping ? 'active-rebind' : ''}"
         @click=${this._startRemap}
       >
-        ${displayText}
+        <bitmap-text
+          .fontRenderer=${this.fontRenderer}
+          .text=${displayText}
+          scale="1.8"
+        ></bitmap-text>
       </div>
     `;
   }
