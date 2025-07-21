@@ -13,4 +13,8 @@ export const TILE_DEFINITIONS = {
   '7': { type: 'sand', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 0, srcY: 0 }, interaction: 'sand', description: 'A solid block of sand. Slows player movement. Wall-jumps are not possible.' },
   '8': { type: 'mud', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 64, srcY: 0 }, interaction: 'mud', description: 'A solid block of mud. Reduces jump height. Wall-jumps are not possible.' },
   '9': { type: 'ice', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 128, srcY: 0 }, interaction: 'ice', description: 'A solid block of slippery ice. Reduces friction. Wall-jumps are not possible.' },
+
+  'G': { type: 'gold_oneway', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 0 }, description: 'A thin, one way platform. Players only collide with the top of this type of platform.' },
+  'W': { type: 'wood_oneway', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 16 }, description: 'A thin, one way platform. Players only collide with the top of this type of platform.' },
+  'S': { type: 'steel_oneway', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 32 }, description: 'A thin, one way platform. Players only collide with the top of this type of platform.' },
 };
