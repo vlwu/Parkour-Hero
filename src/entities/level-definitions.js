@@ -23,43 +23,43 @@ export const levelSections = [
     levels: [
       {
         name: "Level 1",
-        jsonPath: "/levels/basic-mechanics/01.json"
+        jsonPath: "/levels/mechanical-mastery/01.json"
       },
       {
         name: "Level 2",
-        jsonPath: "/levels/basic-mechanics/02.json"
+        jsonPath: "/levels/mechanical-mastery/02.json"
       },
       {
         name: "Level 3",
-        jsonPath: "/levels/basic-mechanics/03.json"
+        jsonPath: "/levels/mechanical-mastery/03.json"
       },
       {
         name: "Level 4",
-        jsonPath: "/levels/basic-mechanics/04.json"
+        jsonPath: "/levels/mechanical-mastery/04.json"
       },
       {
         name: "Level 5",
-        jsonPath: "/levels/basic-mechanics/05.json"
+        jsonPath: "/levels/mechanical-mastery/05.json"
       },
       {
         name: "Level 6",
-        jsonPath: "/levels/basic-mechanics/06.json"
+        jsonPath: "/levels/mechanical-mastery/06.json"
       },
       {
         name: "Level 7",
-        jsonPath: "/levels/basic-mechanics/07.json"
+        jsonPath: "/levels/mechanical-mastery/07.json"
       },
       {
         name: "Level 8",
-        jsonPath: "/levels/basic-mechanics/08.json"
+        jsonPath: "/levels/mechanical-mastery/08.json"
       },
       {
         name: "Level 9",
-        jsonPath: "/levels/basic-mechanics/09.json"
+        jsonPath: "/levels/mechanical-mastery/09.json"
       },
       {
         name: "Level 10",
-        jsonPath: "/levels/basic-mechanics/10.json"
+        jsonPath: "/levels/mechanical-mastery/10.json"
       },
     ]
   },

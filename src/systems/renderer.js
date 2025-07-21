@@ -64,7 +64,7 @@ export class Renderer {
     if (level.trophy) this.drawTrophy(level.trophy, camera);
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
-    this.drawTrampolines(level.trampolines, camera);
+    this.drawTraps(level, camera);
     
     const entities = entityManager.query([PositionComponent, RenderableComponent]);
     for(const entityId of entities) {
@@ -90,19 +90,15 @@ export class Renderer {
       despawn: 'playerDisappear', hit: 'playerHit',
     };
     
-    // Correctly select the sprite based on whether it's character-specific 
     let sprite;
     const spriteAssetKey = stateToSpriteMap[stateName];
 
-    // Spawn and Despawn are non-character-specific animations
     if (stateName === 'spawn' || stateName === 'despawn') {
         sprite = this.assets[spriteAssetKey];
     } 
-    // All other animations are character-specific
     else if (charComp) {
         sprite = this.assets.characters[charComp.characterId]?.[spriteAssetKey] || this.assets.playerIdle;
     } 
-    // Fallback for any other renderable entities that aren't players
     else {
         sprite = this.assets[renderable.spriteKey];
     }
@@ -145,13 +141,13 @@ export class Renderer {
     for (let y = startRow; y < endRow; y++) {
       for (let x = startCol; x < endCol; x++) {
         if (x < 0 || x >= level.gridWidth || y < 0 || y >= level.gridHeight) continue;
+        
         const tile = level.tiles[y][x];
         if (tile.type === 'empty') continue;
         const sprite = this.assets[tile.spriteKey];
         if (!sprite) { this.ctx.fillStyle = 'magenta'; this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize); continue; }
         const screenX = x * tileSize, screenY = y * tileSize;
         
-        // Overdraw each tile by 1 pixel to prevent seams from browser anti-aliasing at non-integer devicePixelRatios.
         const drawSize = tileSize + 1;
         
         if (tile.spriteConfig) {
@@ -180,6 +176,12 @@ export class Renderer {
       this.ctx.drawImage(img, srcX, 0, frameWidth, img.height, fruit.x - fruit.size / 2, fruit.y - fruit.size / 2, fruit.size, fruit.size);
     }
   }
+  
+  drawTraps(level, camera) {
+    this.drawTrampolines(level.trampolines, camera);
+    this.drawFireTraps(level.fireTraps, camera);
+    this.drawSpikes(level.spikes, camera);
+  }
 
   drawTrampolines(trampolines, camera) {
     for (const tramp of trampolines) {
@@ -194,6 +196,54 @@ export class Renderer {
         }
         if (sprite && frameWidth > 0) this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, tramp.x - tramp.size / 2, tramp.y - tramp.size / 2, tramp.size, tramp.size);
         else { this.ctx.fillStyle = '#8e44ad'; this.ctx.fillRect(tramp.x - tramp.size / 2, tramp.y - tramp.size / 2, tramp.size, tramp.size); }
+    }
+  }
+
+  drawSpikes(spikes, camera) {
+      const sprite = this.assets.spike_two;
+      if (!sprite) return;
+      for (const spike of spikes) {
+          if (!camera.isRectVisible({x: spike.x, y: spike.y, width: spike.size, height: spike.size})) continue;
+          this.ctx.drawImage(sprite, spike.x - spike.size / 2, spike.y - spike.size / 2, spike.size, spike.size);
+      }
+  }
+
+  drawFireTraps(fireTraps, camera) {
+    for (const trap of fireTraps) {
+        if (!camera.isVisible(trap.x, trap.y - trap.height, trap.width, trap.height * 2)) continue;
+
+        let sprite, srcX = 0, frameWidth;
+        const drawX = trap.x - trap.width / 2;
+        const drawY = trap.y - trap.height / 2;
+
+        if (trap.state === 'off' || trap.state === 'turning_off') {
+            sprite = this.assets.fire_off;
+            if (sprite) {
+                this.ctx.drawImage(sprite, drawX, drawY, trap.width, trap.height);
+            }
+        } else {
+            if (trap.state === 'activating') {
+                sprite = this.assets.fire_hit;
+                frameWidth = sprite.width / trap.anim.activating.frames;
+                srcX = trap.frame * frameWidth;
+            } else { // 'on'
+                sprite = this.assets.fire_on;
+                frameWidth = sprite.width / trap.anim.on.frames;
+                srcX = trap.frame * frameWidth;
+            }
+
+            if (sprite) {
+                this.ctx.drawImage(
+                    sprite, srcX, 0, frameWidth, sprite.height,
+                    drawX, drawY - trap.height, // Draw the 16x32 sprite, offsetting y
+                    trap.width, trap.height * 2
+                );
+            }
+        }
+        if (!sprite) {
+            this.ctx.fillStyle = (trap.state === 'on' || trap.state === 'activating') ? '#FF4500' : '#8B4513';
+            this.ctx.fillRect(drawX, drawY, trap.width, trap.height);
+        }
     }
   }
 

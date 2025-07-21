@@ -24,19 +24,16 @@ export class Level {
       y: levelConfig.startPosition.y * GRID_CONSTANTS.TILE_SIZE,
     };
 
-    // --- Core Grid Parsing ---
-    // The old 'platforms' array and SpatialHashGrid are no longer needed.
-    // We parse the 'layout' array into a 2D array of rich tile objects.
     this.tiles = levelConfig.layout.map(rowString =>
-      // Use the spread operator to easily iterate over the characters of the string
       [...rowString].map(tileId => TILE_DEFINITIONS[tileId] || TILE_DEFINITIONS['0'])
     );
 
-    // Dynamic objects are still managed as separate entities, but their
-    // initial positions are now defined in grid units for easy placement.
+    // Initialize arrays for all dynamic object types
     this.fruits = [];
     this.checkpoints = [];
     this.trampolines = [];
+    this.spikes = [];
+    this.fireTraps = [];
     this.trophy = null;
 
     (levelConfig.objects || []).forEach(obj => {
@@ -49,7 +46,7 @@ export class Level {
           spriteKey: obj.type, frame: 0,
           frameCount: 17, frameSpeed: 0.07,
           frameTimer: 0, collected: false,
-          type: 'fruit' // Keep a generic type for collision systems
+          type: 'fruit'
         });
       } else if (obj.type === 'checkpoint') {
         this.checkpoints.push({
@@ -61,12 +58,9 @@ export class Level {
       } else if (obj.type === 'trampoline') {
         this.trampolines.push({
             x: worldX, y: worldY, size: 28,
-            state: 'idle', // 'idle', 'jumping'
-            frame: 0,
-            frameCount: 8, // Frames in the jump animation
-            frameSpeed: 0.05,
-            frameTimer: 0,
-            type: 'trampoline'
+            state: 'idle', frame: 0,
+            frameCount: 8, frameSpeed: 0.05,
+            frameTimer: 0, type: 'trampoline'
         });
       } else if (obj.type === 'trophy') {
         this.trophy = {
@@ -75,6 +69,25 @@ export class Level {
           animationTimer: 0, animationSpeed: 0.35,
           acquired: false, inactive: true, contactMade: false,
         };
+      } else if (obj.type === 'spike') {
+        this.spikes.push({
+            x: worldX, y: worldY, size: 16, type: 'spike'
+        });
+      } else if (obj.type === 'fire_trap') {
+        this.fireTraps.push({
+            x: worldX, y: worldY, 
+            width: 16, height: 16, // The base block size
+            state: 'off', // 'off', 'activating', 'on', 'turning_off'
+            playerIsOnTop: false,
+            frame: 0, frameTimer: 0,
+            turnOffTimer: 0,
+            damageTimer: 1.0,
+            anim: {
+                activating: { frames: 4, speed: 0.1 },
+                on: { frames: 3, speed: 0.15 }
+            },
+            type: 'fire_trap'
+        });
       }
     });
 
@@ -83,33 +96,20 @@ export class Level {
     this.completed = false;
   }
 
-  /**
-   * Returns the tile definition object for a given world coordinate.
-   * This is the new cornerstone for all static collision detection.
-   * @param {number} worldX The x-position in pixels.
-   * @param {number} worldY The y-position in pixels.
-   * @returns {object} The tile definition from TILE_DEFINITIONS.
-   */
   getTileAt(worldX, worldY) {
     const gridX = Math.floor(worldX / GRID_CONSTANTS.TILE_SIZE);
     const gridY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE);
 
-    // Create solid walls on the sides and top of the level.
     if (gridX < 0 || gridX >= this.gridWidth || gridY < 0) {
-      return TILE_DEFINITIONS['1']; // Return a basic 'dirt' wall.
+      return TILE_DEFINITIONS['1'];
     }
     
-    // Allow falling through the bottom of the level.
     if (gridY >= this.gridHeight) {
-      return TILE_DEFINITIONS['0']; // Return an empty tile.
+      return TILE_DEFINITIONS['0'];
     }
 
-    // Otherwise, return the actual tile from the grid.
     return this.tiles[gridY][gridX];
   }
-
-
-  // --- Methods for Dynamic Objects (largely unchanged) ---
 
   updateCheckpoints(dt) {
     for (const cp of this.checkpoints) {
@@ -152,9 +152,46 @@ export class Level {
                 tramp.frame++;
                 if (tramp.frame >= tramp.frameCount) {
                     tramp.frame = 0;
-                    tramp.state = 'idle'; // Animation finished
+                    tramp.state = 'idle';
                 }
             }
+        }
+    }
+  }
+
+  updateFireTraps(dt) {
+    for (const trap of this.fireTraps) {
+        if (!trap.playerIsOnTop && trap.state === 'on') {
+            trap.state = 'turning_off';
+            trap.turnOffTimer = 2.0;
+        }
+
+        switch (trap.state) {
+            case 'activating':
+                trap.frameTimer += dt;
+                if (trap.frameTimer >= trap.anim.activating.speed) {
+                    trap.frameTimer = 0;
+                    trap.frame++;
+                    if (trap.frame >= trap.anim.activating.frames) {
+                        trap.frame = 0;
+                        trap.state = 'on';
+                    }
+                }
+                break;
+            case 'on':
+                trap.frameTimer += dt;
+                if (trap.frameTimer >= trap.anim.on.speed) {
+                    trap.frameTimer = 0;
+                    trap.frame = (trap.frame + 1) % trap.anim.on.frames;
+                }
+                break;
+            case 'turning_off':
+                trap.turnOffTimer -= dt;
+                if (trap.turnOffTimer <= 0) {
+                    trap.state = 'off';
+                    trap.frame = 0;
+                }
+                break;
         }
     }
   }
@@ -226,6 +263,18 @@ export class Level {
         tramp.frame = 0;
         tramp.frameTimer = 0;
     });
+
+    this.fireTraps.forEach(trap => {
+        trap.state = 'off';
+        trap.playerIsOnTop = false;
+        trap.frame = 0;
+        trap.frameTimer = 0;
+        trap.turnOffTimer = 0;
+        trap.damageTimer = 1.0;
+    });
+
+    // Spikes have no state to reset, but this is here for future-proofing.
+    this.spikes.forEach(spike => {});
 
     if (this.trophy) {
       this.trophy.acquired = false;

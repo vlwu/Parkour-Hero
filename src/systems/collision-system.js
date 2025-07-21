@@ -8,6 +8,11 @@ export class CollisionSystem {
   constructor() {}
 
   update(dt, { entityManager, level }) {
+    // Reset fire trap state before processing collisions
+    for (const trap of level.fireTraps) {
+        trap.playerIsOnTop = false;
+    }
+      
     const entities = entityManager.query([PositionComponent, VelocityComponent, CollisionComponent]);
     
     for (const entityId of entities) {
@@ -24,17 +29,14 @@ export class CollisionSystem {
         this._handleHorizontalCollisions(pos, vel, col, level);
 
         pos.y += vel.vy * dt;
-        const bounced = this._checkTrampolineBounce(pos, vel, col, level, dt);
-        if (!bounced) {
-            this._handleVerticalCollisions(pos, vel, col, level, dt, entityId);
-        }
+        
+        // Vertical collision must be handled before trap checks that depend on it
+        this._handleVerticalCollisions(pos, vel, col, level, dt, entityId);
 
         pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
 
-        this._checkHazardCollisions(pos, col, level, entityId, entityManager);
-        this._checkFruitCollisions(pos, col, level, entityId, entityManager);
-        this._checkTrophyCollision(pos, col, level.trophy, entityId, entityManager);
-        this.checkCheckpointCollisions(pos, col, level, entityId, entityManager);
+        // Now check for collisions with dynamic objects
+        this._checkDynamicObjectCollisions(pos, col, level, dt, entityId, entityManager);
     }
   }
 
@@ -75,6 +77,7 @@ export class CollisionSystem {
     const leftTile = Math.floor(pos.x / GRID_CONSTANTS.TILE_SIZE);
     const rightTile = Math.floor((pos.x + col.width - 1) / GRID_CONSTANTS.TILE_SIZE);
     
+    // Upward collision
     if (vel.vy < 0) {
         const tileY = Math.floor(pos.y / GRID_CONSTANTS.TILE_SIZE);
         for (let x = leftTile; x <= rightTile; x++) {
@@ -92,13 +95,16 @@ export class CollisionSystem {
     
     col.isGrounded = false;
 
+    // Downward collision (landing)
     for (let x = leftTile; x <= rightTile; x++) {
       const tile = level.getTileAt(x * GRID_CONSTANTS.TILE_SIZE, tileY * GRID_CONSTANTS.TILE_SIZE);
       if (tile && tile.solid && vel.vy >= 0) {
         const tileTop = tileY * GRID_CONSTANTS.TILE_SIZE;
         const playerBottom = pos.y + col.height;
 
+        // Check if player's bottom edge is at or just above the tile's top edge
         if (playerBottom >= tileTop && (playerBottom - vel.vy * dt) <= tileTop + 1) {
+            
             const landingVelocity = vel.vy;
             if (landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY) {
                 this._calculateAndApplyFallDamage(landingVelocity);
@@ -114,45 +120,87 @@ export class CollisionSystem {
     }
   }
 
-  _checkTrampolineBounce(pos, vel, col, level, dt) {
-    if (vel.vy <= 0) return false;
-    for (const tramp of level.trampolines) {
-        const playerBottom = pos.y + col.height;
-        if (pos.x + col.width > tramp.x && pos.x < tramp.x + tramp.size) {
-            if (playerBottom >= tramp.y && (playerBottom - vel.vy * dt) <= tramp.y + 1) {
-                tramp.state = 'jumping'; tramp.frame = 0; tramp.frameTimer = 0;
-                pos.y = tramp.y - col.height;
-                vel.vy = -PLAYER_CONSTANTS.JUMP_FORCE * PLAYER_CONSTANTS.TRAMPOLINE_BOUNCE_MULTIPLIER;
-                eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0, channel: 'SFX' });
-                return true;
-            }
-        }
-    }
-    return false;
-  }
-  
+  // Generic collision check for AABB
   _isCollidingWith(pos, col, other) {
     const otherWidth = other.width || other.size;
     const otherHeight = other.height || other.size;
+    const otherX = other.x - otherWidth / 2;
+    const otherY = other.y - otherHeight / 2;
     return (
-        pos.x < other.x + otherWidth &&
-        pos.x + col.width > other.x &&
-        pos.y < other.y + otherHeight &&
-        pos.y + col.height > other.y
+        pos.x < otherX + otherWidth &&
+        pos.x + col.width > otherX &&
+        pos.y < otherY + otherHeight &&
+        pos.y + col.height > otherY
     );
   }
 
-  _checkHazardCollisions(pos, col, level, entityId, entityManager) {
-    const points = [
-        { x: pos.x, y: pos.y },
-        { x: pos.x + col.width - 1, y: pos.y },
-        { x: pos.x, y: pos.y + col.height - 1 },
-        { x: pos.x + col.width - 1, y: pos.y + col.height - 1 },
-    ];
-    for (const corner of points) {
-        if (level.getTileAt(corner.x, corner.y).hazard) {
+  _checkDynamicObjectCollisions(pos, col, level, dt, entityId, entityManager) {
+    this._checkFruitCollisions(pos, col, level, entityId, entityManager);
+    this._checkTrophyCollision(pos, col, level.trophy, entityId, entityManager);
+    this.checkCheckpointCollisions(pos, col, level, entityId, entityManager);
+    this._checkTrapCollisions(pos, col, level, dt, entityId, entityManager);
+  }
+  
+  _checkTrapCollisions(pos, col, level, dt, entityId, entityManager) {
+    // Spikes
+    for (const spike of level.spikes) {
+        if (this._isCollidingWith(pos, col, spike)) {
             eventBus.publish('collisionEvent', { type: 'hazard', entityId, entityManager });
-            return;
+            return; // Player hit a hazard, no need to check others this frame
+        }
+    }
+
+    // Trampolines
+    for (const tramp of level.trampolines) {
+        const playerBottom = pos.y + col.height;
+        const trampTop = tramp.y - tramp.size / 2;
+        const trampLeft = tramp.x - tramp.size / 2;
+
+        if (pos.x + col.width > trampLeft && pos.x < trampLeft + tramp.size) {
+            if (playerBottom >= trampTop && (playerBottom - col.vy * dt) <= trampTop + 1) {
+                tramp.state = 'jumping'; tramp.frame = 0; tramp.frameTimer = 0;
+                pos.y = trampTop - col.height;
+                vel.vy = -PLAYER_CONSTANTS.JUMP_FORCE * PLAYER_CONSTANTS.TRAMPOLINE_BOUNCE_MULTIPLIER;
+                eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0, channel: 'SFX' });
+                return; // Player bounced, vertical state is set
+            }
+        }
+    }
+
+    // Fire Traps
+    for (const trap of level.fireTraps) {
+        const playerBottom = pos.y + col.height;
+        const trapTop = trap.y - trap.height / 2;
+        const trapLeft = trap.x - trap.width / 2;
+
+        const isOnTop = pos.x + col.width > trapLeft &&
+                        pos.x < trapLeft + trap.width &&
+                        Math.abs(playerBottom - trapTop) < 2;
+
+        if (isOnTop) {
+            trap.playerIsOnTop = true;
+            if (trap.state === 'off' || trap.state === 'turning_off') {
+                trap.state = 'activating';
+                trap.frame = 0;
+                trap.frameTimer = 0;
+            }
+        }
+
+        if (trap.state === 'on') {
+            const flameHitbox = {
+                x: trap.x,
+                y: trap.y - trap.height, // Flame is above the base
+                size: trap.width
+            };
+            if (this._isCollidingWith(pos, col, flameHitbox)) {
+                trap.damageTimer += dt;
+                if (trap.damageTimer >= 1.0) {
+                    trap.damageTimer -= 1.0;
+                    eventBus.publish('playerTookDamage', { amount: 10, source: 'fire' });
+                }
+            }
+        } else if (!trap.playerIsOnTop) {
+            trap.damageTimer = 1.0;
         }
     }
   }

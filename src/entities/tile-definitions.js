@@ -13,8 +13,4 @@ export const TILE_DEFINITIONS = {
   '7': { type: 'sand', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 0, srcY: 0 }, interaction: 'sand', description: 'A solid block of sand. Slows player movement. Wall-jumps are not possible.' },
   '8': { type: 'mud', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 64, srcY: 0 }, interaction: 'mud', description: 'A solid block of mud. Reduces jump height. Wall-jumps are not possible.' },
   '9': { type: 'ice', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 128, srcY: 0 }, interaction: 'ice', description: 'A solid block of slippery ice. Reduces friction. Wall-jumps are not possible.' },
-
-  'A': { type: 'spike_up', solid: false, hazard: true, spriteKey: 'spike_two', description: 'A dangerous spike pointing upwards. Lethal to the touch.' },
-
-  'F': { type: 'fire', solid: false, hazard: true, spriteKey: 'fire_on', interaction: 'fire_trap', description: 'A deadly fire trap. Avoid contact.' }
 };

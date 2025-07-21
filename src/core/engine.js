@@ -206,6 +206,7 @@ export class Engine {
     this.currentLevel.updateTrophyAnimation(dt);
     this.currentLevel.updateCheckpoints(dt);
     this.currentLevel.updateTrampolines(dt);
+    this.currentLevel.updateFireTraps(dt);
     
     for (let i = this.collectedFruits.length - 1; i >= 0; i--) {
         const collected = this.collectedFruits[i];
