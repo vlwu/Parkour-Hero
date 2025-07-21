@@ -1,28 +1,51 @@
+// src/traps/FireTrap.js
+
 import { Trap } from './templates/Trap.js';
 
 export class FireTrap extends Trap {
     constructor(x, y, config) {
-        super(x, y, { ...config, width: 16, height: 16 }); // Use config from level data
+        super(x, y, { ...config, width: 16, height: 16 });
         
-        // --- Logic migrated from level.js constructor ---
-        this.solid = true; // The base is solid
-        this.state = 'off'; // 'off', 'activating', 'on', 'turning_off'
+        this.solid = true;
+        this.state = 'off';
         this.playerIsOnTop = false;
         this.frame = 0;
         this.frameTimer = 0;
         this.turnOffTimer = 0;
-        this.damageTimer = 1.0; // Timer to apply damage periodically
+        this.damageTimer = 1.0;
         this.anim = {
             activating: { frames: 4, speed: 0.1 },
             on: { frames: 3, speed: 0.15 }
         };
     }
 
-    update(dt, _playerPos, eventBus) {
-        // --- Logic migrated from level.js updateFireTraps() ---
+    /**
+     * CRITICAL FIX: The hitbox for the fire trap changes based on its state.
+     * When it's 'on', the hitbox is the large flame area for dealing damage.
+     * Otherwise, it's just the small physical base.
+     */
+    get hitbox() {
+        if (this.state === 'on' || this.state === 'activating') {
+            return {
+                x: this.x - this.width / 2,
+                y: this.y - this.height * 1.5, // Hitbox starts above the base
+                width: this.width,
+                height: this.height * 2 // The full height of the flame sprite
+            };
+        }
+        // Default hitbox is just the solid base
+        return {
+            x: this.x - this.width / 2,
+            y: this.y - this.height / 2,
+            width: this.width,
+            height: this.height
+        };
+    }
+
+    update(dt) {
         if (!this.playerIsOnTop && this.state === 'on') {
             this.state = 'turning_off';
-            this.turnOffTimer = 2.0; // Time before it turns off
+            this.turnOffTimer = 2.0;
         }
 
         switch (this.state) {
@@ -53,34 +76,24 @@ export class FireTrap extends Trap {
                 break;
         }
 
-        // --- Handle damage tick logic migrated from collision-system.js ---
-        // We now handle the damage tick timer internally.
         if (this.state === 'on') {
             this.damageTimer += dt;
         } else if (!this.playerIsOnTop) {
-            // Reset the damage timer when the player is not on top and the trap is not on
             this.damageTimer = 1.0;
         }
     }
 
     render(ctx, assets, camera) {
-        // --- Logic migrated from renderer.js _drawFireTrapBases() & _drawFireTrapFlames() ---
-        // Don't render if not visible
         if (!camera.isVisible(this.x, this.y - this.height, this.width, this.height * 2)) return;
 
         const drawX = this.x - this.width / 2;
         const drawY = this.y - this.height / 2;
         
-        // 1. Draw the base
         const baseSprite = assets.fire_off;
         if (baseSprite) {
-            ctx.drawImage(
-                baseSprite, 0, 16, 16, 16, // Source rect (bottom half of the sprite)
-                drawX, drawY, this.width, this.height // Destination rect
-            );
+            ctx.drawImage(baseSprite, 0, 16, 16, 16, drawX, drawY, this.width, this.height);
         }
 
-        // 2. Draw the flames if active
         if (this.state === 'off' || this.state === 'turning_off') return;
 
         let sprite, srcX = 0, frameWidth;
@@ -88,23 +101,17 @@ export class FireTrap extends Trap {
             sprite = assets.fire_hit;
             frameWidth = sprite.width / this.anim.activating.frames;
             srcX = this.frame * frameWidth;
-        } else { // 'on' state
+        } else {
             sprite = assets.fire_on;
             frameWidth = sprite.width / this.anim.on.frames;
             srcX = this.frame * frameWidth;
         }
 
         if (sprite) {
-            ctx.drawImage(
-                sprite, srcX, 0, frameWidth, sprite.height, // Source frame
-                drawX, drawY - this.height, // Draw flames above the base
-                this.width, this.height * 2 // Destination rect
-            );
+            ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY - this.height, this.width, this.height * 2);
         }
     }
 
-    // This method will be called by the collision system
-    // when the player lands on or touches the trap.
     onLanded(eventBus) {
         this.playerIsOnTop = true;
         if (this.state === 'off' || this.state === 'turning_off') {
@@ -116,18 +123,15 @@ export class FireTrap extends Trap {
     }
 
     onCollision(player, eventBus) {
-        // --- Logic migrated from collision-system.js ---
         if (this.state !== 'on') return;
-
-        // Use the internal timer to decide when to deal damage.
+        
         if (this.damageTimer >= 1.0) {
-            this.damageTimer -= 1.0; // Reset timer for the next second
+            this.damageTimer -= 1.0;
             eventBus.publish('playerTookDamage', { amount: 10, source: 'fire' });
         }
     }
 
     reset() {
-        // --- Logic migrated from level.js reset() ---
         this.state = 'off';
         this.playerIsOnTop = false;
         this.frame = 0;

@@ -41,7 +41,7 @@ export class Level {
     // Initialize arrays for all dynamic object types
     this.fruits = [];
     this.checkpoints = [];
-    this.traps = []; // MODIFIED: A single array for all traps.
+    this.traps = [];
     this.trophy = null;
 
     (levelConfig.objects || []).forEach(obj => {
@@ -51,7 +51,6 @@ export class Level {
       const TrapClass = trapFactory[obj.type];
 
       if (TrapClass) {
-        // MODIFIED: Use the factory to create a new trap instance
         this.traps.push(new TrapClass(worldX, worldY, obj));
       } else if (obj.type.startsWith('fruit_')) {
         this.fruits.push({
@@ -83,29 +82,28 @@ export class Level {
     this.completed = false;
   }
 
+  /**
+   * CRITICAL FIX: This method is now more defensive to prevent crashes
+   * from out-of-bounds array access.
+   */
   getTileAt(worldX, worldY) {
     const gridX = Math.floor(worldX / GRID_CONSTANTS.TILE_SIZE);
     const gridY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE);
 
+    // Check X bounds and negative Y bound first
     if (gridX < 0 || gridX >= this.gridWidth || gridY < 0) {
-      return TILE_DEFINITIONS['1'];
+      return TILE_DEFINITIONS['1']; // Solid block for out-of-bounds (top, left, right)
     }
     
-    if (gridY >= this.gridHeight) {
-      return TILE_DEFINITIONS['0'];
+    // Check if gridY is out of bounds for the actual array. This prevents the crash.
+    if (gridY >= this.gridHeight || !this.tiles[gridY]) {
+      return TILE_DEFINITIONS['0']; // Empty space for out-of-bounds (bottom or malformed level data)
     }
 
-    return this.tiles[gridY][gridX];
+    // Now it's safe to access both indices. Add a fallback for a missing/ragged column.
+    return this.tiles[gridY][gridX] || TILE_DEFINITIONS['0'];
   }
   
-  /**
-   * NEW: Main update loop for all dynamic level objects.
-   * The Engine will call this method every frame.
-   * @param {number} dt Delta time.
-   * @param {EntityManager} entityManager The entity manager.
-   * @param {number} playerEntityId The ID of the player entity.
-   * @param {object} eventBus The global event bus.
-   */
   update(dt, entityManager, playerEntityId, eventBus) {
       this.updateFruits(dt);
       this.updateTrophyAnimation(dt);
@@ -114,10 +112,8 @@ export class Level {
       const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
       const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
       
-      // Pass player data to traps so they can react to proximity.
       const playerData = playerPos && playerCol ? { ...playerPos, width: playerCol.width, height: playerCol.height } : null;
 
-      // MODIFIED: Delegate updates to the trap modules.
       for (const trap of this.traps) {
           trap.update(dt, playerData, eventBus);
       }
@@ -154,9 +150,6 @@ export class Level {
       }
     }
   }
-
-  // REMOVED: updateTrampolines, updateFireTraps, and updateSpikes methods.
-  // Their logic is now inside their respective trap modules.
 
   collectFruit(fruit) {
     if (!fruit.collected) {
@@ -220,7 +213,6 @@ export class Level {
         cp.frameTimer = 0;
     });
     
-    // MODIFIED: Delegate resets to the trap modules.
     this.traps.forEach(trap => {
         trap.reset();
     });

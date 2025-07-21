@@ -1,12 +1,13 @@
+// src/traps/Trampoline.js
+
 import { Trap } from './templates/Trap.js';
 import { PLAYER_CONSTANTS } from '../utils/constants.js';
 
 export class Trampoline extends Trap {
     constructor(x, y, config) {
-        super(x, y, { ...config, width: 28, height: 28 }); // Trampolines are 28x28
+        super(x, y, { ...config, width: 28, height: 28 });
 
-        // --- Logic migrated from level.js constructor ---
-        this.state = 'idle'; // 'idle' or 'jumping'
+        this.state = 'idle';
         this.frame = 0;
         this.frameCount = 8;
         this.frameSpeed = 0.05;
@@ -14,7 +15,6 @@ export class Trampoline extends Trap {
     }
 
     update(dt) {
-        // --- Logic migrated from level.js updateTrampolines() ---
         if (this.state === 'jumping') {
             this.frameTimer += dt;
             if (this.frameTimer >= this.frameSpeed) {
@@ -29,7 +29,6 @@ export class Trampoline extends Trap {
     }
 
     render(ctx, assets, camera) {
-        // --- Logic migrated from renderer.js _drawTrampolines() ---
         const drawX = this.x - this.width / 2;
         const drawY = this.y - this.height / 2;
 
@@ -51,24 +50,21 @@ export class Trampoline extends Trap {
         if (sprite && frameWidth > 0) {
             ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY, this.width, this.height);
         } else {
-            // Fallback rendering
             ctx.fillStyle = '#8e44ad';
             ctx.fillRect(drawX, drawY, this.width, this.height);
         }
     }
 
     onCollision(player, eventBus) {
-        // --- Logic migrated from collision-system.js _checkTrapInteractions() ---
-        // This is a special interaction that directly affects player physics.
-        const { pos, vel } = player;
+        // CRITICAL FIX: Destructure `col` from the player object.
+        const { pos, vel, col } = player;
 
-        // The player is bounced upwards with a force multiplier.
         vel.vy = -PLAYER_CONSTANTS.JUMP_FORCE * PLAYER_CONSTANTS.TRAMPOLINE_BOUNCE_MULTIPLIER;
         
-        // Correct player position to be exactly on top of the trampoline to prevent sinking in.
-        pos.y = (this.y - this.height / 2) - pos.height;
+        // Use `col.height` (from the CollisionComponent) instead of the non-existent `pos.height`.
+        // This prevents the player's Y-position from becoming NaN.
+        pos.y = (this.y - this.height / 2) - col.height;
 
-        // Trigger animation and sound effects.
         this.state = 'jumping';
         this.frame = 0;
         this.frameTimer = 0;
@@ -76,7 +72,6 @@ export class Trampoline extends Trap {
     }
 
     reset() {
-        // --- Logic migrated from level.js reset() ---
         this.state = 'idle';
         this.frame = 0;
         this.frameTimer = 0;
