@@ -9,8 +9,11 @@ export class CollisionSystem {
   constructor() {}
 
   update(dt, { entityManager, level }) {
-    for (const trap of level.fireTraps) {
-        trap.playerIsOnTop = false;
+    // MODIFIED: Reset the playerIsOnTop flag for all fire traps at the start of the frame.
+    for (const trap of level.traps) {
+        if (trap.type === 'fire_trap') {
+            trap.playerIsOnTop = false;
+        }
     }
       
     const entities = entityManager.query([PositionComponent, VelocityComponent, CollisionComponent]);
@@ -20,12 +23,8 @@ export class CollisionSystem {
         const vel = entityManager.getComponent(entityId, VelocityComponent);
         const col = entityManager.getComponent(entityId, CollisionComponent);
 
-        // Check if the entity is the player and if they are in a state where physics should be ignored.
         const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
         if (playerCtrl && (playerCtrl.isSpawning || playerCtrl.isDespawning)) {
-            // If spawning or despawning, skip all physics and collision updates for this frame.
-            // The MovementSystem already zeroes out velocity, so we just need to prevent
-            // the CollisionSystem from incorrectly setting isGrounded to false.
             continue; 
         }
 
@@ -34,21 +33,19 @@ export class CollisionSystem {
             continue; 
         }
 
-        // --- PHASE 1: Tile Grid Collision ---
         pos.x += vel.vx * dt;
         this._handleTileHorizontalCollisions(pos, vel, col, level);
 
         pos.y += vel.vy * dt;
         this._handleTileVerticalCollisions(pos, vel, col, level, dt);
         
-        // --- PHASE 2: Solid Object Collision ---
-        this._handleSolidObjectCollisions(pos, vel, col, level);
+        // MODIFIED: Solid object collision now handles solid traps generically.
+        this._handleSolidObjectCollisions(pos, vel, col, level, dt);
 
-        // Clamp position to level bounds
         pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
 
-        // --- PHASE 3: Interaction and Hazard Collision ---
-        this._checkDynamicObjectInteractions(pos, vel, col, level, dt, entityId, entityManager);
+        // MODIFIED: All dynamic interactions are now consolidated.
+        this._checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager);
     }
   }
 
@@ -97,8 +94,9 @@ export class CollisionSystem {
       if (tile && tile.solid && vel.vy >= 0) {
         const tileTop = tileY * GRID_CONSTANTS.TILE_SIZE;
         const playerBottom = pos.y + col.height;
+        const prevPlayerBottom = playerBottom - vel.vy * dt;
 
-        if (playerBottom >= tileTop && (playerBottom - vel.vy * dt) <= tileTop + 1) {
+        if (playerBottom >= tileTop && prevPlayerBottom <= tileTop + 1) {
             this._landOnSurface(pos, vel, col, tileTop, tile.interaction || tile.type);
             return;
         }
@@ -106,8 +104,9 @@ export class CollisionSystem {
     }
   }
 
-  _handleSolidObjectCollisions(pos, vel, col, level) {
-    const allSolidObjects = level.fireTraps.filter(t => t.solid);
+  _handleSolidObjectCollisions(pos, vel, col, level, dt) {
+    // MODIFIED: Filter for solid traps (currently just FireTrap).
+    const allSolidObjects = level.traps.filter(t => t.solid);
 
     for(const obj of allSolidObjects) {
         const objLeft = obj.x - obj.width / 2;
@@ -120,24 +119,18 @@ export class CollisionSystem {
         const playerTop = pos.y;
         const playerBottom = pos.y + col.height;
 
-        // Broad-phase check
         if (playerRight < objLeft || playerLeft > objRight || playerBottom < objTop || playerTop > objBottom) {
             continue;
         }
 
         // Vertical Collision (Landing on top)
-        if (vel.vy >= 0 && playerBottom >= objTop && playerBottom <= objBottom) {
-            const prevPlayerBottom = playerBottom - vel.vy * (1/60); // A bit of a hack, assumes 60fps
-             if (prevPlayerBottom <= objTop) {
+        if (vel.vy >= 0) {
+             const prevPlayerBottom = playerBottom - vel.vy * dt;
+             if (playerBottom >= objTop && prevPlayerBottom <= objTop + 1) {
                  this._landOnSurface(pos, vel, col, objTop, obj.type);
-                 if (obj.type === 'fire_trap') {
-                     obj.playerIsOnTop = true;
-                     if (obj.state === 'off' || obj.state === 'turning_off') {
-                         obj.state = 'activating'; 
-                         obj.frame = 0; 
-                         obj.frameTimer = 0;
-                         eventBus.publish('playSound', { key: 'fire_activated', volume: 0.8, channel: 'SFX' });
-                     }
+                 // MODIFIED: Delegate the "landed on" event to the trap module.
+                 if (typeof obj.onLanded === 'function') {
+                     obj.onLanded(eventBus);
                  }
                  continue; // Collision handled
              }
@@ -145,13 +138,10 @@ export class CollisionSystem {
 
         // Horizontal Collision
         if (playerBottom > objTop && playerTop < objBottom) {
-            // Player moving right, collides with left side of object
             if (vel.vx > 0 && playerRight > objLeft && playerLeft < objLeft) {
                 pos.x = objLeft - col.width;
                 vel.vx = 0;
-            }
-            // Player moving left, collides with right side of object
-            else if (vel.vx < 0 && playerLeft < objRight && playerRight > objRight) {
+            } else if (vel.vx < 0 && playerLeft < objRight && playerRight > objRight) {
                 pos.x = objRight;
                 vel.vx = 0;
             }
@@ -176,75 +166,58 @@ export class CollisionSystem {
   }
   
   _isCollidingWith(pos, col, other) {
-    const otherWidth = other.width || other.size;
-    const otherHeight = other.height || other.size;
-    const otherX = other.x - otherWidth / 2;
-    const otherY = other.y - otherHeight / 2;
+    // MODIFIED: Standardized hitbox logic. Use `other.hitbox` if available.
+    const hitbox = other.hitbox || {
+        x: other.x - (other.width || other.size) / 2,
+        y: other.y - (other.height || other.size) / 2,
+        width: other.width || other.size,
+        height: other.height || other.size
+    };
+
     return (
-        pos.x < otherX + otherWidth &&
-        pos.x + col.width > otherX &&
-        pos.y < otherY + otherHeight &&
-        pos.y + col.height > otherY
+        pos.x < hitbox.x + hitbox.width &&
+        pos.x + col.width > hitbox.x &&
+        pos.y < hitbox.y + hitbox.height &&
+        pos.y + col.height > hitbox.y
     );
   }
 
-  _checkDynamicObjectInteractions(pos, vel, col, level, dt, entityId, entityManager) {
+  _checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager) {
     this._checkFruitCollisions(pos, col, level, entityId, entityManager);
     this._checkTrophyCollision(pos, col, level.trophy, entityId, entityManager);
     this.checkCheckpointCollisions(pos, col, level, entityId, entityManager);
+    // MODIFIED: Call the new generic trap interaction handler.
     this._checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager);
   }
   
   _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
-    for (const spike of level.spikes) {
-        if (spike.state !== 'extended') {
-            continue;
-        }
+    // Create a simplified player object to pass to trap modules.
+    const player = { pos, vel, col, entityId, entityManager };
 
-        const spikeHitbox = {
-            x: spike.x,
-            y: spike.y - spike.size / 4,
-            width: spike.size,
-            height: spike.size / 2,
-        };
+    for (const trap of level.traps) {
+        // Trampoline has a specific landing condition.
+        if (trap.type === 'trampoline') {
+            if (vel.vy > 0) { // Must be falling onto it
+                const playerBottom = pos.y + col.height;
+                const trampTop = trap.y - trap.height / 2;
+                const trampLeft = trap.x - trap.width / 2;
+                const prevPlayerBottom = playerBottom - vel.vy * dt;
 
-        if (this._isCollidingWith(pos, col, spikeHitbox)) {
-            eventBus.publish('collisionEvent', { type: 'hazard', entityId, entityManager, damage: spike.damage });
-            return;
-        }
-    }
-
-    for (const tramp of level.trampolines) {
-        if (vel.vy <= 0) continue;
-        const playerBottom = pos.y + col.height;
-        const trampTop = tramp.y - tramp.size / 2;
-        const trampLeft = tramp.x - tramp.size / 2;
-
-        if (pos.x + col.width > trampLeft && pos.x < trampLeft + tramp.size) {
-            if (playerBottom >= trampTop && (playerBottom - vel.vy * dt) <= trampTop + 1) {
-                tramp.state = 'jumping'; tramp.frame = 0; tramp.frameTimer = 0;
-                pos.y = trampTop - col.height;
-                vel.vy = -PLAYER_CONSTANTS.JUMP_FORCE * PLAYER_CONSTANTS.TRAMPOLINE_BOUNCE_MULTIPLIER;
-                eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0, channel: 'SFX' });
-                return;
-            }
-        }
-    }
-
-    for (const trap of level.fireTraps) {
-        if (trap.state === 'on') {
-            const flameHitbox = {
-                x: trap.x, y: trap.y - trap.height, width: trap.width, height: trap.height * 2
-            };
-            if (this._isCollidingWith(pos, col, flameHitbox)) {
-                trap.damageTimer += dt;
-                if (trap.damageTimer >= 1.0) {
-                    trap.damageTimer -= 1.0;
-                    eventBus.publish('playerTookDamage', { amount: 10, source: 'fire' });
+                if (pos.x + col.width > trampLeft && pos.x < trampLeft + trap.width) {
+                    if (playerBottom >= trampTop && prevPlayerBottom <= trampTop + 1) {
+                        // MODIFIED: Delegate to the trampoline module.
+                        trap.onCollision(player, eventBus);
+                        return; // Interaction handled, exit to avoid other checks.
+                    }
                 }
             }
-        } else if (!trap.playerIsOnTop) {
-            trap.damageTimer = 1.0;
+        }
+        // Other traps use a standard overlap check.
+        else {
+            if (this._isCollidingWith(pos, col, trap)) {
+                // MODIFIED: Delegate to the specific trap module.
+                trap.onCollision(player, eventBus);
+            }
         }
     }
   }

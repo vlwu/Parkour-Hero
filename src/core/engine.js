@@ -193,24 +193,18 @@ export class Engine {
         dt, 
     };
 
-    // The GameplaySystem is purely event-driven and is not part of the main update loop.
     for(const system of this.systems) {
       system.update(dt, context);
     }
     
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
-    const playerHealth = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) this._respawnPlayer();
 
-    const playerPos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
-    const playerCol = this.entityManager.getComponent(this.playerEntityId, CollisionComponent);
-
-    this.currentLevel.updateFruits(dt);
-    this.currentLevel.updateTrophyAnimation(dt);
-    this.currentLevel.updateCheckpoints(dt);
-    this.currentLevel.updateTrampolines(dt);
-    this.currentLevel.updateFireTraps(dt);
-    this.currentLevel.updateSpikes(dt, playerPos, playerCol);
+    // --- MODIFICATION START ---
+    // The individual update calls are replaced by a single, generic update call.
+    // The Level class now delegates these updates to the appropriate modules.
+    this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus);
+    // --- MODIFICATION END ---
     
     for (let i = this.collectedFruits.length - 1; i >= 0; i--) {
         const collected = this.collectedFruits[i];
@@ -245,6 +239,7 @@ export class Engine {
       }
     }
 
+    const playerHealth = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     eventBus.publish('statsUpdated', {
       levelName: this.currentLevel.name,
       collectedFruits: this.currentLevel.getFruitCount(),
@@ -336,8 +331,6 @@ export class Engine {
 
     this.camera.shake(15, 0.5);
 
-    // Publish a clear event that other systems can subscribe to,
-    // ensuring their internal states are reset for the new life.
     eventBus.publish('playerRespawned');
   }
 

@@ -1,5 +1,15 @@
 import { TILE_DEFINITIONS } from './tile-definitions.js';
 import { GRID_CONSTANTS } from '../utils/constants.js';
+import * as Traps from '../traps/index.js';
+import { PositionComponent } from '../components/PositionComponent.js';
+import { CollisionComponent } from '../components/CollisionComponent.js';
+
+// Factory to map level data types to their corresponding trap classes.
+const trapFactory = {
+  fire_trap: Traps.FireTrap,
+  spike: Traps.Spikes,
+  trampoline: Traps.Trampoline,
+};
 
 /**
  * Manages the level's static tile-based geometry and dynamic objects.
@@ -31,16 +41,19 @@ export class Level {
     // Initialize arrays for all dynamic object types
     this.fruits = [];
     this.checkpoints = [];
-    this.trampolines = [];
-    this.spikes = [];
-    this.fireTraps = [];
+    this.traps = []; // MODIFIED: A single array for all traps.
     this.trophy = null;
 
     (levelConfig.objects || []).forEach(obj => {
       const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
       const worldY = obj.y * GRID_CONSTANTS.TILE_SIZE;
+      
+      const TrapClass = trapFactory[obj.type];
 
-      if (obj.type.startsWith('fruit_')) {
+      if (TrapClass) {
+        // MODIFIED: Use the factory to create a new trap instance
+        this.traps.push(new TrapClass(worldX, worldY, obj));
+      } else if (obj.type.startsWith('fruit_')) {
         this.fruits.push({
           x: worldX, y: worldY, size: 28,
           spriteKey: obj.type, frame: 0,
@@ -55,13 +68,6 @@ export class Level {
           frameCount: 26, frameSpeed: 0.07,
           frameTimer: 0, type: 'checkpoint'
         });
-      } else if (obj.type === 'trampoline') {
-        this.trampolines.push({
-            x: worldX, y: worldY, size: 28,
-            state: 'idle', frame: 0,
-            frameCount: 8, frameSpeed: 0.05,
-            frameTimer: 0, type: 'trampoline'
-        });
       } else if (obj.type === 'trophy') {
         this.trophy = {
           x: worldX, y: worldY, size: 32,
@@ -69,32 +75,6 @@ export class Level {
           animationTimer: 0, animationSpeed: 0.35,
           acquired: false, inactive: true, contactMade: false,
         };
-      } else if (obj.type === 'spike') {
-        this.spikes.push({
-            x: worldX, y: worldY, size: 16, type: 'spike',
-            state: 'hidden', // 'hidden', 'warning', 'extended'
-            activationRadius: 64,
-            warningDuration: 0.4,
-            retractDelay: 1.5,
-            timer: 0,
-            damage: 40
-        });
-      } else if (obj.type === 'fire_trap') {
-        this.fireTraps.push({
-            x: worldX, y: worldY, 
-            width: 16, height: 16, // The collision-box size
-            solid: true, // Crucial for collision system
-            state: 'off', // 'off', 'activating', 'on', 'turning_off'
-            playerIsOnTop: false,
-            frame: 0, frameTimer: 0,
-            turnOffTimer: 0,
-            damageTimer: 1.0,
-            anim: {
-                activating: { frames: 4, speed: 0.1 },
-                on: { frames: 3, speed: 0.15 }
-            },
-            type: 'fire_trap'
-        });
       }
     });
 
@@ -116,6 +96,31 @@ export class Level {
     }
 
     return this.tiles[gridY][gridX];
+  }
+  
+  /**
+   * NEW: Main update loop for all dynamic level objects.
+   * The Engine will call this method every frame.
+   * @param {number} dt Delta time.
+   * @param {EntityManager} entityManager The entity manager.
+   * @param {number} playerEntityId The ID of the player entity.
+   * @param {object} eventBus The global event bus.
+   */
+  update(dt, entityManager, playerEntityId, eventBus) {
+      this.updateFruits(dt);
+      this.updateTrophyAnimation(dt);
+      this.updateCheckpoints(dt);
+      
+      const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
+      const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
+      
+      // Pass player data to traps so they can react to proximity.
+      const playerData = playerPos && playerCol ? { ...playerPos, width: playerCol.width, height: playerCol.height } : null;
+
+      // MODIFIED: Delegate updates to the trap modules.
+      for (const trap of this.traps) {
+          trap.update(dt, playerData, eventBus);
+      }
   }
 
   updateCheckpoints(dt) {
@@ -149,102 +154,9 @@ export class Level {
       }
     }
   }
-  
-  updateTrampolines(dt) {
-    for (const tramp of this.trampolines) {
-        if (tramp.state === 'jumping') {
-            tramp.frameTimer += dt;
-            if (tramp.frameTimer >= tramp.frameSpeed) {
-                tramp.frameTimer -= tramp.frameSpeed;
-                tramp.frame++;
-                if (tramp.frame >= tramp.frameCount) {
-                    tramp.frame = 0;
-                    tramp.state = 'idle';
-                }
-            }
-        }
-    }
-  }
 
-  updateFireTraps(dt) {
-    for (const trap of this.fireTraps) {
-        if (!trap.playerIsOnTop && trap.state === 'on') {
-            trap.state = 'turning_off';
-            trap.turnOffTimer = 2.0;
-        }
-
-        switch (trap.state) {
-            case 'activating':
-                trap.frameTimer += dt;
-                if (trap.frameTimer >= trap.anim.activating.speed) {
-                    trap.frameTimer = 0;
-                    trap.frame++;
-                    if (trap.frame >= trap.anim.activating.frames) {
-                        trap.frame = 0;
-                        trap.state = 'on';
-                    }
-                }
-                break;
-            case 'on':
-                trap.frameTimer += dt;
-                if (trap.frameTimer >= trap.anim.on.speed) {
-                    trap.frameTimer = 0;
-                    trap.frame = (trap.frame + 1) % trap.anim.on.frames;
-                }
-                break;
-            case 'turning_off':
-                trap.turnOffTimer -= dt;
-                if (trap.turnOffTimer <= 0) {
-                    trap.state = 'off';
-                    trap.frame = 0;
-                }
-                break;
-        }
-    }
-  }
-
-  updateSpikes(dt, playerPos, playerCol) {
-    if (!playerPos || !playerCol) return;
-
-    const playerLeft = playerPos.x;
-    const playerRight = playerPos.x + playerCol.width;
-    const playerTop = playerPos.y;
-    const playerBottom = playerPos.y + playerCol.height;
-    
-    for (const spike of this.spikes) {
-        if (spike.timer > 0) {
-            spike.timer -= dt;
-        }
-
-        const activationLeft = spike.x - spike.activationRadius;
-        const activationRight = spike.x + spike.activationRadius;
-        const activationTop = spike.y - spike.activationRadius;
-        const activationBottom = spike.y + spike.activationRadius;
-
-        const playerInRange = playerRight > activationLeft && playerLeft < activationRight &&
-                              playerBottom > activationTop && playerTop < activationBottom;
-
-        switch (spike.state) {
-            case 'hidden':
-                if (playerInRange) {
-                    spike.state = 'warning';
-                    spike.timer = spike.warningDuration;
-                }
-                break;
-            case 'warning':
-                if (spike.timer <= 0) {
-                    spike.state = 'extended';
-                    spike.timer = spike.retractDelay;
-                }
-                break;
-            case 'extended':
-                if (spike.timer <= 0) {
-                    spike.state = 'hidden';
-                }
-                break;
-        }
-    }
-  }
+  // REMOVED: updateTrampolines, updateFireTraps, and updateSpikes methods.
+  // Their logic is now inside their respective trap modules.
 
   collectFruit(fruit) {
     if (!fruit.collected) {
@@ -308,24 +220,9 @@ export class Level {
         cp.frameTimer = 0;
     });
     
-    this.trampolines.forEach(tramp => {
-        tramp.state = 'idle';
-        tramp.frame = 0;
-        tramp.frameTimer = 0;
-    });
-
-    this.fireTraps.forEach(trap => {
-        trap.state = 'off';
-        trap.playerIsOnTop = false;
-        trap.frame = 0;
-        trap.frameTimer = 0;
-        trap.turnOffTimer = 0;
-        trap.damageTimer = 1.0;
-    });
-
-    this.spikes.forEach(spike => {
-        spike.state = 'hidden';
-        spike.timer = 0;
+    // MODIFIED: Delegate resets to the trap modules.
+    this.traps.forEach(trap => {
+        trap.reset();
     });
 
     if (this.trophy) {

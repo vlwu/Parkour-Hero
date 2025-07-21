@@ -59,14 +59,14 @@ export class Renderer {
   renderScene(camera, level, entityManager, collectedFruits) {
     camera.apply(this.ctx);
 
-    // --- RENDER BACKGROUND ELEMENTS ---
     this.drawTileGrid(level, camera);
     if (level.trophy) this.drawTrophy(level.trophy, camera);
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
-    this.drawTrapBases(level, camera);
     
-    // --- RENDER PLAYER ---
+    // MODIFIED: A single, clean call to draw all traps.
+    this.drawTraps(level.traps, camera);
+    
     const entities = entityManager.query([PositionComponent, RenderableComponent]);
     for(const entityId of entities) {
         const pos = entityManager.getComponent(entityId, PositionComponent);
@@ -76,8 +76,6 @@ export class Renderer {
         this._drawRenderable(pos, renderable, charComp, playerCtrl);
     }
     
-    // --- RENDER FOREGROUND ELEMENTS ---
-    this.drawTrapForegrounds(level, camera);
     this.drawCollectedFruits(collectedFruits, camera);
     
     camera.restore(this.ctx);
@@ -116,7 +114,6 @@ export class Renderer {
     this.ctx.save();
     
     const isSpecialAnim = stateName === 'spawn' || stateName === 'despawn';
-    
     const renderX = isSpecialAnim ? pos.x - (renderable.width - PLAYER_CONSTANTS.WIDTH) / 2 : pos.x;
     const renderY = isSpecialAnim ? pos.y - (renderable.height - PLAYER_CONSTANTS.HEIGHT) / 2 : pos.y;
     
@@ -181,100 +178,19 @@ export class Renderer {
     }
   }
   
-  drawTrapBases(level, camera) {
-    this._drawTrampolines(level.trampolines, camera);
-    this._drawSpikes(level.spikes, camera);
-    this._drawFireTrapBases(level.fireTraps, camera);
-  }
-
-  drawTrapForegrounds(level, camera) {
-    this._drawFireTrapFlames(level.fireTraps, camera);
-  }
-
-  _drawTrampolines(trampolines, camera) {
-    for (const tramp of trampolines) {
-        if (!camera.isRectVisible({x: tramp.x, y: tramp.y, width: tramp.size, height: tramp.size})) continue;
-        let sprite, srcX = 0, frameWidth;
-        const drawX = tramp.x - tramp.size / 2;
-        const drawY = tramp.y - tramp.size / 2;
-        if (tramp.state === 'jumping') {
-            sprite = this.assets.trampoline_jump;
-            if (sprite) { frameWidth = sprite.width / tramp.frameCount; srcX = tramp.frame * frameWidth; }
-        } else {
-            sprite = this.assets.trampoline_idle;
-            if (sprite) frameWidth = sprite.width;
-        }
-        if (sprite && frameWidth > 0) this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY, tramp.size, tramp.size);
-        else { this.ctx.fillStyle = '#8e44ad'; this.ctx.fillRect(drawX, drawY, tramp.size, tramp.size); }
-    }
-  }
-
-  _drawSpikes(spikes, camera) {
-      const sprite = this.assets.spike_two;
-      if (!sprite) return;
-      for (const spike of spikes) {
-          if (spike.state === 'hidden' || spike.state === 'warning') {
-              continue;
-          }
-          if (!camera.isRectVisible({x: spike.x, y: spike.y, width: spike.size, height: spike.size})) continue;
-          this.ctx.drawImage(sprite, spike.x - spike.size / 2, spike.y - spike.size / 2, spike.size, spike.size);
+  /**
+   * NEW: Generic method to render all traps.
+   * It iterates through the level's traps and delegates rendering to each trap's own render method.
+   * @param {Trap[]} traps - The array of trap objects from the level.
+   * @param {Camera} camera - The game camera.
+   */
+  drawTraps(traps, camera) {
+      for (const trap of traps) {
+          trap.render(this.ctx, this.assets, camera);
       }
   }
 
-  _drawFireTrapBases(fireTraps, camera) {
-    const sprite = this.assets.fire_off;
-    if (!sprite) return; // Exit if the asset isn't loaded
-    for (const trap of fireTraps) {
-        if (!camera.isVisible(trap.x, trap.y, trap.width, trap.height)) continue;
-        
-        const drawX = trap.x - trap.width / 2;
-        const drawY = trap.y - trap.height / 2;
-
-        // Use the 9-argument drawImage to clip the source sprite.
-        // The fire_off.png is 16x32. We want the bottom 16x16 part.
-        this.ctx.drawImage(
-            sprite,      // Source image
-            0,           // Source X
-            16,          // Source Y (start from the middle of the 32px height)
-            16,          // Source Width
-            16,          // Source Height
-            drawX,       // Destination X
-            drawY,       // Destination Y
-            trap.width,  // Destination Width
-            trap.height  // Destination Height
-        );
-    }
-  }
-  
-  _drawFireTrapFlames(fireTraps, camera) {
-    for (const trap of fireTraps) {
-        if (trap.state === 'off' || trap.state === 'turning_off') continue;
-        if (!camera.isVisible(trap.x, trap.y - trap.height, trap.width, trap.height * 2)) continue;
-
-        let sprite, srcX = 0, frameWidth;
-        const drawX = trap.x - trap.width / 2;
-        const drawY = trap.y - trap.height / 2;
-
-        if (trap.state === 'activating') {
-            sprite = this.assets.fire_hit;
-            frameWidth = sprite.width / trap.anim.activating.frames;
-            srcX = trap.frame * frameWidth;
-        } else { // 'on'
-            sprite = this.assets.fire_on;
-            frameWidth = sprite.width / trap.anim.on.frames;
-            srcX = trap.frame * frameWidth;
-        }
-
-        if (sprite) {
-            // This part was correct: it draws the full 16x32 animated flame sprite.
-            this.ctx.drawImage(
-                sprite, srcX, 0, frameWidth, sprite.height,
-                drawX, drawY - trap.height,
-                trap.width, trap.height * 2
-            );
-        }
-    }
-  }
+  // REMOVED: All trap-specific drawing methods (_drawTrampolines, _drawSpikes, etc.) are gone.
 
   drawCollectedFruits(collectedArr, camera) {
     const sprite = this.assets['fruit_collected']; if (!sprite) return;
