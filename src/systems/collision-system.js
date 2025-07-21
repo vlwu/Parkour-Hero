@@ -11,6 +11,7 @@ export class CollisionSystem {
   update(dt, { entityManager, level }) {
     const collidableEntities = entityManager.query([PositionComponent, CollisionComponent]);
     
+    // First, handle all player movement and tile collisions. This is the base layer.
     for (const entityId of collidableEntities) {
         if (entityManager.hasComponent(entityId, PlayerControlledComponent)) {
             const pos = entityManager.getComponent(entityId, PositionComponent);
@@ -31,6 +32,7 @@ export class CollisionSystem {
         }
     }
 
+    // Now, handle entity-to-entity collisions.
     for (let i = 0; i < collidableEntities.length; i++) {
         for (let j = i + 1; j < collidableEntities.length; j++) {
             const idA = collidableEntities[i];
@@ -40,6 +42,7 @@ export class CollisionSystem {
             const posB = entityManager.getComponent(idB, PositionComponent);
             const colB = entityManager.getComponent(idB, CollisionComponent);
 
+            // AABB Check
             const a_isPlayer = entityManager.hasComponent(idA, PlayerControlledComponent);
             const ax = a_isPlayer ? posA.x : posA.x - colA.width / 2;
             const ay = a_isPlayer ? posA.y : posA.y - colA.height / 2;
@@ -47,6 +50,7 @@ export class CollisionSystem {
             const by = posB.y - colB.height / 2;
 
             if (ax < bx + colB.width && ax + colA.width > bx && ay < by + colB.height && ay + colA.height > by) {
+                // If they are colliding, resolve solid collisions first, then publish events for other systems.
                 if (colA.solid && colB.solid) {
                     this._resolveSolidEntityCollision(idA, idB, dt, entityManager);
                 }
@@ -56,6 +60,7 @@ export class CollisionSystem {
         }
     }
 
+    // Finally, check for interactions with raw level objects (fruits, trophy, etc.)
     const playerEntities = entityManager.query([PlayerControlledComponent, PositionComponent, CollisionComponent]);
     for (const entityId of playerEntities) {
       const pos = entityManager.getComponent(entityId, PositionComponent);
@@ -79,49 +84,47 @@ export class CollisionSystem {
     const oCol = entityManager.getComponent(obstacleId, CollisionComponent);
     
     if (!pPos || !pCol || !pVel || !oPos || !oCol) return;
-    
-    // Player's previous position for context
-    const prevPlayerY = pPos.y - pVel.vy * dt;
-    
-    // Player bounds
+
     const pLeft = pPos.x;
     const pRight = pPos.x + pCol.width;
     const pTop = pPos.y;
     const pBottom = pPos.y + pCol.height;
 
-    // Obstacle bounds
     const oLeft = oPos.x - oCol.width / 2;
     const oRight = oPos.x + oCol.width / 2;
     const oTop = oPos.y - oCol.height / 2;
     const oBottom = oPos.y + oCol.height / 2;
 
-    // First, check for the most common case: landing on top of a platform.
-    const prevPlayerBottom = prevPlayerY + pCol.height;
-    if (pVel.vy >= 0 && prevPlayerBottom <= oTop + 1) { // The +1 is a small tolerance
+    const prevPlayerBottom = (pPos.y - pVel.vy * dt) + pCol.height;
+
+    // PRIORITY 1: Check for landing on top. This is the most important and common case.
+    if (pVel.vy >= 0 && prevPlayerBottom <= oTop + 1) {
         this._landOnSurface(pPos, pVel, pCol, oTop, oCol.type || 'solid');
-        return; // Collision resolved
+        return; // Collision handled, exit.
     }
 
-    // AABB collision resolution using axis of least penetration
-    const overlapX = Math.min(pRight, oRight) - Math.max(pLeft, oLeft);
-    const overlapY = Math.min(pBottom, oBottom) - Math.max(pTop, oTop);
-
-    if (overlapX < overlapY) {
-        // Horizontal penetration is less, resolve horizontally.
-        if (pVel.vx > 0) { // Player was moving right.
-            pPos.x -= overlapX;
-        } else { // Player was moving left or was stationary.
-            pPos.x += overlapX;
+    // PRIORITY 2: Handle side collisions if not landing.
+    // Check for vertical overlap and that we aren't hitting it from below.
+    if (pBottom > oTop + 1 && pTop < oBottom) {
+        // Player moving right, collides with left side of obstacle
+        if (pVel.vx > 0 && pRight > oLeft && (pPos.x - pVel.vx * dt) < oLeft) {
+            pPos.x = oLeft - pCol.width;
+            pVel.vx = 0;
+            return;
         }
-        pVel.vx = 0;
-    } else {
-        // Vertical penetration is less (or equal), resolve vertically.
-        if (pVel.vy > 0) { // Hitting from the top (should have been caught by landing logic, but as a fallback)
-            pPos.y -= overlapY;
-        } else { // Hitting from the bottom.
-            pPos.y += overlapY;
+        // Player moving left, collides with right side of object
+        if (pVel.vx < 0 && pLeft < oRight && (pPos.x - pVel.vx * dt) > oRight) {
+            pPos.x = oRight;
+            pVel.vx = 0;
+            return;
         }
+    }
+    
+    // PRIORITY 3: Handle hitting the obstacle from below.
+    if (pTop < oBottom && pBottom > oBottom && pVel.vy < 0) {
+        pPos.y = oBottom;
         pVel.vy = 0;
+        return;
     }
   }
 

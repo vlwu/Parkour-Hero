@@ -42,9 +42,9 @@ export function createPlayer(entityManager, x, y, characterId) {
 export function createSpike(entityManager, x_tl, y_tl) {
     const colWidth = 16;
     const colHeight = 16;
+    // MODIFICATION: Place the center of the object on the grid line, centered horizontally.
     const centerX = x_tl + GRID_CONSTANTS.TILE_SIZE / 2;
-    // MODIFICATION: Position the entity so its bottom aligns with the bottom of its grid cell.
-    const centerY = y_tl + GRID_CONSTANTS.TILE_SIZE - colHeight / 2;
+    const centerY = y_tl;
 
     const entityId = entityManager.createEntity();
     entityManager.addComponent(entityId, new PositionComponent(centerX, centerY));
@@ -65,9 +65,10 @@ export function createSpike(entityManager, x_tl, y_tl) {
 export function createTrampoline(entityManager, x_tl, y_tl) {
     const colWidth = 28;
     const colHeight = 28;
+    // MODIFICATION: Place the center of the object on the grid line, centered horizontally.
     const centerX = x_tl + GRID_CONSTANTS.TILE_SIZE / 2;
-    // MODIFICATION: Position the entity so its bottom aligns with the bottom of its grid cell.
-    const centerY = y_tl + GRID_CONSTANTS.TILE_SIZE - colHeight / 2;
+    // MODIFICATION: Add a specific visual offset to make the sprite sit flush on the line.
+    const centerY = y_tl + colHeight / 2;
 
     const entityId = entityManager.createEntity();
     entityManager.addComponent(entityId, new PositionComponent(centerX, centerY));
@@ -93,9 +94,11 @@ export function createTrampoline(entityManager, x_tl, y_tl) {
 export function createFireTrap(entityManager, x_tl, y_tl) {
     const colWidth = 16;
     const colHeight = 16;
+    // MODIFICATION: Place the center of the object on the grid line, centered horizontally.
     const centerX = x_tl + GRID_CONSTANTS.TILE_SIZE / 2;
-    // MODIFICATION: Position the entity so its bottom aligns with the bottom of its grid cell.
-    const centerY = y_tl + GRID_CONSTANTS.TILE_SIZE - colHeight / 2;
+    // FIX: The fire trap is a solid object the player can stand on. Its center Y should
+    // be calculated so its top edge aligns with the provided y_tl coordinate.
+    const centerY = y_tl + colHeight / 2;
 
     const entityId = entityManager.createEntity();
     entityManager.addComponent(entityId, new PositionComponent(centerX, centerY));

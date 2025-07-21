@@ -4,6 +4,7 @@ import { PeriodicDamageComponent } from '../components/PeriodicDamageComponent.j
 import { HealthComponent } from '../components/HealthComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
+import { CollisionComponent } from '../components/CollisionComponent.js';
 
 export class DamageSystem {
     constructor() {
