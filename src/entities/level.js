@@ -71,7 +71,13 @@ export class Level {
         };
       } else if (obj.type === 'spike') {
         this.spikes.push({
-            x: worldX, y: worldY, size: 16, type: 'spike'
+            x: worldX, y: worldY, size: 16, type: 'spike',
+            state: 'hidden', // 'hidden', 'warning', 'extended'
+            activationRadius: 64,
+            warningDuration: 0.4,
+            retractDelay: 1.5,
+            timer: 0,
+            damage: 40
         });
       } else if (obj.type === 'fire_trap') {
         this.fireTraps.push({
@@ -197,6 +203,49 @@ export class Level {
     }
   }
 
+  updateSpikes(dt, playerPos, playerCol) {
+    if (!playerPos || !playerCol) return;
+
+    const playerLeft = playerPos.x;
+    const playerRight = playerPos.x + playerCol.width;
+    const playerTop = playerPos.y;
+    const playerBottom = playerPos.y + playerCol.height;
+    
+    for (const spike of this.spikes) {
+        if (spike.timer > 0) {
+            spike.timer -= dt;
+        }
+
+        const activationLeft = spike.x - spike.activationRadius;
+        const activationRight = spike.x + spike.activationRadius;
+        const activationTop = spike.y - spike.activationRadius;
+        const activationBottom = spike.y + spike.activationRadius;
+
+        const playerInRange = playerRight > activationLeft && playerLeft < activationRight &&
+                              playerBottom > activationTop && playerTop < activationBottom;
+
+        switch (spike.state) {
+            case 'hidden':
+                if (playerInRange) {
+                    spike.state = 'warning';
+                    spike.timer = spike.warningDuration;
+                }
+                break;
+            case 'warning':
+                if (spike.timer <= 0) {
+                    spike.state = 'extended';
+                    spike.timer = spike.retractDelay;
+                }
+                break;
+            case 'extended':
+                if (spike.timer <= 0) {
+                    spike.state = 'hidden';
+                }
+                break;
+        }
+    }
+  }
+
   collectFruit(fruit) {
     if (!fruit.collected) {
       fruit.collected = true;
@@ -274,7 +323,10 @@ export class Level {
         trap.damageTimer = 1.0;
     });
 
-    this.spikes.forEach(spike => {});
+    this.spikes.forEach(spike => {
+        spike.state = 'hidden';
+        spike.timer = 0;
+    });
 
     if (this.trophy) {
       this.trophy.acquired = false;

@@ -8,7 +8,7 @@ import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ParticleSystem } from '../systems/particle-system.js';
 import { UISystem } from '../ui/ui-system.js';
-import { EntityManager } from './entity-manager.js';
+import { EntityManager } from '../managers/entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { PositionComponent } from '../components/PositionComponent.js';
@@ -202,11 +202,15 @@ export class Engine {
     const playerHealth = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) this._respawnPlayer();
 
+    const playerPos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
+    const playerCol = this.entityManager.getComponent(this.playerEntityId, CollisionComponent);
+
     this.currentLevel.updateFruits(dt);
     this.currentLevel.updateTrophyAnimation(dt);
     this.currentLevel.updateCheckpoints(dt);
     this.currentLevel.updateTrampolines(dt);
     this.currentLevel.updateFireTraps(dt);
+    this.currentLevel.updateSpikes(dt, playerPos, playerCol);
     
     for (let i = this.collectedFruits.length - 1; i >= 0; i--) {
         const collected = this.collectedFruits[i];

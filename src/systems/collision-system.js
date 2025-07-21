@@ -187,8 +187,19 @@ export class CollisionSystem {
   
   _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
     for (const spike of level.spikes) {
-        if (this._isCollidingWith(pos, col, spike)) {
-            eventBus.publish('collisionEvent', { type: 'hazard', entityId, entityManager });
+        if (spike.state !== 'extended') {
+            continue;
+        }
+
+        const spikeHitbox = {
+            x: spike.x,
+            y: spike.y - spike.size / 4,
+            width: spike.size,
+            height: spike.size / 2,
+        };
+
+        if (this._isCollidingWith(pos, col, spikeHitbox)) {
+            eventBus.publish('collisionEvent', { type: 'hazard', entityId, entityManager, damage: spike.damage });
             return;
         }
     }

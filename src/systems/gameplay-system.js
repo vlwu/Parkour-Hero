@@ -14,7 +14,7 @@ export class GameplaySystem {
      * @param {object} [event.target] The object that was collided with (e.g., the fruit object).
      * @param {EntityManager} event.entityManager The entity manager instance.
      */
-    handleCollision({ type, entityId, target, entityManager }) {
+    handleCollision({ type, entityId, target, entityManager, damage }) {
         const isPlayer = !!entityManager.getComponent(entityId, PlayerControlledComponent);
         if (!isPlayer) return;
 
@@ -26,7 +26,8 @@ export class GameplaySystem {
                 eventBus.publish('playerDied');
                 break;
             case 'hazard':
-                eventBus.publish('playerTookDamage', { amount: 25, source: 'hazard' });
+                const hazardDamage = damage !== undefined ? damage : 25;
+                eventBus.publish('playerTookDamage', { amount: hazardDamage, source: 'hazard' });
                 break;
             case 'trophy':
                 eventBus.publish('trophyCollision');

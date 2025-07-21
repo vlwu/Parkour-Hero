@@ -213,6 +213,9 @@ export class Renderer {
       const sprite = this.assets.spike_two;
       if (!sprite) return;
       for (const spike of spikes) {
+          if (spike.state === 'hidden' || spike.state === 'warning') {
+              continue;
+          }
           if (!camera.isRectVisible({x: spike.x, y: spike.y, width: spike.size, height: spike.size})) continue;
           this.ctx.drawImage(sprite, spike.x - spike.size / 2, spike.y - spike.size / 2, spike.size, spike.size);
       }
