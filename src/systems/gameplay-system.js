@@ -14,7 +14,6 @@ export class GameplaySystem {
      * @param {object} [event.target] The object that was collided with (e.g., the fruit object).
      * @param {EntityManager} event.entityManager The entity manager instance.
      */
-    // FIX: Correctly destructure the 'entityManager' from the event payload 'e'.
     handleCollision({ type, entityId, target, entityManager }) {
         const isPlayer = !!entityManager.getComponent(entityId, PlayerControlledComponent);
         if (!isPlayer) return;

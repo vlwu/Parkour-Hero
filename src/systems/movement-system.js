@@ -27,6 +27,10 @@ export class MovementSystem {
             if (ctrl.isSpawning || ctrl.isDespawning) {
                 vel.vx = 0;
                 vel.vy = 0;
+                if (ctrl.activeSurfaceSound) {
+                    eventBus.publish('stopSoundLoop', { key: ctrl.activeSurfaceSound });
+                    ctrl.activeSurfaceSound = null;
+                }
                 continue;
             };
 
