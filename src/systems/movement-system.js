@@ -77,8 +77,8 @@ export class MovementSystem {
     }
 
     _applyVerticalMovement(dt, vel, col, ctrl) {
-        // Only apply gravity if the player is not on the ground
-        if (!col.isGrounded && !ctrl.isDashing && !ctrl.isHit) {
+        // Only apply gravity if the player is not on the ground, and not in a special state
+        if (!col.isGrounded && !ctrl.isDashing && !ctrl.isHit && !ctrl.isSpawning) {
             vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
         }
 

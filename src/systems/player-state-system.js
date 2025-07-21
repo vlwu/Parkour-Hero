@@ -165,13 +165,17 @@ export class PlayerStateSystem {
     _updateFSM(vel, ctrl, col, renderable, state) {
         const currentState = state.currentState;
 
+        // If the player is spawning or despawning, lock the state until the animation finishes.
+        if ((currentState === 'spawn' && !ctrl.spawnComplete) || currentState === 'despawn') {
+            return;
+        }
+        
+        // Transition from spawn to idle once the animation is done.
         if (currentState === 'spawn' && ctrl.spawnComplete) {
             this._setAnimationState(renderable, state, 'idle', ctrl);
             return; 
         }
 
-        if (currentState === 'spawn' || currentState === 'despawn') return;
-        
         if (ctrl.isHit) {
             if (currentState !== 'hit') this._setAnimationState(renderable, state, 'hit', ctrl);
             return;

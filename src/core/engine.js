@@ -8,7 +8,7 @@ import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ParticleSystem } from '../systems/particle-system.js';
 import { UISystem } from '../ui/ui-system.js';
-import { EntityManager } from '../managers/entity-manager.js';
+import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { PositionComponent } from '../components/PositionComponent.js';
@@ -260,7 +260,7 @@ export class Engine {
       const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
       const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
       
-      if (health && playerCtrl && !playerCtrl.needsRespawn) {
+      if (health && playerCtrl && !playerCtrl.isHit && !playerCtrl.isSpawning && !playerCtrl.needsRespawn) {
           health.currentHealth = Math.max(0, health.currentHealth - amount);
           this.camera.shake(8, 0.3);
           
@@ -275,6 +275,7 @@ export class Engine {
     if (playerCtrl && !playerCtrl.needsRespawn) {
       playerCtrl.deathCount++;
       playerCtrl.needsRespawn = true;
+      eventBus.publish('playSound', { key: 'death_sound', volume: 0.3, channel: 'SFX' });
     }
   }
 
@@ -299,17 +300,20 @@ export class Engine {
         health.currentHealth = health.maxHealth;
     }
 
-    // Stop any looping sounds before replacing the component that tracks them.
     if (playerCtrl.activeSurfaceSound) {
         eventBus.publish('stopSoundLoop', { key: playerCtrl.activeSurfaceSound });
     }
 
+    // Reset the PlayerControlledComponent's state in-place
     const currentDeathCount = playerCtrl.deathCount;
-    this.entityManager.removeComponent(this.playerEntityId, PlayerControlledComponent);
-    this.entityManager.addComponent(this.playerEntityId, new PlayerControlledComponent({ deathCount: currentDeathCount }));
-    
-    renderable.animationState = 'spawn';
+    const defaultState = new PlayerControlledComponent();
+    Object.assign(playerCtrl, defaultState); // Reset all properties to their defaults
+    playerCtrl.deathCount = currentDeathCount; // Restore the death count
+    playerCtrl.needsRespawn = false; // IMPORTANT: Clear the flag that triggered the respawn
+
+    // Manually set the spawn state for all relevant components
     state.currentState = 'spawn';
+    renderable.animationState = 'spawn';
     renderable.animationFrame = 0;
     renderable.animationTimer = 0;
     renderable.direction = 'right';
@@ -321,7 +325,6 @@ export class Engine {
     collision.groundType = null;
 
     this.camera.shake(15, 0.5);
-    eventBus.publish('playSound', { key: 'death_sound', volume: 0.3, channel: 'SFX' });
   }
 
   _onFruitCollected(fruit) {
