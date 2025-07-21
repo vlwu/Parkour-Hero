@@ -23,6 +23,11 @@ import { PlayerStateSystem } from '../systems/player-state-system.js';
 import { MovementSystem } from '../systems/movement-system.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
+// MODIFICATION: Import the new systems
+import { DamageSystem } from '../systems/DamageSystem.js';
+import { InteractionSystem } from '../systems/InteractionSystem.js';
+import { TrapMovementSystem } from '../systems/TrapMovementSystem.js';
+
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -59,9 +64,15 @@ export class Engine {
     this.particleSystem = new ParticleSystem(assets);
     this.uiSystem = new UISystem(canvas, assets);
 
+    // Instantiate the new systems
+    this.damageSystem = new DamageSystem();
+    this.interactionSystem = new InteractionSystem();
+    this.trapMovementSystem = new TrapMovementSystem();
+
     this.systems = [
         this.inputSystemProcessor,
         this.playerStateSystem,
+        this.trapMovementSystem, // This needs to run every frame to move traps
         this.movementSystem,
         this.collisionSystem,
         this.particleSystem,
@@ -75,6 +86,8 @@ export class Engine {
     
     this._setupEventSubscriptions();
   }
+
+  // ... The rest of the Engine class remains unchanged.
   
   _setupEventSubscriptions() {
     eventBus.subscribe('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
