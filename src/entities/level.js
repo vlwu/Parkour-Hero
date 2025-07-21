@@ -46,23 +46,17 @@ export class Level {
     }
 
     (levelConfig.objects || []).forEach(obj => {
-      // The `x` coordinate is centered on the grid square.
       const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE + GRID_CONSTANTS.TILE_SIZE / 2;
-      
-      // The `y` coordinate is now adjusted to place the object's bottom edge on the grid line.
-      let worldY;
+      const worldY = obj.y * GRID_CONSTANTS.TILE_SIZE + GRID_CONSTANTS.TILE_SIZE / 2;
 
       switch (obj.type) {
         case 'trampoline':
-          worldY = obj.y * GRID_CONSTANTS.TILE_SIZE - 14; // half of 28 height
           createTrampoline(entityManager, worldX, worldY);
           break;
         case 'spike':
-          worldY = obj.y * GRID_CONSTANTS.TILE_SIZE - 8; // half of 16 height
           createSpike(entityManager, worldX, worldY);
           break;
         case 'fire_trap':
-          worldY = obj.y * GRID_CONSTANTS.TILE_SIZE - 8; // half of 16 base height
           createFireTrap(entityManager, worldX, worldY);
           break;
       }
@@ -186,7 +180,7 @@ export class Level {
       this.trophy.acquired = false;
       this.trophy.inactive = true;
       this.trophy.animationFrame = 0;
-      this.animationTimer = 0;
+      this.trophy.animationTimer = 0;
     }
     this.completed = false;
   }

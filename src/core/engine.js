@@ -27,7 +27,6 @@ import { DamageSystem } from '../systems/DamageSystem.js';
 import { InteractionSystem } from '../systems/InteractionSystem.js';
 import { TrapMovementSystem } from '../systems/TrapMovementSystem.js';
 import { AnimationSystem } from '../systems/AnimationSystem.js';
-import { FireTrapSystem } from '../systems/FireTrapSystem.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -68,13 +67,11 @@ export class Engine {
     this.interactionSystem = new InteractionSystem();
     this.trapMovementSystem = new TrapMovementSystem();
     this.animationSystem = new AnimationSystem();
-    this.fireTrapSystem = new FireTrapSystem();
 
     this.systems = [
         this.inputSystemProcessor,
         this.playerStateSystem,
         this.trapMovementSystem,
-        this.fireTrapSystem,
         this.animationSystem,
         this.movementSystem,
         this.collisionSystem,

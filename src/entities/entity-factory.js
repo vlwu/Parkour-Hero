@@ -12,6 +12,7 @@ import { DamageOnContactComponent } from '../components/DamageOnContactComponent
 import { BouncePlatformComponent } from '../components/BouncePlatformComponent.js';
 import { PeriodicDamageComponent } from '../components/PeriodicDamageComponent.js';
 
+// createPlayer function remains unchanged...
 export function createPlayer(entityManager, x, y, characterId) {
     const playerEntityId = entityManager.createEntity();
 
@@ -42,6 +43,7 @@ export function createPlayer(entityManager, x, y, characterId) {
 export function createSpike(entityManager, x, y) {
     const entityId = entityManager.createEntity();
     entityManager.addComponent(entityId, new PositionComponent(x, y));
+    // MODIFICATION: Added RenderableComponent
     entityManager.addComponent(entityId, new RenderableComponent({
         spriteKey: 'spike_two',
         width: 16,
@@ -59,6 +61,7 @@ export function createSpike(entityManager, x, y) {
 export function createTrampoline(entityManager, x, y) {
     const entityId = entityManager.createEntity();
     entityManager.addComponent(entityId, new PositionComponent(x, y));
+    // MODIFICATION: Added RenderableComponent with animation config
     entityManager.addComponent(entityId, new RenderableComponent({
         spriteKey: 'trampoline', // Base key
         width: 28,
@@ -81,14 +84,15 @@ export function createTrampoline(entityManager, x, y) {
 export function createFireTrap(entityManager, x, y) {
     const entityId = entityManager.createEntity();
     entityManager.addComponent(entityId, new PositionComponent(x, y));
+    // MODIFICATION: Added RenderableComponent with animation config
     entityManager.addComponent(entityId, new RenderableComponent({
-        spriteKey: 'fire', // Base key for the trap
+        spriteKey: 'fire', // Base key
         width: 16,
-        height: 32, // The full flame height for rendering
+        height: 32, // The full flame height
         animationState: 'off',
         animationConfig: {
             off: { frames: 1, speed: 1, loop: false },
-            hit: { frames: 4, speed: 0.1, loop: false }, // Corresponds to 'activating'
+            activating: { frames: 4, speed: 0.1, loop: false },
             on: { frames: 3, speed: 0.15, loop: true }
         }
     }));

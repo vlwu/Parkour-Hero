@@ -15,19 +15,22 @@ export class InteractionSystem {
 
         const playerVel = entityManager.getComponent(entityA, VelocityComponent);
         const platformBounce = entityManager.getComponent(entityB, BouncePlatformComponent);
-        const platformRenderable = entityManager.getComponent(entityB, RenderableComponent);
+        const platformRenderable = entityManager.getComponent(entityB, RenderableComponent); // For animation
 
-        if (playerVel && playerVel.vy > 0 && platformBounce && platformRenderable) {
+        // Check if the player is moving downwards when hitting the bouncer
+        if (playerVel && playerVel.vy > 0 && platformBounce) {
             playerVel.vy = -platformBounce.force;
-            
-            // MODIFICATION: Trigger the jumping animation on the trampoline.
-            platformRenderable.animationState = 'jumping';
-            platformRenderable.animationFrame = 0; // Reset animation
-            platformRenderable.animationTimer = 0;
-            
+
+            // Trigger animations or sounds
+            if (platformRenderable) {
+                // Future enhancement: create an AnimationStateComponent to manage this
+                // platformRenderable.animationState = 'jump';
+            }
             eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0, channel: 'SFX' });
         }
     }
 
-    update(dt, context) {}
+    update(dt, context) {
+        // This system is currently event-driven and does not require a per-frame update.
+    }
 }

@@ -59,20 +59,27 @@ export class Renderer {
   renderScene(camera, level, entityManager, collectedFruits) {
     camera.apply(this.ctx);
 
+    // --- RENDER BACKGROUND ELEMENTS ---
     this.drawTileGrid(level, camera);
+    // These draw the raw objects that have not been converted to entities yet.
     if (level.trophy) this.drawTrophy(level.trophy, camera);
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
     
+    // --- RENDER ALL ENTITIES ---
     const entities = entityManager.query([PositionComponent, RenderableComponent]);
     for(const entityId of entities) {
         const pos = entityManager.getComponent(entityId, PositionComponent);
         const renderable = entityManager.getComponent(entityId, RenderableComponent);
+        
+        // Pass optional components that might affect rendering
         const charComp = entityManager.getComponent(entityId, CharacterComponent);
         const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+
         this._drawEntity(pos, renderable, charComp, playerCtrl);
     }
     
+    // --- RENDER FOREGROUND ELEMENTS ---
     this.drawCollectedFruits(collectedFruits, camera);
     
     camera.restore(this.ctx);
@@ -84,7 +91,9 @@ export class Renderer {
     
     let sprite, frameCount, frameWidth, srcX;
     
+    // --- Determine Sprite and Animation ---
     if (playerCtrl) {
+      // Player-specific rendering logic
       const stateToSpriteMap = {
         idle: 'playerIdle', run: 'playerRun', jump: 'playerJump', double_jump: 'playerDoubleJump',
         fall: 'playerFall', dash: 'playerDash', cling: 'playerCling', spawn: 'playerAppear',
@@ -96,12 +105,21 @@ export class Renderer {
         : this.assets.characters[charComp.characterId]?.[spriteAssetKey];
       
       frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
+
     } else {
-      // Correctly construct the asset key for generic entities.
-      const assetKey = `${renderable.spriteKey}_${stateName}`;
+      // Generic entity rendering logic (for traps, enemies, etc.)
+      const stateConfig = renderable.animationConfig?.[stateName];
+      let assetKey;
+      if (stateConfig && stateConfig.loop) {
+        // For looping animations like 'fire_on', the asset key includes the state.
+        assetKey = `${renderable.spriteKey}_${stateName}`;
+      } else {
+        // For simple or one-shot animations, use the base key.
+        assetKey = renderable.spriteKey;
+      }
+      
       sprite = this.assets[assetKey] || this.assets[renderable.spriteKey];
-      const animConfig = renderable.animationConfig?.[stateName];
-      frameCount = animConfig ? animConfig.frames : 1;
+      frameCount = stateConfig ? stateConfig.frames : 1;
     }
 
     if (!sprite) { this.ctx.fillStyle = '#FF00FF'; this.ctx.fillRect(pos.x, pos.y, renderable.width, renderable.height); return; }
@@ -115,6 +133,7 @@ export class Renderer {
     const drawWidth = isSpecialAnim ? PLAYER_CONSTANTS.SPAWN_WIDTH : renderable.width;
     const drawHeight = isSpecialAnim ? PLAYER_CONSTANTS.SPAWN_HEIGHT : renderable.height;
     
+    // Player is drawn from top-left. Generic entities are drawn from their center.
     const renderX = playerCtrl ? pos.x : pos.x - renderable.width / 2;
     const renderY = playerCtrl ? pos.y : pos.y - renderable.height / 2;
     
@@ -129,15 +148,25 @@ export class Renderer {
     }
     
     const drawOffsetX = (playerCtrl && stateName === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
-
-    // MODIFICATION: Simplified drawing logic. Fire traps are now drawn like any other entity.
-    // The special case has been removed.
-    this.ctx.drawImage(
-      sprite, srcX, 0, frameWidth, sprite.height,
-      drawOffsetX, 0,
-      drawWidth, drawHeight
-    );
     
+    // Handle specific drawing cases for complex sprites like fire
+    if (!playerCtrl && renderable.spriteKey === 'fire') {
+      // Draw the base (off state)
+      const baseSprite = this.assets.fire_off;
+      if(baseSprite) {
+        this.ctx.drawImage(baseSprite, 0, 16, 16, 16, 0, 0, renderable.width, renderable.width); // Draw bottom half as base
+      }
+      // Draw the flame animation on top
+      if (stateName !== 'off') {
+         this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, 0, -renderable.height/2, drawWidth, drawHeight);
+      }
+    } else {
+      this.ctx.drawImage(
+        sprite, srcX, 0, frameWidth, sprite.height,
+        drawOffsetX, 0,
+        drawWidth, drawHeight
+      );
+    }
     this.ctx.restore();
   }
   
