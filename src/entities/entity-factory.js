@@ -8,100 +8,44 @@ import { PLAYER_CONSTANTS } from '../utils/constants.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
-import { DamageOnContactComponent } from '../components/DamageOnContactComponent.js';
-import { BouncePlatformComponent } from '../components/BouncePlatformComponent.js';
-import { PeriodicDamageComponent } from '../components/PeriodicDamageComponent.js';
 
-// createPlayer function remains unchanged...
+/**
+ * Creates a player entity and adds its components to the entity manager.
+ * This function acts as a "recipe" for what a player entity is.
+ * @param {EntityManager} entityManager The entity manager instance.
+ * @param {number} x The initial x-position.
+ * @param {number} y The initial y-position.
+ * @param {string} characterId The ID for the selected character.
+ * @returns {number} The ID of the newly created player entity.
+ */
 export function createPlayer(entityManager, x, y, characterId) {
     const playerEntityId = entityManager.createEntity();
 
     entityManager.addComponent(playerEntityId, new PositionComponent(x, y));
     entityManager.addComponent(playerEntityId, new VelocityComponent());
     entityManager.addComponent(playerEntityId, new CharacterComponent(characterId));
+
+    // Player starts in the 'spawn' state
     entityManager.addComponent(playerEntityId, new RenderableComponent({
-        spriteKey: null, 
+        spriteKey: null, // Sprite key is now derived in the renderer
         width: PLAYER_CONSTANTS.SPAWN_WIDTH,
         height: PLAYER_CONSTANTS.SPAWN_HEIGHT,
         animationState: 'spawn',
     }));
+    
     entityManager.addComponent(playerEntityId, new PlayerControlledComponent());
+    
     entityManager.addComponent(playerEntityId, new CollisionComponent({
         type: 'dynamic',
         solid: true,
         width: PLAYER_CONSTANTS.WIDTH,
         height: PLAYER_CONSTANTS.HEIGHT,
     }));
+    
+    // Add the components required for the refactored systems.
     entityManager.addComponent(playerEntityId, new InputComponent());
     entityManager.addComponent(playerEntityId, new StateComponent('spawn'));
     entityManager.addComponent(playerEntityId, new HealthComponent());
 
     return playerEntityId;
-}
-
-
-export function createSpike(entityManager, x, y) {
-    const entityId = entityManager.createEntity();
-    entityManager.addComponent(entityId, new PositionComponent(x, y));
-    // MODIFICATION: Added RenderableComponent
-    entityManager.addComponent(entityId, new RenderableComponent({
-        spriteKey: 'spike_two',
-        width: 16,
-        height: 16,
-    }));
-    entityManager.addComponent(entityId, new CollisionComponent({
-        type: 'hazard',
-        width: 16,
-        height: 16,
-    }));
-    entityManager.addComponent(entityId, new DamageOnContactComponent({ amount: 25, source: 'spike' }));
-    return entityId;
-}
-
-export function createTrampoline(entityManager, x, y) {
-    const entityId = entityManager.createEntity();
-    entityManager.addComponent(entityId, new PositionComponent(x, y));
-    // MODIFICATION: Added RenderableComponent with animation config
-    entityManager.addComponent(entityId, new RenderableComponent({
-        spriteKey: 'trampoline', // Base key
-        width: 28,
-        height: 28,
-        animationState: 'idle',
-        animationConfig: {
-            idle: { frames: 1, speed: 1, loop: false },
-            jumping: { frames: 8, speed: 0.05, loop: false }
-        }
-    }));
-    entityManager.addComponent(entityId, new CollisionComponent({
-        type: 'platform',
-        width: 28,
-        height: 28,
-    }));
-    entityManager.addComponent(entityId, new BouncePlatformComponent());
-    return entityId;
-}
-
-export function createFireTrap(entityManager, x, y) {
-    const entityId = entityManager.createEntity();
-    entityManager.addComponent(entityId, new PositionComponent(x, y));
-    // MODIFICATION: Added RenderableComponent with animation config
-    entityManager.addComponent(entityId, new RenderableComponent({
-        spriteKey: 'fire', // Base key
-        width: 16,
-        height: 32, // The full flame height
-        animationState: 'off',
-        animationConfig: {
-            off: { frames: 1, speed: 1, loop: false },
-            activating: { frames: 4, speed: 0.1, loop: false },
-            on: { frames: 3, speed: 0.15, loop: true }
-        }
-    }));
-    entityManager.addComponent(entityId, new CollisionComponent({
-        type: 'hazard',
-        solid: true,
-        width: 16,
-        height: 16, // Solid part is only the base
-    }));
-    entityManager.addComponent(entityId, new PeriodicDamageComponent({ amount: 10, interval: 0.8, source: 'fire' }));
-    return entityId;
 }

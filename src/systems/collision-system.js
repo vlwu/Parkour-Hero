@@ -3,74 +3,43 @@ import { eventBus } from '../utils/event-bus.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
-import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 
 export class CollisionSystem {
   constructor() {}
 
   update(dt, { entityManager, level }) {
-    const collidableEntities = entityManager.query([PositionComponent, CollisionComponent]);
+    for (const trap of level.fireTraps) {
+        trap.playerIsOnTop = false;
+    }
+      
+    const entities = entityManager.query([PositionComponent, VelocityComponent, CollisionComponent]);
     
-    // --- PHASE 1: ENTITY vs. TILE GRID COLLISION ---
-    for (const entityId of collidableEntities) {
-        // Only check player-controlled entities against the grid for now for performance.
-        // This can be expanded to include enemies later if needed.
-        if (entityManager.hasComponent(entityId, PlayerControlledComponent)) {
-            const pos = entityManager.getComponent(entityId, PositionComponent);
-            const vel = entityManager.getComponent(entityId, VelocityComponent);
-            const col = entityManager.getComponent(entityId, CollisionComponent);
+    for (const entityId of entities) {
+        const pos = entityManager.getComponent(entityId, PositionComponent);
+        const vel = entityManager.getComponent(entityId, VelocityComponent);
+        const col = entityManager.getComponent(entityId, CollisionComponent);
 
-            if (pos.y > level.height + 50) {
-                eventBus.publish('worldBoundaryCollision', { type: 'world_bottom', entityId, entityManager });
-                continue; 
-            }
-
-            if (vel) {
-                pos.x += vel.vx * dt;
-                this._handleTileHorizontalCollisions(pos, vel, col, level);
-
-                pos.y += vel.vy * dt;
-                this._handleTileVerticalCollisions(pos, vel, col, level, dt);
-            }
+        if (pos.y > level.height + 50) {
+            // MODIFIED: Publish a specific event for boundary collisions.
+            eventBus.publish('worldBoundaryCollision', { type: 'world_bottom', entityId, entityManager });
+            continue; 
         }
-    }
 
-    // --- PHASE 2: ENTITY vs. ENTITY COLLISION ---
-    for (let i = 0; i < collidableEntities.length; i++) {
-        for (let j = i + 1; j < collidableEntities.length; j++) {
-            const idA = collidableEntities[i];
-            const idB = collidableEntities[j];
+        // --- PHASE 1: Tile Grid Collision ---
+        pos.x += vel.vx * dt;
+        this._handleTileHorizontalCollisions(pos, vel, col, level);
 
-            const posA = entityManager.getComponent(idA, PositionComponent);
-            const colA = entityManager.getComponent(idA, CollisionComponent);
-            const posB = entityManager.getComponent(idB, PositionComponent);
-            const colB = entityManager.getComponent(idB, CollisionComponent);
+        pos.y += vel.vy * dt;
+        this._handleTileVerticalCollisions(pos, vel, col, level, dt);
+        
+        // --- PHASE 2: Solid Object Collision ---
+        this._handleSolidObjectCollisions(pos, vel, col, level);
 
-            // Determine hitbox positions (player is top-left, others are centered)
-            const a_isPlayer = entityManager.hasComponent(idA, PlayerControlledComponent);
-            const b_isPlayer = entityManager.hasComponent(idB, PlayerControlledComponent);
+        // Clamp position to level bounds
+        pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
 
-            const ax = a_isPlayer ? posA.x : posA.x - colA.width / 2;
-            const ay = a_isPlayer ? posA.y : posA.y - colA.height / 2;
-            const bx = b_isPlayer ? posB.x : posB.x - colB.width / 2;
-            const by = b_isPlayer ? posB.y : posB.y - colB.height / 2;
-
-            if (ax < bx + colB.width && ax + colA.width > bx &&
-                ay < by + colB.height && ay + colA.height > by)
-            {
-                // A collision occurred, publish the generic event for both entities.
-                eventBus.publish('collisionDetected', { entityA: idA, entityB: idB, entityManager });
-                eventBus.publish('collisionDetected', { entityA: idB, entityB: idA, entityManager });
-            }
-        }
-    }
-
-    // --- PHASE 3: PLAYER vs. RAW OBJECTS (Temporary) ---
-    const playerEntities = entityManager.query([PlayerControlledComponent, PositionComponent, CollisionComponent]);
-    for (const entityId of playerEntities) {
-      const pos = entityManager.getComponent(entityId, PositionComponent);
-      const col = entityManager.getComponent(entityId, CollisionComponent);
-      this._checkRawObjectInteractions(pos, col, level, entityId, entityManager);
+        // --- PHASE 3: Interaction and Hazard Collision ---
+        this._checkDynamicObjectInteractions(pos, vel, col, level, dt, entityId, entityManager);
     }
   }
 
@@ -97,7 +66,7 @@ export class CollisionSystem {
     const leftTile = Math.floor(pos.x / GRID_CONSTANTS.TILE_SIZE);
     const rightTile = Math.floor((pos.x + col.width - 1) / GRID_CONSTANTS.TILE_SIZE);
     
-    if (vel.vy < 0) {
+    if (vel.vy < 0) { // Upward
         const tileY = Math.floor(pos.y / GRID_CONSTANTS.TILE_SIZE);
         for (let x = leftTile; x <= rightTile; x++) {
             const tile = level.getTileAt(x * GRID_CONSTANTS.TILE_SIZE, tileY * GRID_CONSTANTS.TILE_SIZE);
@@ -128,6 +97,59 @@ export class CollisionSystem {
     }
   }
 
+  _handleSolidObjectCollisions(pos, vel, col, level) {
+    const allSolidObjects = level.fireTraps.filter(t => t.solid);
+
+    for(const obj of allSolidObjects) {
+        const objLeft = obj.x - obj.width / 2;
+        const objRight = obj.x + obj.width / 2;
+        const objTop = obj.y - obj.height / 2;
+        const objBottom = obj.y + obj.height / 2;
+
+        const playerLeft = pos.x;
+        const playerRight = pos.x + col.width;
+        const playerTop = pos.y;
+        const playerBottom = pos.y + col.height;
+
+        // Broad-phase check
+        if (playerRight < objLeft || playerLeft > objRight || playerBottom < objTop || playerTop > objBottom) {
+            continue;
+        }
+
+        // Vertical Collision (Landing on top)
+        if (vel.vy >= 0 && playerBottom >= objTop && playerBottom <= objBottom) {
+            const prevPlayerBottom = playerBottom - vel.vy * (1/60); // A bit of a hack, assumes 60fps
+             if (prevPlayerBottom <= objTop) {
+                 this._landOnSurface(pos, vel, col, objTop, obj.type);
+                 if (obj.type === 'fire_trap') {
+                     obj.playerIsOnTop = true;
+                     if (obj.state === 'off' || obj.state === 'turning_off') {
+                         obj.state = 'activating'; 
+                         obj.frame = 0; 
+                         obj.frameTimer = 0;
+                         eventBus.publish('playSound', { key: 'fire_activated', volume: 0.8, channel: 'SFX' });
+                     }
+                 }
+                 continue; // Collision handled
+             }
+        }
+
+        // Horizontal Collision
+        if (playerBottom > objTop && playerTop < objBottom) {
+            // Player moving right, collides with left side of object
+            if (vel.vx > 0 && playerRight > objLeft && playerLeft < objLeft) {
+                pos.x = objLeft - col.width;
+                vel.vx = 0;
+            }
+            // Player moving left, collides with right side of object
+            else if (vel.vx < 0 && playerLeft < objRight && playerRight > objRight) {
+                pos.x = objRight;
+                vel.vx = 0;
+            }
+        }
+    }
+  }
+
   _landOnSurface(pos, vel, col, surfaceTopY, surfaceType) {
     const landingVelocity = vel.vy;
     if (landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY) {
@@ -144,17 +166,11 @@ export class CollisionSystem {
     col.groundType = surfaceType;
   }
   
-  _checkRawObjectInteractions(pos, col, level, entityId, entityManager) {
-    this._checkFruitCollisions(pos, col, level, entityId, entityManager);
-    this._checkTrophyCollision(pos, col, level.trophy, entityId, entityManager);
-    this.checkCheckpointCollisions(pos, col, level, entityId, entityManager);
-  }
-
-  _isCollidingWithRaw(pos, col, other) {
-    const otherWidth = other.size;
-    const otherHeight = other.size;
-    const otherX = other.x;
-    const otherY = other.y;
+  _isCollidingWith(pos, col, other) {
+    const otherWidth = other.width || other.size;
+    const otherHeight = other.height || other.size;
+    const otherX = other.x - otherWidth / 2;
+    const otherY = other.y - otherHeight / 2;
     return (
         pos.x < otherX + otherWidth &&
         pos.x + col.width > otherX &&
@@ -163,9 +179,53 @@ export class CollisionSystem {
     );
   }
 
+  _checkDynamicObjectInteractions(pos, vel, col, level, dt, entityId, entityManager) {
+    this._checkFruitCollisions(pos, col, level, entityId, entityManager);
+    this._checkTrophyCollision(pos, col, level.trophy, entityId, entityManager);
+    this.checkCheckpointCollisions(pos, col, level, entityId, entityManager);
+    this._checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager);
+    this._checkGenericObjectCollisions(pos, col, level.trampolines, entityId, entityManager);
+  }
+  
+  _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
+    for (const spike of level.spikes) {
+        if (this._isCollidingWith(pos, col, spike)) {
+            // MODIFIED: Publish a generic collision event.
+            eventBus.publish('collisionDetected', { entityA: entityId, entityB: spike, entityManager });
+            return;
+        }
+    }
+
+    for (const trap of level.fireTraps) {
+        if (trap.state === 'on') {
+            const flameHitbox = {
+                x: trap.x, y: trap.y - trap.height, width: trap.width, height: trap.height * 2
+            };
+            if (this._isCollidingWith(pos, col, flameHitbox)) {
+                trap.damageTimer += dt;
+                if (trap.damageTimer >= 1.0) {
+                    trap.damageTimer -= 1.0;
+                    eventBus.publish('playerTookDamage', { amount: 10, source: 'fire' });
+                }
+            }
+        } else if (!trap.playerIsOnTop) {
+            trap.damageTimer = 1.0;
+        }
+    }
+  }
+
+  _checkGenericObjectCollisions(pos, col, objects, entityId, entityManager) {
+      for (const obj of objects) {
+          if (this._isCollidingWith(pos, col, obj)) {
+              eventBus.publish('collisionDetected', { entityA: entityId, entityB: obj, entityManager });
+          }
+      }
+  }
+
   _checkFruitCollisions(pos, col, level, entityId, entityManager) {
     for (const fruit of level.getActiveFruits()) {
-        if (this._isCollidingWithRaw(pos, col, fruit)) {
+        if (this._isCollidingWith(pos, col, fruit)) {
+            // MODIFIED: Publish a generic collision event.
             eventBus.publish('collisionDetected', { entityA: entityId, entityB: fruit, entityManager });
         }
     }
@@ -173,14 +233,16 @@ export class CollisionSystem {
 
   _checkTrophyCollision(pos, col, trophy, entityId, entityManager) {
     if (!trophy || trophy.acquired || trophy.inactive) return;
-    if (this._isCollidingWithRaw(pos, col, trophy)) {
+    if (this._isCollidingWith(pos, col, trophy)) {
+        // MODIFIED: Publish a generic collision event.
         eventBus.publish('collisionDetected', { entityA: entityId, entityB: trophy, entityManager });
     }
   }
 
   checkCheckpointCollisions(pos, col, level, entityId, entityManager) {
     for (const cp of level.getInactiveCheckpoints()) {
-        if (this._isCollidingWithRaw(pos, col, cp)) {
+        if (this._isCollidingWith(pos, col, cp)) {
+            // MODIFIED: Publish a generic collision event.
             eventBus.publish('collisionDetected', { entityA: entityId, entityB: cp, entityManager });
         }
     }

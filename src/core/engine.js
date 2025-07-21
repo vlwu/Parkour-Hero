@@ -23,10 +23,11 @@ import { PlayerStateSystem } from '../systems/player-state-system.js';
 import { MovementSystem } from '../systems/movement-system.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
+// MODIFICATION: Import the new systems
 import { DamageSystem } from '../systems/DamageSystem.js';
 import { InteractionSystem } from '../systems/InteractionSystem.js';
 import { TrapMovementSystem } from '../systems/TrapMovementSystem.js';
-import { AnimationSystem } from '../systems/AnimationSystem.js';
+
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -63,16 +64,15 @@ export class Engine {
     this.particleSystem = new ParticleSystem(assets);
     this.uiSystem = new UISystem(canvas, assets);
 
+    // Instantiate the new systems
     this.damageSystem = new DamageSystem();
     this.interactionSystem = new InteractionSystem();
     this.trapMovementSystem = new TrapMovementSystem();
-    this.animationSystem = new AnimationSystem();
 
     this.systems = [
         this.inputSystemProcessor,
         this.playerStateSystem,
-        this.trapMovementSystem,
-        this.animationSystem,
+        this.trapMovementSystem, // This needs to run every frame to move traps
         this.movementSystem,
         this.collisionSystem,
         this.particleSystem,
@@ -86,6 +86,8 @@ export class Engine {
     
     this._setupEventSubscriptions();
   }
+
+  // ... The rest of the Engine class remains unchanged.
   
   _setupEventSubscriptions() {
     eventBus.subscribe('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
@@ -153,10 +155,7 @@ export class Engine {
 
   loadLevel(sectionIndex, levelIndex) {
     this.levelManager.gameState = this.gameState;
-    this.entityManager = new EntityManager();
-    
-    const newLevel = this.levelManager.loadLevel(sectionIndex, levelIndex, this.entityManager);
-
+    const newLevel = this.levelManager.loadLevel(sectionIndex, levelIndex);
     if (!newLevel) { this.stop(); return; }
     
     this.currentLevel = newLevel;
@@ -174,6 +173,7 @@ export class Engine {
     this.lastCheckpoint = null;
     this.fruitsAtLastCheckpoint.clear();
     this.soundManager.stopAll();
+    this.entityManager = new EntityManager();
 
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
 
@@ -206,6 +206,7 @@ export class Engine {
         dt, 
     };
 
+    // The GameplaySystem is purely event-driven and is not part of the main update loop.
     for(const system of this.systems) {
       system.update(dt, context);
     }
@@ -217,6 +218,8 @@ export class Engine {
     this.currentLevel.updateFruits(dt);
     this.currentLevel.updateTrophyAnimation(dt);
     this.currentLevel.updateCheckpoints(dt);
+    this.currentLevel.updateTrampolines(dt);
+    this.currentLevel.updateFireTraps(dt);
     
     for (let i = this.collectedFruits.length - 1; i >= 0; i--) {
         const collected = this.collectedFruits[i];
@@ -338,7 +341,7 @@ export class Engine {
 
   _onCheckpointActivated(cp) {
       cp.state = 'activating';
-      this.lastCheckpoint = { x: cp.x, y: cp.y };
+      this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 }; 
       eventBus.publish('playSound', { key: 'checkpoint_activated', volume: 1, channel: 'UI' });
       this.fruitsAtLastCheckpoint.clear();
       this.currentLevel.fruits.forEach((fruit, index) => { if (fruit.collected) this.fruitsAtLastCheckpoint.add(index); });

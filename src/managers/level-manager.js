@@ -15,10 +15,9 @@ export class LevelManager {
    * Creates and returns a new Level instance based on the provided indices.
    * @param {number} sectionIndex - The index of the level section.
    * @param {number} levelIndex - The index of the level within the section.
-   * @param {EntityManager} entityManager - The entity manager to be populated by the level.
    * @returns {Level|null} A new Level object or null if the indices are invalid.
    */
-  loadLevel(sectionIndex, levelIndex, entityManager) {
+  loadLevel(sectionIndex, levelIndex) {
     if (sectionIndex >= this.levelSections.length || levelIndex >= this.levelSections[sectionIndex].levels.length) {
       console.error(`Invalid level: Section ${sectionIndex}, Level ${levelIndex}`);
       return null;
@@ -30,10 +29,11 @@ export class LevelManager {
       return null;
     }
 
+    // Update game state to reflect the new current level
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
 
-    return new Level(levelData, entityManager);
+    return new Level(levelData);
   }
 
   hasNextLevel() {
@@ -72,6 +72,10 @@ export class LevelManager {
       eventBus.publish('requestLevelLoad', { sectionIndex: currentSection, levelIndex: currentLevelIndex });
   }
 
+  /**
+   * Handles the logic after a level is complete, publishing events to trigger the next action.
+   * @param {'next' | 'restart' | 'previous'} action - The desired action.
+   */
   handleLevelCompleteAction(action) {
     this.gameState.showingLevelComplete = false;
     let { currentSection, currentLevelIndex } = this.gameState;
