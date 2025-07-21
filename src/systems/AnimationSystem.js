@@ -1,0 +1,43 @@
+// src/systems/AnimationSystem.js
+
+import { RenderableComponent } from '../components/RenderableComponent.js';
+import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
+
+export class AnimationSystem {
+    update(dt, { entityManager }) {
+        const entities = entityManager.query([RenderableComponent]);
+
+        for (const entityId of entities) {
+            // Player animations are handled by the more complex PlayerStateSystem.
+            if (entityManager.hasComponent(entityId, PlayerControlledComponent)) {
+                continue;
+            }
+
+            const renderable = entityManager.getComponent(entityId, RenderableComponent);
+            if (!renderable.animationConfig || !renderable.animationConfig[renderable.animationState]) {
+                continue;
+            }
+
+            const config = renderable.animationConfig[renderable.animationState];
+            renderable.animationTimer += dt;
+
+            if (renderable.animationTimer >= config.speed) {
+                renderable.animationTimer -= config.speed;
+                renderable.animationFrame++;
+
+                if (renderable.animationFrame >= config.frames) {
+                    if (config.loop) {
+                        renderable.animationFrame = 0;
+                    } else {
+                        renderable.animationFrame = config.frames - 1; // Hold on last frame
+                    }
+
+                    // Handle state transitions for simple animations
+                    if (renderable.animationState === 'jumping') {
+                        renderable.animationState = 'idle';
+                    }
+                }
+            }
+        }
+    }
+}

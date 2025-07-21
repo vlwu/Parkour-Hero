@@ -61,79 +61,112 @@ export class Renderer {
 
     // --- RENDER BACKGROUND ELEMENTS ---
     this.drawTileGrid(level, camera);
+    // These draw the raw objects that have not been converted to entities yet.
     if (level.trophy) this.drawTrophy(level.trophy, camera);
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
-    this.drawTrapBases(level, camera);
     
-    // --- RENDER PLAYER ---
+    // --- RENDER ALL ENTITIES ---
     const entities = entityManager.query([PositionComponent, RenderableComponent]);
     for(const entityId of entities) {
         const pos = entityManager.getComponent(entityId, PositionComponent);
         const renderable = entityManager.getComponent(entityId, RenderableComponent);
+        
+        // Pass optional components that might affect rendering
         const charComp = entityManager.getComponent(entityId, CharacterComponent);
         const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-        this._drawRenderable(pos, renderable, charComp, playerCtrl);
+
+        this._drawEntity(pos, renderable, charComp, playerCtrl);
     }
     
     // --- RENDER FOREGROUND ELEMENTS ---
-    this.drawTrapForegrounds(level, camera);
     this.drawCollectedFruits(collectedFruits, camera);
     
     camera.restore(this.ctx);
   }
 
-  _drawRenderable(pos, renderable, charComp, playerCtrl) {
+  _drawEntity(pos, renderable, charComp, playerCtrl) {
     const stateName = renderable.animationState;
     if (!renderable.isVisible || (playerCtrl && playerCtrl.despawnAnimationFinished)) return;
-
-    const stateToSpriteMap = {
-      idle: 'playerIdle', run: 'playerRun', jump: 'playerJump',
-      double_jump: 'playerDoubleJump', fall: 'playerFall',
-      dash: 'playerDash', cling: 'playerCling', spawn: 'playerAppear',
-      despawn: 'playerDisappear', hit: 'playerHit',
-    };
     
-    let sprite;
-    const spriteAssetKey = stateToSpriteMap[stateName];
+    let sprite, frameCount, frameWidth, srcX;
+    
+    // --- Determine Sprite and Animation ---
+    if (playerCtrl) {
+      // Player-specific rendering logic
+      const stateToSpriteMap = {
+        idle: 'playerIdle', run: 'playerRun', jump: 'playerJump', double_jump: 'playerDoubleJump',
+        fall: 'playerFall', dash: 'playerDash', cling: 'playerCling', spawn: 'playerAppear',
+        despawn: 'playerDisappear', hit: 'playerHit',
+      };
+      const spriteAssetKey = stateToSpriteMap[stateName];
+      sprite = (stateName === 'spawn' || stateName === 'despawn') 
+        ? this.assets[spriteAssetKey] 
+        : this.assets.characters[charComp.characterId]?.[spriteAssetKey];
+      
+      frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
 
-    if (stateName === 'spawn' || stateName === 'despawn') {
-        sprite = this.assets[spriteAssetKey];
-    } 
-    else if (charComp) {
-        sprite = this.assets.characters[charComp.characterId]?.[spriteAssetKey] || this.assets.playerIdle;
-    } 
-    else {
-        sprite = this.assets[renderable.spriteKey];
+    } else {
+      // Generic entity rendering logic (for traps, enemies, etc.)
+      const stateConfig = renderable.animationConfig?.[stateName];
+      let assetKey;
+      if (stateConfig && stateConfig.loop) {
+        // For looping animations like 'fire_on', the asset key includes the state.
+        assetKey = `${renderable.spriteKey}_${stateName}`;
+      } else {
+        // For simple or one-shot animations, use the base key.
+        assetKey = renderable.spriteKey;
+      }
+      
+      sprite = this.assets[assetKey] || this.assets[renderable.spriteKey];
+      frameCount = stateConfig ? stateConfig.frames : 1;
     }
-        
+
     if (!sprite) { this.ctx.fillStyle = '#FF00FF'; this.ctx.fillRect(pos.x, pos.y, renderable.width, renderable.height); return; }
 
-    const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
-    const frameWidth = sprite.width / frameCount;
-    const srcX = frameWidth * renderable.animationFrame;
+    frameWidth = sprite.width / frameCount;
+    srcX = frameWidth * renderable.animationFrame;
 
     this.ctx.save();
     
-    const isSpecialAnim = stateName === 'spawn' || stateName === 'despawn';
+    const isSpecialAnim = playerCtrl && (stateName === 'spawn' || stateName === 'despawn');
+    const drawWidth = isSpecialAnim ? PLAYER_CONSTANTS.SPAWN_WIDTH : renderable.width;
+    const drawHeight = isSpecialAnim ? PLAYER_CONSTANTS.SPAWN_HEIGHT : renderable.height;
     
-    const renderX = isSpecialAnim ? pos.x - (renderable.width - PLAYER_CONSTANTS.WIDTH) / 2 : pos.x;
-    const renderY = isSpecialAnim ? pos.y - (renderable.height - PLAYER_CONSTANTS.HEIGHT) / 2 : pos.y;
+    // Player is drawn from top-left. Generic entities are drawn from their center.
+    const renderX = playerCtrl ? pos.x : pos.x - renderable.width / 2;
+    const renderY = playerCtrl ? pos.y : pos.y - renderable.height / 2;
+    
+    const finalRenderX = isSpecialAnim ? pos.x - (drawWidth - PLAYER_CONSTANTS.WIDTH) / 2 : renderX;
+    const finalRenderY = isSpecialAnim ? pos.y - (drawHeight - PLAYER_CONSTANTS.HEIGHT) / 2 : renderY;
     
     if (renderable.direction === 'left') {
       this.ctx.scale(-1, 1);
-      this.ctx.translate(-renderX - renderable.width, renderY);
+      this.ctx.translate(-finalRenderX - drawWidth, finalRenderY);
     } else {
-      this.ctx.translate(renderX, renderY);
+      this.ctx.translate(finalRenderX, finalRenderY);
     }
     
-    const drawOffsetX = (stateName === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
-
-    this.ctx.drawImage(
-      sprite, srcX, 0, frameWidth, sprite.height,
-      drawOffsetX, 0,
-      renderable.width, renderable.height
-    );
+    const drawOffsetX = (playerCtrl && stateName === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
+    
+    // Handle specific drawing cases for complex sprites like fire
+    if (!playerCtrl && renderable.spriteKey === 'fire') {
+      // Draw the base (off state)
+      const baseSprite = this.assets.fire_off;
+      if(baseSprite) {
+        this.ctx.drawImage(baseSprite, 0, 16, 16, 16, 0, 0, renderable.width, renderable.width); // Draw bottom half as base
+      }
+      // Draw the flame animation on top
+      if (stateName !== 'off') {
+         this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, 0, -renderable.height/2, drawWidth, drawHeight);
+      }
+    } else {
+      this.ctx.drawImage(
+        sprite, srcX, 0, frameWidth, sprite.height,
+        drawOffsetX, 0,
+        drawWidth, drawHeight
+      );
+    }
     this.ctx.restore();
   }
   
@@ -177,99 +210,7 @@ export class Renderer {
       if (!camera.isRectVisible({x: fruit.x - fruit.size/2, y: fruit.y - fruit.size/2, width: fruit.size, height: fruit.size})) continue;
       const img = this.assets[fruit.spriteKey]; if (!img) continue;
       const frameWidth = img.width / fruit.frameCount, srcX = frameWidth * fruit.frame;
-      this.ctx.drawImage(img, srcX, 0, frameWidth, img.height, fruit.x - fruit.size / 2, fruit.y - fruit.size / 2, fruit.size, fruit.size);
-    }
-  }
-  
-  drawTrapBases(level, camera) {
-    this._drawTrampolines(level.trampolines, camera);
-    this._drawSpikes(level.spikes, camera);
-    this._drawFireTrapBases(level.fireTraps, camera);
-  }
-
-  drawTrapForegrounds(level, camera) {
-    this._drawFireTrapFlames(level.fireTraps, camera);
-  }
-
-  _drawTrampolines(trampolines, camera) {
-    for (const tramp of trampolines) {
-        if (!camera.isRectVisible({x: tramp.x, y: tramp.y, width: tramp.size, height: tramp.size})) continue;
-        let sprite, srcX = 0, frameWidth;
-        const drawX = tramp.x - tramp.size / 2;
-        const drawY = tramp.y - tramp.size / 2;
-        if (tramp.state === 'jumping') {
-            sprite = this.assets.trampoline_jump;
-            if (sprite) { frameWidth = sprite.width / tramp.frameCount; srcX = tramp.frame * frameWidth; }
-        } else {
-            sprite = this.assets.trampoline_idle;
-            if (sprite) frameWidth = sprite.width;
-        }
-        if (sprite && frameWidth > 0) this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY, tramp.size, tramp.size);
-        else { this.ctx.fillStyle = '#8e44ad'; this.ctx.fillRect(drawX, drawY, tramp.size, tramp.size); }
-    }
-  }
-
-  _drawSpikes(spikes, camera) {
-      const sprite = this.assets.spike_two;
-      if (!sprite) return;
-      for (const spike of spikes) {
-          if (!camera.isRectVisible({x: spike.x, y: spike.y, width: spike.size, height: spike.size})) continue;
-          this.ctx.drawImage(sprite, spike.x - spike.size / 2, spike.y - spike.size / 2, spike.size, spike.size);
-      }
-  }
-
-  _drawFireTrapBases(fireTraps, camera) {
-    const sprite = this.assets.fire_off;
-    if (!sprite) return; // Exit if the asset isn't loaded
-    for (const trap of fireTraps) {
-        if (!camera.isVisible(trap.x, trap.y, trap.width, trap.height)) continue;
-        
-        const drawX = trap.x - trap.width / 2;
-        const drawY = trap.y - trap.height / 2;
-
-        // Use the 9-argument drawImage to clip the source sprite.
-        // The fire_off.png is 16x32. We want the bottom 16x16 part.
-        this.ctx.drawImage(
-            sprite,      // Source image
-            0,           // Source X
-            16,          // Source Y (start from the middle of the 32px height)
-            16,          // Source Width
-            16,          // Source Height
-            drawX,       // Destination X
-            drawY,       // Destination Y
-            trap.width,  // Destination Width
-            trap.height  // Destination Height
-        );
-    }
-  }
-  
-  _drawFireTrapFlames(fireTraps, camera) {
-    for (const trap of fireTraps) {
-        if (trap.state === 'off' || trap.state === 'turning_off') continue;
-        if (!camera.isVisible(trap.x, trap.y - trap.height, trap.width, trap.height * 2)) continue;
-
-        let sprite, srcX = 0, frameWidth;
-        const drawX = trap.x - trap.width / 2;
-        const drawY = trap.y - trap.height / 2;
-
-        if (trap.state === 'activating') {
-            sprite = this.assets.fire_hit;
-            frameWidth = sprite.width / trap.anim.activating.frames;
-            srcX = trap.frame * frameWidth;
-        } else { // 'on'
-            sprite = this.assets.fire_on;
-            frameWidth = sprite.width / trap.anim.on.frames;
-            srcX = trap.frame * frameWidth;
-        }
-
-        if (sprite) {
-            // This part was correct: it draws the full 16x32 animated flame sprite.
-            this.ctx.drawImage(
-                sprite, srcX, 0, frameWidth, sprite.height,
-                drawX, drawY - trap.height,
-                trap.width, trap.height * 2
-            );
-        }
+      this.ctx.drawImage(img, srcX, 0, frameWidth, img.height, fruit.x, fruit.y, fruit.size, fruit.size);
     }
   }
 
@@ -292,8 +233,8 @@ export class Renderer {
         case 'activating': sprite = this.assets.checkpoint_activation; if (sprite) { frameWidth = sprite.width / cp.frameCount; srcX = cp.frame * frameWidth; } break;
         case 'active': sprite = this.assets.checkpoint_active; if (sprite) { const activeFrameCount = 10, currentFrame = Math.floor((performance.now() / 1000 / 0.1) % activeFrameCount); frameWidth = sprite.width / activeFrameCount; srcX = currentFrame * frameWidth; } break;
       }
-      if (sprite && frameWidth > 0) this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size); 
-      else { this.ctx.fillStyle = 'purple'; this.ctx.fillRect(cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size); }
+      if (sprite && frameWidth > 0) this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, cp.x, cp.y, cp.size, cp.size); 
+      else { this.ctx.fillStyle = 'purple'; this.ctx.fillRect(cp.x, cp.y, cp.size, cp.size); }
     }
   }
 }
