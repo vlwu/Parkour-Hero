@@ -20,19 +20,17 @@ export class GameplaySystem {
         const isPlayer = !!entityManager.getComponent(entityA, PlayerControlledComponent);
         if (!isPlayer) return;
 
-        // Check the type of entityB if it's not an entity ID (i.e., it's a raw level object)
-        if (typeof entityB === 'object' && entityB.type) {
-            switch (entityB.type) {
-                case 'fruit':
-                    eventBus.publish('fruitCollected', entityB);
-                    break;
-                case 'trophy':
-                    eventBus.publish('trophyCollision');
-                    break;
-                case 'checkpoint':
-                    eventBus.publish('checkpointActivated', entityB);
-                    break;
-            }
+        switch (entityB.type) {
+            case 'fruit':
+                eventBus.publish('fruitCollected', entityB);
+                break;
+            // MODIFICATION: The 'spike' case is removed from here.
+            case 'trophy':
+                eventBus.publish('trophyCollision');
+                break;
+            case 'checkpoint':
+                eventBus.publish('checkpointActivated', entityB);
+                break;
         }
     }
 

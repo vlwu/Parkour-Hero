@@ -81,7 +81,6 @@ export function createTrampoline(entityManager, x_tl, y_tl) {
     }));
     entityManager.addComponent(entityId, new CollisionComponent({
         type: 'platform',
-        solid: true, // MODIFICATION: Make the trampoline solid.
         width: colWidth,
         height: colHeight,
     }));

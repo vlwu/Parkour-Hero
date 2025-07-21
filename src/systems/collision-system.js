@@ -4,8 +4,6 @@ import { PositionComponent } from '../components/PositionComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
-import { BouncePlatformComponent } from '../components/BouncePlatformComponent.js';
-import { RenderableComponent } from '../components/RenderableComponent.js';
 
 export class CollisionSystem {
   constructor() {}
@@ -13,6 +11,7 @@ export class CollisionSystem {
   update(dt, { entityManager, level }) {
     const collidableEntities = entityManager.query([PositionComponent, CollisionComponent]);
     
+    // First, handle all player movement and tile collisions. This is the base layer.
     for (const entityId of collidableEntities) {
         if (entityManager.hasComponent(entityId, PlayerControlledComponent)) {
             const pos = entityManager.getComponent(entityId, PositionComponent);
@@ -28,11 +27,12 @@ export class CollisionSystem {
                 pos.x += vel.vx * dt;
                 this._handleTileHorizontalCollisions(pos, vel, col, level);
                 pos.y += vel.vy * dt;
-                this._handleTileVerticalCollisions(pos, vel, col, level, dt, entityManager);
+                this._handleTileVerticalCollisions(pos, vel, col, level, dt);
             }
         }
     }
 
+    // Now, handle entity-to-entity collisions.
     for (let i = 0; i < collidableEntities.length; i++) {
         for (let j = i + 1; j < collidableEntities.length; j++) {
             const idA = collidableEntities[i];
@@ -42,14 +42,15 @@ export class CollisionSystem {
             const posB = entityManager.getComponent(idB, PositionComponent);
             const colB = entityManager.getComponent(idB, CollisionComponent);
 
+            // AABB Check
             const a_isPlayer = entityManager.hasComponent(idA, PlayerControlledComponent);
-            const b_isPlayer = entityManager.hasComponent(idB, PlayerControlledComponent);
             const ax = a_isPlayer ? posA.x : posA.x - colA.width / 2;
             const ay = a_isPlayer ? posA.y : posA.y - colA.height / 2;
-            const bx = b_isPlayer ? posB.x : posB.x - colB.width / 2;
-            const by = b_isPlayer ? posB.y : posB.y - colB.height / 2;
+            const bx = posB.x - colB.width / 2;
+            const by = posB.y - colB.height / 2;
 
             if (ax < bx + colB.width && ax + colA.width > bx && ay < by + colB.height && ay + colA.height > by) {
+                // If they are colliding, resolve solid collisions first, then publish events for other systems.
                 if (colA.solid && colB.solid) {
                     this._resolveSolidEntityCollision(idA, idB, dt, entityManager);
                 }
@@ -59,6 +60,7 @@ export class CollisionSystem {
         }
     }
 
+    // Finally, check for interactions with raw level objects (fruits, trophy, etc.)
     const playerEntities = entityManager.query([PlayerControlledComponent, PositionComponent, CollisionComponent]);
     for (const entityId of playerEntities) {
       const pos = entityManager.getComponent(entityId, PositionComponent);
@@ -80,38 +82,49 @@ export class CollisionSystem {
     const pVel = entityManager.getComponent(playerId, VelocityComponent);
     const oPos = entityManager.getComponent(obstacleId, PositionComponent);
     const oCol = entityManager.getComponent(obstacleId, CollisionComponent);
-
+    
     if (!pPos || !pCol || !pVel || !oPos || !oCol) return;
 
-    const pLeft = pPos.x, pRight = pPos.x + pCol.width;
-    const pTop = pPos.y, pBottom = pPos.y + pCol.height;
-    const oLeft = oPos.x - oCol.width / 2, oRight = oPos.x + oCol.width / 2;
-    const oTop = oPos.y - oCol.height / 2, oBottom = oPos.y + oCol.height / 2;
+    const pLeft = pPos.x;
+    const pRight = pPos.x + pCol.width;
+    const pTop = pPos.y;
+    const pBottom = pPos.y + pCol.height;
 
-    const overlapX = Math.min(pRight, oRight) - Math.max(pLeft, oLeft);
-    const overlapY = Math.min(pBottom, oBottom) - Math.max(pTop, oTop);
+    const oLeft = oPos.x - oCol.width / 2;
+    const oRight = oPos.x + oCol.width / 2;
+    const oTop = oPos.y - oCol.height / 2;
+    const oBottom = oPos.y + oCol.height / 2;
 
-    if (overlapX <= 0 || overlapY <= 0) return;
+    const prevPlayerBottom = (pPos.y - pVel.vy * dt) + pCol.height;
 
-    // MODIFICATION: The entire resolution logic is replaced to be more robust.
-    if (overlapX < overlapY) {
-        // Horizontal collision has less overlap, resolve horizontally.
-        if ((pRight - pLeft) / 2 + pLeft < (oRight - oLeft) / 2 + oLeft) {
-            pPos.x -= overlapX; // Player is on the left, push left.
-        } else {
-            pPos.x += overlapX; // Player is on the right, push right.
+    // PRIORITY 1: Check for landing on top. This is the most important and common case.
+    if (pVel.vy >= 0 && prevPlayerBottom <= oTop + 1) {
+        this._landOnSurface(pPos, pVel, pCol, oTop, oCol.type || 'solid');
+        return; // Collision handled, exit.
+    }
+
+    // PRIORITY 2: Handle side collisions if not landing.
+    // Check for vertical overlap and that we aren't hitting it from below.
+    if (pBottom > oTop + 1 && pTop < oBottom) {
+        // Player moving right, collides with left side of obstacle
+        if (pVel.vx > 0 && pRight > oLeft && (pPos.x - pVel.vx * dt) < oLeft) {
+            pPos.x = oLeft - pCol.width;
+            pVel.vx = 0;
+            return;
         }
-        pVel.vx = 0;
-    } else {
-        // Vertical collision has less or equal overlap, resolve vertically.
-        if (pVel.vy >= 0) {
-            // Player is moving down or is still, so treat this as a landing.
-            this._landOnSurface(pPos, pVel, pCol, oTop, oCol.type || 'solid', obstacleId, entityManager);
-        } else {
-            // Player is moving up, so they are hitting the bottom of the obstacle.
-            pPos.y += overlapY;
-            pVel.vy = 0;
+        // Player moving left, collides with right side of object
+        if (pVel.vx < 0 && pLeft < oRight && (pPos.x - pVel.vx * dt) > oRight) {
+            pPos.x = oRight;
+            pVel.vx = 0;
+            return;
         }
+    }
+    
+    // PRIORITY 3: Handle hitting the obstacle from below.
+    if (pTop < oBottom && pBottom > oBottom && pVel.vy < 0) {
+        pPos.y = oBottom;
+        pVel.vy = 0;
+        return;
     }
   }
 
@@ -134,7 +147,7 @@ export class CollisionSystem {
     col.isAgainstWall = false;
   }
 
-  _handleTileVerticalCollisions(pos, vel, col, level, dt, entityManager) {
+  _handleTileVerticalCollisions(pos, vel, col, level, dt) {
     const leftTile = Math.floor(pos.x / GRID_CONSTANTS.TILE_SIZE);
     const rightTile = Math.floor((pos.x + col.width - 1) / GRID_CONSTANTS.TILE_SIZE);
     
@@ -161,15 +174,15 @@ export class CollisionSystem {
         const tileTop = tileY * GRID_CONSTANTS.TILE_SIZE;
         const playerBottom = pos.y + col.height;
 
-        if (playerBottom >= tileTop && (playerBottom - (vel.vy * dt)) <= tileTop + 1) {
-            this._landOnSurface(pos, vel, col, tileTop, tile.interaction || tile.type, null, entityManager);
+        if (playerBottom >= tileTop && (playerBottom - vel.vy * dt) <= tileTop + 1) {
+            this._landOnSurface(pos, vel, col, tileTop, tile.interaction || tile.type);
             return;
         }
       }
     }
   }
 
-  _landOnSurface(pos, vel, col, surfaceTopY, surfaceType, entityId, entityManager) {
+  _landOnSurface(pos, vel, col, surfaceTopY, surfaceType) {
     const landingVelocity = vel.vy;
     if (landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY) {
         const { FALL_DAMAGE_MIN_VELOCITY, FALL_DAMAGE_MAX_VELOCITY, FALL_DAMAGE_MIN_AMOUNT, FALL_DAMAGE_MAX_AMOUNT } = PLAYER_CONSTANTS;
@@ -183,21 +196,6 @@ export class CollisionSystem {
     vel.vy = 0;
     col.isGrounded = true;
     col.groundType = surfaceType;
-
-    if (entityId && entityManager.hasComponent(entityId, BouncePlatformComponent)) {
-        const bounceComp = entityManager.getComponent(entityId, BouncePlatformComponent);
-        const renderable = entityManager.getComponent(entityId, RenderableComponent);
-
-        vel.vy = -bounceComp.force;
-        col.isGrounded = true; 
-
-        if (renderable && renderable.animationState !== 'jump') {
-            renderable.animationState = 'jump';
-            renderable.animationFrame = 0;
-            renderable.animationTimer = 0;
-            eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0, channel: 'SFX' });
-        }
-    }
   }
   
   _checkRawObjectInteractions(pos, col, level, entityId, entityManager) {
