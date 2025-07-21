@@ -25,7 +25,6 @@ import { StateComponent } from '../components/StateComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
 import { AnimationSystem } from '../systems/animation-system.js';
 import { FireTrapSystem } from '../systems/fire-trap-system.js';
-import { InteractionSystem } from '../systems/interaction-system.js';
 import { DamageSystem } from '../systems/damage-system.js';
 
 export class Engine {
@@ -64,15 +63,14 @@ export class Engine {
     this.uiSystem = new UISystem(canvas, assets);
     this.animationSystem = new AnimationSystem();
     this.fireTrapSystem = new FireTrapSystem();
-    this.interactionSystem = new InteractionSystem();
     this.damageSystem = new DamageSystem();
 
+    // MODIFICATION: Removed the obsolete InteractionSystem.
     this.systems = [
         this.inputSystemProcessor,
         this.playerStateSystem,
         this.movementSystem,
         this.collisionSystem,
-        this.interactionSystem,
         this.damageSystem,
         this.fireTrapSystem,
         this.animationSystem,
