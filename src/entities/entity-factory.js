@@ -60,13 +60,13 @@ export function createTrampoline(entityManager, x, y) {
     const entityId = entityManager.createEntity();
     entityManager.addComponent(entityId, new PositionComponent(x, y));
     entityManager.addComponent(entityId, new RenderableComponent({
-        spriteKey: 'trampoline', // Base key
+        spriteKey: 'trampoline', 
         width: 28,
         height: 28,
         animationState: 'idle',
         animationConfig: {
             idle: { frames: 1, speed: 1, loop: false },
-            jumping: { frames: 8, speed: 0.05, loop: false }
+            jump: { frames: 8, speed: 0.05, loop: false }
         }
     }));
     entityManager.addComponent(entityId, new CollisionComponent({
@@ -82,13 +82,13 @@ export function createFireTrap(entityManager, x, y) {
     const entityId = entityManager.createEntity();
     entityManager.addComponent(entityId, new PositionComponent(x, y));
     entityManager.addComponent(entityId, new RenderableComponent({
-        spriteKey: 'fire', // Base key for the trap
+        spriteKey: 'fire', 
         width: 16,
-        height: 32, // The full flame height for rendering
+        height: 32, 
         animationState: 'off',
         animationConfig: {
             off: { frames: 1, speed: 1, loop: false },
-            hit: { frames: 4, speed: 0.1, loop: false }, // Corresponds to 'activating'
+            hit: { frames: 4, speed: 0.1, loop: false },
             on: { frames: 3, speed: 0.15, loop: true }
         }
     }));
@@ -96,7 +96,7 @@ export function createFireTrap(entityManager, x, y) {
         type: 'hazard',
         solid: true,
         width: 16,
-        height: 16, // Solid part is only the base
+        height: 16, 
     }));
     entityManager.addComponent(entityId, new PeriodicDamageComponent({ amount: 10, interval: 0.8, source: 'fire' }));
     return entityId;

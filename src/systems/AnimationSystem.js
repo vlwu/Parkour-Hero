@@ -1,5 +1,3 @@
-// src/systems/AnimationSystem.js
-
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 
@@ -8,7 +6,6 @@ export class AnimationSystem {
         const entities = entityManager.query([RenderableComponent]);
 
         for (const entityId of entities) {
-            // Player animations are handled by the more complex PlayerStateSystem.
             if (entityManager.hasComponent(entityId, PlayerControlledComponent)) {
                 continue;
             }
@@ -29,12 +26,10 @@ export class AnimationSystem {
                     if (config.loop) {
                         renderable.animationFrame = 0;
                     } else {
-                        renderable.animationFrame = config.frames - 1; // Hold on last frame
-                    }
-
-                    // Handle state transitions for simple animations
-                    if (renderable.animationState === 'jumping') {
-                        renderable.animationState = 'idle';
+                        renderable.animationFrame = config.frames - 1;
+                        if (renderable.animationState === 'jump') {
+                            renderable.animationState = 'idle';
+                        }
                     }
                 }
             }

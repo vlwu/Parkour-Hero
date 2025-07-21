@@ -11,10 +11,7 @@ export class CollisionSystem {
   update(dt, { entityManager, level }) {
     const collidableEntities = entityManager.query([PositionComponent, CollisionComponent]);
     
-    // --- PHASE 1: ENTITY vs. TILE GRID COLLISION ---
     for (const entityId of collidableEntities) {
-        // Only check player-controlled entities against the grid for now for performance.
-        // This can be expanded to include enemies later if needed.
         if (entityManager.hasComponent(entityId, PlayerControlledComponent)) {
             const pos = entityManager.getComponent(entityId, PositionComponent);
             const vel = entityManager.getComponent(entityId, VelocityComponent);
@@ -28,49 +25,89 @@ export class CollisionSystem {
             if (vel) {
                 pos.x += vel.vx * dt;
                 this._handleTileHorizontalCollisions(pos, vel, col, level);
-
                 pos.y += vel.vy * dt;
                 this._handleTileVerticalCollisions(pos, vel, col, level, dt);
             }
         }
     }
 
-    // --- PHASE 2: ENTITY vs. ENTITY COLLISION ---
     for (let i = 0; i < collidableEntities.length; i++) {
         for (let j = i + 1; j < collidableEntities.length; j++) {
             const idA = collidableEntities[i];
             const idB = collidableEntities[j];
-
             const posA = entityManager.getComponent(idA, PositionComponent);
             const colA = entityManager.getComponent(idA, CollisionComponent);
             const posB = entityManager.getComponent(idB, PositionComponent);
             const colB = entityManager.getComponent(idB, CollisionComponent);
 
-            // Determine hitbox positions (player is top-left, others are centered)
             const a_isPlayer = entityManager.hasComponent(idA, PlayerControlledComponent);
-            const b_isPlayer = entityManager.hasComponent(idB, PlayerControlledComponent);
-
             const ax = a_isPlayer ? posA.x : posA.x - colA.width / 2;
             const ay = a_isPlayer ? posA.y : posA.y - colA.height / 2;
-            const bx = b_isPlayer ? posB.x : posB.x - colB.width / 2;
-            const by = b_isPlayer ? posB.y : posB.y - colB.height / 2;
+            const bx = posB.x - colB.width / 2;
+            const by = posB.y - colB.height / 2;
 
-            if (ax < bx + colB.width && ax + colA.width > bx &&
-                ay < by + colB.height && ay + colA.height > by)
-            {
-                // A collision occurred, publish the generic event for both entities.
+            if (ax < bx + colB.width && ax + colA.width > bx && ay < by + colB.height && ay + colA.height > by) {
+                if (colA.solid && colB.solid) {
+                    this._resolveSolidEntityCollision(idA, idB, dt, entityManager);
+                }
                 eventBus.publish('collisionDetected', { entityA: idA, entityB: idB, entityManager });
                 eventBus.publish('collisionDetected', { entityA: idB, entityB: idA, entityManager });
             }
         }
     }
 
-    // --- PHASE 3: PLAYER vs. RAW OBJECTS (Temporary) ---
     const playerEntities = entityManager.query([PlayerControlledComponent, PositionComponent, CollisionComponent]);
     for (const entityId of playerEntities) {
       const pos = entityManager.getComponent(entityId, PositionComponent);
       const col = entityManager.getComponent(entityId, CollisionComponent);
       this._checkRawObjectInteractions(pos, col, level, entityId, entityManager);
+    }
+  }
+
+  _resolveSolidEntityCollision(idA, idB, dt, entityManager) {
+    const aIsPlayer = entityManager.hasComponent(idA, PlayerControlledComponent);
+    const bIsPlayer = entityManager.hasComponent(idB, PlayerControlledComponent);
+    if (!aIsPlayer && !bIsPlayer) return;
+
+    // MODIFICATION: Correctly fetch components one by one.
+    const playerId = aIsPlayer ? idA : idB;
+    const obstacleId = aIsPlayer ? idB : idA;
+
+    const pPos = entityManager.getComponent(playerId, PositionComponent);
+    const pCol = entityManager.getComponent(playerId, CollisionComponent);
+    const pVel = entityManager.getComponent(playerId, VelocityComponent);
+    const oPos = entityManager.getComponent(obstacleId, PositionComponent);
+    const oCol = entityManager.getComponent(obstacleId, CollisionComponent);
+    
+    if (!pPos || !pCol || !pVel || !oPos || !oCol) return;
+
+    const pLeft = pPos.x;
+    const pRight = pPos.x + pCol.width;
+    const pTop = pPos.y;
+    const pBottom = pPos.y + pCol.height;
+
+    const oLeft = oPos.x - oCol.width / 2;
+    const oRight = oPos.x + oCol.width / 2;
+    const oTop = oPos.y - oCol.height / 2;
+    const oBottom = oPos.y + oCol.height / 2;
+
+    const prevPlayerBottom = pBottom - pVel.vy * dt;
+    if (pVel.vy >= 0 && prevPlayerBottom <= oTop + 1) {
+        this._landOnSurface(pPos, pVel, pCol, oTop, oCol.type || 'solid');
+        return;
+    }
+
+    const overlapX = (pLeft < oLeft) ? pRight - oLeft : oRight - pLeft;
+    const overlapY = (pTop < oTop) ? pBottom - oTop : oBottom - pTop;
+
+    if (overlapX < overlapY) {
+        if (pVel.vx > 0) pPos.x -= overlapX;
+        else if (pVel.vx < 0) pPos.x += overlapX;
+        pVel.vx = 0;
+    } else {
+        if (pVel.vy > 0) pPos.y -= overlapY;
+        else if (pVel.vy < 0) pPos.y += overlapY;
+        pVel.vy = 0;
     }
   }
 
