@@ -15,19 +15,53 @@ export class LevelsMenu extends LitElement {
       display: flex; justify-content: center; align-items: center;
       z-index: 200;
     }
+    
+    /* --- MODIFICATION START --- */
+    /* 1. The main content container is now a flex column. */
     .modal-content {
-      background-color: #333; padding: 30px; border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); color: #eee;
-      text-align: center; position: relative; width: 90%;
-      max-width: 600px; max-height: 80vh; overflow-y: auto;
-      padding-bottom: 80px;
+      background-color: #333;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+      color: #eee;
+      text-align: center;
+      position: relative;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      /* Flexbox layout to structure header, body, and footer */
+      display: flex;
+      flex-direction: column;
+      /* Padding will be handled by inner elements now */
+      padding: 20px;
+      box-sizing: border-box;
     }
+
+    /* 2. A new container for the scrollable level list. */
+    .scrollable-content {
+      flex-grow: 1; /* Allows this element to fill available space */
+      overflow-y: auto; /* This is where the scrolling happens now */
+      padding: 10px 5px; /* Add some padding for the scrollbar */
+      margin: 0 -5px; /* Counteract padding to keep alignment clean */
+    }
+    
+    /* 3. The footer is now a simple flex item, no longer absolutely positioned. */
+    .footer-actions {
+        flex-shrink: 0; /* Prevents the footer from shrinking */
+        padding-top: 20px; /* Space between level list and button */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-top: 1px solid #444; /* Visual separator */
+    }
+    /* --- MODIFICATION END --- */
+
     .close-button {
       position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
       background-image: url('/assets/Menu/Buttons/Close.png');
       background-size: cover; background-color: transparent;
       border: none; cursor: pointer; border-radius: 50%;
       transition: transform 0.2s ease-in-out;
+      z-index: 10; /* Ensure it's on top */
     }
     .close-button:hover { transform: scale(1.1); }
     
@@ -35,10 +69,11 @@ export class LevelsMenu extends LitElement {
       display: flex;
       justify-content: center;
       margin-bottom: 25px;
+      flex-shrink: 0; /* Prevent header from shrinking */
     }
     
     #level-selection-container {
-      display: flex; flex-direction: column; gap: 20px; padding: 10px;
+      display: flex; flex-direction: column; gap: 20px;
     }
     .level-section-menu {
       background-color: #3a3a3a; border-radius: 8px; padding: 15px; border: 1px solid #4a4a4a;
@@ -49,7 +84,9 @@ export class LevelsMenu extends LitElement {
       padding-bottom: 10px;
     }
     .level-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 15px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
     }
     .level-button {
       background-color: #555; color: #fff; border: 2px solid #777;
@@ -57,6 +94,7 @@ export class LevelsMenu extends LitElement {
       font-size: 1.2em; font-weight: bold; transition: all 0.2s ease-in-out;
       display: flex; justify-content: center; align-items: center;
       min-height: 53px; box-sizing: border-box;
+      aspect-ratio: 1 / 1;
     }
     .level-button:not(:disabled):hover {
       background-color: #007bff; border-color: #0056b3; transform: translateY(-2px);
@@ -66,14 +104,6 @@ export class LevelsMenu extends LitElement {
     .level-button.locked { background-color: #444; color: #777; cursor: not-allowed; border-color: #666; }
     .level-button.locked svg { fill: #777; width: 24px; height: 24px; }
 
-    .footer-actions {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 15px;
-    }
     .footer-button {
       background-color: #007bff; color: #fff; border: 2px solid #0056b3;
       padding: 10px 20px; border-radius: 8px; cursor: pointer;
@@ -117,33 +147,40 @@ export class LevelsMenu extends LitElement {
       <div class="modal-overlay" @click=${this._dispatchClose}>
         <div class="modal-content" @click=${e => e.stopPropagation()}>
           <button class="close-button" @click=${this._dispatchClose}></button>
+          
           <div class="title-container">
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Levels Menu" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
           </div>
-          <div id="level-selection-container">
-            ${map(levelSections, (section, sectionIndex) => html`
-              <div class="level-section-menu">
-                <div class="section-title-container">
-                  <bitmap-text .fontRenderer=${this.fontRenderer} text=${section.name} scale="2"></bitmap-text>
-                </div>
-                <div class="level-grid">
-                  ${map(section.levels, (_, levelIndex) => {
-                    const isUnlocked = this.gameState.isLevelUnlocked(sectionIndex, levelIndex);
-                    const isCompleted = this.gameState.isLevelCompleted(sectionIndex, levelIndex);
-                    const isCurrent = this.gameState.currentSection === sectionIndex && this.gameState.currentLevelIndex === levelIndex;
-                    
-                    const classes = `level-button ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''} ${!isUnlocked ? 'locked' : ''}`;
 
-                    return isUnlocked
-                      ? html`<button class=${classes} @click=${() => this._selectLevel(sectionIndex, levelIndex)}>${levelIndex + 1}</button>`
-                      : html`<button class=${classes} disabled>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"></path></svg>
-                         </button>`;
-                  })}
+          <!-- The new scrollable container -->
+          <div class="scrollable-content">
+            <div id="level-selection-container">
+              ${map(levelSections, (section, sectionIndex) => html`
+                <div class="level-section-menu">
+                  <div class="section-title-container">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text=${section.name} scale="2"></bitmap-text>
+                  </div>
+                  <div class="level-grid">
+                    ${map(section.levels, (_, levelIndex) => {
+                      const isUnlocked = this.gameState.isLevelUnlocked(sectionIndex, levelIndex);
+                      const isCompleted = this.gameState.isLevelCompleted(sectionIndex, levelIndex);
+                      const isCurrent = this.gameState.currentSection === sectionIndex && this.gameState.currentLevelIndex === levelIndex;
+                      
+                      const classes = `level-button ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''} ${!isUnlocked ? 'locked' : ''}`;
+
+                      return isUnlocked
+                        ? html`<button class=${classes} @click=${() => this._selectLevel(sectionIndex, levelIndex)}>${levelIndex + 1}</button>`
+                        : html`<button class=${classes} disabled>
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"></path></svg>
+                           </button>`;
+                    })}
+                  </div>
                 </div>
-              </div>
-            `)}
+              `)}
+            </div>
           </div>
+
+          <!-- The footer is now outside the scrollable area -->
           <div class="footer-actions">
             <button class="footer-button" @click=${this._openStatsModal}>
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="View Stats" scale="1.8"></bitmap-text>
