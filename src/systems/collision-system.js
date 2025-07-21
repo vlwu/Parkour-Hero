@@ -123,7 +123,10 @@ export class CollisionSystem {
                  if (obj.type === 'fire_trap') {
                      obj.playerIsOnTop = true;
                      if (obj.state === 'off' || obj.state === 'turning_off') {
-                         obj.state = 'activating'; obj.frame = 0; obj.frameTimer = 0;
+                         obj.state = 'activating'; 
+                         obj.frame = 0; 
+                         obj.frameTimer = 0;
+                         eventBus.publish('playSound', { key: 'fire_activated', volume: 0.8, channel: 'SFX' });
                      }
                  }
                  continue; // Collision handled
