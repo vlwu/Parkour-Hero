@@ -20,9 +20,9 @@ export class InteractionSystem {
         if (playerVel && playerVel.vy > 0 && platformBounce && platformRenderable) {
             playerVel.vy = -platformBounce.force;
             
-            // MODIFICATION: Set state to 'jump' to match asset and config names.
-            platformRenderable.animationState = 'jump';
-            platformRenderable.animationFrame = 0;
+            // MODIFICATION: Trigger the jumping animation on the trampoline.
+            platformRenderable.animationState = 'jumping';
+            platformRenderable.animationFrame = 0; // Reset animation
             platformRenderable.animationTimer = 0;
             
             eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0, channel: 'SFX' });
