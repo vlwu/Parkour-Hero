@@ -23,11 +23,11 @@ import { PlayerStateSystem } from '../systems/player-state-system.js';
 import { MovementSystem } from '../systems/movement-system.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
-import { DamageSystem } from '../systems/DamageSystem.js';
-import { InteractionSystem } from '../systems/InteractionSystem.js';
-import { TrapMovementSystem } from '../systems/TrapMovementSystem.js';
-import { AnimationSystem } from '../systems/AnimationSystem.js';
-import { FireTrapSystem } from '../systems/FireTrapSystem.js';
+import { DamageSystem } from '../systems/damage-system.js';
+import { InteractionSystem } from '../systems/interaction-system.js';
+import { TrapMovementSystem } from '../systems/trap-movement-system.js';
+import { AnimationSystem } from '../systems/animation-system.js';
+import { FireTrapSystem } from '../systems/fire-trap-system.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {

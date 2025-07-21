@@ -69,7 +69,6 @@ export class CollisionSystem {
     const bIsPlayer = entityManager.hasComponent(idB, PlayerControlledComponent);
     if (!aIsPlayer && !bIsPlayer) return;
 
-    // MODIFICATION: Correctly fetch components one by one.
     const playerId = aIsPlayer ? idA : idB;
     const obstacleId = aIsPlayer ? idB : idA;
 
@@ -80,33 +79,48 @@ export class CollisionSystem {
     const oCol = entityManager.getComponent(obstacleId, CollisionComponent);
     
     if (!pPos || !pCol || !pVel || !oPos || !oCol) return;
-
+    
+    // Player's previous position for context
+    const prevPlayerY = pPos.y - pVel.vy * dt;
+    
+    // Player bounds
     const pLeft = pPos.x;
     const pRight = pPos.x + pCol.width;
     const pTop = pPos.y;
     const pBottom = pPos.y + pCol.height;
 
+    // Obstacle bounds
     const oLeft = oPos.x - oCol.width / 2;
     const oRight = oPos.x + oCol.width / 2;
     const oTop = oPos.y - oCol.height / 2;
     const oBottom = oPos.y + oCol.height / 2;
 
-    const prevPlayerBottom = pBottom - pVel.vy * dt;
-    if (pVel.vy >= 0 && prevPlayerBottom <= oTop + 1) {
+    // First, check for the most common case: landing on top of a platform.
+    const prevPlayerBottom = prevPlayerY + pCol.height;
+    if (pVel.vy >= 0 && prevPlayerBottom <= oTop + 1) { // The +1 is a small tolerance
         this._landOnSurface(pPos, pVel, pCol, oTop, oCol.type || 'solid');
-        return;
+        return; // Collision resolved
     }
 
-    const overlapX = (pLeft < oLeft) ? pRight - oLeft : oRight - pLeft;
-    const overlapY = (pTop < oTop) ? pBottom - oTop : oBottom - pTop;
+    // AABB collision resolution using axis of least penetration
+    const overlapX = Math.min(pRight, oRight) - Math.max(pLeft, oLeft);
+    const overlapY = Math.min(pBottom, oBottom) - Math.max(pTop, oTop);
 
     if (overlapX < overlapY) {
-        if (pVel.vx > 0) pPos.x -= overlapX;
-        else if (pVel.vx < 0) pPos.x += overlapX;
+        // Horizontal penetration is less, resolve horizontally.
+        if (pVel.vx > 0) { // Player was moving right.
+            pPos.x -= overlapX;
+        } else { // Player was moving left or was stationary.
+            pPos.x += overlapX;
+        }
         pVel.vx = 0;
     } else {
-        if (pVel.vy > 0) pPos.y -= overlapY;
-        else if (pVel.vy < 0) pPos.y += overlapY;
+        // Vertical penetration is less (or equal), resolve vertically.
+        if (pVel.vy > 0) { // Hitting from the top (should have been caught by landing logic, but as a fallback)
+            pPos.y -= overlapY;
+        } else { // Hitting from the bottom.
+            pPos.y += overlapY;
+        }
         pVel.vy = 0;
     }
   }

@@ -46,22 +46,18 @@ export class Level {
     }
 
     (levelConfig.objects || []).forEach(obj => {
-      const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE + GRID_CONSTANTS.TILE_SIZE / 2;
-      let worldY;
+      const worldX_tl = obj.x * GRID_CONSTANTS.TILE_SIZE;
+      const worldY_tl = obj.y * GRID_CONSTANTS.TILE_SIZE;
 
       switch (obj.type) {
         case 'trampoline':
-          // MODIFICATION: Adjusted Y offset for better visual alignment.
-          worldY = obj.y * GRID_CONSTANTS.TILE_SIZE; 
-          createTrampoline(entityManager, worldX, worldY);
+          createTrampoline(entityManager, worldX_tl, worldY_tl);
           break;
         case 'spike':
-          worldY = obj.y * GRID_CONSTANTS.TILE_SIZE - 8;
-          createSpike(entityManager, worldX, worldY);
+          createSpike(entityManager, worldX_tl, worldY_tl);
           break;
         case 'fire_trap':
-          worldY = obj.y * GRID_CONSTANTS.TILE_SIZE - 8;
-          createFireTrap(entityManager, worldX, worldY);
+          createFireTrap(entityManager, worldX_tl, worldY_tl);
           break;
       }
     });
