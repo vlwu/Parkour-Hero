@@ -295,6 +295,11 @@ export class Engine {
         health.currentHealth = health.maxHealth;
     }
 
+    // Stop any looping sounds before replacing the component that tracks them.
+    if (playerCtrl.activeSurfaceSound) {
+        eventBus.publish('stopSoundLoop', { key: playerCtrl.activeSurfaceSound });
+    }
+
     const currentDeathCount = playerCtrl.deathCount;
     this.entityManager.removeComponent(this.playerEntityId, PlayerControlledComponent);
     this.entityManager.addComponent(this.playerEntityId, new PlayerControlledComponent({ deathCount: currentDeathCount }));
