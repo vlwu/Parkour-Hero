@@ -34,10 +34,11 @@ export class PlayerStateSystem {
                 const renderable = entityManager.getComponent(entityId, RenderableComponent);
                 const state = entityManager.getComponent(entityId, StateComponent);
                 
-                if ((event.source === 'fall' || event.source === 'fire') && !ctrl.isHit) {
+                if ((event.source === 'fall' || event.source === 'fire' || event.source === 'hazard') && !ctrl.isHit) {
                     ctrl.isHit = true;
                     ctrl.hitStunTimer = PLAYER_CONSTANTS.HIT_STUN_DURATION;
                     this._setAnimationState(renderable, state, 'hit', ctrl);
+                    eventBus.publish('playSound', { key: 'hit', volume: 0.8, channel: 'SFX' });
                 }
             }
         }

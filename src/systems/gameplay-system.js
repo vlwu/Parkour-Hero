@@ -27,7 +27,7 @@ export class GameplaySystem {
                 eventBus.publish('playerDied');
                 break;
             case 'hazard':
-                eventBus.publish('playerTookDamage', { amount: 25 });
+                eventBus.publish('playerTookDamage', { amount: 25, source: 'hazard' });
                 break;
             case 'trophy':
                 eventBus.publish('trophyCollision');
