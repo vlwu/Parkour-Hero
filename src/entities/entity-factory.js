@@ -4,7 +4,7 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
-import { PLAYER_CONSTANTS, GRID_CONSTANTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS } from '../utils/constants.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
@@ -39,15 +39,9 @@ export function createPlayer(entityManager, x, y, characterId) {
 }
 
 
-export function createSpike(entityManager, x_tl, y_tl) {
-    const colWidth = 16;
-    const colHeight = 16;
-    const centerX = x_tl + GRID_CONSTANTS.TILE_SIZE / 2;
-    // MODIFICATION: Position the entity so its bottom aligns with the bottom of its grid cell.
-    const centerY = y_tl + GRID_CONSTANTS.TILE_SIZE - colHeight / 2;
-
+export function createSpike(entityManager, x, y) {
     const entityId = entityManager.createEntity();
-    entityManager.addComponent(entityId, new PositionComponent(centerX, centerY));
+    entityManager.addComponent(entityId, new PositionComponent(x, y));
     entityManager.addComponent(entityId, new RenderableComponent({
         spriteKey: 'spike_two',
         width: 16,
@@ -55,22 +49,16 @@ export function createSpike(entityManager, x_tl, y_tl) {
     }));
     entityManager.addComponent(entityId, new CollisionComponent({
         type: 'hazard',
-        width: colWidth,
-        height: colHeight,
+        width: 16,
+        height: 16,
     }));
     entityManager.addComponent(entityId, new DamageOnContactComponent({ amount: 25, source: 'spike' }));
     return entityId;
 }
 
-export function createTrampoline(entityManager, x_tl, y_tl) {
-    const colWidth = 28;
-    const colHeight = 28;
-    const centerX = x_tl + GRID_CONSTANTS.TILE_SIZE / 2;
-    // MODIFICATION: Position the entity so its bottom aligns with the bottom of its grid cell.
-    const centerY = y_tl + GRID_CONSTANTS.TILE_SIZE - colHeight / 2;
-
+export function createTrampoline(entityManager, x, y) {
     const entityId = entityManager.createEntity();
-    entityManager.addComponent(entityId, new PositionComponent(centerX, centerY));
+    entityManager.addComponent(entityId, new PositionComponent(x, y));
     entityManager.addComponent(entityId, new RenderableComponent({
         spriteKey: 'trampoline', 
         width: 28,
@@ -83,22 +71,16 @@ export function createTrampoline(entityManager, x_tl, y_tl) {
     }));
     entityManager.addComponent(entityId, new CollisionComponent({
         type: 'platform',
-        width: colWidth,
-        height: colHeight,
+        width: 28,
+        height: 28,
     }));
     entityManager.addComponent(entityId, new BouncePlatformComponent());
     return entityId;
 }
 
-export function createFireTrap(entityManager, x_tl, y_tl) {
-    const colWidth = 16;
-    const colHeight = 16;
-    const centerX = x_tl + GRID_CONSTANTS.TILE_SIZE / 2;
-    // MODIFICATION: Position the entity so its bottom aligns with the bottom of its grid cell.
-    const centerY = y_tl + GRID_CONSTANTS.TILE_SIZE - colHeight / 2;
-
+export function createFireTrap(entityManager, x, y) {
     const entityId = entityManager.createEntity();
-    entityManager.addComponent(entityId, new PositionComponent(centerX, centerY));
+    entityManager.addComponent(entityId, new PositionComponent(x, y));
     entityManager.addComponent(entityId, new RenderableComponent({
         spriteKey: 'fire', 
         width: 16,
@@ -113,8 +95,8 @@ export function createFireTrap(entityManager, x_tl, y_tl) {
     entityManager.addComponent(entityId, new CollisionComponent({
         type: 'hazard',
         solid: true,
-        width: colWidth,
-        height: colHeight, 
+        width: 16,
+        height: 16, 
     }));
     entityManager.addComponent(entityId, new PeriodicDamageComponent({ amount: 10, interval: 0.8, source: 'fire' }));
     return entityId;
