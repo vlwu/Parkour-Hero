@@ -50,8 +50,14 @@ export class MovementSystem {
             } else if (input.moveRight) {
                 vel.vx += acc * dt;
             } else {
-                vel.vx += (vel.vx > 0 ? -fric : fric) * dt;
-                if (Math.abs(vel.vx) < fric * dt) vel.vx = 0;
+                // Correctly apply friction only when moving
+                if (vel.vx > 0) {
+                    vel.vx -= fric * dt;
+                    if (vel.vx < 0) vel.vx = 0; // Clamp to zero, prevent overshooting
+                } else if (vel.vx < 0) {
+                    vel.vx += fric * dt;
+                    if (vel.vx > 0) vel.vx = 0; // Clamp to zero, prevent overshooting
+                }
             }
             vel.vx = Math.max(-ctrl.speed, Math.min(ctrl.speed, vel.vx));
         } else {
@@ -67,7 +73,8 @@ export class MovementSystem {
     }
 
     _applyVerticalMovement(dt, vel, col, ctrl) {
-        if (!ctrl.isDashing && !ctrl.isHit) {
+        // Only apply gravity if the player is not on the ground
+        if (!col.isGrounded && !ctrl.isDashing && !ctrl.isHit) {
             vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
         }
 
