@@ -1,5 +1,5 @@
 {
-  "name": "Level 2: Big Drop",
+  "name": "Level 2: Deadly Drop",
   "gridWidth": 28,
   "gridHeight": 15,
   "background": "background_brown",
@@ -32,12 +32,12 @@
     },
     {
       "type": "fruit_bananas",
-      "x": 7.0625,
+      "x": 7.06,
       "y": 5
     },
     {
       "type": "fruit_cherries",
-      "x": 10.9375,
+      "x": 10.94,
       "y": 4
     },
     {
@@ -69,6 +69,26 @@
       "type": "trophy",
       "x": 21.5,
       "y": 11.67
+    },
+    {
+      "type": "spike",
+      "x": 20.25,
+      "y": 11.83
+    },
+    {
+      "type": "spike",
+      "x": 20.77,
+      "y": 11.83
+    },
+    {
+      "type": "spike",
+      "x": 22.21,
+      "y": 11.83
+    },
+    {
+      "type": "spike",
+      "x": 22.7,
+      "y": 11.83
     }
   ]
 }
