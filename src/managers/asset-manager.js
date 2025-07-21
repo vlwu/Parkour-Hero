@@ -185,7 +185,6 @@ export async function loadAssets() {
     death_sound: '/assets/Sounds/Death.mp3',
     dash: '/assets/Sounds/Whoosh.mp3',
     checkpoint_activated: '/assets/Sounds/Checkpoint (Activation).mp3',
-    hit: 'assets/Sounds/Hit.mp3',
     sand_walk: '/assets/Sounds/Sand Walk.mp3',
     mud_run: '/assets/Sounds/Mud Run.mp3',
     ice_run: '/assets/Sounds/Ice Run.mp3',
