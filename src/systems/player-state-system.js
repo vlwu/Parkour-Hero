@@ -16,6 +16,13 @@ import { StateComponent } from '../components/StateComponent.js';
 export class PlayerStateSystem {
     constructor() {
         eventBus.subscribe('playerTookDamage', (e) => this.handleDamageTaken(e));
+        // Subscribe to the new event to clear the internal queue upon respawn.
+        eventBus.subscribe('playerRespawned', () => this.clearDamageEvents());
+        this.damageEvents = [];
+    }
+    
+    // A dedicated function to clear the latent damage events.
+    clearDamageEvents() {
         this.damageEvents = [];
     }
     
@@ -33,6 +40,11 @@ export class PlayerStateSystem {
                 const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
                 const renderable = entityManager.getComponent(entityId, RenderableComponent);
                 const state = entityManager.getComponent(entityId, StateComponent);
+                
+                // Add a defensive guard: Do not process damage if the player is in an invulnerable state.
+                if (ctrl.isHit || ctrl.isSpawning) {
+                    continue; 
+                }
                 
                 if ((event.source === 'fall' || event.source === 'fire' || event.source === 'hazard') && !ctrl.isHit) {
                     ctrl.isHit = true;
@@ -165,12 +177,10 @@ export class PlayerStateSystem {
     _updateFSM(vel, ctrl, col, renderable, state) {
         const currentState = state.currentState;
 
-        // If the player is spawning or despawning, lock the state until the animation finishes.
         if ((currentState === 'spawn' && !ctrl.spawnComplete) || currentState === 'despawn') {
             return;
         }
         
-        // Transition from spawn to idle once the animation is done.
         if (currentState === 'spawn' && ctrl.spawnComplete) {
             this._setAnimationState(renderable, state, 'idle', ctrl);
             return; 
@@ -237,7 +247,7 @@ export class PlayerStateSystem {
         if (renderable.animationTimer < speed) return;
         
         renderable.animationTimer -= speed;
-        const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
+        const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1.
         renderable.animationFrame++;
         
         if (stateName === 'spawn' || stateName === 'despawn' || stateName === 'hit') {

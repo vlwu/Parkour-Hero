@@ -3,6 +3,7 @@ import { eventBus } from '../utils/event-bus.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
+import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 
 export class CollisionSystem {
   constructor() {}
@@ -18,6 +19,15 @@ export class CollisionSystem {
         const pos = entityManager.getComponent(entityId, PositionComponent);
         const vel = entityManager.getComponent(entityId, VelocityComponent);
         const col = entityManager.getComponent(entityId, CollisionComponent);
+
+        // Check if the entity is the player and if they are in a state where physics should be ignored.
+        const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+        if (playerCtrl && (playerCtrl.isSpawning || playerCtrl.isDespawning)) {
+            // If spawning or despawning, skip all physics and collision updates for this frame.
+            // The MovementSystem already zeroes out velocity, so we just need to prevent
+            // the CollisionSystem from incorrectly setting isGrounded to false.
+            continue; 
+        }
 
         if (pos.y > level.height + 50) {
             eventBus.publish('collisionEvent', { type: 'world_bottom', entityId, entityManager });

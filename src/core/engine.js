@@ -260,7 +260,7 @@ export class Engine {
       const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
       const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
       
-      if (health && playerCtrl && !playerCtrl.isHit && !playerCtrl.isSpawning && !playerCtrl.needsRespawn) {
+      if (health && playerCtrl && !playerCtrl.isHit && !playerCtrl.needsRespawn) {
           health.currentHealth = Math.max(0, health.currentHealth - amount);
           this.camera.shake(8, 0.3);
           
@@ -273,9 +273,22 @@ export class Engine {
   _onPlayerDied() {
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     if (playerCtrl && !playerCtrl.needsRespawn) {
-      playerCtrl.deathCount++;
-      playerCtrl.needsRespawn = true;
-      eventBus.publish('playSound', { key: 'death_sound', volume: 0.3, channel: 'SFX' });
+        const vel = this.entityManager.getComponent(this.playerEntityId, VelocityComponent);
+        const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
+        const renderable = this.entityManager.getComponent(this.playerEntityId, RenderableComponent);
+
+        playerCtrl.needsRespawn = true;
+        playerCtrl.deathCount++;
+
+        vel.vx = 0;
+        vel.vy = 0;
+        playerCtrl.isHit = true; 
+        state.currentState = 'hit';
+        renderable.animationState = 'hit'; 
+        renderable.animationFrame = 0;
+        renderable.animationTimer = 0;
+        
+        eventBus.publish('playSound', { key: 'death_sound', volume: 0.3, channel: 'SFX' });
     }
   }
 
@@ -304,14 +317,11 @@ export class Engine {
         eventBus.publish('stopSoundLoop', { key: playerCtrl.activeSurfaceSound });
     }
 
-    // Reset the PlayerControlledComponent's state in-place
     const currentDeathCount = playerCtrl.deathCount;
-    const defaultState = new PlayerControlledComponent();
-    Object.assign(playerCtrl, defaultState); // Reset all properties to their defaults
-    playerCtrl.deathCount = currentDeathCount; // Restore the death count
-    playerCtrl.needsRespawn = false; // IMPORTANT: Clear the flag that triggered the respawn
+    Object.assign(playerCtrl, new PlayerControlledComponent());
+    playerCtrl.deathCount = currentDeathCount;
+    playerCtrl.needsRespawn = false;
 
-    // Manually set the spawn state for all relevant components
     state.currentState = 'spawn';
     renderable.animationState = 'spawn';
     renderable.animationFrame = 0;
@@ -325,6 +335,10 @@ export class Engine {
     collision.groundType = null;
 
     this.camera.shake(15, 0.5);
+
+    // Publish a clear event that other systems can subscribe to,
+    // ensuring their internal states are reset for the new life.
+    eventBus.publish('playerRespawned');
   }
 
   _onFruitCollected(fruit) {
