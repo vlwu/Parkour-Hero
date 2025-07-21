@@ -184,7 +184,6 @@ export class CollisionSystem {
     this._checkTrophyCollision(pos, col, level.trophy, entityId, entityManager);
     this.checkCheckpointCollisions(pos, col, level, entityId, entityManager);
     this._checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager);
-    this._checkGenericObjectCollisions(pos, col, level.trampolines, entityId, entityManager);
   }
   
   _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
@@ -193,6 +192,23 @@ export class CollisionSystem {
             // MODIFIED: Publish a generic collision event.
             eventBus.publish('collisionDetected', { entityA: entityId, entityB: spike, entityManager });
             return;
+        }
+    }
+
+    for (const tramp of level.trampolines) {
+        if (vel.vy <= 0) continue;
+        const playerBottom = pos.y + col.height;
+        const trampTop = tramp.y - tramp.size / 2;
+        const trampLeft = tramp.x - tramp.size / 2;
+
+        if (pos.x + col.width > trampLeft && pos.x < trampLeft + tramp.size) {
+            if (playerBottom >= trampTop && (playerBottom - vel.vy * dt) <= trampTop + 1) {
+                tramp.state = 'jumping'; tramp.frame = 0; tramp.frameTimer = 0;
+                pos.y = trampTop - col.height;
+                vel.vy = -PLAYER_CONSTANTS.JUMP_FORCE * PLAYER_CONSTANTS.TRAMPOLINE_BOUNCE_MULTIPLIER;
+                eventBus.publish('playSound', { key: 'trampoline_bounce', volume: 1.0, channel: 'SFX' });
+                return;
+            }
         }
     }
 
@@ -212,14 +228,6 @@ export class CollisionSystem {
             trap.damageTimer = 1.0;
         }
     }
-  }
-
-  _checkGenericObjectCollisions(pos, col, objects, entityId, entityManager) {
-      for (const obj of objects) {
-          if (this._isCollidingWith(pos, col, obj)) {
-              eventBus.publish('collisionDetected', { entityA: entityId, entityB: obj, entityManager });
-          }
-      }
   }
 
   _checkFruitCollisions(pos, col, level, entityId, entityManager) {
