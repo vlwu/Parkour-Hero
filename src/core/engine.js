@@ -23,10 +23,11 @@ import { PlayerStateSystem } from '../systems/player-state-system.js';
 import { MovementSystem } from '../systems/movement-system.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
+import { DamageSystem } from '../systems/damage-system.js';
+import { InteractionSystem } from '../systems/interaction-system.js';
+import { TrapMovementSystem } from '../systems/trap-movement-system.js';
 import { AnimationSystem } from '../systems/animation-system.js';
 import { FireTrapSystem } from '../systems/fire-trap-system.js';
-import { InteractionSystem } from '../systems/interaction-system.js';
-import { DamageSystem } from '../systems/damage-system.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -62,20 +63,21 @@ export class Engine {
     this.gameplaySystem = new GameplaySystem();
     this.particleSystem = new ParticleSystem(assets);
     this.uiSystem = new UISystem(canvas, assets);
+
+    this.damageSystem = new DamageSystem();
+    this.interactionSystem = new InteractionSystem();
+    this.trapMovementSystem = new TrapMovementSystem();
     this.animationSystem = new AnimationSystem();
     this.fireTrapSystem = new FireTrapSystem();
-    this.interactionSystem = new InteractionSystem();
-    this.damageSystem = new DamageSystem();
 
     this.systems = [
         this.inputSystemProcessor,
         this.playerStateSystem,
-        this.movementSystem,
-        this.collisionSystem,
-        this.interactionSystem,
-        this.damageSystem,
+        this.trapMovementSystem,
         this.fireTrapSystem,
         this.animationSystem,
+        this.movementSystem,
+        this.collisionSystem,
         this.particleSystem,
         this.uiSystem,
     ];
@@ -111,7 +113,6 @@ export class Engine {
     });
     
     eventBus.subscribe('gameStateUpdated', (newState) => this.gameState = newState);
-    eventBus.subscribe('worldBoundaryCollision', (e) => this.gameplaySystem.handleBoundaryCollision(e));
   }
 
   updatePlayerCharacter(newCharId) {
@@ -155,9 +156,10 @@ export class Engine {
 
   loadLevel(sectionIndex, levelIndex) {
     this.levelManager.gameState = this.gameState;
-    
     this.entityManager = new EntityManager();
+    
     const newLevel = this.levelManager.loadLevel(sectionIndex, levelIndex, this.entityManager);
+
     if (!newLevel) { this.stop(); return; }
     
     this.currentLevel = newLevel;
@@ -263,15 +265,13 @@ export class Engine {
     });
   }
 
-  _onPlayerTookDamage({ amount, source }) {
+  _onPlayerTookDamage({ amount }) {
       const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
       const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
-      const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
       
-      if (health && playerCtrl && !playerCtrl.needsRespawn && state.currentState !== 'hit') {
+      if (health && playerCtrl && !playerCtrl.needsRespawn) {
           health.currentHealth = Math.max(0, health.currentHealth - amount);
           this.camera.shake(8, 0.3);
-          eventBus.publish('playSound', { key: 'hit', volume: 0.5, channel: 'SFX' });
           
           if (health.currentHealth <= 0) {
               this._onPlayerDied();
@@ -340,9 +340,8 @@ export class Engine {
   }
 
   _onCheckpointActivated(cp) {
-      if (cp.state !== 'inactive') return;
       cp.state = 'activating';
-      this.lastCheckpoint = { x: cp.x, y: cp.y }; 
+      this.lastCheckpoint = { x: cp.x, y: cp.y };
       eventBus.publish('playSound', { key: 'checkpoint_activated', volume: 1, channel: 'UI' });
       this.fruitsAtLastCheckpoint.clear();
       this.currentLevel.fruits.forEach((fruit, index) => { if (fruit.collected) this.fruitsAtLastCheckpoint.add(index); });
@@ -350,15 +349,11 @@ export class Engine {
   }
 
   _onTrophyCollision() {
-    const trophy = this.currentLevel.trophy;
-    if (!trophy || trophy.acquired || trophy.inactive) return;
-    
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     const renderable = this.entityManager.getComponent(this.playerEntityId, RenderableComponent);
     const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
-
     if (playerCtrl && !playerCtrl.isDespawning) {
-      trophy.acquired = true;
+      this.currentLevel.trophy.acquired = true;
       this.camera.shake(8, 0.3);
       playerCtrl.isDespawning = true;
       renderable.animationState = 'despawn';
