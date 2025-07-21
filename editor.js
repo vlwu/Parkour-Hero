@@ -38,7 +38,7 @@ const OBJECT_DESCRIPTIONS = {
     'trophy': 'The level\'s goal. Becomes active once all fruits are collected. Snaps to the ground.',
     'checkpoint': 'Saves the player\'s progress. The player will respawn here upon death. Snaps to the ground.',
     'trampoline': 'Bounces the player high into the air. Snaps to the ground.',
-    'spike': 'A dangerous spike. Lethal to the touch. Snaps to the ground.',
+    'spike': 'A retractable spike trap. Extends when the player is near and retracts after a delay. Snaps to the ground.',
     'fire_trap': 'A block that erupts in flame when stepped on. Snaps to the ground.'
 };
 
