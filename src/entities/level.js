@@ -76,7 +76,8 @@ export class Level {
       } else if (obj.type === 'fire_trap') {
         this.fireTraps.push({
             x: worldX, y: worldY, 
-            width: 16, height: 16, // The base block size
+            width: 16, height: 16, // The collision-box size
+            solid: true, // Crucial for collision system
             state: 'off', // 'off', 'activating', 'on', 'turning_off'
             playerIsOnTop: false,
             frame: 0, frameTimer: 0,
@@ -273,7 +274,6 @@ export class Level {
         trap.damageTimer = 1.0;
     });
 
-    // Spikes have no state to reset, but this is here for future-proofing.
     this.spikes.forEach(spike => {});
 
     if (this.trophy) {

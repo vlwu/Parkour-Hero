@@ -59,13 +59,14 @@ export class Renderer {
   renderScene(camera, level, entityManager, collectedFruits) {
     camera.apply(this.ctx);
 
+    // --- RENDER BACKGROUND ELEMENTS ---
     this.drawTileGrid(level, camera);
-
     if (level.trophy) this.drawTrophy(level.trophy, camera);
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
-    this.drawTraps(level, camera);
+    this.drawTrapBases(level, camera);
     
+    // --- RENDER PLAYER ---
     const entities = entityManager.query([PositionComponent, RenderableComponent]);
     for(const entityId of entities) {
         const pos = entityManager.getComponent(entityId, PositionComponent);
@@ -75,7 +76,10 @@ export class Renderer {
         this._drawRenderable(pos, renderable, charComp, playerCtrl);
     }
     
+    // --- RENDER FOREGROUND ELEMENTS ---
+    this.drawTrapForegrounds(level, camera);
     this.drawCollectedFruits(collectedFruits, camera);
+    
     camera.restore(this.ctx);
   }
 
@@ -177,16 +181,22 @@ export class Renderer {
     }
   }
   
-  drawTraps(level, camera) {
-    this.drawTrampolines(level.trampolines, camera);
-    this.drawFireTraps(level.fireTraps, camera);
-    this.drawSpikes(level.spikes, camera);
+  drawTrapBases(level, camera) {
+    this._drawTrampolines(level.trampolines, camera);
+    this._drawSpikes(level.spikes, camera);
+    this._drawFireTrapBases(level.fireTraps, camera);
   }
 
-  drawTrampolines(trampolines, camera) {
+  drawTrapForegrounds(level, camera) {
+    this._drawFireTrapFlames(level.fireTraps, camera);
+  }
+
+  _drawTrampolines(trampolines, camera) {
     for (const tramp of trampolines) {
         if (!camera.isRectVisible({x: tramp.x, y: tramp.y, width: tramp.size, height: tramp.size})) continue;
         let sprite, srcX = 0, frameWidth;
+        const drawX = tramp.x - tramp.size / 2;
+        const drawY = tramp.y - tramp.size / 2;
         if (tramp.state === 'jumping') {
             sprite = this.assets.trampoline_jump;
             if (sprite) { frameWidth = sprite.width / tramp.frameCount; srcX = tramp.frame * frameWidth; }
@@ -194,12 +204,12 @@ export class Renderer {
             sprite = this.assets.trampoline_idle;
             if (sprite) frameWidth = sprite.width;
         }
-        if (sprite && frameWidth > 0) this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, tramp.x - tramp.size / 2, tramp.y - tramp.size / 2, tramp.size, tramp.size);
-        else { this.ctx.fillStyle = '#8e44ad'; this.ctx.fillRect(tramp.x - tramp.size / 2, tramp.y - tramp.size / 2, tramp.size, tramp.size); }
+        if (sprite && frameWidth > 0) this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY, tramp.size, tramp.size);
+        else { this.ctx.fillStyle = '#8e44ad'; this.ctx.fillRect(drawX, drawY, tramp.size, tramp.size); }
     }
   }
 
-  drawSpikes(spikes, camera) {
+  _drawSpikes(spikes, camera) {
       const sprite = this.assets.spike_two;
       if (!sprite) return;
       for (const spike of spikes) {
@@ -208,41 +218,57 @@ export class Renderer {
       }
   }
 
-  drawFireTraps(fireTraps, camera) {
+  _drawFireTrapBases(fireTraps, camera) {
+    const sprite = this.assets.fire_off;
+    if (!sprite) return; // Exit if the asset isn't loaded
     for (const trap of fireTraps) {
+        if (!camera.isVisible(trap.x, trap.y, trap.width, trap.height)) continue;
+        
+        const drawX = trap.x - trap.width / 2;
+        const drawY = trap.y - trap.height / 2;
+
+        // Use the 9-argument drawImage to clip the source sprite.
+        // The fire_off.png is 16x32. We want the bottom 16x16 part.
+        this.ctx.drawImage(
+            sprite,      // Source image
+            0,           // Source X
+            16,          // Source Y (start from the middle of the 32px height)
+            16,          // Source Width
+            16,          // Source Height
+            drawX,       // Destination X
+            drawY,       // Destination Y
+            trap.width,  // Destination Width
+            trap.height  // Destination Height
+        );
+    }
+  }
+  
+  _drawFireTrapFlames(fireTraps, camera) {
+    for (const trap of fireTraps) {
+        if (trap.state === 'off' || trap.state === 'turning_off') continue;
         if (!camera.isVisible(trap.x, trap.y - trap.height, trap.width, trap.height * 2)) continue;
 
         let sprite, srcX = 0, frameWidth;
         const drawX = trap.x - trap.width / 2;
         const drawY = trap.y - trap.height / 2;
 
-        if (trap.state === 'off' || trap.state === 'turning_off') {
-            sprite = this.assets.fire_off;
-            if (sprite) {
-                this.ctx.drawImage(sprite, drawX, drawY, trap.width, trap.height);
-            }
-        } else {
-            if (trap.state === 'activating') {
-                sprite = this.assets.fire_hit;
-                frameWidth = sprite.width / trap.anim.activating.frames;
-                srcX = trap.frame * frameWidth;
-            } else { // 'on'
-                sprite = this.assets.fire_on;
-                frameWidth = sprite.width / trap.anim.on.frames;
-                srcX = trap.frame * frameWidth;
-            }
-
-            if (sprite) {
-                this.ctx.drawImage(
-                    sprite, srcX, 0, frameWidth, sprite.height,
-                    drawX, drawY - trap.height, // Draw the 16x32 sprite, offsetting y
-                    trap.width, trap.height * 2
-                );
-            }
+        if (trap.state === 'activating') {
+            sprite = this.assets.fire_hit;
+            frameWidth = sprite.width / trap.anim.activating.frames;
+            srcX = trap.frame * frameWidth;
+        } else { // 'on'
+            sprite = this.assets.fire_on;
+            frameWidth = sprite.width / trap.anim.on.frames;
+            srcX = trap.frame * frameWidth;
         }
-        if (!sprite) {
-            this.ctx.fillStyle = (trap.state === 'on' || trap.state === 'activating') ? '#FF4500' : '#8B4513';
-            this.ctx.fillRect(drawX, drawY, trap.width, trap.height);
+
+        if (sprite) {
+            // This part was correct: it draws the full 16x32 animated flame sprite.
+            this.ctx.drawImage(
+                sprite, srcX, 0, frameWidth, sprite.height,
+                drawX, drawY - trap.height,
+                trap.width, trap.height * 2
+            );
         }
     }
   }
