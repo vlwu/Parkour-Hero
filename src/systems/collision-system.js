@@ -20,7 +20,8 @@ export class CollisionSystem {
         const col = entityManager.getComponent(entityId, CollisionComponent);
 
         if (pos.y > level.height + 50) {
-            eventBus.publish('collisionEvent', { type: 'world_bottom', entityId, entityManager });
+            // MODIFIED: Publish a specific event for boundary collisions.
+            eventBus.publish('worldBoundaryCollision', { type: 'world_bottom', entityId, entityManager });
             continue; 
         }
 
@@ -188,7 +189,8 @@ export class CollisionSystem {
   _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
     for (const spike of level.spikes) {
         if (this._isCollidingWith(pos, col, spike)) {
-            eventBus.publish('collisionEvent', { type: 'hazard', entityId, entityManager });
+            // MODIFIED: Publish a generic collision event.
+            eventBus.publish('collisionDetected', { entityA: entityId, entityB: spike, entityManager });
             return;
         }
     }
@@ -231,7 +233,8 @@ export class CollisionSystem {
   _checkFruitCollisions(pos, col, level, entityId, entityManager) {
     for (const fruit of level.getActiveFruits()) {
         if (this._isCollidingWith(pos, col, fruit)) {
-            eventBus.publish('collisionEvent', { type: 'fruit', entityId, target: fruit, entityManager });
+            // MODIFIED: Publish a generic collision event.
+            eventBus.publish('collisionDetected', { entityA: entityId, entityB: fruit, entityManager });
         }
     }
   }
@@ -239,14 +242,16 @@ export class CollisionSystem {
   _checkTrophyCollision(pos, col, trophy, entityId, entityManager) {
     if (!trophy || trophy.acquired || trophy.inactive) return;
     if (this._isCollidingWith(pos, col, trophy)) {
-        eventBus.publish('collisionEvent', { type: 'trophy', entityId, target: trophy, entityManager });
+        // MODIFIED: Publish a generic collision event.
+        eventBus.publish('collisionDetected', { entityA: entityId, entityB: trophy, entityManager });
     }
   }
 
   checkCheckpointCollisions(pos, col, level, entityId, entityManager) {
     for (const cp of level.getInactiveCheckpoints()) {
         if (this._isCollidingWith(pos, col, cp)) {
-            eventBus.publish('collisionEvent', { type: 'checkpoint', entityId, target: cp, entityManager });
+            // MODIFIED: Publish a generic collision event.
+            eventBus.publish('collisionDetected', { entityA: entityId, entityB: cp, entityManager });
         }
     }
   }

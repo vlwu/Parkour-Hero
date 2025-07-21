@@ -3,37 +3,50 @@ import { PlayerControlledComponent } from '../components/PlayerControlledCompone
 
 export class GameplaySystem {
     constructor() {
-        eventBus.subscribe('collisionEvent', (e) => this.handleCollision(e));
+        // MODIFIED: Subscribe to the new, more specific events.
+        eventBus.subscribe('collisionDetected', (e) => this.handleEntityCollision(e));
+        eventBus.subscribe('worldBoundaryCollision', (e) => this.handleBoundaryCollision(e));
     }
 
     /**
-     * Translates a raw collision event into a specific gameplay action.
+     * Handles collisions with the edge of the world.
      * @param {object} event The collision event data.
-     * @param {'fruit'|'hazard'|'trophy'|'checkpoint'|'world_bottom'} event.type The type of the collision target.
-     * @param {number} event.entityId The ID of the entity that initiated the collision (e.g., the player).
-     * @param {object} [event.target] The object that was collided with (e.g., the fruit object).
-     * @param {EntityManager} event.entityManager The entity manager instance.
+     * @param {'world_bottom'} event.type The type of boundary.
+     * @param {number} event.entityId The ID of the entity that hit the boundary.
      */
-    // FIX: Correctly destructure the 'entityManager' from the event payload 'e'.
-    handleCollision({ type, entityId, target, entityManager }) {
+    handleBoundaryCollision({ type, entityId, entityManager }) {
         const isPlayer = !!entityManager.getComponent(entityId, PlayerControlledComponent);
         if (!isPlayer) return;
 
-        switch (type) {
+        if (type === 'world_bottom') {
+            eventBus.publish('playerDied');
+        }
+    }
+
+    /**
+     * Translates a raw entity-object collision into a specific gameplay action.
+     * @param {object} event The collision event data.
+     * @param {number} event.entityA The ID of the player entity.
+     * @param {object} event.entityB The raw level object that was collided with (e.g., fruit, spike).
+     * @param {EntityManager} event.entityManager The entity manager instance.
+     */
+    handleEntityCollision({ entityA, entityB, entityManager }) {
+        const isPlayer = !!entityManager.getComponent(entityA, PlayerControlledComponent);
+        if (!isPlayer) return;
+
+        // The logic is now based on the type property of the object collided with.
+        switch (entityB.type) {
             case 'fruit':
-                eventBus.publish('fruitCollected', target);
+                eventBus.publish('fruitCollected', entityB);
                 break;
-            case 'world_bottom':
-                eventBus.publish('playerDied');
-                break;
-            case 'hazard':
+            case 'spike':
                 eventBus.publish('playerTookDamage', { amount: 25 });
                 break;
             case 'trophy':
                 eventBus.publish('trophyCollision');
                 break;
             case 'checkpoint':
-                eventBus.publish('checkpointActivated', target);
+                eventBus.publish('checkpointActivated', entityB);
                 break;
         }
     }
