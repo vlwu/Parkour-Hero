@@ -183,8 +183,8 @@ function getPaletteColor(type) {
         case 'green_block': return '#28a745'; case 'sand': return '#F4A460';
         case 'mud': return '#5D4037'; case 'ice': return '#5DADE2';
         case 'trampoline': return '#8e44ad';
-        case 'spike': return '#3c3c3cff';
-        case 'fire_trap': return '#941b00ff';
+        case 'spike': return '#e74c3c';
+        case 'fire_trap': return '#f39c12';
         case 'fruit_apple': return '#e74c3c';
         case 'fruit_bananas': return '#f1c40f';
         case 'fruit_cherries': return '#c0392b';
