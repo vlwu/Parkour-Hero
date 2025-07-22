@@ -127,6 +127,15 @@
       "type": "trampoline",
       "x": 6.9,
       "y": 50.71
+    },
+    {
+      "type": "spiked_ball",
+      "x": 8.48,
+      "y": 47,
+      "chainLength": 144,
+      "swingArc": 110,
+      "tiltAmount": 0.8,
+      "period": 4
     }
   ]
 }
