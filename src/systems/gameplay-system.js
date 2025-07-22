@@ -27,7 +27,11 @@ export class GameplaySystem {
                 break;
             case 'hazard':
                 const hazardDamage = damage !== undefined ? damage : 25;
-                eventBus.publish('playerTookDamage', { amount: hazardDamage, source: 'hazard' });
+                // Only trigger the damage event if there is actual damage.
+                // This prevents the hit animation and stun for non-damaging hazards like the ArrowBubble.
+                if (hazardDamage > 0) {
+                    eventBus.publish('playerTookDamage', { amount: hazardDamage, source: 'hazard' });
+                }
 
                 if (knockback) {
                     eventBus.publish('playerKnockback', {

@@ -76,9 +76,10 @@ export class PlayerStateSystem {
             const { entityId, vx, vy } = event;
             const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
             
-            // Apply knockback only if the player is in the 'hit' state,
-            // which should have been set by the damage event in the same frame.
-            if (ctrl && ctrl.isHit) {
+            // The check for `ctrl.isHit` is removed. A knockback event should always apply
+            // its velocity. The hit state, which controls animation and input stun, is now handled
+            // separately by the `playerTookDamage` event processing.
+            if (ctrl) {
                 const vel = entityManager.getComponent(entityId, VelocityComponent);
                 if (vel) {
                     vel.vx = vx;
