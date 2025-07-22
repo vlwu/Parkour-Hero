@@ -134,6 +134,7 @@
       "y": 47,
       "chainLength": 144,
       "swingArc": 110,
+      "tiltAmount": 0.8,
       "period": 4
     }
   ]
