@@ -26,9 +26,16 @@ export class ObjectManager {
                 newObj.swingArc = obj.swingArc || 90;
                 newObj.period = obj.period || 4;
             }
-            if (newObj.type === 'arrow_bubble' || newObj.type === 'fan') {
+            if (newObj.type === 'arrow_bubble') {
                 newObj.direction = obj.direction || 'right';
             }
+            // --- MODIFICATION START ---
+            if (newObj.type === 'fan') {
+                newObj.direction = obj.direction || 'right';
+                newObj.pushStrength = obj.pushStrength || 250;
+                newObj.windHeight = obj.windHeight || 120;
+            }
+            // --- MODIFICATION END ---
             return newObj;
         });
 
@@ -72,9 +79,17 @@ export class ObjectManager {
             newObject.tiltAmount = 0.5;
         }
 
-        if (type === 'arrow_bubble' || type === 'fan') {
+        if (type === 'arrow_bubble') {
             newObject.direction = 'right'; // Default direction
         }
+        
+        // --- MODIFICATION START ---
+        if (type === 'fan') {
+            newObject.direction = 'right';
+            newObject.pushStrength = 250;
+            newObject.windHeight = 120;
+        }
+        // --- MODIFICATION END ---
 
         this._applySnapping(newObject);
         newObject.x = round(newObject.x);
@@ -143,8 +158,19 @@ export class ObjectManager {
             el.style.backgroundColor = getPaletteColor(obj.type);
             el.style.opacity = '0.8';
 
+            // --- MODIFICATION START ---
             let angle = 0;
-            if (obj.direction) {
+            if (obj.type === 'fan') {
+                // Fan sprite rotation (base sprite faces UP)
+                switch (obj.direction) {
+                    case 'up': angle = 0; break;
+                    case 'right': angle = 90; break;
+                    case 'down': angle = 180; break;
+                    case 'left': angle = -90; break;
+                    default: angle = 90; break;
+                }
+            } else if (obj.type === 'arrow_bubble') {
+                 // Arrow bubble sprite rotation (base sprite faces RIGHT)
                 switch (obj.direction) {
                     case 'up': angle = -90; break;
                     case 'left': angle = 180; break;
@@ -153,6 +179,7 @@ export class ObjectManager {
                 }
             }
             el.style.transform = `rotate(${angle}deg)`;
+            // --- MODIFICATION END ---
 
             if (obj.type === 'player_spawn') {
                 el.innerHTML = '<span style="color: white; font-weight: bold; font-size: 18px;">P</span>';

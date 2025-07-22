@@ -39,6 +39,13 @@ export class PropertiesPanel {
             propertiesHTML += this._createSelectInput('direction', 'Direction', directions, obj.direction);
         }
         
+        // --- MODIFICATION START ---
+        if (obj.type === 'fan') {
+            propertiesHTML += this._createNumberInput('pushStrength', 'Push Strength', obj.pushStrength || 250, 5);
+            propertiesHTML += this._createNumberInput('windHeight', 'Wind Height (pixels)', obj.windHeight || 120, 5);
+        }
+        // --- MODIFICATION END ---
+        
         DOM.propertiesPanel.innerHTML = propertiesHTML;
         this._attachEventListeners(obj);
     }
@@ -87,6 +94,12 @@ export class PropertiesPanel {
         if (obj.type === 'arrow_bubble' || obj.type === 'fan') {
             attach('direction', 'select');
         }
+        // --- MODIFICATION START ---
+        if (obj.type === 'fan') {
+            attach('pushStrength');
+            attach('windHeight');
+        }
+        // --- MODIFICATION END ---
     }
 
     _handleInput(id, prop, element) {

@@ -144,21 +144,15 @@
       "chainLength": 120,
       "swingArc": 90,
       "period": 3,
-      "tiltAmount": 1,
-      "initialDragPos": {
-        "x": 17.35,
-        "y": 33.2
-      }
+      "tiltAmount": 1
     },
     {
       "type": "fan",
       "x": 14.5,
       "y": 21.75,
       "direction": "up",
-      "initialDragPos": {
-        "x": 15.5,
-        "y": 21.75
-      }
+      "pushStrength": 350,
+      "windHeight": 250
     }
   ]
 }

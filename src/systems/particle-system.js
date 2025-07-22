@@ -4,10 +4,12 @@ export class ParticleSystem {
     constructor(assets) {
         this.assets = assets;
         this.particles = [];
+        // --- MODIFICATION: Add particleSpeed to the subscribed payload ---
         eventBus.subscribe('createParticles', (data) => this.create(data));
     }
 
-    create({ x, y, type, direction = 'right' }) {
+    // --- MODIFICATION: Accept particleSpeed to override default behavior ---
+    create({ x, y, type, direction = 'right', particleSpeed = null }) {
         const particleConfigs = {
             dash: { count: 10, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
             double_jump: { count: 7, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
@@ -24,14 +26,18 @@ export class ParticleSystem {
 
         for (let i = 0; i < config.count; i++) {
             let angle;
-            let speed = config.baseSpeed + Math.random() * (config.baseSpeed * 0.5);
+            // --- MODIFICATION START: Use passed particleSpeed for dynamic effects ---
+            // Use the speed passed from the event if it exists, otherwise use the config default.
+            const currentBaseSpeed = particleSpeed || config.baseSpeed;
+            // Add a bit of randomization to the final speed.
+            let speed = currentBaseSpeed * (0.8 + Math.random() * 0.4);
+            // --- MODIFICATION END ---
             
             if (type === 'dash') {
                 angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
             } else if (type === 'double_jump') {
                 angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             } else if (type === 'jump_trail') {
-                // Emit a particle with low velocity to create a "left behind" trail effect.
                 angle = (Math.random() * Math.PI * 2);
                 speed *= (Math.random() * 0.5);
             } else if (type === 'fan_push') {
@@ -45,7 +51,6 @@ export class ParticleSystem {
                 angle = baseAngle + (Math.random() - 0.5) * (Math.PI / 6); // 30 degree spread
             }
             else {
-                // Default "kick up" effect for walking on sand, mud, and dust.
                 angle = - (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 4);
             }
             
@@ -83,8 +88,6 @@ export class ParticleSystem {
     render(ctx, camera) {
         if (this.particles.length === 0) return;
         
-        // The particle system is rendered after the main scene,
-        // so it needs to apply the camera transform itself.
         ctx.save();
         camera.apply(ctx);
 
@@ -96,6 +99,6 @@ export class ParticleSystem {
         }
         
         camera.restore(ctx);
-        ctx.restore(); // Restore to the state before camera transform
+        ctx.restore();
     }
 }

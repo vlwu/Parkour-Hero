@@ -11,7 +11,7 @@ export const OBJECT_DESCRIPTIONS = {
     'fire_trap': 'A block that erupts in flame when stepped on. Snaps to the ground.',
     'spiked_ball': 'A swinging spiked ball hazard. Place the anchor point; it does not snap to ground. Properties: chain length, swing arc, speed (period), and tilt amount.',
     'arrow_bubble': 'Pops on contact and pushes the player. Does not snap to surfaces. Its direction can be set in properties.',
-    'fan': 'Periodically pushes the player. Must be attached to the edge of a solid platform. Direction is set automatically on placement but can be changed.'
+    'fan': 'Periodically creates a column of wind. Must be attached to a solid platform. Direction is auto-set but can be changed. Properties: pushStrength (how fast the player is pushed), and windHeight (length of the wind column in pixels).'
 };
 
 export const PALETTE_ABBREVIATIONS = {
