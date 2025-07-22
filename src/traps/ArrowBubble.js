@@ -17,7 +17,7 @@ export class ArrowBubble extends Trap {
         
         // Direction from level data ('right', 'left', 'up', 'down')
         this.direction = config.direction || 'right';
-        this.knockbackSpeed = config.knockbackSpeed || 450;
+        this.knockbackSpeed = config.knockbackSpeed || 300;
         
         // Internal state: 'idle', 'hit' (playing pop animation), 'inactive' (gone)
         this.state = 'idle';
