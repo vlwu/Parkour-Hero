@@ -1,5 +1,3 @@
-import { PLAYER_CONSTANTS } from "../utils/constants.js";
-
 export const TILE_DEFINITIONS = {
   '0': { type: 'empty', solid: false, hazard: false, description: 'Empty space. The player can move freely through it.' },
   

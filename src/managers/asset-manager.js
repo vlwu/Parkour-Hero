@@ -174,6 +174,15 @@ export async function loadAssets() {
     fan_on: '/assets/Traps/Fan/On.png',
     arrow_idle: '/assets/Traps/Arrow/Idle.png',
     arrow_hit: '/assets/Traps/Arrow/Hit.png',
+    falling_platform_off: '/assets/Traps/Falling Platforms/Off.png',
+    falling_platform_on: '/assets/Traps/Falling Platforms/On.png',
+    // RH stands for Rock Head
+    rh_blink: '/assets/Traps/Rock Head/Blink.png',
+    rh_idle: '/assets/Traps/Rock Head/Idle.png',
+    rh_bottom_hit: '/assets/Traps/Rock Head/Bottom Hit.png',
+    rh_top_hit: '/assets/Traps/Rock Head/Top Hit.png',
+    rh_left_hit: '/assets/Traps/Rock Head/Left Hit.png',
+    rh_right_hit: '/assets/Traps/Rock Head/Right Hit.png',
 
     sand_mud_ice: '/assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
     trampoline_idle: '/assets/Traps/Trampoline/Idle.png',
