@@ -199,6 +199,7 @@ export async function loadAssets() {
     double_jump: '/assets/Sounds/Player Double Jump.mp3',
     collect: '/assets/Sounds/Fruit Collect.mp3',
     level_complete: '/assets/Sounds/Level Complete.mp3',
+    trophy_activated: '/assets/Sounds/Trophy Activated.mp3',
     death_sound: '/assets/Sounds/Death.mp3',
     dash: '/assets/Sounds/Whoosh.mp3',
     checkpoint_activated: '/assets/Sounds/Checkpoint (Activation).mp3',

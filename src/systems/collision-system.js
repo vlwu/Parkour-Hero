@@ -237,11 +237,12 @@ export class CollisionSystem {
   _checkTrophyCollision(pos, col, trophy, entityId, entityManager, vel, dt) {
     if (!trophy || trophy.inactive || trophy.acquired) return;
 
+    const collisionOffset = 15; 
     const trophyHitbox = {
         x: trophy.x - trophy.size / 2,
-        y: trophy.y - trophy.size / 2,
+        y: (trophy.y - trophy.size / 2) + collisionOffset,
         width: trophy.size,
-        height: trophy.size
+        height: trophy.size - collisionOffset
     };
 
     const playerLeft = pos.x;
@@ -257,10 +258,11 @@ export class CollisionSystem {
     if (vel.vy >= 0 && playerBottom >= trophyHitbox.y && prevPlayerBottom <= trophyHitbox.y + 1) {
         if (!trophy.isAnimating) {
             trophy.isAnimating = true;
-            pos.y = trophyHitbox.y - col.height;
-            vel.vy = 0;
-            col.isGrounded = true;
-            col.groundType = 'trophy';
+
+            // Publish events for knockback, sound, and camera shake
+            eventBus.publish('playerKnockback', { entityId, entityManager, vx: 0, vy: -300 });
+            eventBus.publish('playSound', { key: 'trophy_activated', volume: 0.9, channel: 'UI' });
+            eventBus.publish('cameraShakeRequested', { intensity: 6, duration: 0.25 });
         }
         return;
     }

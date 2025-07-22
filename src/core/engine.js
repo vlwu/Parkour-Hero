@@ -87,6 +87,7 @@ export class Engine {
     eventBus.subscribe('checkpointActivated', (cp) => this._onCheckpointActivated(cp));
     eventBus.subscribe('playerDied', () => this._onPlayerDied());
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
+    eventBus.subscribe('cameraShakeRequested', (params) => this._onCameraShakeRequested(params));
     
     eventBus.subscribe('menuOpened', () => {
         this.pauseForMenu = true;
@@ -352,6 +353,12 @@ export class Engine {
       this.fruitsAtLastCheckpoint.clear();
       this.currentLevel.fruits.forEach((fruit, index) => { if (fruit.collected) this.fruitsAtLastCheckpoint.add(index); });
       this.currentLevel.checkpoints.forEach(otherCp => { if (otherCp !== cp && otherCp.state === 'active') { otherCp.state = 'inactive'; otherCp.frame = 0; } });
+  }
+
+  _onCameraShakeRequested({ intensity, duration }) {
+      if (this.camera) {
+          this.camera.shake(intensity, duration);
+      }
   }
 
   _startPlayerDespawnSequence() {
