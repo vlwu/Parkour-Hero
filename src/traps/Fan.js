@@ -191,22 +191,22 @@ export class Fan extends Trap {
      * @param {object} player A simplified object containing player data.
      */
     onCollision(player) {
-        if (this.state !== 'on' || !player.dt) return;
+        if (this.state !== 'on') return;
 
-        const { vel, dt } = player;
+        const { vel } = player;
 
         switch (this.direction) {
             case 'up':
                 vel.vy = -this.pushStrength;
                 break;
             case 'down':
-                vel.vy += this.pushStrength * dt;
+                vel.vy = this.pushStrength;
                 break;
             case 'left':
-                vel.vx -= this.pushStrength * dt;
+                vel.vx = -this.pushStrength;
                 break;
             case 'right':
-                vel.vx += this.pushStrength * dt;
+                vel.vx = this.pushStrength;
                 break;
         }
     }

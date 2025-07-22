@@ -13,9 +13,9 @@ export const PLAYER_CONSTANTS = {
   MAX_FALL_SPEED: 600,  // terminal velocity
 
   // Fall Damage
-  FALL_DAMAGE_MIN_VELOCITY: 550, // vy threshold to start taking damage
-  FALL_DAMAGE_MAX_VELOCITY: 700, // vy at which max damage is taken
-  FALL_DAMAGE_MIN_AMOUNT: 5,     // min HP damage
+  FALL_DAMAGE_MIN_VELOCITY: 525, // vy threshold to start taking damage
+  FALL_DAMAGE_MAX_VELOCITY: 650, // vy at which max damage is taken
+  FALL_DAMAGE_MIN_AMOUNT: 8,     // min HP damage
   FALL_DAMAGE_MAX_AMOUNT: 20,    // max HP damage
 
   // Dash

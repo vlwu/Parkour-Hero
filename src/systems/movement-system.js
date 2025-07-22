@@ -46,6 +46,8 @@ export class MovementSystem {
             return;
         }
 
+        const GROUND_FRICTION = 1000; // A sensible default friction value
+
         if (col.isGrounded && col.groundType === 'ice') {
             const acc = PLAYER_CONSTANTS.ICE_ACCELERATION;
             const fric = PLAYER_CONSTANTS.ICE_FRICTION;
@@ -71,7 +73,15 @@ export class MovementSystem {
             } else if (input.moveRight) {
                 vel.vx = moveSpeed;
             } else {
-                vel.vx = 0;
+                // Apply friction when there is no input, instead of setting velocity to 0.
+                // This allows external forces like fans to work correctly.
+                if (vel.vx > 0) {
+                    vel.vx -= GROUND_FRICTION * dt;
+                    if (vel.vx < 0) vel.vx = 0;
+                } else if (vel.vx < 0) {
+                    vel.vx += GROUND_FRICTION * dt;
+                    if (vel.vx > 0) vel.vx = 0;
+                }
             }
         }
     }

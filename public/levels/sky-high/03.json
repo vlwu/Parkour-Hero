@@ -160,7 +160,7 @@
       "y": 21.92,
       "direction": "up",
       "pushStrength": 350,
-      "windHeight": 250,
+      "windHeight": 200,
       "initialDragPos": {
         "x": 14.5,
         "y": 21.75
@@ -181,8 +181,8 @@
       "x": 7.92,
       "y": 45.5,
       "direction": "left",
-      "pushStrength": 250,
-      "windHeight": 144,
+      "pushStrength": 300,
+      "windHeight": 150,
       "initialDragPos": {
         "x": 7.92,
         "y": 44.5
