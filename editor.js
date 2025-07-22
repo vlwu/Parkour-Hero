@@ -40,9 +40,7 @@ const OBJECT_DESCRIPTIONS = {
     'trampoline': 'Bounces the player high into the air. Snaps to the ground.',
     'spike': 'A retractable spike trap. Extends when the player is near and retracts after a delay. Snaps to the ground.',
     'fire_trap': 'A block that erupts in flame when stepped on. Snaps to the ground.',
-    // --- MODIFICATION START ---
-    'spiked_ball': 'A swinging spiked ball hazard. Place the anchor point; it does not snap to ground. Properties: chain length, swing arc, and speed (period).'
-    // --- MODIFICATION END ---
+    'spiked_ball': 'A swinging spiked ball hazard. Place the anchor point; it does not snap to ground. Properties: chain length, swing arc, speed (period), and tilt amount.'
 };
 
 const PALETTE_ABBREVIATIONS = {
@@ -495,14 +493,12 @@ function placeObject(pixelX, pixelY, type) {
         size: getObjectSize(type)
     };
     
-    // --- MODIFICATION START ---
-    // Add default properties for the new trap
     if (type === 'spiked_ball') {
         newObject.chainLength = 100;
         newObject.swingArc = 90;
         newObject.period = 4;
+        newObject.tiltAmount = 0.5;
     }
-    // --- MODIFICATION END ---
     
     snapObjectToGround(newObject);
     newObject.x = round(newObject.x);
@@ -552,7 +548,6 @@ function selectObject(obj) {
         <input type="number" id="prop-y" step="0.01" value="${obj.y.toFixed(2)}">
     `;
 
-    // --- MODIFICATION START ---
     // Add specific properties for the spiked ball trap
     if (obj.type === 'spiked_ball') {
         propertiesHTML += `
@@ -562,9 +557,10 @@ function selectObject(obj) {
             <input type="number" id="prop-swingArc" step="1" value="${obj.swingArc || 90}">
             <label for="prop-period">Period (seconds):</label>
             <input type="number" id="prop-period" step="0.1" value="${obj.period || 4}">
+            <label for="prop-tiltAmount">Tilt Amount:</label>
+            <input type="number" id="prop-tiltAmount" step="0.1" value="${obj.tiltAmount || 0.5}">
         `;
     }
-    // --- MODIFICATION END ---
     
     propertiesPanel.innerHTML = propertiesHTML;
 
@@ -576,6 +572,7 @@ function selectObject(obj) {
         document.getElementById('prop-chainLength').addEventListener('input', e => updateObjectProp(obj.id, 'chainLength', parseFloat(e.target.value), e.target));
         document.getElementById('prop-swingArc').addEventListener('input', e => updateObjectProp(obj.id, 'swingArc', parseFloat(e.target.value), e.target));
         document.getElementById('prop-period').addEventListener('input', e => updateObjectProp(obj.id, 'period', parseFloat(e.target.value), e.target));
+        document.getElementById('prop-tiltAmount').addEventListener('input', e => updateObjectProp(obj.id, 'tiltAmount', parseFloat(e.target.value), e.target));
     }
     
     document.querySelectorAll('.dynamic-object').forEach(el => el.classList.remove('selected'));
