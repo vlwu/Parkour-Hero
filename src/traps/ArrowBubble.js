@@ -16,7 +16,7 @@ export class ArrowBubble extends Trap {
         this.type = 'arrow_bubble';
         
         this.direction = config.direction || 'right';
-        this.knockbackSpeed = config.knockbackSpeed || 300;
+        this.knockbackSpeed = config.knockbackSpeed || 450;
         
         this.state = 'idle';
 

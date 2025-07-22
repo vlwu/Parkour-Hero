@@ -28,6 +28,7 @@ export class ObjectManager {
             }
             if (newObj.type === 'arrow_bubble') {
                 newObj.direction = obj.direction || 'right';
+                newObj.knockbackSpeed = obj.knockbackSpeed || 300;
             }
             if (newObj.type === 'fan') {
                 newObj.direction = obj.direction || 'right';
@@ -79,6 +80,7 @@ export class ObjectManager {
 
         if (type === 'arrow_bubble') {
             newObject.direction = 'right'; // Default direction
+            newObject.knockbackSpeed = 300;
         }
         
         if (type === 'fan') {

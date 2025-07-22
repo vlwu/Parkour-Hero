@@ -10,7 +10,7 @@ export const OBJECT_DESCRIPTIONS = {
     'spike': 'A retractable spike trap. Extends when the player is near and retracts after a delay. Snaps to the ground.',
     'fire_trap': 'A block that erupts in flame when stepped on. Snaps to the ground.',
     'spiked_ball': 'A swinging spiked ball hazard. Place the anchor point; it does not snap to ground. Properties: chain length, swing arc, speed (period), and tilt amount.',
-    'arrow_bubble': 'Pops on contact and pushes the player. Does not snap to surfaces. Its direction can be set in properties.',
+    'arrow_bubble': 'Pops on contact and pushes the player toward the indicated direction. Does not snap to surfaces. Direction can be changed in its properties. Properties: knockbackSpeed (how fast the player is pushed).',
     'fan': 'Periodically creates a column of wind. Must be attached to a solid platform. Direction is auto-set but can be changed. Properties: pushStrength (how fast the player is pushed), and windHeight (length of the wind column in pixels).'
 };
 
