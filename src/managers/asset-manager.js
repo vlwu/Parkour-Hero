@@ -166,6 +166,9 @@ export async function loadAssets() {
     fire_off: '/assets/Traps/Fire/off.png',
     fire_hit: '/assets/Traps/Fire/hit.png',
     fire_on: '/assets/Traps/Fire/on.png',
+    spiked_ball_chain: '/assets/Traps/Spiked Ball/Chain.png', 
+    spiked_ball: '/assets/Traps/Spiked Ball/Spiked Ball.png', 
+
     sand_mud_ice: '/assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
     trampoline_idle: '/assets/Traps/Trampoline/Idle.png',
     trampoline_jump: '/assets/Traps/Trampoline/Jump.png',

@@ -9,6 +9,7 @@ const trapFactory = {
   fire_trap: Traps.FireTrap,
   spike: Traps.Spikes,
   trampoline: Traps.Trampoline,
+  spiked_ball: Traps.SpikedBall,
 };
 
 /**
