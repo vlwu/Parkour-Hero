@@ -7,7 +7,7 @@ export class Grid {
     constructor(width, height) {
         this.width = width;
         this.height = height;
-        this.scale = 1;
+        this.zoomLevel = 1;
     }
 
     generate() {
@@ -23,7 +23,7 @@ export class Grid {
             cell.dataset.index = i;
             DOM.gridContainer.appendChild(cell);
         }
-        this.updateScale();
+        this.autoFitScale();
     }
 
     resize(newWidth, newHeight) {
@@ -32,7 +32,7 @@ export class Grid {
         this.generate();
     }
 
-    updateScale() {
+    autoFitScale() {
         const availableWidth = DOM.gridParent.clientWidth - 40;
         const availableHeight = DOM.gridParent.clientHeight - 40;
         const gridPixelWidth = this.width * GRID_CONSTANTS.TILE_SIZE;
@@ -41,8 +41,21 @@ export class Grid {
         const scaleX = availableWidth / gridPixelWidth;
         const scaleY = availableHeight / gridPixelHeight;
 
-        this.scale = Math.min(scaleX, scaleY, 1);
-        DOM.gridContainer.style.transform = `scale(${this.scale})`;
+        this.setZoom(Math.min(scaleX, scaleY));
+    }
+
+    setZoom(level) {
+        // Clamp zoom level to prevent zooming too far in or out
+        this.zoomLevel = Math.max(0.1, Math.min(level, 3));
+        this.applyZoom();
+    }
+
+    zoom(delta) {
+        this.setZoom(this.zoomLevel + delta);
+    }
+
+    applyZoom() {
+        DOM.gridContainer.style.transform = `scale(${this.zoomLevel})`;
     }
 
     paintCell(index, tileId) {

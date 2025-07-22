@@ -9,6 +9,9 @@ export class Toolbar {
 
         DOM.undoBtn.addEventListener('click', callbacks.onUndo);
         DOM.redoBtn.addEventListener('click', callbacks.onRedo);
+        
+        DOM.zoomInBtn.addEventListener('click', callbacks.onZoomIn);
+        DOM.zoomOutBtn.addEventListener('click', callbacks.onZoomOut);
 
         DOM.loadFileInput.addEventListener('change', (e) => {
             callbacks.onFileLoad(e);

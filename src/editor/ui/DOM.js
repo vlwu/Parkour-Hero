@@ -20,6 +20,8 @@ export const DOM = {
     exportBtn: document.getElementById('exportBtn'),
     undoBtn: document.getElementById('undoBtn'),
     redoBtn: document.getElementById('redoBtn'),
+    zoomInBtn: document.getElementById('zoomInBtn'),
+    zoomOutBtn: document.getElementById('zoomOutBtn'),
 
     // File Input
     loadFileInput: document.getElementById('loadFile'),

@@ -106,28 +106,21 @@ body {
 
 
 /* Grid */
-/* --- MODIFICATION START --- */
 #grid-parent {
     flex-grow: 1;
-    overflow: hidden; /* Hide scrollbars, as scaling replaces the need for them */
+    overflow: auto; /* Allow scrolling */
     background-color: var(--bg-grid);
     padding: 20px;
-    /* Use flexbox to center the scaled grid container */
-    display: flex;
-    justify-content: center;
-    align-items: center;
     user-select: none;
 }
 
 #grid-container {
     display: grid;
     position: relative;
-    /* Set origin for scaling transformation */
-    transform-origin: top left;
+    transform-origin: top left; /* Keep zoom origin at the corner */
     box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-    background-color: #2c3e50; /* Give grid a background to see its bounds */
+    background-color: #2c3e50;
 }
-/* --- MODIFICATION END --- */
 
 .grid-cell {
     width: 48px;
@@ -227,7 +220,7 @@ body {
     margin-top: 10px;
     font-size: 0.9em;
 }
-#properties-panel input {
+#properties-panel input, #properties-panel select {
     width: calc(100% - 12px);
     margin-top: 5px;
     padding: 5px;

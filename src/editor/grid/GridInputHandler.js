@@ -3,7 +3,7 @@ import { GRID_CONSTANTS } from '../../utils/constants.js';
 export class GridInputHandler {
     constructor(gridContainer, grid, callbacks) {
         this.gridContainer = gridContainer;
-        this.grid = grid; // Reference to the grid module for scale/dimensions
+        this.grid = grid; // Reference to the grid module for zoomLevel/dimensions
         this.callbacks = callbacks;
 
         this.isPainting = false;
@@ -39,7 +39,7 @@ export class GridInputHandler {
     _handleMouseDown(e) {
         const target = e.target;
         const rect = this.gridContainer.getBoundingClientRect();
-        const scale = this.grid.scale;
+        const scale = this.grid.zoomLevel; // Use the current zoom level
         
         const clickX = (e.clientX - rect.left) / scale;
         const clickY = (e.clientY - rect.top) / scale;
@@ -79,7 +79,7 @@ export class GridInputHandler {
 
     _handleMouseMove(e) {
         if (this.isDragging && this.draggedObjectId !== null) {
-            const scale = this.grid.scale;
+            const scale = this.grid.zoomLevel; // Use the current zoom level
             const dx = (e.clientX - this.dragStartX) / (GRID_CONSTANTS.TILE_SIZE * scale);
             const dy = (e.clientY - this.dragStartY) / (GRID_CONSTANTS.TILE_SIZE * scale);
             const newX = this.dragInitialX + dx;

@@ -55,33 +55,35 @@ class EditorController {
             onExport: this._onExport.bind(this),
             onUndo: this._onUndo.bind(this),
             onRedo: this._onRedo.bind(this),
+            onZoomIn: () => this.grid.zoom(0.1),
+            onZoomOut: () => this.grid.zoom(-0.1),
         });
-        window.addEventListener('resize', () => this.grid.updateScale());
+        window.addEventListener('resize', () => this.grid.autoFitScale());
         window.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); this._onUndo(); }
             if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); this._onRedo(); }
         });
         this._onPaletteSelection(this.palette.getSelection()); // Show initial description
     }
-
+    
     resetEditor(width, height) {
         this.grid.resize(width, height);
         this.objectManager.clear();
         this.history.clear();
         this.deselectObject();
     }
-
+    
     // --- Callback Methods ---
 
     _onPaletteSelection(selection) {
         this.deselectObject();
         this.propertiesPanel.showItemDescription(selection.type, selection.id);
     }
-
+    
     _onPropertyUpdate(id, prop, value, type) {
         const obj = this.objectManager.getObject(id);
         if (!obj) return;
-
+    
         if (type === 'live') { // For live dragging of a number input
             if (!this.objectPropChange.isChanging) {
                 this.objectPropChange.isChanging = true;
@@ -111,15 +113,15 @@ class EditorController {
                 });
             } else {
                 // Even if the value hasn't changed (e.g., number input blur), ensure the object is correctly set
-                this.objectManager.updateObjectProp(id, prop, finalValue);
+                 this.objectManager.updateObjectProp(id, prop, finalValue);
             }
         }
     }
-
+    
     _onPaintStart() {
         this.currentPaintAction = { type: 'paint', changes: [] };
     }
-
+    
     _onPaint(index, tileId = null) {
         if (!this.currentPaintAction) return;
         tileId = tileId ?? this.palette.getSelection().id;
@@ -175,7 +177,7 @@ class EditorController {
         this.objectManager.updateObjectProp(id, 'y', newY);
         this.propertiesPanel.displayObject(this.objectManager.getObject(id));
     }
-
+    
     _onObjectDragEnd(id) {
         const obj = this.objectManager.getObject(id);
         this.objectManager._applySnapping(obj);
@@ -197,7 +199,7 @@ class EditorController {
         this.objectManager.render();
         this.propertiesPanel.displayObject(obj);
     }
-
+    
     _onResize() {
         const w = parseInt(prompt("Enter new grid width:", this.grid.width));
         const h = parseInt(prompt("Enter new grid height:", this.grid.height));
