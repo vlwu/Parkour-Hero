@@ -84,7 +84,6 @@ export class Engine {
     
     eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
     eventBus.subscribe('playerTookDamage', (data) => this._onPlayerTookDamage(data));
-    eventBus.subscribe('trophyCollision', () => this._onTrophyCollision());
     eventBus.subscribe('checkpointActivated', (cp) => this._onCheckpointActivated(cp));
     eventBus.subscribe('playerDied', () => this._onPlayerDied());
     eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
@@ -200,8 +199,6 @@ export class Engine {
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) this._respawnPlayer();
 
-    // The individual update calls are replaced by a single, generic update call.
-    // The Level class now delegates these updates to the appropriate modules.
     this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus);
 
     for (let i = this.collectedFruits.length - 1; i >= 0; i--) {
@@ -212,6 +209,11 @@ export class Engine {
             collected.frame++;
             if (collected.frame >= collected.collectedFrameCount) this.collectedFruits.splice(i, 1);
         }
+    }
+
+    const trophy = this.currentLevel.trophy;
+    if (trophy && trophy.acquired && playerCtrl && !playerCtrl.isDespawning) {
+      this._startPlayerDespawnSequence();
     }
 
     if (playerCtrl && playerCtrl.despawnAnimationFinished && !this.gameState.showingLevelComplete) {
@@ -352,12 +354,11 @@ export class Engine {
       this.currentLevel.checkpoints.forEach(otherCp => { if (otherCp !== cp && otherCp.state === 'active') { otherCp.state = 'inactive'; otherCp.frame = 0; } });
   }
 
-  _onTrophyCollision() {
+  _startPlayerDespawnSequence() {
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     const renderable = this.entityManager.getComponent(this.playerEntityId, RenderableComponent);
     const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
     if (playerCtrl && !playerCtrl.isDespawning) {
-      this.currentLevel.trophy.acquired = true;
       this.camera.shake(8, 0.3);
       playerCtrl.isDespawning = true;
       renderable.animationState = 'despawn';

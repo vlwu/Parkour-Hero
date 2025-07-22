@@ -42,9 +42,6 @@ export class GameplaySystem {
                     });
                 }
                 break;
-            case 'trophy':
-                eventBus.publish('trophyCollision');
-                break;
             case 'checkpoint':
                 eventBus.publish('checkpointActivated', target);
                 break;

@@ -184,9 +184,8 @@ export class CollisionSystem {
 
   _checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager) {
     this._checkFruitCollisions(pos, col, level, entityId, entityManager);
-    this._checkTrophyCollision(pos, col, level.trophy, entityId, entityManager);
+    this._checkTrophyCollision(pos, col, level.trophy, entityId, entityManager, vel, dt);
     this.checkCheckpointCollisions(pos, col, level, entityId, entityManager);
-    // MODIFIED: Call the new generic trap interaction handler.
     this._checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager);
   }
   
@@ -235,10 +234,45 @@ export class CollisionSystem {
     }
   }
 
-  _checkTrophyCollision(pos, col, trophy, entityId, entityManager) {
-    if (!trophy || trophy.acquired || trophy.inactive) return;
-    if (this._isCollidingWith(pos, col, trophy)) {
-        eventBus.publish('collisionEvent', { type: 'trophy', entityId, target: trophy, entityManager });
+  _checkTrophyCollision(pos, col, trophy, entityId, entityManager, vel, dt) {
+    if (!trophy || trophy.inactive || trophy.acquired) return;
+
+    const trophyHitbox = {
+        x: trophy.x - trophy.size / 2,
+        y: trophy.y - trophy.size / 2,
+        width: trophy.size,
+        height: trophy.size
+    };
+
+    const playerLeft = pos.x;
+    const playerRight = pos.x + col.width;
+    const playerTop = pos.y;
+    const playerBottom = pos.y + col.height;
+
+    if (playerRight < trophyHitbox.x || playerLeft > trophyHitbox.x + trophyHitbox.width || playerBottom < trophyHitbox.y || playerTop > trophyHitbox.y + trophyHitbox.height) {
+        return;
+    }
+
+    const prevPlayerBottom = playerBottom - vel.vy * dt;
+    if (vel.vy >= 0 && playerBottom >= trophyHitbox.y && prevPlayerBottom <= trophyHitbox.y + 1) {
+        if (!trophy.isAnimating) {
+            trophy.isAnimating = true;
+            pos.y = trophyHitbox.y - col.height;
+            vel.vy = 0;
+            col.isGrounded = true;
+            col.groundType = 'trophy';
+        }
+        return;
+    }
+
+    if (playerBottom > trophyHitbox.y && playerTop < trophyHitbox.y + trophyHitbox.height) {
+        if (vel.vx > 0 && playerRight > trophyHitbox.x && playerLeft < trophyHitbox.x) {
+            pos.x = trophyHitbox.x - col.width;
+            vel.vx = 0;
+        } else if (vel.vx < 0 && playerLeft < trophyHitbox.x + trophyHitbox.width && playerRight > trophyHitbox.x + trophyHitbox.width) {
+            pos.x = trophyHitbox.x + trophyHitbox.width;
+            vel.vx = 0;
+        }
     }
   }
 

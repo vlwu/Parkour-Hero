@@ -76,6 +76,7 @@ export class Level {
           frameCount: 8, animationFrame: 0,
           animationTimer: 0, animationSpeed: 0.1,
           acquired: false, inactive: true, contactMade: false,
+          isAnimating: false,
         };
       }
     });
@@ -184,12 +185,20 @@ export class Level {
 
   updateTrophyAnimation(dt) {
     const trophy = this.trophy;
-    if (!trophy || trophy.inactive || trophy.acquired) return;
+    // Only animate if isAnimating is true and it hasn't already been acquired.
+    if (!trophy || !trophy.isAnimating || trophy.acquired) return;
 
     trophy.animationTimer += dt;
     if (trophy.animationTimer >= trophy.animationSpeed) {
       trophy.animationTimer -= trophy.animationSpeed;
-      trophy.animationFrame = (trophy.animationFrame + 1) % trophy.frameCount;
+      trophy.animationFrame = (trophy.animationFrame + 1); // No modulo
+
+      // Check if animation has just finished
+      if (trophy.animationFrame >= trophy.frameCount) {
+        trophy.animationFrame = trophy.frameCount - 1; // Hold last frame
+        trophy.isAnimating = false; // Stop animation loop
+        trophy.acquired = true; // Mark as officially acquired
+      }
     }
   }
 
@@ -219,6 +228,7 @@ export class Level {
     if (this.trophy) {
       this.trophy.acquired = false;
       this.trophy.inactive = true;
+      this.trophy.isAnimating = false;
       this.trophy.animationFrame = 0;
       this.trophy.animationTimer = 0;
     }
