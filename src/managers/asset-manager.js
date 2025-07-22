@@ -201,6 +201,7 @@ export async function loadAssets() {
     trampoline_bounce: '/assets/Sounds/Boing.mp3',
     fire_activated: '/assets/Sounds/Fire (Activated).mp3',
     arrow_pop: '/assets/Sounds/Arrow Pop.mp3',
+    fan_blowing: '/assets/Sounds/Fan Blowing.mp3'
   };
 
   console.log('Starting asset loading...');
