@@ -26,11 +26,9 @@ export class CharacterCard extends LitElement {
       flex-shrink: 0; /* Prevent canvas from shrinking */
     }
     .char-name-container { 
-      /* Removed min-height. Let it size to the text. */
       margin-top: 5px;
     }
     .char-unlock-container { 
-      /* Removed min-height. Let it size to the text. */
       display: flex; flex-direction: column; 
       justify-content: center; align-items: center;
       flex-grow: 1; /* This is key: it will take up available space, pushing the button down */

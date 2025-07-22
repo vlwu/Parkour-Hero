@@ -64,7 +64,6 @@ export class Renderer {
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
     
-    // MODIFIED: A single, clean call to draw all traps.
     this.drawTraps(level.traps, camera);
     
     const entities = entityManager.query([PositionComponent, RenderableComponent]);
@@ -204,8 +203,6 @@ export class Renderer {
           trap.render(this.ctx, this.assets, camera);
       }
   }
-
-  // REMOVED: All trap-specific drawing methods (_drawTrampolines, _drawSpikes, etc.) are gone.
 
   drawCollectedFruits(collectedArr, camera) {
     const sprite = this.assets['fruit_collected']; if (!sprite) return;

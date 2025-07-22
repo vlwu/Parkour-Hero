@@ -9,7 +9,6 @@ export class CollisionSystem {
   constructor() {}
 
   update(dt, { entityManager, level }) {
-    // MODIFIED: Reset the playerIsOnTop flag for all fire traps at the start of the frame.
     for (const trap of level.traps) {
         if (trap.type === 'fire_trap') {
             trap.playerIsOnTop = false;
@@ -39,12 +38,10 @@ export class CollisionSystem {
         pos.y += vel.vy * dt;
         this._handleTileVerticalCollisions(pos, vel, col, level, dt);
         
-        // MODIFIED: Solid object collision now handles solid traps generically.
         this._handleSolidObjectCollisions(pos, vel, col, level, dt);
 
         pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
 
-        // MODIFIED: All dynamic interactions are now consolidated.
         this._checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager);
     }
   }
@@ -105,7 +102,6 @@ export class CollisionSystem {
   }
 
   _handleSolidObjectCollisions(pos, vel, col, level, dt) {
-    // MODIFIED: Filter for solid traps (currently just FireTrap).
     const allSolidObjects = level.traps.filter(t => t.solid);
 
     for(const obj of allSolidObjects) {
@@ -128,7 +124,6 @@ export class CollisionSystem {
              const prevPlayerBottom = playerBottom - vel.vy * dt;
              if (playerBottom >= objTop && prevPlayerBottom <= objTop + 1) {
                  this._landOnSurface(pos, vel, col, objTop, obj.type);
-                 // MODIFIED: Delegate the "landed on" event to the trap module.
                  if (typeof obj.onLanded === 'function') {
                      obj.onLanded(eventBus);
                  }
@@ -166,7 +161,6 @@ export class CollisionSystem {
   }
   
   _isCollidingWith(pos, col, other) {
-    // MODIFIED: Standardized hitbox logic. Use `other.hitbox` if available.
     const hitbox = other.hitbox || {
         x: other.x - (other.width || other.size) / 2,
         y: other.y - (other.height || other.size) / 2,
