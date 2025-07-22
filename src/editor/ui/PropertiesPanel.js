@@ -33,6 +33,11 @@ export class PropertiesPanel {
             propertiesHTML += this._createNumberInput('period', 'Period (seconds)', obj.period || 4, 0.1);
             propertiesHTML += this._createNumberInput('tiltAmount', 'Tilt Amount', obj.tiltAmount || 0.5, 0.1);
         }
+
+        if (obj.type === 'arrow_bubble' || obj.type === 'fan') {
+            const directions = ['right', 'left', 'up', 'down'];
+            propertiesHTML += this._createSelectInput('direction', 'Direction', directions, obj.direction);
+        }
         
         DOM.propertiesPanel.innerHTML = propertiesHTML;
         this._attachEventListeners(obj);
@@ -49,11 +54,24 @@ export class PropertiesPanel {
         `;
     }
 
+    _createSelectInput(id, label, options, selectedValue) {
+        let optionsHTML = options.map(opt => 
+            `<option value="${opt}" ${opt === selectedValue ? 'selected' : ''}>${opt}</option>`
+        ).join('');
+
+        return `
+            <label for="prop-${id}">${label}:</label>
+            <select id="prop-${id}">${optionsHTML}</select>
+        `;
+    }
+
     _attachEventListeners(obj) {
-        const attach = (prop) => {
+        const attach = (prop, inputType = 'number') => {
             const element = document.getElementById(`prop-${prop}`);
             if (element) {
-                element.addEventListener('input', (e) => this._handleInput(obj.id, prop, e.target));
+                if (inputType === 'number') {
+                    element.addEventListener('input', (e) => this._handleInput(obj.id, prop, e.target));
+                }
                 element.addEventListener('change', (e) => this._handleChange(obj.id, prop, e.target));
             }
         };
@@ -65,6 +83,9 @@ export class PropertiesPanel {
             attach('swingArc');
             attach('period');
             attach('tiltAmount');
+        }
+        if (obj.type === 'arrow_bubble' || obj.type === 'fan') {
+            attach('direction', 'select');
         }
     }
 
@@ -79,9 +100,13 @@ export class PropertiesPanel {
 
     _handleChange(id, prop, element) {
         // This is for the final value, which creates a history entry
-        const value = parseFloat(element.value);
-        if (!isNaN(value)) {
-            this.onPropertyUpdate(id, prop, value, 'final');
+        let value;
+        if (element.type === 'number') {
+            value = parseFloat(element.value);
+            if(isNaN(value)) return;
+        } else { // Handles select, text, etc.
+            value = element.value;
         }
+        this.onPropertyUpdate(id, prop, value, 'final');
     }
 }

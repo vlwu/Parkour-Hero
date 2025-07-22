@@ -63,49 +63,63 @@ class EditorController {
         });
         this._onPaletteSelection(this.palette.getSelection()); // Show initial description
     }
-    
+
     resetEditor(width, height) {
         this.grid.resize(width, height);
         this.objectManager.clear();
         this.history.clear();
         this.deselectObject();
     }
-    
+
     // --- Callback Methods ---
 
     _onPaletteSelection(selection) {
         this.deselectObject();
         this.propertiesPanel.showItemDescription(selection.type, selection.id);
     }
-    
+
     _onPropertyUpdate(id, prop, value, type) {
         const obj = this.objectManager.getObject(id);
         if (!obj) return;
-    
-        if (type === 'live') { // For live dragging of the input number
+
+        if (type === 'live') { // For live dragging of a number input
             if (!this.objectPropChange.isChanging) {
                 this.objectPropChange.isChanging = true;
                 this.objectPropChange.oldValue = obj[prop];
             }
             this.objectManager.updateObjectProp(id, prop, value);
-        } else if (type === 'final') { // On 'change' event after user is done
+        } else if (type === 'final') { // On 'change' event
+            let oldValue;
+            // If we were live-dragging a number, the "from" is the value before dragging started.
             if (this.objectPropChange.isChanging) {
-                const finalValue = round(value);
-                obj[prop] = finalValue; // Ensure obj has final value for history
+                oldValue = this.objectPropChange.oldValue;
+                this.objectPropChange.isChanging = false;
+            } else {
+                // Otherwise (for selects, or numbers changed without dragging), it's the current value.
+                oldValue = obj[prop];
+            }
+            
+            const finalValue = typeof value === 'number' ? round(value) : value;
+
+            if (oldValue !== finalValue) {
+                // Set the object's property to the final value before pushing to history
+                this.objectManager.updateObjectProp(id, prop, finalValue);
                 this.history.push({
                     type: 'update_prop', id, prop,
-                    from: this.objectPropChange.oldValue,
+                    from: oldValue,
                     to: finalValue,
                 });
-                this.objectPropChange.isChanging = false;
+            } else {
+                // Even if the value hasn't changed (e.g., number input blur), ensure the object is correctly set
+                this.objectManager.updateObjectProp(id, prop, finalValue);
             }
         }
     }
-    
+
     _onPaintStart() {
         this.currentPaintAction = { type: 'paint', changes: [] };
     }
-    
+
     _onPaint(index, tileId = null) {
         if (!this.currentPaintAction) return;
         tileId = tileId ?? this.palette.getSelection().id;
@@ -161,10 +175,10 @@ class EditorController {
         this.objectManager.updateObjectProp(id, 'y', newY);
         this.propertiesPanel.displayObject(this.objectManager.getObject(id));
     }
-    
+
     _onObjectDragEnd(id) {
         const obj = this.objectManager.getObject(id);
-        this.objectManager._snapObjectToGround(obj);
+        this.objectManager._applySnapping(obj);
         
         const finalX = round(obj.x);
         const finalY = round(obj.y);
@@ -183,7 +197,7 @@ class EditorController {
         this.objectManager.render();
         this.propertiesPanel.displayObject(obj);
     }
-    
+
     _onResize() {
         const w = parseInt(prompt("Enter new grid width:", this.grid.width));
         const h = parseInt(prompt("Enter new grid height:", this.grid.height));

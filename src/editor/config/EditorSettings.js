@@ -9,7 +9,9 @@ export const OBJECT_DESCRIPTIONS = {
     'trampoline': 'Bounces the player high into the air. Snaps to the ground.',
     'spike': 'A retractable spike trap. Extends when the player is near and retracts after a delay. Snaps to the ground.',
     'fire_trap': 'A block that erupts in flame when stepped on. Snaps to the ground.',
-    'spiked_ball': 'A swinging spiked ball hazard. Place the anchor point; it does not snap to ground. Properties: chain length, swing arc, speed (period), and tilt amount.'
+    'spiked_ball': 'A swinging spiked ball hazard. Place the anchor point; it does not snap to ground. Properties: chain length, swing arc, speed (period), and tilt amount.',
+    'arrow_bubble': 'Pops on contact and pushes the player. Does not snap to surfaces. Its direction can be set in properties.',
+    'fan': 'Periodically pushes the player. Must be attached to the edge of a solid platform. Direction is set automatically on placement but can be changed.'
 };
 
 export const PALETTE_ABBREVIATIONS = {
@@ -21,7 +23,7 @@ export const PALETTE_ABBREVIATIONS = {
     'trophy': 'GOL', 'checkpoint': 'CHK',
     // Traps
     'trampoline': 'TRP', 'spike': 'SPK', 'fire_trap': 'FIR',
-    'spiked_ball': 'BAL',
+    'spiked_ball': 'BAL', 'arrow_bubble': 'ARR', 'fan': 'FAN',
     // Terrain
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -39,6 +41,8 @@ export function getPaletteColor(type) {
         case 'spike': return '#e74c3c';
         case 'fire_trap': return '#f39c12';
         case 'spiked_ball': return '#7f8c8d';
+        case 'arrow_bubble': return '#3498db';
+        case 'fan': return '#95a5a6';
         case 'fruit_apple': return '#e74c3c';
         case 'fruit_bananas': return '#f1c40f';
         case 'fruit_cherries': return '#c0392b';
