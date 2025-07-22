@@ -42,7 +42,7 @@ export class SoundManager {
 
   loadSounds(assets) {
     const soundKeys = ['button_click', 'jump', 'double_jump', 'collect', 'level_complete', 'death_sound', 'dash', 'checkpoint_activated', 
-      'hit', 'sand_walk', 'mud_run', 'ice_run', 'trampoline_bounce', 'fire_activated'];
+      'hit', 'sand_walk', 'mud_run', 'ice_run', 'trampoline_bounce', 'fire_activated', 'arrow_pop'];
     soundKeys.forEach(key => {
       if (assets[key]) {
         this.sounds[key] = assets[key];

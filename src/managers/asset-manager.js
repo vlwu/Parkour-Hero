@@ -199,7 +199,8 @@ export async function loadAssets() {
     mud_run: '/assets/Sounds/Mud Run.mp3',
     ice_run: '/assets/Sounds/Ice Run.mp3',
     trampoline_bounce: '/assets/Sounds/Boing.mp3',
-    fire_activated: 'assets/Sounds/Fire (Activated).mp3',
+    fire_activated: '/assets/Sounds/Fire (Activated).mp3',
+    arrow_pop: '/assets/Sounds/Arrow Pop.mp3',
   };
 
   console.log('Starting asset loading...');
