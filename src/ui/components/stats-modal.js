@@ -11,7 +11,8 @@ export class StatsModal extends LitElement {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     .modal-overlay {
-      position: fixed; inset: 0;
+      position: absolute;
+      inset: 0;
       background-color: rgba(0, 0, 0, 0.7);
       display: flex; justify-content: center; align-items: center;
       z-index: 250;

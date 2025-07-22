@@ -12,7 +12,8 @@ import './bitmap-text.js';
 export class ParkourHeroUI extends LitElement {
   static styles = css`
     .main-menu-overlay {
-      position: fixed; inset: 0;
+      position: absolute;
+      inset: 0;
       background-image: url('/assets/Background/Main Menu.png');
       background-size: cover; background-position: center; z-index: 500;
       display: flex; justify-content: center; align-items: center;

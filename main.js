@@ -8,6 +8,7 @@ import './src/ui/ui-main.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const uiRoot = document.getElementById('ui-root');
 
 if (!canvas || !ctx) {
   console.error('Canvas not found or context not available');
@@ -42,11 +43,24 @@ function resizeCanvas() {
     const finalWidth = Math.floor(width);
     const finalHeight = Math.floor(height);
 
+    const left = `${(window.innerWidth - finalWidth) / 2}px`;
+    const top = `${(window.innerHeight - finalHeight) / 2}px`;
+
     canvas.style.width = `${finalWidth}px`;
     canvas.style.height = `${finalHeight}px`;
     canvas.style.position = 'absolute';
-    canvas.style.left = `${(window.innerWidth - finalWidth) / 2}px`;
-    canvas.style.top = `${(window.innerHeight - finalHeight) / 2}px`;
+    canvas.style.left = left;
+    canvas.style.top = top;
+    
+    if (uiRoot) {
+        uiRoot.style.width = `${finalWidth}px`;
+        uiRoot.style.height = `${finalHeight}px`;
+        uiRoot.style.position = 'absolute';
+        uiRoot.style.left = left;
+        uiRoot.style.top = top;
+        uiRoot.style.overflow = 'hidden';
+    }
+
 
     console.log(`Canvas resized to: ${finalWidth}x${finalHeight} (display size)`);
   } catch (error) {

@@ -8,7 +8,8 @@ import './bitmap-text.js';
 export class CharacterMenu extends LitElement {
   static styles = css`
     .modal-overlay {
-      position: fixed; inset: 0;
+      position: absolute;
+      inset: 0;
       background-color: rgba(0, 0, 0, 0.7);
       display: flex; justify-content: center; align-items: center;
       z-index: 200;

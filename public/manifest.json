@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Parkour Hero",
   "description": "A simple and fun 2D parkour platformer. Jump, dash, and climb your way to victory!",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "author": "Victor Wu",
   "action": {
     "default_title": "Play Parkour Hero",
