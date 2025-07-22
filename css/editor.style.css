@@ -106,18 +106,28 @@ body {
 
 
 /* Grid */
+/* --- MODIFICATION START --- */
 #grid-parent {
     flex-grow: 1;
-    overflow: auto;
+    overflow: hidden; /* Hide scrollbars, as scaling replaces the need for them */
     background-color: var(--bg-grid);
     padding: 20px;
+    /* Use flexbox to center the scaled grid container */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
 }
 
 #grid-container {
     display: grid;
-    user-select: none;
     position: relative;
+    /* Set origin for scaling transformation */
+    transform-origin: top left;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    background-color: #2c3e50; /* Give grid a background to see its bounds */
 }
+/* --- MODIFICATION END --- */
 
 .grid-cell {
     width: 48px;
@@ -134,10 +144,11 @@ body {
 }
 
 /* Palettes */
-#tile-palette, #object-palette {
+#terrain-palette, #items-palette, #traps-palette {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-    gap: 5px;
+    gap: 8px;
+    padding-bottom: 15px;
 }
 
 .palette-item {

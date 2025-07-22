@@ -23,6 +23,9 @@ let selectedPaletteItem = { type: 'tile', id: '1' };
 let dynamicObjects = [], selectedObject = null, draggedObject = null;
 let nextObjectId = 0;
 let dragStartX, dragStartY, dragInitialX, dragInitialY;
+// --- MODIFICATION START ---
+let currentScale = 1;
+// --- MODIFICATION END ---
 
 // History State
 let historyStack = [], redoStack = [];
@@ -52,9 +55,7 @@ const PALETTE_ABBREVIATIONS = {
     'trophy': 'GOL', 'checkpoint': 'CHK',
     // Traps
     'trampoline': 'TRP', 'spike': 'SPK', 'fire_trap': 'FIR',
-    // --- MODIFICATION START ---
     'spiked_ball': 'BAL',
-    // --- MODIFICATION END ---
     // Terrain
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -70,6 +71,9 @@ function init() {
     updatePaletteSelection();
     showDescription('tile', '1');
     updateUndoRedoButtons();
+    // --- MODIFICATION START ---
+    updateGridScale();
+    // --- MODIFICATION END ---
 }
 
 function setupEventListeners() {
@@ -87,6 +91,9 @@ function setupEventListeners() {
     document.addEventListener('mouseup', handleDocumentMouseUp);
     gridContainer.addEventListener('contextmenu', e => e.preventDefault());
 
+    // --- MODIFICATION START ---
+    window.addEventListener('resize', updateGridScale);
+    // --- MODIFICATION END ---
     window.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
         if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
@@ -101,18 +108,18 @@ function resetEditor(width, height) {
     redoStack = [];
     generateGrid();
     updateUndoRedoButtons();
+    // --- MODIFICATION START ---
+    updateGridScale();
+    // --- MODIFICATION END ---
 }
 
 // --- HISTORY (UNDO/REDO) ---
 
 function pushToHistory(action) {
-    // --- MODIFICATION START ---
-    // Added deep cloning for object properties to ensure history is correct
     const deepClonedAction = JSON.parse(JSON.stringify(action));
     historyStack.push(deepClonedAction);
     redoStack = []; 
     updateUndoRedoButtons();
-    // --- MODIFICATION END ---
 }
 
 function updateUndoRedoButtons() {
@@ -146,7 +153,6 @@ function undo() {
                 movedObj.y = action.from.y;
             }
             break;
-        // --- MODIFICATION START ---
         case 'update_prop':
             const propObj = dynamicObjects.find(o => o.id === action.id);
             if (propObj) {
@@ -156,7 +162,6 @@ function undo() {
                 }
             }
             break;
-        // --- MODIFICATION END ---
     }
     renderDynamicObjects();
     updateUndoRedoButtons();
@@ -188,7 +193,6 @@ function redo() {
                 movedObj.y = action.to.y;
             }
             break;
-        // --- MODIFICATION START ---
         case 'update_prop':
             const propObj = dynamicObjects.find(o => o.id === action.id);
             if (propObj) {
@@ -198,7 +202,6 @@ function redo() {
                 }
             }
             break;
-        // --- MODIFICATION END ---
     }
     renderDynamicObjects();
     updateUndoRedoButtons();
@@ -215,9 +218,7 @@ function getPaletteColor(type) {
         case 'trampoline': return '#8e44ad';
         case 'spike': return '#e74c3c';
         case 'fire_trap': return '#f39c12';
-        // --- MODIFICATION START ---
         case 'spiked_ball': return '#7f8c8d';
-        // --- MODIFICATION END ---
         case 'fruit_apple': return '#e74c3c';
         case 'fruit_bananas': return '#f1c40f';
         case 'fruit_cherries': return '#c0392b';
@@ -251,9 +252,7 @@ function populatePalettes() {
     });
 
     // Traps
-    // --- MODIFICATION START ---
     const trapTypes = ['spike', 'fire_trap', 'trampoline', 'spiked_ball'];
-    // --- MODIFICATION END ---
     trapTypes.forEach(type => {
         const abbreviation = PALETTE_ABBREVIATIONS[type] || '???';
         const item = createPaletteItem('object', type, type.replace(/_/g, ' '), OBJECT_DESCRIPTIONS[type], abbreviation);
@@ -306,6 +305,29 @@ function showDescription(itemType, itemId) {
 
 // --- GRID, PAINTING, & DRAGGING ---
 
+// --- MODIFICATION START ---
+function updateGridScale() {
+    const gridParent = document.getElementById('grid-parent');
+    if (!gridParent) return;
+
+    // Subtract padding from the available client dimensions
+    const availableWidth = gridParent.clientWidth - 40;
+    const availableHeight = gridParent.clientHeight - 40;
+
+    const gridPixelWidth = gridWidth * GRID_CONSTANTS.TILE_SIZE;
+    const gridPixelHeight = gridHeight * GRID_CONSTANTS.TILE_SIZE;
+
+    // Calculate scale required to fit grid within available space
+    const scaleX = availableWidth / gridPixelWidth;
+    const scaleY = availableHeight / gridPixelHeight;
+
+    // Use the smaller scale factor to fit the whole grid, and don't scale up past 100%
+    currentScale = Math.min(scaleX, scaleY, 1);
+    
+    gridContainer.style.transform = `scale(${currentScale})`;
+}
+// --- MODIFICATION END ---
+
 function generateGrid() {
     gridContainer.innerHTML = '';
     gridContainer.style.gridTemplateColumns = `repeat(${gridWidth}, ${GRID_CONSTANTS.TILE_SIZE}px)`;
@@ -325,6 +347,8 @@ function resizeGrid() {
     const newWidth = parseInt(prompt("Enter new grid width:", gridWidth));
     const newHeight = parseInt(prompt("Enter new grid height:", gridHeight));
     if (!isNaN(newWidth) && !isNaN(newHeight) && newWidth > 0 && newHeight > 0) {
+        gridWidth = newWidth;
+        gridHeight = newHeight;
         resetEditor(newWidth, newHeight);
     }
 }
@@ -332,9 +356,12 @@ function resizeGrid() {
 function handleGridMouseDown(e) {
     const target = e.target;
     if (target.classList.contains('grid-cell')) {
+        // --- MODIFICATION START ---
+        // Adjust click coordinates to account for grid scaling
         const rect = gridContainer.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const clickY = e.clientY - rect.top;
+        const clickX = (e.clientX - rect.left) / currentScale;
+        const clickY = (e.clientY - rect.top) / currentScale;
+        // --- MODIFICATION END ---
 
         if (e.button === 0) { // Left-click
             if (selectedPaletteItem.type === 'tile') {
@@ -367,8 +394,11 @@ function handleGridMouseDown(e) {
 
 function handleDocumentMouseMove(e) {
     if (isDragging && draggedObject) {
-        const dx = (e.clientX - dragStartX) / GRID_CONSTANTS.TILE_SIZE;
-        const dy = (e.clientY - dragStartY) / GRID_CONSTANTS.TILE_SIZE;
+        // --- MODIFICATION START ---
+        // Adjust drag delta to account for grid scaling
+        const dx = (e.clientX - dragStartX) / (GRID_CONSTANTS.TILE_SIZE * currentScale);
+        const dy = (e.clientY - dragStartY) / (GRID_CONSTANTS.TILE_SIZE * currentScale);
+        // --- MODIFICATION END ---
         draggedObject.x = dragInitialX + dx;
         draggedObject.y = dragInitialY + dy;
         renderDynamicObjects();
@@ -467,9 +497,7 @@ function getObjectSize(type) {
     if (type === 'trampoline') return 28;
     if (type === 'spike') return 16;
     if (type === 'fire_trap') return 16;
-    // --- MODIFICATION START ---
     if (type === 'spiked_ball') return 28;
-    // --- MODIFICATION END ---
     return 28; // Default for fruits
 }
 
@@ -540,7 +568,6 @@ function selectObject(obj) {
     selectedObject = obj;
     let propertiesHTML = `<h3 class="properties-title">${obj.type.replace(/_/g, ' ')} (ID: ${obj.id})</h3>`;
     
-    // Always add X and Y properties
     propertiesHTML += `
         <label for="prop-x">Grid X (Anchor):</label>
         <input type="number" id="prop-x" step="0.01" value="${obj.x.toFixed(2)}">
@@ -548,7 +575,6 @@ function selectObject(obj) {
         <input type="number" id="prop-y" step="0.01" value="${obj.y.toFixed(2)}">
     `;
 
-    // Add specific properties for the spiked ball trap
     if (obj.type === 'spiked_ball') {
         propertiesHTML += `
             <label for="prop-chainLength">Chain Length (pixels):</label>
@@ -564,7 +590,6 @@ function selectObject(obj) {
     
     propertiesPanel.innerHTML = propertiesHTML;
 
-    // Attach event listeners
     document.getElementById('prop-x').addEventListener('input', e => updateObjectProp(obj.id, 'x', parseFloat(e.target.value), e.target));
     document.getElementById('prop-y').addEventListener('input', e => updateObjectProp(obj.id, 'y', parseFloat(e.target.value), e.target));
     
@@ -588,20 +613,17 @@ function deselectObject() {
     propertiesPanel.innerHTML = `<p>Select an object or palette item for info.</p>`;
 }
 
-// --- MODIFICATION START ---
-// Added 'element' parameter to manage focus and added history tracking.
 function updateObjectProp(id, prop, value, element) {
     const obj = dynamicObjects.find(o => o.id === id);
     if (obj && !isNaN(value)) {
         const oldValue = obj[prop];
         
-        // Push property change to history stack *before* changing it
         if (element && !element.dataset.isChanging) {
-            element.dataset.isChanging = "true"; // Flag to prevent multiple history entries
+            element.dataset.isChanging = "true";
             element.addEventListener('change', () => {
                 const finalValue = round(parseFloat(element.value));
                  pushToHistory({ type: 'update_prop', id, prop, from: oldValue, to: finalValue });
-                 obj[prop] = finalValue; // Update with the final value after user is done
+                 obj[prop] = finalValue;
                 delete element.dataset.isChanging;
             }, { once: true });
         }
@@ -612,7 +634,6 @@ function updateObjectProp(id, prop, value, element) {
         if (objEl) objEl.classList.add('selected');
     }
 }
-// --- MODIFICATION END ---
 
 
 function deleteObject(id) {
@@ -659,14 +680,11 @@ function loadGridLevel(data) {
     
     dynamicObjects = (data.objects || []).map((obj, i) => {
         const baseObj = { ...obj, id: i, size: getObjectSize(obj.type) };
-        // --- MODIFICATION START ---
-        // Ensure loaded spiked balls have default properties if they are missing
         if (baseObj.type === 'spiked_ball') {
             baseObj.chainLength = obj.chainLength || 100;
             baseObj.swingArc = obj.swingArc || 90;
             baseObj.period = obj.period || 4;
         }
-        // --- MODIFICATION END ---
         return baseObj;
     });
     nextObjectId = dynamicObjects.length;
@@ -702,7 +720,6 @@ function exportLevelJSON() {
         .filter(obj => obj.type !== 'player_spawn')
         .map(({ id, size, ...rest }) => {
             const finalObj = {};
-            // Round all numeric properties before export
             for (const key in rest) {
                 finalObj[key] = typeof rest[key] === 'number' ? round(rest[key]) : rest[key];
             }
