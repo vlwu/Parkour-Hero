@@ -72,9 +72,9 @@ export class Level {
         });
       } else if (obj.type === 'trophy') {
         this.trophy = {
-          x: worldX, y: worldY, size: 32,
+          x: worldX, y: worldY, size: 64,
           frameCount: 8, animationFrame: 0,
-          animationTimer: 0, animationSpeed: 0.35,
+          animationTimer: 0, animationSpeed: 0.1,
           acquired: false, inactive: true, contactMade: false,
         };
       }

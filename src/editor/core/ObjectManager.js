@@ -215,7 +215,6 @@ export class ObjectManager {
 
             if (this.grid.isTileSolid(tileX, tileY)) {
                 let snapX, snapY;
-                const fanW_half_grid = (fan.width / 2) / GRID_CONSTANTS.TILE_SIZE;
                 const fanH_half_grid = (fan.height / 2) / GRID_CONSTANTS.TILE_SIZE;
                 
                 // The distance from the fan's center to the surface it attaches to should always be
@@ -276,7 +275,7 @@ export class ObjectManager {
     _getObjectDimensions(type) {
         switch(type) {
             case 'checkpoint': return { width: 64, height: 64 };
-            case 'trophy': return { width: 32, height: 32 };
+            case 'trophy': return { width: 64, height: 64 };
             case 'player_spawn': return { width: 32, height: 32 };
             case 'trampoline': return { width: 28, height: 28 };
             case 'spike': return { width: 16, height: 16 };
