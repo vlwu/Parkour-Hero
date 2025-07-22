@@ -192,7 +192,8 @@ export class CollisionSystem {
   
   _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
     // Create a simplified player object to pass to trap modules.
-    const player = { pos, vel, col, entityId, entityManager };
+    // MODIFIED: Add `dt` to the player object for physics calculations in traps.
+    const player = { pos, vel, col, entityId, entityManager, dt };
 
     for (const trap of level.traps) {
         // Trampoline has a specific landing condition.

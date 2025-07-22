@@ -11,6 +11,7 @@ const trapFactory = {
   trampoline: Traps.Trampoline,
   spiked_ball: Traps.SpikedBall,
   arrow_bubble: Traps.ArrowBubble,
+  fan: Traps.Fan,
 };
 
 /**
@@ -212,7 +213,7 @@ export class Level {
     });
     
     this.traps.forEach(trap => {
-        trap.reset();
+        trap.reset(eventBus);
     });
 
     if (this.trophy) {

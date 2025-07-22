@@ -15,7 +15,8 @@ export class ParticleSystem {
             mud: { count: 2, baseSpeed: 15, spriteKey: 'mud_particle', life: 0.6, gravity: 100 },
             ice: { count: 2, baseSpeed: 25, spriteKey: 'ice_particle', life: 0.4, gravity: 20 },
             walk_dust: { count: 1, baseSpeed: 15, spriteKey: 'dust_particle', life: 0.4, gravity: 80 },
-            jump_trail: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.3, gravity: 20 }
+            jump_trail: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.3, gravity: 20 },
+            fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
         };
         
         const config = particleConfigs[type];
@@ -33,7 +34,17 @@ export class ParticleSystem {
                 // Emit a particle with low velocity to create a "left behind" trail effect.
                 angle = (Math.random() * Math.PI * 2);
                 speed *= (Math.random() * 0.5);
-            } else {
+            } else if (type === 'fan_push') {
+                let baseAngle = 0;
+                switch (direction) {
+                    case 'up': baseAngle = -Math.PI / 2; break;
+                    case 'left': baseAngle = Math.PI; break;
+                    case 'down': baseAngle = Math.PI / 2; break;
+                    case 'right': default: baseAngle = 0; break;
+                }
+                angle = baseAngle + (Math.random() - 0.5) * (Math.PI / 6); // 30 degree spread
+            }
+            else {
                 // Default "kick up" effect for walking on sand, mud, and dust.
                 angle = - (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 4);
             }
