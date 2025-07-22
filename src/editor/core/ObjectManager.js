@@ -29,13 +29,11 @@ export class ObjectManager {
             if (newObj.type === 'arrow_bubble') {
                 newObj.direction = obj.direction || 'right';
             }
-            // --- MODIFICATION START ---
             if (newObj.type === 'fan') {
                 newObj.direction = obj.direction || 'right';
                 newObj.pushStrength = obj.pushStrength || 250;
                 newObj.windHeight = obj.windHeight || 120;
             }
-            // --- MODIFICATION END ---
             return newObj;
         });
 
@@ -83,13 +81,11 @@ export class ObjectManager {
             newObject.direction = 'right'; // Default direction
         }
         
-        // --- MODIFICATION START ---
         if (type === 'fan') {
             newObject.direction = 'right';
             newObject.pushStrength = 250;
             newObject.windHeight = 120;
         }
-        // --- MODIFICATION END ---
 
         this._applySnapping(newObject);
         newObject.x = round(newObject.x);
@@ -158,7 +154,6 @@ export class ObjectManager {
             el.style.backgroundColor = getPaletteColor(obj.type);
             el.style.opacity = '0.8';
 
-            // --- MODIFICATION START ---
             let angle = 0;
             if (obj.type === 'fan') {
                 // Fan sprite rotation (base sprite faces UP)
@@ -179,7 +174,6 @@ export class ObjectManager {
                 }
             }
             el.style.transform = `rotate(${angle}deg)`;
-            // --- MODIFICATION END ---
 
             if (obj.type === 'player_spawn') {
                 el.innerHTML = '<span style="color: white; font-weight: bold; font-size: 18px;">P</span>';
@@ -222,20 +216,22 @@ export class ObjectManager {
                 const fanW_half_grid = (fan.width / 2) / GRID_CONSTANTS.TILE_SIZE;
                 const fanH_half_grid = (fan.height / 2) / GRID_CONSTANTS.TILE_SIZE;
                 
+                // The distance from the fan's center to the surface it attaches to should always be
+                // half of its shortest dimension (its height of 8px), regardless of orientation.
                 switch(check.dir) {
-                    case 'up':
+                    case 'up': // Fan sits on top of a platform.
                         snapX = tileX + 0.5;
-                        snapY = tileY - fanW_half_grid;
+                        snapY = tileY - fanH_half_grid;
                         break;
-                    case 'down':
+                    case 'down': // Fan hangs below a platform.
                         snapX = tileX + 0.5;
-                        snapY = tileY + 1 + fanW_half_grid;
+                        snapY = tileY + 1 + fanH_half_grid;
                         break;
-                    case 'left':
+                    case 'left': // Fan is on the right side of a platform.
                         snapX = tileX - fanH_half_grid;
                         snapY = tileY + 0.5;
                         break;
-                    case 'right':
+                    case 'right': // Fan is on the left side of a platform.
                         snapX = tileX + 1 + fanH_half_grid;
                         snapY = tileY + 0.5;
                         break;
