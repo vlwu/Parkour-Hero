@@ -61,7 +61,7 @@ export class PlayerStateSystem {
                     ctrl.isHit = true;
                     ctrl.hitStunTimer = PLAYER_CONSTANTS.HIT_STUN_DURATION;
                     this._setAnimationState(renderable, state, 'hit', ctrl);
-                    eventBus.publish('playSound', { key: 'hit', volume: 0.8, channel: 'SFX' });
+                    eventBus.publish('playSound', { key: 'hit', volume: 0.5, channel: 'SFX' });
                 }
             }
         }
