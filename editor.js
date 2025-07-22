@@ -39,7 +39,10 @@ const OBJECT_DESCRIPTIONS = {
     'checkpoint': 'Saves the player\'s progress. The player will respawn here upon death. Snaps to the ground.',
     'trampoline': 'Bounces the player high into the air. Snaps to the ground.',
     'spike': 'A retractable spike trap. Extends when the player is near and retracts after a delay. Snaps to the ground.',
-    'fire_trap': 'A block that erupts in flame when stepped on. Snaps to the ground.'
+    'fire_trap': 'A block that erupts in flame when stepped on. Snaps to the ground.',
+    // --- MODIFICATION START ---
+    'spiked_ball': 'A swinging spiked ball hazard. Place the anchor point; it does not snap to ground. Properties: chain length, swing arc, and speed (period).'
+    // --- MODIFICATION END ---
 };
 
 const PALETTE_ABBREVIATIONS = {
@@ -51,6 +54,9 @@ const PALETTE_ABBREVIATIONS = {
     'trophy': 'GOL', 'checkpoint': 'CHK',
     // Traps
     'trampoline': 'TRP', 'spike': 'SPK', 'fire_trap': 'FIR',
+    // --- MODIFICATION START ---
+    'spiked_ball': 'BAL',
+    // --- MODIFICATION END ---
     // Terrain
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -102,9 +108,13 @@ function resetEditor(width, height) {
 // --- HISTORY (UNDO/REDO) ---
 
 function pushToHistory(action) {
-    historyStack.push(action);
+    // --- MODIFICATION START ---
+    // Added deep cloning for object properties to ensure history is correct
+    const deepClonedAction = JSON.parse(JSON.stringify(action));
+    historyStack.push(deepClonedAction);
     redoStack = []; 
     updateUndoRedoButtons();
+    // --- MODIFICATION END ---
 }
 
 function updateUndoRedoButtons() {
@@ -138,6 +148,17 @@ function undo() {
                 movedObj.y = action.from.y;
             }
             break;
+        // --- MODIFICATION START ---
+        case 'update_prop':
+            const propObj = dynamicObjects.find(o => o.id === action.id);
+            if (propObj) {
+                propObj[action.prop] = action.from;
+                if (selectedObject && selectedObject.id === action.id) {
+                    selectObject(propObj); // Re-render properties panel
+                }
+            }
+            break;
+        // --- MODIFICATION END ---
     }
     renderDynamicObjects();
     updateUndoRedoButtons();
@@ -169,6 +190,17 @@ function redo() {
                 movedObj.y = action.to.y;
             }
             break;
+        // --- MODIFICATION START ---
+        case 'update_prop':
+            const propObj = dynamicObjects.find(o => o.id === action.id);
+            if (propObj) {
+                propObj[action.prop] = action.to;
+                 if (selectedObject && selectedObject.id === action.id) {
+                    selectObject(propObj); // Re-render properties panel
+                }
+            }
+            break;
+        // --- MODIFICATION END ---
     }
     renderDynamicObjects();
     updateUndoRedoButtons();
@@ -185,6 +217,9 @@ function getPaletteColor(type) {
         case 'trampoline': return '#8e44ad';
         case 'spike': return '#e74c3c';
         case 'fire_trap': return '#f39c12';
+        // --- MODIFICATION START ---
+        case 'spiked_ball': return '#7f8c8d';
+        // --- MODIFICATION END ---
         case 'fruit_apple': return '#e74c3c';
         case 'fruit_bananas': return '#f1c40f';
         case 'fruit_cherries': return '#c0392b';
@@ -218,7 +253,9 @@ function populatePalettes() {
     });
 
     // Traps
-    const trapTypes = ['spike', 'fire_trap', 'trampoline'];
+    // --- MODIFICATION START ---
+    const trapTypes = ['spike', 'fire_trap', 'trampoline', 'spiked_ball'];
+    // --- MODIFICATION END ---
     trapTypes.forEach(type => {
         const abbreviation = PALETTE_ABBREVIATIONS[type] || '???';
         const item = createPaletteItem('object', type, type.replace(/_/g, ' '), OBJECT_DESCRIPTIONS[type], abbreviation);
@@ -432,6 +469,9 @@ function getObjectSize(type) {
     if (type === 'trampoline') return 28;
     if (type === 'spike') return 16;
     if (type === 'fire_trap') return 16;
+    // --- MODIFICATION START ---
+    if (type === 'spiked_ball') return 28;
+    // --- MODIFICATION END ---
     return 28; // Default for fruits
 }
 
@@ -454,6 +494,15 @@ function placeObject(pixelX, pixelY, type) {
         y: pixelY / GRID_CONSTANTS.TILE_SIZE,
         size: getObjectSize(type)
     };
+    
+    // --- MODIFICATION START ---
+    // Add default properties for the new trap
+    if (type === 'spiked_ball') {
+        newObject.chainLength = 100;
+        newObject.swingArc = 90;
+        newObject.period = 4;
+    }
+    // --- MODIFICATION END ---
     
     snapObjectToGround(newObject);
     newObject.x = round(newObject.x);
@@ -493,9 +542,42 @@ function renderDynamicObjects() {
 
 function selectObject(obj) {
     selectedObject = obj;
-    propertiesPanel.innerHTML = `<h3 class="properties-title">${obj.type.replace(/_/g, ' ')} (ID: ${obj.id})</h3><label for="prop-x">Grid X:</label><input type="number" id="prop-x" step="0.01" value="${obj.x.toFixed(2)}"><label for="prop-y">Grid Y:</label><input type="number" id="prop-y" step="0.01" value="${obj.y.toFixed(2)}">`;
-    document.getElementById('prop-x').addEventListener('input', e => updateObjectProp(obj.id, 'x', parseFloat(e.target.value)));
-    document.getElementById('prop-y').addEventListener('input', e => updateObjectProp(obj.id, 'y', parseFloat(e.target.value)));
+    let propertiesHTML = `<h3 class="properties-title">${obj.type.replace(/_/g, ' ')} (ID: ${obj.id})</h3>`;
+    
+    // Always add X and Y properties
+    propertiesHTML += `
+        <label for="prop-x">Grid X (Anchor):</label>
+        <input type="number" id="prop-x" step="0.01" value="${obj.x.toFixed(2)}">
+        <label for="prop-y">Grid Y (Anchor):</label>
+        <input type="number" id="prop-y" step="0.01" value="${obj.y.toFixed(2)}">
+    `;
+
+    // --- MODIFICATION START ---
+    // Add specific properties for the spiked ball trap
+    if (obj.type === 'spiked_ball') {
+        propertiesHTML += `
+            <label for="prop-chainLength">Chain Length (pixels):</label>
+            <input type="number" id="prop-chainLength" step="1" value="${obj.chainLength || 100}">
+            <label for="prop-swingArc">Swing Arc (degrees):</label>
+            <input type="number" id="prop-swingArc" step="1" value="${obj.swingArc || 90}">
+            <label for="prop-period">Period (seconds):</label>
+            <input type="number" id="prop-period" step="0.1" value="${obj.period || 4}">
+        `;
+    }
+    // --- MODIFICATION END ---
+    
+    propertiesPanel.innerHTML = propertiesHTML;
+
+    // Attach event listeners
+    document.getElementById('prop-x').addEventListener('input', e => updateObjectProp(obj.id, 'x', parseFloat(e.target.value), e.target));
+    document.getElementById('prop-y').addEventListener('input', e => updateObjectProp(obj.id, 'y', parseFloat(e.target.value), e.target));
+    
+    if (obj.type === 'spiked_ball') {
+        document.getElementById('prop-chainLength').addEventListener('input', e => updateObjectProp(obj.id, 'chainLength', parseFloat(e.target.value), e.target));
+        document.getElementById('prop-swingArc').addEventListener('input', e => updateObjectProp(obj.id, 'swingArc', parseFloat(e.target.value), e.target));
+        document.getElementById('prop-period').addEventListener('input', e => updateObjectProp(obj.id, 'period', parseFloat(e.target.value), e.target));
+    }
+    
     document.querySelectorAll('.dynamic-object').forEach(el => el.classList.remove('selected'));
     const objEl = gridContainer.querySelector(`.dynamic-object[data-id='${obj.id}']`);
     if (objEl) objEl.classList.add('selected');
@@ -509,15 +591,32 @@ function deselectObject() {
     propertiesPanel.innerHTML = `<p>Select an object or palette item for info.</p>`;
 }
 
-function updateObjectProp(id, prop, value) {
+// --- MODIFICATION START ---
+// Added 'element' parameter to manage focus and added history tracking.
+function updateObjectProp(id, prop, value, element) {
     const obj = dynamicObjects.find(o => o.id === id);
     if (obj && !isNaN(value)) {
+        const oldValue = obj[prop];
+        
+        // Push property change to history stack *before* changing it
+        if (element && !element.dataset.isChanging) {
+            element.dataset.isChanging = "true"; // Flag to prevent multiple history entries
+            element.addEventListener('change', () => {
+                const finalValue = round(parseFloat(element.value));
+                 pushToHistory({ type: 'update_prop', id, prop, from: oldValue, to: finalValue });
+                 obj[prop] = finalValue; // Update with the final value after user is done
+                delete element.dataset.isChanging;
+            }, { once: true });
+        }
+        
         obj[prop] = round(value);
         renderDynamicObjects();
         const objEl = gridContainer.querySelector(`.dynamic-object[data-id='${id}']`);
         if (objEl) objEl.classList.add('selected');
     }
 }
+// --- MODIFICATION END ---
+
 
 function deleteObject(id) {
     const objToDelete = dynamicObjects.find(o => o.id === id);
@@ -561,7 +660,18 @@ function loadGridLevel(data) {
         });
     });
     
-    dynamicObjects = (data.objects || []).map((obj, i) => ({ ...obj, id: i, size: getObjectSize(obj.type) }));
+    dynamicObjects = (data.objects || []).map((obj, i) => {
+        const baseObj = { ...obj, id: i, size: getObjectSize(obj.type) };
+        // --- MODIFICATION START ---
+        // Ensure loaded spiked balls have default properties if they are missing
+        if (baseObj.type === 'spiked_ball') {
+            baseObj.chainLength = obj.chainLength || 100;
+            baseObj.swingArc = obj.swingArc || 90;
+            baseObj.period = obj.period || 4;
+        }
+        // --- MODIFICATION END ---
+        return baseObj;
+    });
     nextObjectId = dynamicObjects.length;
 
     if (data.startPosition) {
@@ -593,7 +703,14 @@ function exportLevelJSON() {
 
     const finalObjects = dynamicObjects
         .filter(obj => obj.type !== 'player_spawn')
-        .map(({ id, size, ...rest }) => ({...rest, x: round(rest.x), y: round(rest.y)}));
+        .map(({ id, size, ...rest }) => {
+            const finalObj = {};
+            // Round all numeric properties before export
+            for (const key in rest) {
+                finalObj[key] = typeof rest[key] === 'number' ? round(rest[key]) : rest[key];
+            }
+            return finalObj;
+        });
     
     const exportData = {
         name: levelNameInput.value, gridWidth: gridWidth, gridHeight: gridHeight,
