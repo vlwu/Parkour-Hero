@@ -168,6 +168,12 @@ export async function loadAssets() {
     fire_on: '/assets/Traps/Fire/on.png',
     spiked_ball_chain: '/assets/Traps/Spiked Ball/Chain.png', 
     spiked_ball: '/assets/Traps/Spiked Ball/Spiked Ball.png', 
+    saw: '/assets/Traps/Saw/on.png', 
+    saw_chain: '/assets/Traps/Saw/Chain.png', 
+    fan_off: '/assets/Traps/Fan/Off.png',
+    fan_on: '/assets/Traps/Fan/On.png',
+    arrow_idle: '/assets/Traps/Arrow/Idle.png',
+    arrow_hit: '/assets/Traps/Arrow/Hit.png',
 
     sand_mud_ice: '/assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
     trampoline_idle: '/assets/Traps/Trampoline/Idle.png',
