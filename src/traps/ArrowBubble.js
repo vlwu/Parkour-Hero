@@ -1,4 +1,4 @@
-import { Trap } from './Trap.js';
+import { Trap } from './templates/Trap.js';
 
 /**
  * An Arrow Bubble trap that pops on contact and sends the player flying.
