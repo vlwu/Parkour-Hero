@@ -160,7 +160,8 @@ export async function loadAssets() {
     checkpoint_inactive: '/assets/Items/Checkpoints/Checkpoint/Checkpoint (No Flag).png',
     checkpoint_activation: '/assets/Items/Checkpoints/Checkpoint/Checkpoint (Flag Out).png',
     checkpoint_active: '/assets/Items/Checkpoints/Checkpoint/Checkpoint (Flag Idle).png',
-    trophy: '/assets/Items/Checkpoints/End/End (Pressed).png',
+    trophy_idle: '/assets/Items/Checkpoints/End/End (Idle).png',
+    trophy_pressed: '/assets/Items/Checkpoints/End/End (Pressed).png',
     // Traps
     spike_two: '/assets/Traps/Spikes/Two.png',
     fire_off: '/assets/Traps/Fire/off.png',

@@ -162,10 +162,25 @@ export class Renderer {
 
   drawTrophy(trophy, camera) {
     if (!camera.isVisible(trophy.x - trophy.size / 2, trophy.y - trophy.size / 2, trophy.size, trophy.size)) return;
-    const sprite = this.assets['trophy']; if (!sprite) return;
-    const frameWidth = sprite.width / trophy.frameCount, srcX = frameWidth * trophy.animationFrame;
+    
+    const isAnimating = trophy.isAnimating || trophy.acquired;
+    const sprite = this.assets[isAnimating ? 'trophy_pressed' : 'trophy_idle'];
+    if (!sprite) return;
+    
+    let frameWidth, srcX;
+    
+    if (isAnimating) {
+        frameWidth = sprite.width / trophy.frameCount;
+        srcX = frameWidth * trophy.animationFrame;
+    } else {
+        frameWidth = sprite.width;
+        srcX = 0;
+    }
+
     if (trophy.inactive) this.ctx.globalAlpha = 0.5;
+    
     this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, trophy.x - trophy.size / 2, trophy.y - trophy.size / 2, trophy.size, trophy.size);
+    
     this.ctx.globalAlpha = 1.0;
   }
 

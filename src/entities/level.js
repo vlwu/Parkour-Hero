@@ -74,7 +74,7 @@ export class Level {
         this.trophy = {
           x: worldX, y: worldY, size: 64,
           frameCount: 8, animationFrame: 0,
-          animationTimer: 0, animationSpeed: 0.1,
+          animationTimer: 0, animationSpeed: 0.07,
           acquired: false, inactive: true, contactMade: false,
           isAnimating: false,
         };
