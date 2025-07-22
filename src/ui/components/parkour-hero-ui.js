@@ -33,6 +33,33 @@ export class ParkourHeroUI extends LitElement {
     }
     .main-menu-buttons button:hover { background-color: #0056b3; transform: translateY(-2px); box-shadow: 0 8px #004a99; }
     .main-menu-buttons button:active { transform: translateY(2px); box-shadow: 0 2px #004a99; }
+
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-shadow: 2px 2px 4px #000000;
+    }
+    .loading-text {
+        font-size: 4em;
+        font-family: 'Arial', sans-serif; /* Fallback font */
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .loading-spinner {
+        border: 8px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top: 8px solid #fff;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
   `;
 
   static properties = {
@@ -45,6 +72,7 @@ export class ParkourHeroUI extends LitElement {
     assets: { type: Object, state: true },
     fontRenderer: { type: Object },
     levelCompleteStats: { type: Object, state: true },
+    isLoading: { type: Boolean, state: true },
   };
 
   constructor() {
@@ -58,6 +86,7 @@ export class ParkourHeroUI extends LitElement {
     this.assets = null;
     this.fontRenderer = null;
     this.levelCompleteStats = null;
+    this.isLoading = true;
   }
 
   connectedCallback() {
@@ -87,6 +116,14 @@ export class ParkourHeroUI extends LitElement {
     eventBus.unsubscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
     eventBus.unsubscribe('assetsLoaded', (assets) => this.assets = assets);
     eventBus.unsubscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
+  }
+
+  updated(changedProperties) {
+    super.updated(changedProperties);
+    // Once both assets and the font renderer are available, the UI is ready.
+    if (this.isLoading && this.assets && this.fontRenderer) {
+      this.isLoading = false;
+    }
   }
 
   _handleLevelLoad = ({ gameState }) => {
@@ -190,16 +227,16 @@ export class ParkourHeroUI extends LitElement {
       `;
     }
 
-    // FIX: Reworked rendering logic for the main menu and modals
     // If the game has NOT started, render the main menu screen.
-    // Any active modal will be rendered on top of it.
+    // This will show a loading screen until all assets are ready.
     if (!this.gameHasStarted) {
       return html`
         <div class="main-menu-overlay">
-          ${this.activeModal === 'main-menu'
+          ${this.isLoading
+            ? this.renderLoadingScreen()
+            : this.activeModal === 'main-menu'
             ? this.renderMainMenuContent()
-            : this.renderActiveModal()
-          }
+            : this.renderActiveModal()}
         </div>
       `;
     }
@@ -208,6 +245,15 @@ export class ParkourHeroUI extends LitElement {
     return this.renderActiveModal();
   }
   
+  renderLoadingScreen() {
+      return html`
+        <div class="loading-container">
+            <div class="loading-text">LOADING...</div>
+            <div class="loading-spinner"></div>
+        </div>
+      `;
+  }
+
   // FIX: Created a new method for just the main menu's content.
   renderMainMenuContent() {
     const buttonTexts = [
