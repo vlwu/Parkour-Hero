@@ -211,6 +211,7 @@ export async function loadAssets() {
     arrow_pop: '/assets/Sounds/Arrow Pop.mp3',
     fan_blowing: '/assets/Sounds/Fan Blowing.mp3',
     rh_slam: '/assets/Sounds/RH Slam.mp3',
+    falling_platform: '/assets/Sounds/Falling Platform Whirring.mp3',
   };
 
   console.log('Starting asset loading...');
