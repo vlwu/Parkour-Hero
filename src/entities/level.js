@@ -10,6 +10,7 @@ const trapFactory = {
   spike: Traps.Spikes,
   trampoline: Traps.Trampoline,
   spiked_ball: Traps.SpikedBall,
+  arrow_bubble: Traps.ArrowBubble,
 };
 
 /**
@@ -83,10 +84,6 @@ export class Level {
     this.completed = false;
   }
 
-  /**
-   * CRITICAL FIX: This method is now more defensive to prevent crashes
-   * from out-of-bounds array access.
-   */
   getTileAt(worldX, worldY) {
     const gridX = Math.floor(worldX / GRID_CONSTANTS.TILE_SIZE);
     const gridY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE);
