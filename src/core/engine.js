@@ -200,12 +200,10 @@ export class Engine {
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) this._respawnPlayer();
 
-    // --- MODIFICATION START ---
     // The individual update calls are replaced by a single, generic update call.
     // The Level class now delegates these updates to the appropriate modules.
     this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus);
-    // --- MODIFICATION END ---
-    
+
     for (let i = this.collectedFruits.length - 1; i >= 0; i--) {
         const collected = this.collectedFruits[i];
         collected.frameTimer += dt;
@@ -308,13 +306,13 @@ export class Engine {
         health.currentHealth = health.maxHealth;
     }
 
-    if (playerCtrl.activeSurfaceSound) {
-        eventBus.publish('stopSoundLoop', { key: playerCtrl.activeSurfaceSound });
-    }
-
     const currentDeathCount = playerCtrl.deathCount;
+    const currentSound = playerCtrl.activeSurfaceSound;
+
     Object.assign(playerCtrl, new PlayerControlledComponent());
+    
     playerCtrl.deathCount = currentDeathCount;
+    playerCtrl.activeSurfaceSound = currentSound;
     playerCtrl.needsRespawn = false;
 
     state.currentState = 'spawn';
