@@ -15,22 +15,15 @@ export class Fan extends Trap {
         this.height = 8;
         this.type = 'fan';
         
-        // --- MODIFICATION START ---
-        // Configurable properties for level design
         this.direction = config.direction || 'right';
-        // The strength of the push. For 'up', it's a direct velocity. For others, a force.
         this.pushStrength = config.pushStrength || 250; 
-        // The length of the wind column in pixels.
         this.windHeight = config.windHeight || 120;
-        // How close the player needs to be for the sound to play.
         this.soundRadius = config.soundRadius || 250;
-        // --- MODIFICATION END ---
         
-        // Internal state: 'on', 'off'
         this.state = 'off';
         this.onDuration = 5;
         this.offDuration = 5;
-        this.timer = this.offDuration; // Start in the 'off' state
+        this.timer = this.offDuration;
         this.isSoundPlaying = false;
 
         this.onAnimation = {
@@ -44,47 +37,49 @@ export class Fan extends Trap {
     }
 
     /**
-     * The hitbox represents the "column of wind", not the fan's physical body.
-     * Its size and orientation are based on the fan's direction and power.
+     * The hitbox represents the "column of wind". Its size and orientation
+     * are calculated based on the fan's direction and properties.
      */
     get hitbox() {
-        const isVertical = this.direction === 'up' || this.direction === 'down';
-        const bodyWidth = isVertical ? this.width : this.height;
-        const bodyHeight = isVertical ? this.height : this.width;
+        // The fan's physical body dimensions.
+        const bodyWidth = this.width;  // 24
+        const bodyHeight = this.height; // 8
 
+        // Correctly calculate hitbox for all directions
         switch (this.direction) {
             case 'up':
-                // Wind column starts from the fan's base and goes up.
+                // The wind column starts from the top edge of the fan's body and extends upwards.
                 return {
                     x: this.x - bodyWidth / 2,
-                    y: this.y - this.windHeight,
+                    y: this.y - (bodyHeight / 2) - this.windHeight, 
                     width: bodyWidth,
                     height: this.windHeight
                 };
             case 'down':
-                // Wind column starts from the fan's base and goes down.
+                // The wind column starts from the bottom edge of the fan's body and extends downwards.
                 return {
                     x: this.x - bodyWidth / 2,
-                    y: this.y,
+                    y: this.y + bodyHeight / 2,
                     width: bodyWidth,
                     height: this.windHeight
                 };
             case 'left':
-                // Wind column starts from the fan's base and goes left.
+                // The fan is rotated. Its visual width is its bodyHeight, and its visual height is its bodyWidth.
+                // The wind column starts from the left edge of the rotated body and extends leftwards.
                 return {
-                    x: this.x - this.windHeight,
-                    y: this.y - bodyHeight / 2,
+                    x: this.x - (bodyHeight / 2) - this.windHeight,
+                    y: this.y - bodyWidth / 2,
                     width: this.windHeight,
-                    height: bodyHeight
+                    height: bodyWidth 
                 };
             case 'right':
             default:
-                // Wind column starts from the fan's base and goes right.
+                // The wind column starts from the right edge of the rotated body and extends rightwards.
                 return {
-                    x: this.x,
-                    y: this.y - bodyHeight / 2,
+                    x: this.x + bodyHeight / 2,
+                    y: this.y - bodyWidth / 2,
                     width: this.windHeight,
-                    height: bodyHeight
+                    height: bodyWidth
                 };
         }
     }
@@ -98,7 +93,6 @@ export class Fan extends Trap {
     update(dt, playerData, eventBus) {
         this.timer -= dt;
 
-        // --- MODIFICATION: Sound logic is no longer handled in this block ---
         if (this.timer <= 0) {
             if (this.state === 'off') {
                 this.state = 'on';
@@ -110,33 +104,28 @@ export class Fan extends Trap {
         }
 
         if (this.state === 'on') {
-            // Update animation
             this.onAnimation.frameTimer += dt;
             if (this.onAnimation.frameTimer >= this.onAnimation.frameSpeed) {
                 this.onAnimation.frameTimer = 0;
                 this.onAnimation.currentFrame = (this.onAnimation.currentFrame + 1) % this.onAnimation.frameCount;
             }
 
-            // Create particles
             this.particleTimer += dt;
             if (this.particleTimer >= 0.05) {
                 this.particleTimer = 0;
-                // --- MODIFICATION: Pass pushStrength to determine particle speed ---
                 eventBus.publish('createParticles', {
                     x: this.x,
                     y: this.y,
                     type: 'fan_push',
                     direction: this.direction,
-                    particleSpeed: this.pushStrength * 0.75 // Scale factor to look good
+                    particleSpeed: this.pushStrength * 0.75
                 });
             }
         }
 
-        // --- MODIFICATION START: Proximity-based sound logic ---
         const wasSoundPlaying = this.isSoundPlaying;
         let shouldSoundBePlaying = false;
 
-        // Sound should only play if the fan is on AND the player is nearby.
         if (this.state === 'on' && playerData) {
             const distance = Math.sqrt(Math.pow(playerData.x - this.x, 2) + Math.pow(playerData.y - this.y, 2));
             if (distance < this.soundRadius) {
@@ -151,7 +140,6 @@ export class Fan extends Trap {
             eventBus.publish('stopSoundLoop', { key: 'fan_blowing' });
             this.isSoundPlaying = false;
         }
-        // --- MODIFICATION END ---
     }
 
     /**
@@ -162,8 +150,6 @@ export class Fan extends Trap {
      */
     render(ctx, assets, camera) {
         const sprite = this.state === 'on' ? assets.fan_on : assets.fan_off;
-        // The actual fan body is small, so we check visibility against a slightly larger area
-        // to ensure it doesn't pop in/out at screen edges.
         if (!sprite || !camera.isVisible(this.x - 32, this.y - 32, 64, 64)) {
             return;
         }
@@ -209,22 +195,17 @@ export class Fan extends Trap {
 
         const { vel, dt } = player;
 
-        // --- MODIFICATION: Use pushStrength and handle 'up' direction specially ---
         switch (this.direction) {
             case 'up':
-                // Set velocity directly to override gravity and create a strong, consistent lift.
                 vel.vy = -this.pushStrength;
                 break;
             case 'down':
-                // Apply as a continuous downward force.
                 vel.vy += this.pushStrength * dt;
                 break;
             case 'left':
-                // Apply as a continuous horizontal force.
                 vel.vx -= this.pushStrength * dt;
                 break;
             case 'right':
-                // Apply as a continuous horizontal force.
                 vel.vx += this.pushStrength * dt;
                 break;
         }

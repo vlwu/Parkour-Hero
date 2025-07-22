@@ -191,14 +191,13 @@ export class CollisionSystem {
   }
   
   _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
-    // Create a simplified player object to pass to trap modules.
-    // MODIFIED: Add `dt` to the player object for physics calculations in traps.
     const player = { pos, vel, col, entityId, entityManager, dt };
 
     for (const trap of level.traps) {
-        // Trampoline has a specific landing condition.
+        // Refactored trap interaction logic 
         if (trap.type === 'trampoline') {
-            if (vel.vy > 0) { // Must be falling onto it
+            // Trampoline requires a specific "landing on top" check.
+            if (vel.vy > 0) { // Must be falling onto it.
                 const playerBottom = pos.y + col.height;
                 const trampTop = trap.y - trap.height / 2;
                 const trampLeft = trap.x - trap.width / 2;
@@ -206,17 +205,22 @@ export class CollisionSystem {
 
                 if (pos.x + col.width > trampLeft && pos.x < trampLeft + trap.width) {
                     if (playerBottom >= trampTop && prevPlayerBottom <= trampTop + 1) {
-                        // MODIFIED: Delegate to the trampoline module.
                         trap.onCollision(player, eventBus);
-                        return; // Interaction handled, exit to avoid other checks.
+                        // Use 'continue' to prevent other interactions in the same frame after bouncing.
+                        // This fixes a bug where a return statement would exit the function entirely.
+                        continue;
                     }
                 }
             }
-        }
-        // Other traps use a standard overlap check.
-        else {
+        } else if (trap.type === 'fan') {
+            // A fan is a zone of influence. We just need to check if the player overlaps with its wind hitbox.
+            // We use the trap's own 'hitbox' getter which correctly calculates the wind area.
             if (this._isCollidingWith(pos, col, trap)) {
-                // MODIFIED: Delegate to the specific trap module.
+                trap.onCollision(player, eventBus);
+            }
+        } else {
+            // All other traps (like spikes, spiked balls) use a standard overlap check.
+            if (this._isCollidingWith(pos, col, trap)) {
                 trap.onCollision(player, eventBus);
             }
         }

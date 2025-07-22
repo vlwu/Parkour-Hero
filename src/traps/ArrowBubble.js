@@ -15,11 +15,9 @@ export class ArrowBubble extends Trap {
         this.height = 18;
         this.type = 'arrow_bubble';
         
-        // Direction from level data ('right', 'left', 'up', 'down')
         this.direction = config.direction || 'right';
         this.knockbackSpeed = config.knockbackSpeed || 300;
         
-        // Internal state: 'idle', 'hit' (playing pop animation), 'inactive' (gone)
         this.state = 'idle';
 
         this.idleAnimation = {
@@ -53,7 +51,6 @@ export class ArrowBubble extends Trap {
             if (this.hitAnimation.frameTimer >= this.hitAnimation.frameSpeed) {
                 this.hitAnimation.frameTimer = 0;
                 this.hitAnimation.currentFrame++;
-                // After the 'hit' animation completes, the bubble becomes inactive.
                 if (this.hitAnimation.currentFrame >= this.hitAnimation.frameCount) {
                     this.state = 'inactive';
                 }
@@ -68,12 +65,17 @@ export class ArrowBubble extends Trap {
      * @param {Camera} camera The game camera.
      */
     render(ctx, assets, camera) {
-        if (this.state === 'inactive') return; // Do not render if popped.
+        if (this.state === 'inactive') return;
 
+        // --- MODIFICATION START ---
+        // Use world coordinates; the main renderer handles the camera offset.
+        // Add a visibility check for performance.
         const worldX = this.x - this.width / 2;
         const worldY = this.y - this.height / 2;
-        const screenX = worldX - camera.x;
-        const screenY = worldY - camera.y;
+        if (!camera.isVisible(worldX, worldY, this.width, this.height)) {
+            return;
+        }
+        // --- MODIFICATION END ---
 
         const sprite = this.state === 'idle' ? assets.arrow_idle : assets.arrow_hit;
         const frame = this.state === 'idle' ? this.idleAnimation.currentFrame : this.hitAnimation.currentFrame;
@@ -84,15 +86,19 @@ export class ArrowBubble extends Trap {
             const frameHeight = sprite.height;
 
             ctx.save();
-            ctx.translate(screenX + this.width / 2, screenY + this.height / 2);
+            // --- MODIFICATION: Translate to the object's world center ---
+            ctx.translate(this.x, this.y);
 
+            // --- MODIFICATION START: Correct rotation angles ---
+            // Assumes the base sprite points UP.
             let angle = 0;
             switch (this.direction) {
-                case 'up': angle = -Math.PI / 2; break;
-                case 'left': angle = Math.PI; break;
-                case 'down': angle = Math.PI / 2; break;
-                case 'right': default: angle = 0; break;
+                case 'up': angle = 0; break;
+                case 'right': angle = Math.PI / 2; break;
+                case 'down': angle = Math.PI; break;
+                case 'left': default: angle = -Math.PI / 2; break;
             }
+            // --- MODIFICATION END ---
             ctx.rotate(angle);
 
             ctx.drawImage(
@@ -131,13 +137,11 @@ export class ArrowBubble extends Trap {
             case 'right': knockbackVx = this.knockbackSpeed; break;
         }
 
-        // Use the existing 'hazard' event type to trigger knockback without dealing damage.
-        // The GameplaySystem will handle this event and trigger the knockback on the player.
         eventBus.publish('collisionEvent', {
             type: 'hazard',
             entityId: player.entityId,
             entityManager: player.entityManager,
-            damage: 0, // No damage
+            damage: 0,
             knockback: {
                 vx: knockbackVx,
                 vy: knockbackVy,
