@@ -107,11 +107,32 @@ export class SpikedBall extends Trap {
     }
 
     onCollision(player, eventBus) {
+        const playerCenterX = player.pos.x + player.col.width / 2;
+        const playerCenterY = player.pos.y + player.col.height / 2;
+
+        let dx = playerCenterX - this.ballX;
+        let dy = playerCenterY - this.ballY;
+
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance === 0) { // Avoid division by zero if player is perfectly centered
+            dx = 1;
+            dy = 0;
+        } else {
+            dx /= distance;
+            dy /= distance;
+        }
+
+        const knockbackStrength = 200; // A force impulse in pixels/second
+
         eventBus.publish('collisionEvent', { 
             type: 'hazard', 
             entityId: player.entityId, 
             entityManager: player.entityManager, 
-            damage: 50
+            damage: 50,
+            knockback: {
+                vx: dx * knockbackStrength,
+                vy: dy * knockbackStrength - 150 // Add a slight upward force to prevent slamming into ground
+            }
         });
     }
 

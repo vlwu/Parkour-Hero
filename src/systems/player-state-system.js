@@ -16,18 +16,29 @@ import { StateComponent } from '../components/StateComponent.js';
 export class PlayerStateSystem {
     constructor() {
         eventBus.subscribe('playerTookDamage', (e) => this.handleDamageTaken(e));
-        // Subscribe to the new event to clear the internal queue upon respawn.
-        eventBus.subscribe('playerRespawned', () => this.clearDamageEvents());
+        eventBus.subscribe('playerRespawned', () => {
+            this.clearDamageEvents();
+            this.clearKnockbackEvents();
+        });
+        eventBus.subscribe('playerKnockback', (e) => this.handleKnockback(e));
         this.damageEvents = [];
+        this.knockbackEvents = [];
     }
     
-    // A dedicated function to clear the latent damage events.
     clearDamageEvents() {
         this.damageEvents = [];
+    }
+
+    clearKnockbackEvents() {
+        this.knockbackEvents = [];
     }
     
     handleDamageTaken(event) {
         this.damageEvents.push(event);
+    }
+
+    handleKnockback(event) {
+        this.knockbackEvents.push(event);
     }
 
     _processDamageEvents(entityManager) {
@@ -58,8 +69,30 @@ export class PlayerStateSystem {
         this.damageEvents = [];
     }
 
+    _processKnockbackEvents(entityManager) {
+        if (this.knockbackEvents.length === 0) return;
+
+        for (const event of this.knockbackEvents) {
+            const { entityId, vx, vy } = event;
+            const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+            
+            // Apply knockback only if the player is in the 'hit' state,
+            // which should have been set by the damage event in the same frame.
+            if (ctrl && ctrl.isHit) {
+                const vel = entityManager.getComponent(entityId, VelocityComponent);
+                if (vel) {
+                    vel.vx = vx;
+                    vel.vy = vy;
+                }
+            }
+        }
+        
+        this.knockbackEvents = [];
+    }
+
     update(dt, { entityManager }) {
         this._processDamageEvents(entityManager);
+        this._processKnockbackEvents(entityManager);
 
         const entities = entityManager.query([
             PlayerControlledComponent, PositionComponent, VelocityComponent, CollisionComponent,
