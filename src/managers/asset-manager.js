@@ -176,8 +176,7 @@ export async function loadAssets() {
     arrow_hit: '/assets/Traps/Arrow/Hit.png',
     falling_platform_off: '/assets/Traps/Falling Platforms/Off.png',
     falling_platform_on: '/assets/Traps/Falling Platforms/On.png',
-    // RH stands for Rock Head
-    rh_blink: '/assets/Traps/Rock Head/Blink.png',
+    rh_blink: '/assets/Traps/Rock Head/Blink.png', // RH stands for Rock Head
     rh_idle: '/assets/Traps/Rock Head/Idle.png',
     rh_bottom_hit: '/assets/Traps/Rock Head/Bottom Hit.png',
     rh_top_hit: '/assets/Traps/Rock Head/Top Hit.png',
@@ -210,7 +209,8 @@ export async function loadAssets() {
     trampoline_bounce: '/assets/Sounds/Boing.mp3',
     fire_activated: '/assets/Sounds/Fire (Activated).mp3',
     arrow_pop: '/assets/Sounds/Arrow Pop.mp3',
-    fan_blowing: '/assets/Sounds/Fan Blowing.mp3'
+    fan_blowing: '/assets/Sounds/Fan Blowing.mp3',
+    rh_slam: '/assets/Sounds/RH Slam.mp3',
   };
 
   console.log('Starting asset loading...');
