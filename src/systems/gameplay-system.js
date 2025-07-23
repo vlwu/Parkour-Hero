@@ -1,6 +1,6 @@
 import { eventBus } from '../utils/event-bus.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
-import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, TRAP_CONSTANTS } from '../utils/constants.js';
 
 export class GameplaySystem {
     constructor() {
@@ -29,7 +29,7 @@ export class GameplaySystem {
                 eventBus.publish('playerDied');
                 break;
             case 'hazard':
-                const hazardDamage = damage !== undefined ? damage : 25;
+                const hazardDamage = damage !== undefined ? damage : TRAP_CONSTANTS.DEFAULT_HAZARD_DAMAGE;
 
 
                 if (hazardDamage > 0) {

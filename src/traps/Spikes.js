@@ -1,5 +1,6 @@
 import { Trap } from './templates/Trap.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
+import { TRAP_CONSTANTS } from '../utils/constants.js';
 
 export class Spikes extends Trap {
     constructor(x, y, config) {
@@ -11,7 +12,7 @@ export class Spikes extends Trap {
         this.warningDuration = 0.4;
         this.retractDelay = 1.5;
         this.timer = 0;
-        this.damage = config.damage || 40;
+        this.damage = config.damage || TRAP_CONSTANTS.SPIKE_DAMAGE;
     }
 
 
@@ -92,8 +93,8 @@ export class Spikes extends Trap {
         const renderable = player.entityManager.getComponent(player.entityId, RenderableComponent);
         if (!renderable) return;
 
-        const knockbackVx = renderable.direction === 'right' ? -150 : 150;
-        const knockbackVy = -200;
+        const knockbackVx = renderable.direction === 'right' ? -TRAP_CONSTANTS.SPIKE_KNOCKBACK_X : TRAP_CONSTANTS.SPIKE_KNOCKBACK_X;
+        const knockbackVy = TRAP_CONSTANTS.SPIKE_KNOCKBACK_Y;
 
         eventBus.publish('collisionEvent', {
             type: 'hazard',

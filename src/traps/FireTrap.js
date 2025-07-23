@@ -1,39 +1,38 @@
-// src/traps/FireTrap.js
-
 import { Trap } from './templates/Trap.js';
+import { TRAP_CONSTANTS } from '../utils/constants.js';
 
 export class FireTrap extends Trap {
     constructor(x, y, config) {
         super(x, y, { ...config, width: 16, height: 16 });
-        
+
         this.solid = true;
         this.state = 'off';
         this.playerIsOnTop = false;
         this.frame = 0;
         this.frameTimer = 0;
         this.turnOffTimer = 0;
-        this.damageTimer = 1.0;
+        this.damageTimer = TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL;
         this.anim = {
             activating: { frames: 4, speed: 0.1 },
             on: { frames: 3, speed: 0.15 }
         };
     }
 
-    /**
-     * CRITICAL FIX: The hitbox for the fire trap changes based on its state.
-     * When it's 'on', the hitbox is the large flame area for dealing damage.
-     * Otherwise, it's just the small physical base.
-     */
+
+
+
+
+
     get hitbox() {
         if (this.state === 'on' || this.state === 'activating') {
             return {
                 x: this.x - this.width / 2,
-                y: this.y - this.height * 1.5, // Hitbox starts above the base
+                y: this.y - this.height * 1.5,
                 width: this.width,
-                height: this.height * 2 // The full height of the flame sprite
+                height: this.height * 2
             };
         }
-        // Default hitbox is just the solid base
+
         return {
             x: this.x - this.width / 2,
             y: this.y - this.height / 2,
@@ -79,7 +78,7 @@ export class FireTrap extends Trap {
         if (this.state === 'on') {
             this.damageTimer += dt;
         } else if (!this.playerIsOnTop) {
-            this.damageTimer = 1.0;
+            this.damageTimer = TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL;
         }
     }
 
@@ -88,7 +87,7 @@ export class FireTrap extends Trap {
 
         const drawX = this.x - this.width / 2;
         const drawY = this.y - this.height / 2;
-        
+
         const baseSprite = assets.fire_off;
         if (baseSprite) {
             ctx.drawImage(baseSprite, 0, 16, 16, 16, drawX, drawY, this.width, this.height);
@@ -115,8 +114,8 @@ export class FireTrap extends Trap {
     onLanded(eventBus) {
         this.playerIsOnTop = true;
         if (this.state === 'off' || this.state === 'turning_off') {
-            this.state = 'activating'; 
-            this.frame = 0; 
+            this.state = 'activating';
+            this.frame = 0;
             this.frameTimer = 0;
             eventBus.publish('playSound', { key: 'fire_activated', volume: 0.8, channel: 'SFX' });
         }
@@ -124,10 +123,10 @@ export class FireTrap extends Trap {
 
     onCollision(player, eventBus) {
         if (this.state !== 'on') return;
-        
-        if (this.damageTimer >= 1.0) {
-            this.damageTimer -= 1.0;
-            eventBus.publish('playerTookDamage', { amount: 10, source: 'fire' });
+
+        if (this.damageTimer >= TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL) {
+            this.damageTimer -= TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL;
+            eventBus.publish('playerTookDamage', { amount: TRAP_CONSTANTS.FIRE_TRAP_DAMAGE, source: 'fire' });
         }
     }
 
@@ -137,6 +136,6 @@ export class FireTrap extends Trap {
         this.frame = 0;
         this.frameTimer = 0;
         this.turnOffTimer = 0;
-        this.damageTimer = 1.0;
+        this.damageTimer = TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL;
     }
 }
