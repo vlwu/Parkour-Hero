@@ -1,4 +1,5 @@
 import { Trap } from './templates/Trap.js';
+import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 
 /**
  * A Fan trap that periodically turns on, pushing the player.
@@ -41,14 +42,11 @@ export class Fan extends Trap {
      * are calculated based on the fan's direction and properties.
      */
     get hitbox() {
-        // The fan's physical body dimensions.
-        const bodyWidth = this.width;  // 24
-        const bodyHeight = this.height; // 8
+        const bodyWidth = this.width;
+        const bodyHeight = this.height;
 
-        // Correctly calculate hitbox for all directions
         switch (this.direction) {
             case 'up':
-                // The wind column starts from the top edge of the fan's body and extends upwards.
                 return {
                     x: this.x - bodyWidth / 2,
                     y: this.y - (bodyHeight / 2) - this.windHeight, 
@@ -56,7 +54,6 @@ export class Fan extends Trap {
                     height: this.windHeight
                 };
             case 'down':
-                // The wind column starts from the bottom edge of the fan's body and extends downwards.
                 return {
                     x: this.x - bodyWidth / 2,
                     y: this.y + bodyHeight / 2,
@@ -64,8 +61,6 @@ export class Fan extends Trap {
                     height: this.windHeight
                 };
             case 'left':
-                // The fan is rotated. Its visual width is its bodyHeight, and its visual height is its bodyWidth.
-                // The wind column starts from the left edge of the rotated body and extends leftwards.
                 return {
                     x: this.x - (bodyHeight / 2) - this.windHeight,
                     y: this.y - bodyWidth / 2,
@@ -74,7 +69,6 @@ export class Fan extends Trap {
                 };
             case 'right':
             default:
-                // The wind column starts from the right edge of the rotated body and extends rightwards.
                 return {
                     x: this.x + bodyHeight / 2,
                     y: this.y - bodyWidth / 2,
@@ -192,6 +186,11 @@ export class Fan extends Trap {
      */
     onCollision(player) {
         if (this.state !== 'on') return;
+
+        const ctrl = player.entityManager.getComponent(player.entityId, PlayerControlledComponent);
+        if (!ctrl) return;
+        
+        ctrl.isPushed = true;
 
         const { vel } = player;
 

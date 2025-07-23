@@ -1,4 +1,5 @@
 import { Trap } from './templates/Trap.js';
+import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 
 /**
  * An Arrow Bubble trap that pops on contact and sends the player flying.
@@ -67,8 +68,6 @@ export class ArrowBubble extends Trap {
     render(ctx, assets, camera) {
         if (this.state === 'inactive') return;
 
-        // Use world coordinates; the main renderer handles the camera offset.
-        // Add a visibility check for performance.
         const worldX = this.x - this.width / 2;
         const worldY = this.y - this.height / 2;
         if (!camera.isVisible(worldX, worldY, this.width, this.height)) {
@@ -86,7 +85,6 @@ export class ArrowBubble extends Trap {
             ctx.save();
             ctx.translate(this.x, this.y);
 
-            // Assumes the base sprite points UP.
             let angle = 0;
             switch (this.direction) {
                 case 'up': angle = 0; break;
@@ -116,13 +114,24 @@ export class ArrowBubble extends Trap {
     onCollision(player, eventBus) {
         if (this.state !== 'idle') return;
 
+        const ctrl = player.entityManager.getComponent(player.entityId, PlayerControlledComponent);
+        if (!ctrl) return;
+
         this.state = 'hit';
         this.hitAnimation.currentFrame = 0;
         this.hitAnimation.frameTimer = 0;
         
         eventBus.publish('playSound', { key: 'arrow_pop', volume: 0.8, channel: 'SFX' });
 
+        ctrl.isPushed = true;
+
         const { vel } = player;
+
+        if (this.direction === 'up' || this.direction === 'down') {
+            vel.vx = 0;
+        } else {
+            vel.vy = 0;
+        }
 
         switch (this.direction) {
             case 'up':

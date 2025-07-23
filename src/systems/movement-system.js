@@ -42,39 +42,38 @@ export class MovementSystem {
 
     _applyHorizontalMovement(dt, input, vel, col, ctrl) {
         if (ctrl.isDashing || ctrl.isHit) {
-            if (ctrl.isHit) vel.vx = 0;
             return;
         }
 
-        const GROUND_FRICTION = 1000; // A sensible default friction value
+        const applyInput = !ctrl.isPushed;
+        ctrl.isPushed = false;
+
+        const GROUND_FRICTION = 1000;
 
         if (col.isGrounded && col.groundType === 'ice') {
             const acc = PLAYER_CONSTANTS.ICE_ACCELERATION;
             const fric = PLAYER_CONSTANTS.ICE_FRICTION;
-            if (input.moveLeft) {
+            if (applyInput && input.moveLeft) {
                 vel.vx -= acc * dt;
-            } else if (input.moveRight) {
+            } else if (applyInput && input.moveRight) {
                 vel.vx += acc * dt;
             } else {
-                // Correctly apply friction only when moving
                 if (vel.vx > 0) {
                     vel.vx -= fric * dt;
-                    if (vel.vx < 0) vel.vx = 0; // Clamp to zero, prevent overshooting
+                    if (vel.vx < 0) vel.vx = 0;
                 } else if (vel.vx < 0) {
                     vel.vx += fric * dt;
-                    if (vel.vx > 0) vel.vx = 0; // Clamp to zero, prevent overshooting
+                    if (vel.vx > 0) vel.vx = 0;
                 }
             }
             vel.vx = Math.max(-ctrl.speed, Math.min(ctrl.speed, vel.vx));
         } else {
             const moveSpeed = ctrl.speed * (col.isGrounded && col.groundType === 'sand' ? PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER : 1);
-            if (input.moveLeft) {
+            if (applyInput && input.moveLeft) {
                 vel.vx = -moveSpeed;
-            } else if (input.moveRight) {
+            } else if (applyInput && input.moveRight) {
                 vel.vx = moveSpeed;
             } else {
-                // Apply friction when there is no input, instead of setting velocity to 0.
-                // This allows external forces like fans to work correctly.
                 if (vel.vx > 0) {
                     vel.vx -= GROUND_FRICTION * dt;
                     if (vel.vx < 0) vel.vx = 0;
