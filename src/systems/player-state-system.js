@@ -54,7 +54,7 @@ export class PlayerStateSystem {
                 if ((event.source === 'fall' || event.source === 'fire' || event.source === 'hazard') && !ctrl.isHit) {
                     ctrl.isHit = true;
                     ctrl.hitStunTimer = PLAYER_CONSTANTS.HIT_STUN_DURATION;
-                    this._setAnimationState(renderable, state, 'hit', ctrl);
+                    this._setAnimationState(renderable, state, 'hit', ctrl, entityManager.getComponent(entityId, CollisionComponent));
                     eventBus.publish('playSound', { key: 'hit', volume: 0.5, channel: 'SFX' });
                 }
             }
@@ -180,7 +180,7 @@ export class PlayerStateSystem {
                 vel.vy = -ctrl.jumpForce;
                 ctrl.jumpCount = 2;
                 ctrl.jumpBufferTimer = 0;
-                this._setAnimationState(renderable, state, 'double_jump', ctrl);
+                this._setAnimationState(renderable, state, 'double_jump', ctrl, col);
                 eventBus.publish('playSound', { key: 'double_jump', volume: 0.6, channel: 'SFX' });
                 eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'double_jump' });
             }
@@ -195,7 +195,7 @@ export class PlayerStateSystem {
             vel.vx = renderable.direction === 'right' ? ctrl.dashSpeed : -ctrl.dashSpeed;
             vel.vy = 0;
             ctrl.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN;
-            this._setAnimationState(renderable, state, 'dash', ctrl);
+            this._setAnimationState(renderable, state, 'dash', ctrl, col);
             eventBus.publish('playSound', { key: 'dash', volume: 0.7, channel: 'SFX' });
             eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: 'dash', direction: renderable.direction });
         }
@@ -210,43 +210,59 @@ export class PlayerStateSystem {
         }
 
         if (currentState === 'spawn' && ctrl.spawnComplete) {
-            this._setAnimationState(renderable, state, 'idle', ctrl);
+            this._setAnimationState(renderable, state, 'idle', ctrl, col);
             return;
         }
 
         if (ctrl.isHit) {
-            if (currentState !== 'hit') this._setAnimationState(renderable, state, 'hit', ctrl);
+            if (currentState !== 'hit') this._setAnimationState(renderable, state, 'hit', ctrl, col);
             return;
         }
 
         if (currentState === 'hit' && !ctrl.isHit) {
-             this._setAnimationState(renderable, state, 'idle', ctrl);
+             this._setAnimationState(renderable, state, 'idle', ctrl, col);
         }
 
         if (ctrl.isDashing) {
-            if (currentState !== 'dash') this._setAnimationState(renderable, state, 'dash', ctrl);
+            if (currentState !== 'dash') this._setAnimationState(renderable, state, 'dash', ctrl, col);
             return;
         }
 
         if (col.isAgainstWall && !col.isGrounded && vel.vy >= 0) {
-            if (currentState !== 'cling') this._setAnimationState(renderable, state, 'cling', ctrl);
+            if (currentState !== 'cling') this._setAnimationState(renderable, state, 'cling', ctrl, col);
         } else if (!col.isGrounded) {
             if (vel.vy < 0 && currentState !== 'jump' && currentState !== 'double_jump') {
-                this._setAnimationState(renderable, state, 'jump', ctrl);
+                this._setAnimationState(renderable, state, 'jump', ctrl, col);
             } else if (vel.vy > 0.1 && currentState !== 'fall') {
-                this._setAnimationState(renderable, state, 'fall', ctrl);
+                this._setAnimationState(renderable, state, 'fall', ctrl, col);
             }
         } else {
             if (Math.abs(vel.vx) > 1) {
-                if (currentState !== 'run') this._setAnimationState(renderable, state, 'run', ctrl);
+                if (currentState !== 'run') this._setAnimationState(renderable, state, 'run', ctrl, col);
             } else {
-                if (currentState !== 'idle') this._setAnimationState(renderable, state, 'idle', ctrl);
+                if (currentState !== 'idle') this._setAnimationState(renderable, state, 'idle', ctrl, col);
             }
         }
     }
 
-    _setAnimationState(renderable, state, newState, ctrl) {
+    _setAnimationState(renderable, state, newState, ctrl, col) {
         if (state.currentState !== newState) {
+            let requiredSound = null;
+            if (newState === 'run' && col.isGrounded) {
+                const surfaceSounds = { 'sand': 'sand_walk', 'mud': 'mud_run', 'ice': 'ice_run' };
+                requiredSound = surfaceSounds[col.groundType] || null;
+            }
+
+            if (requiredSound !== ctrl.activeSurfaceSound) {
+                if (ctrl.activeSurfaceSound) {
+                    eventBus.publish('stopSoundLoop', { key: ctrl.activeSurfaceSound });
+                }
+                if (requiredSound) {
+                    eventBus.publish('startSoundLoop', { key: requiredSound, channel: 'SFX' });
+                }
+                ctrl.activeSurfaceSound = requiredSound;
+            }
+
             state.currentState = newState;
             renderable.animationState = newState;
             renderable.animationFrame = 0;

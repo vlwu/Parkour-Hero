@@ -6,11 +6,6 @@ import { PlayerControlledComponent } from '../components/PlayerControlledCompone
 import { InputComponent } from '../components/InputComponent.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 
-/**
- * Applies physics forces and movement rules to entities.
- * This system is responsible for changing entity velocities based on their
- * state and interactions with the environment (e.g., ice, sand).
- */
 export class MovementSystem {
     constructor() {}
 
@@ -27,10 +22,6 @@ export class MovementSystem {
             if (ctrl.isSpawning || ctrl.isDespawning) {
                 vel.vx = 0;
                 vel.vy = 0;
-                if (ctrl.activeSurfaceSound) {
-                    eventBus.publish('stopSoundLoop', { key: ctrl.activeSurfaceSound });
-                    ctrl.activeSurfaceSound = null;
-                }
                 continue;
             };
 
@@ -47,9 +38,9 @@ export class MovementSystem {
         }
 
         const applyInput = !ctrl.hLock;
-        ctrl.hLock = false; // Reset lock for the next frame cycle.
+        ctrl.hLock = false;
 
-        const GROUND_FRICTION = 1000; // A sensible default friction value
+        const GROUND_FRICTION = 1000;
 
         if (col.isGrounded && col.groundType === 'ice') {
             const acc = PLAYER_CONSTANTS.ICE_ACCELERATION;
@@ -59,13 +50,12 @@ export class MovementSystem {
             } else if (applyInput && input.moveRight) {
                 vel.vx += acc * dt;
             } else {
-                // Correctly apply friction only when moving
                 if (vel.vx > 0) {
                     vel.vx -= fric * dt;
-                    if (vel.vx < 0) vel.vx = 0; // Clamp to zero, prevent overshooting
+                    if (vel.vx < 0) vel.vx = 0;
                 } else if (vel.vx < 0) {
                     vel.vx += fric * dt;
-                    if (vel.vx > 0) vel.vx = 0; // Clamp to zero, prevent overshooting
+                    if (vel.vx > 0) vel.vx = 0;
                 }
             }
             vel.vx = Math.max(-ctrl.speed, Math.min(ctrl.speed, vel.vx));
@@ -76,8 +66,6 @@ export class MovementSystem {
             } else if (applyInput && input.moveRight) {
                 vel.vx = moveSpeed;
             } else {
-                // Apply friction when there is no input, instead of setting velocity to 0.
-                // This allows external forces like fans to work correctly.
                 if (vel.vx > 0) {
                     vel.vx -= GROUND_FRICTION * dt;
                     if (vel.vx < 0) vel.vx = 0;
@@ -90,42 +78,33 @@ export class MovementSystem {
     }
 
     _applyVerticalMovement(dt, vel, col, ctrl) {
-        // Only apply gravity if the player is not on the ground, and not in a special state
         if (!col.isGrounded && !ctrl.isDashing && !ctrl.isHit && !ctrl.isSpawning) {
             vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
         }
 
         if (col.isAgainstWall && !col.isGrounded) {
-            vel.vy = Math.min(vel.vy, 30); // Slower slide speed
+            vel.vy = Math.min(vel.vy, 30);
         }
-        
+
         vel.vy = Math.min(vel.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
     }
 
     _updateSurfaceEffects(dt, pos, vel, col, ctrl) {
         const onGroundAndMoving = col.isGrounded && Math.abs(vel.vx) > 1 && !ctrl.isDashing && !ctrl.isHit;
-        const requiredSound = onGroundAndMoving ? { 'sand': 'sand_walk', 'mud': 'mud_run', 'ice': 'ice_run' }[col.groundType] : null;
-
-        if (requiredSound !== ctrl.activeSurfaceSound) {
-            if (ctrl.activeSurfaceSound) eventBus.publish('stopSoundLoop', { key: ctrl.activeSurfaceSound });
-            if (requiredSound) eventBus.publish('startSoundLoop', { key: requiredSound, channel: 'SFX' });
-            ctrl.activeSurfaceSound = requiredSound;
-        }
-
         if (onGroundAndMoving) {
             ctrl.surfaceParticleTimer += dt;
             const particleInterval = (col.groundType === 'sand' || col.groundType === 'mud') ? 0.1 : 0.15;
-            
+
             if (ctrl.surfaceParticleTimer >= particleInterval) {
                 ctrl.surfaceParticleTimer = 0;
-                
+
                 let particleType;
                 switch (col.groundType) {
                     case 'sand': particleType = 'sand'; break;
                     case 'mud': particleType = 'mud'; break;
                     case 'ice': particleType = 'ice'; break;
                     default:
-                        if (col.groundType) { 
+                        if (col.groundType) {
                             particleType = 'walk_dust';
                         }
                         break;
