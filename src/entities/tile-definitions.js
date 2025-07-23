@@ -14,8 +14,7 @@ export const TILE_DEFINITIONS = {
   '9': { type: 'ice', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 128, srcY: 0 }, interaction: 'ice', description: 'A solid block of slippery ice. Reduces friction. Wall-jumps are not possible.' },
 
   // One-way platforms
-  'a': { type: 'oneway_gold', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 0 }, description: 'A one-way platform made of gold. The player can jump through it from below.' },
-  'b': { type: 'oneway_wood', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 16 }, description: 'A one-way platform made of wood. The player can jump through it from below.' },
-  'c': { type: 'oneway_stone', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 32 }, description: 'A one-way platform made of stone. The player can jump through it from below.' },
-  
+  'a': { type: 'oneway_gold', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 0, height: 5 }, description: 'A one-way platform made of gold. The player can jump through it from below.' },
+  'b': { type: 'oneway_wood', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 16, height: 5 }, description: 'A one-way platform made of wood. The player can jump through it from below.' },
+  'c': { type: 'oneway_stone', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 32, height: 5 }, description: 'A one-way platform made of stone. The player can jump through it from below.' },
 };

@@ -151,7 +151,14 @@ export class Renderer {
         const drawSize = tileSize + 1;
         
         if (tile.spriteConfig) {
-            this.ctx.drawImage(sprite, tile.spriteConfig.srcX, tile.spriteConfig.srcY, tileSize, tileSize, screenX, screenY, drawSize, drawSize);
+            const sWidth = tileSize;
+            const sHeight = tile.spriteConfig.height || tileSize;
+            const dWidth = drawSize;
+            // If the tile has a special height, use that for drawing, otherwise use the default drawSize.
+            // Do not add +1 for overlap on thin platforms to prevent visual artifacts.
+            const dHeight = sHeight === tileSize ? drawSize : sHeight;
+
+            this.ctx.drawImage(sprite, tile.spriteConfig.srcX, tile.spriteConfig.srcY, sWidth, sHeight, screenX, screenY, dWidth, dHeight);
         } else {
             this.ctx.drawImage(sprite, screenX, screenY, drawSize, drawSize);
         }
