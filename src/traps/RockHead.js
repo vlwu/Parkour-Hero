@@ -117,7 +117,7 @@ export class RockHead extends Trap {
             this.state = 'slammed';
             this.timers.slammed = 0.4;
             this.animations.hit.frame = 0;
-            eventBus.publish('playSound', { key: 'rh_slam', volume: 1.0, channel: 'SFX' });
+            eventBus.publish('playSound', { key: 'rh_slam', volume: 1.5, channel: 'SFX' });
             eventBus.publish('cameraShakeRequested', { intensity: 15, duration: 0.4 });
             eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'walk_dust', particleSpeed: 200 });
             eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'sand', particleSpeed: 200 });

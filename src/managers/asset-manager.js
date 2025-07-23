@@ -180,9 +180,9 @@ export async function loadAssets() {
     rh_blink: '/assets/Traps/Rock Head/Blink.png', // RH stands for Rock Head
     rh_idle: '/assets/Traps/Rock Head/Idle.png',
     rh_bottom_hit: '/assets/Traps/Rock Head/Bottom Hit.png',
-    rh_top_hit: '/assets/Traps/Rock Head/Top Hit.png',
-    rh_left_hit: '/assets/Traps/Rock Head/Left Hit.png',
-    rh_right_hit: '/assets/Traps/Rock Head/Right Hit.png',
+    sh_blink: '/assets/Traps/Spike Head/Blink.png', // SH stands for Spike Head
+    sh_idle: '/assets/Traps/Spike Head/Idle.png',
+    sh_bottom_hit: '/assets/Traps/Spike Head/Bottom Hit.png',
 
     sand_mud_ice: '/assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
     trampoline_idle: '/assets/Traps/Trampoline/Idle.png',
@@ -213,6 +213,7 @@ export async function loadAssets() {
     arrow_pop: '/assets/Sounds/Arrow Pop.mp3',
     fan_blowing: '/assets/Sounds/Fan Blowing.mp3',
     rh_slam: '/assets/Sounds/RH Slam.mp3',
+    sh_slam: '/assets/Sounds/SH Slam.mp3',
     falling_platform: '/assets/Sounds/Falling Platform Whirring.mp3',
   };
 
