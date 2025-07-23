@@ -8,7 +8,14 @@ export const TILE_DEFINITIONS = {
   '5': { type: 'orange_dirt', solid: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 96, srcY: 64 }, description: 'Solid orange dirt. Wall-jumps are not possible on this surface.' },
   '6': { type: 'pink_dirt', solid: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 96, srcY: 128 }, description: 'Solid pink dirt. Wall-jumps are not possible on this surface.' },
   
+  // Special platforms
   '7': { type: 'sand', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 0, srcY: 0 }, interaction: 'sand', description: 'A solid block of sand. Slows player movement. Wall-jumps are not possible.' },
   '8': { type: 'mud', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 64, srcY: 0 }, interaction: 'mud', description: 'A solid block of mud. Reduces jump height. Wall-jumps are not possible.' },
   '9': { type: 'ice', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 128, srcY: 0 }, interaction: 'ice', description: 'A solid block of slippery ice. Reduces friction. Wall-jumps are not possible.' },
+
+  // One-way platforms
+  'a': { type: 'oneway_gold', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 0 }, description: 'A one-way platform made of gold. The player can jump through it from below.' },
+  'b': { type: 'oneway_wood', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 16 }, description: 'A one-way platform made of wood. The player can jump through it from below.' },
+  'c': { type: 'oneway_stone', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 32 }, description: 'A one-way platform made of stone. The player can jump through it from below.' },
+  
 };

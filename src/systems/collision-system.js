@@ -55,7 +55,7 @@ export class CollisionSystem {
 
     for (let y = topTile; y <= bottomTile; y++) {
       const tile = level.getTileAt(tileX * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE);
-      if (tile && tile.solid) {
+      if (tile && tile.solid && !tile.oneWay) {
         pos.x = vel.vx > 0 ? tileX * GRID_CONSTANTS.TILE_SIZE - col.width : (tileX + 1) * GRID_CONSTANTS.TILE_SIZE;
         vel.vx = 0;
         col.isAgainstWall = !['dirt', 'sand', 'mud', 'ice'].includes(tile.type);
@@ -73,7 +73,7 @@ export class CollisionSystem {
         const tileY = Math.floor(pos.y / GRID_CONSTANTS.TILE_SIZE);
         for (let x = leftTile; x <= rightTile; x++) {
             const tile = level.getTileAt(x * GRID_CONSTANTS.TILE_SIZE, tileY * GRID_CONSTANTS.TILE_SIZE);
-            if (tile && tile.solid) {
+            if (tile && tile.solid && !tile.oneWay) {
                 pos.y = (tileY + 1) * GRID_CONSTANTS.TILE_SIZE;
                 vel.vy = 0;
                 return;
