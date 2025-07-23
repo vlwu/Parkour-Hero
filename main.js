@@ -1,9 +1,7 @@
 import { Engine } from './src/core/engine.js';
 import { loadAssets } from './src/managers/asset-manager.js';
-import { InputManager } from './src/systems/input-system.js';
 import { eventBus } from './src/utils/event-bus.js';
 import { FontRenderer } from './src/ui/font-renderer.js';
-import { inputState } from './src/systems/input-state.js';
 import './src/ui/ui-main.js';
 
 const canvas = document.getElementById('gameCanvas');
@@ -51,7 +49,7 @@ function resizeCanvas() {
     canvas.style.position = 'absolute';
     canvas.style.left = left;
     canvas.style.top = top;
-    
+
     if (uiRoot) {
         uiRoot.style.width = `${finalWidth}px`;
         uiRoot.style.height = `${finalHeight}px`;
@@ -74,21 +72,21 @@ resizeCanvas();
 function showLoadingIndicator() {
   ctx.fillStyle = '#222';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
+
   ctx.fillStyle = 'white';
   ctx.font = '24px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Loading Assets...', canvas.width / 2, canvas.height / 2);
-  
+
   const barWidth = 300;
   const barHeight = 20;
   const barX = (canvas.width - barWidth) / 2;
   const barY = canvas.height / 2 + 30;
-  
+
   ctx.strokeStyle = 'white';
   ctx.lineWidth = 2;
   ctx.strokeRect(barX, barY, barWidth, barHeight);
-  
+
   ctx.fillStyle = '#4CAF50';
   ctx.fillRect(barX, barY, barWidth * 0.1, barHeight);
 }
@@ -103,25 +101,22 @@ let keybinds = {
 };
 
 let engine;
-let inputManager;
 
 loadAssets().then((assets) => {
   console.log('Assets loaded successfully, preparing main menu...');
-  
+
   try {
     const fontRenderer = new FontRenderer(assets.font_spritesheet);
     engine = new Engine(ctx, canvas, assets, keybinds, fontRenderer);
 
     eventBus.publish('assetsLoaded', assets);
 
-    // Inject the FontRenderer instance into the already-rendered UI component
+
     const uiRoot = document.querySelector('parkour-hero-ui');
     if (uiRoot) {
         uiRoot.fontRenderer = fontRenderer;
     }
 
-    inputManager = new InputManager();
-    
     eventBus.subscribe('requestStartGame', () => {
         engine.start();
     });
@@ -133,7 +128,7 @@ loadAssets().then((assets) => {
         }
     };
     console.log('Developer command available: Type `unlockAllLevels()` in the console to unlock all levels.');
-    
+
     window.resetProgress = () => {
         if (engine && engine.gameState) {
             engine.gameState.resetProgress();
@@ -143,11 +138,11 @@ loadAssets().then((assets) => {
         }
     };
     console.log('Developer command available: Type `resetProgress()` in the console to reset all saved data.');
-    
+
     console.log('Game is ready. Waiting for user to start from the main menu.');
   } catch (error) {
     console.error('Failed to start game engine:', error);
-    
+
     ctx.fillStyle = '#222';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'red';
@@ -158,7 +153,7 @@ loadAssets().then((assets) => {
     ctx.font = '16px sans-serif';
     ctx.fillText('Check console for details', canvas.width / 2, canvas.height / 2 + 20);
   }
-  
+
 }).catch((error) => {
   console.error("Asset loading failed:", error);
 
