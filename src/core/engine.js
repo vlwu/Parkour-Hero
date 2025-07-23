@@ -294,6 +294,16 @@ export class Engine {
     else this.currentLevel.fruits.forEach(f => f.collected = false);
     this.currentLevel.recalculateCollectedFruits();
 
+    // Reset the trophy state based on whether fruits are all collected after respawning.
+    if (this.currentLevel.trophy) {
+        const allFruitsAreCollected = this.currentLevel.allFruitsCollected();
+        this.currentLevel.trophy.acquired = false;
+        this.currentLevel.trophy.isAnimating = false;
+        this.currentLevel.trophy.animationFrame = 0;
+        this.currentLevel.trophy.animationTimer = 0;
+        this.currentLevel.trophy.inactive = !allFruitsAreCollected;
+    }
+
     const pos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
     const vel = this.entityManager.getComponent(this.playerEntityId, VelocityComponent);
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
