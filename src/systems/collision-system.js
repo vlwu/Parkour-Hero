@@ -58,7 +58,7 @@ export class CollisionSystem {
       if (tile && tile.solid && !tile.oneWay) {
         pos.x = vel.vx > 0 ? tileX * GRID_CONSTANTS.TILE_SIZE - col.width : (tileX + 1) * GRID_CONSTANTS.TILE_SIZE;
         vel.vx = 0;
-        col.isAgainstWall = !['dirt', 'sand', 'mud', 'ice'].includes(tile.type);
+        col.isAgainstWall = !['sand', 'mud', 'ice'].includes(tile.type);
         return; 
       }
     }

@@ -91,7 +91,7 @@ export class InfoModal extends LitElement {
               <p>Use the controls to navigate the world, collect all the fruit, and reach the trophy!</p>
               <p>You can also jump off of most walls! While in the air, move against a wall to slide down it, then press the jump key again to wall jump away.</p>
               <p>Beware of traps and enemies—an unknown world is full of hidden dangers.</p>
-              <p><strong>Note:</strong> You cannot cling to natural surfaces like dirt, sand, mud, or ice.</p>
+              <p><strong>Note:</strong> You cannot cling to special surfaces like sand, mud, or ice.</p>
               <div class="keybind-list">
                 
                 <div class="keybind-item">
