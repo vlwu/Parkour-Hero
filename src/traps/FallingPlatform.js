@@ -5,6 +5,7 @@ export class FallingPlatform extends Trap {
         super(x, y, { ...config, width: 32, height: 10 });
 
         this.solid = true;
+        this.initialX = x;
         this.initialY = y;
         this.state = 'idle'; // 'idle', 'shaking', 'falling', 'respawning'
         this.playerOnTimer = 0;
@@ -18,10 +19,10 @@ export class FallingPlatform extends Trap {
         this.bobbingAmplitude = Math.random() * 5 + 5; // 10-20 pixel total movement (5-10 amplitude)
 
         // Constants
-        this.PLAYER_ON_DURATION = 1.0;
-        this.SHAKE_DURATION = 0.5;
+        this.PLAYER_ON_DURATION = 0.5;
+        this.SHAKE_DURATION = 0.3;
         this.RESPAWN_DURATION = 3.0;
-        this.FALL_ACCELERATION = 200;
+        this.FALL_ACCELERATION = 250;
         this.MAX_FALL_SPEED = 400;
 
         // Animation
@@ -35,6 +36,16 @@ export class FallingPlatform extends Trap {
     }
 
     update(dt, playerData, eventBus) {
+        // State-independent animation updates
+        if (this.state === 'shaking' || this.state === 'falling') {
+            this.animation.frameTimer += dt;
+            if (this.animation.frameTimer >= this.animation.frameSpeed) {
+                this.animation.frameTimer = 0;
+                this.animation.currentFrame = (this.animation.currentFrame + 1) % this.animation.frameCount;
+            }
+        }
+
+        // State machine
         switch (this.state) {
             case 'idle':
                 this.bobbingTimer += dt * 2;
@@ -43,15 +54,11 @@ export class FallingPlatform extends Trap {
 
             case 'shaking':
                 this.shakeTimer -= dt;
-                this.animation.frameTimer += dt;
-                if (this.animation.frameTimer >= this.animation.frameSpeed) {
-                    this.animation.frameTimer = 0;
-                    this.animation.currentFrame = (this.animation.currentFrame + 1) % this.animation.frameCount;
-                }
-                // Add a small random shake effect
-                this.x += (Math.random() - 0.5) * 2;
+                // Add a small random shake effect by slightly moving the original x position
+                this.x = this.initialX + (Math.random() - 0.5) * 2;
                 if (this.shakeTimer <= 0) {
                     this.state = 'falling';
+                    this.x = this.initialX; // Reset x position before falling
                 }
                 break;
 
@@ -66,12 +73,11 @@ export class FallingPlatform extends Trap {
                     this.particleTimer = 0;
                     eventBus.publish('createParticles', {
                         x: this.x,
-                        y: this.y - this.height / 2, // Under the platform
+                        y: this.y + this.height / 2, // Under the platform
                         type: 'walk_dust',
                         particleSpeed: 50
                     });
                 }
-
 
                 if (this.opacity <= 0) {
                     this.state = 'respawning';
@@ -97,17 +103,18 @@ export class FallingPlatform extends Trap {
 
         if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
 
-        const sprite = this.state === 'shaking' || this.state === 'falling' ? assets.falling_platform_on : assets.falling_platform_off;
+        const isAnimating = this.state === 'shaking' || this.state === 'falling';
+        const sprite = isAnimating ? assets.falling_platform_on : assets.falling_platform_off;
         if (!sprite) return;
 
         ctx.globalAlpha = this.opacity;
 
-        if (this.state === 'shaking') {
+        if (isAnimating) {
             const frameWidth = sprite.width / this.animation.frameCount;
             const srcX = this.animation.currentFrame * frameWidth;
             ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY, this.width, this.height);
         } else {
-            // idle or falling state
+            // idle state
             ctx.drawImage(sprite, drawX, drawY, this.width, this.height);
         }
 
@@ -123,6 +130,7 @@ export class FallingPlatform extends Trap {
 
     reset() {
         this.state = 'idle';
+        this.x = this.initialX;
         this.y = this.initialY;
         this.opacity = 1;
         this.fallSpeed = 0;
