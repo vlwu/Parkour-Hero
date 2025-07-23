@@ -11,6 +11,45 @@ export class Renderer {
     this.assets = assets;
     this.backgroundCache = new Map();
     this.backgroundOffset = { x: 0, y: 0 };
+    this.staticLayerCache = null;
+  }
+
+  preRenderLevel(level) {
+    this.staticLayerCache = document.createElement('canvas');
+    this.staticLayerCache.width = level.width;
+    this.staticLayerCache.height = level.height;
+    const cacheCtx = this.staticLayerCache.getContext('2d');
+    cacheCtx.imageSmoothingEnabled = false;
+
+    const tileSize = GRID_CONSTANTS.TILE_SIZE;
+
+    for (let y = 0; y < level.gridHeight; y++) {
+      for (let x = 0; x < level.gridWidth; x++) {
+        const tile = level.tiles[y][x];
+
+        if (tile.solid && !tile.oneWay) {
+            const sprite = this.assets[tile.spriteKey];
+            if (!sprite) {
+                cacheCtx.fillStyle = 'magenta';
+                cacheCtx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+                continue;
+            }
+            const screenX = x * tileSize;
+            const screenY = y * tileSize;
+            const drawSize = tileSize + 1;
+
+            if (tile.spriteConfig) {
+                const sWidth = tileSize;
+                const sHeight = tile.spriteConfig.height || tileSize;
+                const dWidth = drawSize;
+                const dHeight = sHeight === tileSize ? drawSize : sHeight;
+                cacheCtx.drawImage(sprite, tile.spriteConfig.srcX, tile.spriteConfig.srcY, sWidth, sHeight, screenX, screenY, dWidth, dHeight);
+            } else {
+                cacheCtx.drawImage(sprite, screenX, screenY, drawSize, drawSize);
+            }
+        }
+      }
+    }
   }
 
   _preRenderBackground(level) {
@@ -18,7 +57,7 @@ export class Renderer {
     if (this.backgroundCache.has(bgAssetKey)) {
         return this.backgroundCache.get(bgAssetKey);
     }
-    
+
     const bg = this.assets[bgAssetKey];
     if (!bg || !bg.complete || bg.naturalWidth === 0) {
         return null;
@@ -32,11 +71,11 @@ export class Renderer {
     const pattern = offscreenCtx.createPattern(bg, 'repeat');
     offscreenCtx.fillStyle = pattern;
     offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-    
+
     this.backgroundCache.set(bgAssetKey, offscreenCanvas);
     return offscreenCanvas;
   }
-  
+
   drawScrollingBackground(level, dt) {
     const bgCanvas = this._preRenderBackground(level);
     const bg = this.assets[level.background];
@@ -63,9 +102,9 @@ export class Renderer {
     if (level.trophy) this.drawTrophy(level.trophy, camera);
     this.drawFruits(level.getActiveFruits(), camera);
     this.drawCheckpoints(level.checkpoints, camera);
-    
+
     this.drawTraps(level.traps, camera);
-    
+
     const entities = entityManager.query([PositionComponent, RenderableComponent]);
     for(const entityId of entities) {
         const pos = entityManager.getComponent(entityId, PositionComponent);
@@ -74,9 +113,9 @@ export class Renderer {
         const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
         this._drawRenderable(pos, renderable, charComp, playerCtrl);
     }
-    
+
     this.drawCollectedFruits(collectedFruits, camera);
-    
+
     camera.restore(this.ctx);
   }
 
@@ -90,20 +129,20 @@ export class Renderer {
       dash: 'playerDash', cling: 'playerCling', spawn: 'playerAppear',
       despawn: 'playerDisappear', hit: 'playerHit',
     };
-    
+
     let sprite;
     const spriteAssetKey = stateToSpriteMap[stateName];
 
     if (stateName === 'spawn' || stateName === 'despawn') {
         sprite = this.assets[spriteAssetKey];
-    } 
+    }
     else if (charComp) {
         sprite = this.assets.characters[charComp.characterId]?.[spriteAssetKey] || this.assets.playerIdle;
-    } 
+    }
     else {
         sprite = this.assets[renderable.spriteKey];
     }
-        
+
     if (!sprite) { this.ctx.fillStyle = '#FF00FF'; this.ctx.fillRect(pos.x, pos.y, renderable.width, renderable.height); return; }
 
     const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
@@ -111,18 +150,18 @@ export class Renderer {
     const srcX = frameWidth * renderable.animationFrame;
 
     this.ctx.save();
-    
+
     const isSpecialAnim = stateName === 'spawn' || stateName === 'despawn';
     const renderX = isSpecialAnim ? pos.x - (renderable.width - PLAYER_CONSTANTS.WIDTH) / 2 : pos.x;
     const renderY = isSpecialAnim ? pos.y - (renderable.height - PLAYER_CONSTANTS.HEIGHT) / 2 : pos.y;
-    
+
     if (renderable.direction === 'left') {
       this.ctx.scale(-1, 1);
       this.ctx.translate(-renderX - renderable.width, renderY);
     } else {
       this.ctx.translate(renderX, renderY);
     }
-    
+
     const drawOffsetX = (stateName === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
 
     this.ctx.drawImage(
@@ -132,8 +171,12 @@ export class Renderer {
     );
     this.ctx.restore();
   }
-  
+
   drawTileGrid(level, camera) {
+    if (this.staticLayerCache) {
+        this.ctx.drawImage(this.staticLayerCache, 0, 0);
+    }
+
     const tileSize = GRID_CONSTANTS.TILE_SIZE;
     const startCol = Math.floor(camera.x / tileSize), endCol = Math.ceil((camera.x + camera.width) / tileSize);
     const startRow = Math.floor(camera.y / tileSize), endRow = Math.ceil((camera.y + camera.height) / tileSize);
@@ -141,21 +184,21 @@ export class Renderer {
     for (let y = startRow; y < endRow; y++) {
       for (let x = startCol; x < endCol; x++) {
         if (x < 0 || x >= level.gridWidth || y < 0 || y >= level.gridHeight) continue;
-        
+
         const tile = level.tiles[y][x];
-        if (tile.type === 'empty') continue;
+        if (tile.type === 'empty' || !tile.oneWay) continue;
         const sprite = this.assets[tile.spriteKey];
         if (!sprite) { this.ctx.fillStyle = 'magenta'; this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize); continue; }
         const screenX = x * tileSize, screenY = y * tileSize;
-        
+
         const drawSize = tileSize + 1;
-        
+
         if (tile.spriteConfig) {
             const sWidth = tileSize;
             const sHeight = tile.spriteConfig.height || tileSize;
             const dWidth = drawSize;
-            // If the tile has a special height, use that for drawing, otherwise use the default drawSize.
-            // Do not add +1 for overlap on thin platforms to prevent visual artifacts.
+
+
             const dHeight = sHeight === tileSize ? drawSize : sHeight;
 
             this.ctx.drawImage(sprite, tile.spriteConfig.srcX, tile.spriteConfig.srcY, sWidth, sHeight, screenX, screenY, dWidth, dHeight);
@@ -168,13 +211,13 @@ export class Renderer {
 
   drawTrophy(trophy, camera) {
     if (!camera.isVisible(trophy.x - trophy.size / 2, trophy.y - trophy.size / 2, trophy.size, trophy.size)) return;
-    
+
     const isAnimating = trophy.isAnimating || trophy.acquired;
     const sprite = this.assets[isAnimating ? 'trophy_pressed' : 'trophy_idle'];
     if (!sprite) return;
-    
+
     let frameWidth, srcX;
-    
+
     if (isAnimating) {
         frameWidth = sprite.width / trophy.frameCount;
         srcX = frameWidth * trophy.animationFrame;
@@ -184,9 +227,9 @@ export class Renderer {
     }
 
     if (trophy.inactive) this.ctx.globalAlpha = 0.5;
-    
+
     this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, trophy.x - trophy.size / 2, trophy.y - trophy.size / 2, trophy.size, trophy.size);
-    
+
     this.ctx.globalAlpha = 1.0;
   }
 
@@ -198,13 +241,13 @@ export class Renderer {
       this.ctx.drawImage(img, srcX, 0, frameWidth, img.height, fruit.x - fruit.size / 2, fruit.y - fruit.size / 2, fruit.size, fruit.size);
     }
   }
-  
-  /**
-   * NEW: Generic method to render all traps.
-   * It iterates through the level's traps and delegates rendering to each trap's own render method.
-   * @param {Trap[]} traps - The array of trap objects from the level.
-   * @param {Camera} camera - The game camera.
-   */
+
+
+
+
+
+
+
   drawTraps(traps, camera) {
       for (const trap of traps) {
           trap.render(this.ctx, this.assets, camera);
@@ -230,7 +273,7 @@ export class Renderer {
         case 'activating': sprite = this.assets.checkpoint_activation; if (sprite) { frameWidth = sprite.width / cp.frameCount; srcX = cp.frame * frameWidth; } break;
         case 'active': sprite = this.assets.checkpoint_active; if (sprite) { const activeFrameCount = 10, currentFrame = Math.floor((performance.now() / 1000 / 0.1) % activeFrameCount); frameWidth = sprite.width / activeFrameCount; srcX = currentFrame * frameWidth; } break;
       }
-      if (sprite && frameWidth > 0) this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size); 
+      if (sprite && frameWidth > 0) this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size);
       else { this.ctx.fillStyle = 'purple'; this.ctx.fillRect(cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size); }
     }
   }

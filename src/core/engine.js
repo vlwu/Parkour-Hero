@@ -168,6 +168,8 @@ export class Engine {
     this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
     this.camera.snapToPlayer(this.entityManager, this.playerEntityId);
 
+    this.renderer.preRenderLevel(this.currentLevel);
+
     this.levelStartTime = performance.now();
 
     if (this.gameHasStarted) this.resume(); else this.start();
