@@ -13,6 +13,7 @@ const trapFactory = {
   arrow_bubble: Traps.ArrowBubble,
   fan: Traps.Fan,
   falling_platform: Traps.FallingPlatform,
+  rock_head: Traps.RockHead,
 };
 
 export class Level {
@@ -114,7 +115,7 @@ export class Level {
       const playerData = playerPos && playerCol ? { ...playerPos, width: playerCol.width, height: playerCol.height } : null;
 
       for (const trap of this.traps) {
-          trap.update(dt, playerData, eventBus);
+          trap.update(dt, playerData, eventBus, this);
       }
   }
 

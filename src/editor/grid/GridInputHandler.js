@@ -1,3 +1,5 @@
+// src/editor/grid/GridInputHandler.js
+
 import { GRID_CONSTANTS } from '../../utils/constants.js';
 
 export class GridInputHandler {
