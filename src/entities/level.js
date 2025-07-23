@@ -4,7 +4,7 @@ import * as Traps from '../traps/index.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 
-// Factory to map level data types to their corresponding trap classes.
+
 const trapFactory = {
   fire_trap: Traps.FireTrap,
   spike: Traps.Spikes,
@@ -14,16 +14,16 @@ const trapFactory = {
   fan: Traps.Fan,
 };
 
-/**
- * Manages the level's static tile-based geometry and dynamic objects.
- * This class parses a grid-based level configuration and provides methods
- * for the engine to interact with the world.
- */
+
+
+
+
+
 export class Level {
   constructor(levelConfig) {
     this.name = levelConfig.name || 'Unnamed Level';
 
-    // Establish grid and world dimensions
+
     this.gridWidth = levelConfig.gridWidth;
     this.gridHeight = levelConfig.gridHeight;
     this.width = this.gridWidth * GRID_CONSTANTS.TILE_SIZE;
@@ -31,7 +31,7 @@ export class Level {
     this.background = levelConfig.background || 'background_blue';
     this.backgroundScroll = levelConfig.backgroundScroll || { x: 0, y: 15 };
 
-    // Convert player start position from grid units to world coordinates
+
     this.startPosition = {
       x: levelConfig.startPosition.x * GRID_CONSTANTS.TILE_SIZE,
       y: levelConfig.startPosition.y * GRID_CONSTANTS.TILE_SIZE,
@@ -41,7 +41,7 @@ export class Level {
       [...rowString].map(tileId => TILE_DEFINITIONS[tileId] || TILE_DEFINITIONS['0'])
     );
 
-    // Initialize arrays for all dynamic object types
+
     this.fruits = [];
     this.checkpoints = [];
     this.traps = [];
@@ -50,7 +50,7 @@ export class Level {
     (levelConfig.objects || []).forEach(obj => {
       const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
       const worldY = obj.y * GRID_CONSTANTS.TILE_SIZE;
-      
+
       const TrapClass = trapFactory[obj.type];
 
       if (TrapClass) {
@@ -90,28 +90,31 @@ export class Level {
     const gridX = Math.floor(worldX / GRID_CONSTANTS.TILE_SIZE);
     const gridY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE);
 
-    // Check X bounds and negative Y bound first
-    if (gridX < 0 || gridX >= this.gridWidth || gridY < 0) {
-      return TILE_DEFINITIONS['1']; // Solid block for out-of-bounds (top, left, right)
+
+    if (gridX < 0 || gridX >= this.gridWidth) {
+      return TILE_DEFINITIONS['0'];
     }
-    
-    // Check if gridY is out of bounds for the actual array. This prevents the crash.
-    if (gridY >= this.gridHeight || !this.tiles[gridY]) {
-      return TILE_DEFINITIONS['0']; // Empty space for out-of-bounds (bottom or malformed level data)
+    if (gridY < 0) {
+      return TILE_DEFINITIONS['1'];
     }
 
-    // Now it's safe to access both indices. Add a fallback for a missing/ragged column.
+
+    if (gridY >= this.gridHeight || !this.tiles[gridY]) {
+      return TILE_DEFINITIONS['0'];
+    }
+
+
     return this.tiles[gridY][gridX] || TILE_DEFINITIONS['0'];
   }
-  
+
   update(dt, entityManager, playerEntityId, eventBus) {
       this.updateFruits(dt);
       this.updateTrophyAnimation(dt);
       this.updateCheckpoints(dt);
-      
+
       const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
       const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
-      
+
       const playerData = playerPos && playerCol ? { ...playerPos, width: playerCol.width, height: playerCol.height } : null;
 
       for (const trap of this.traps) {
@@ -185,19 +188,19 @@ export class Level {
 
   updateTrophyAnimation(dt) {
     const trophy = this.trophy;
-    // Only animate if isAnimating is true and it hasn't already been acquired.
+
     if (!trophy || !trophy.isAnimating || trophy.acquired) return;
 
     trophy.animationTimer += dt;
     if (trophy.animationTimer >= trophy.animationSpeed) {
       trophy.animationTimer -= trophy.animationSpeed;
-      trophy.animationFrame = (trophy.animationFrame + 1); // No modulo
+      trophy.animationFrame = (trophy.animationFrame + 1);
 
-      // Check if animation has just finished
+
       if (trophy.animationFrame >= trophy.frameCount) {
-        trophy.animationFrame = trophy.frameCount - 1; // Hold last frame
-        trophy.isAnimating = false; // Stop animation loop
-        trophy.acquired = true; // Mark as officially acquired
+        trophy.animationFrame = trophy.frameCount - 1;
+        trophy.isAnimating = false;
+        trophy.acquired = true;
       }
     }
   }
@@ -220,7 +223,7 @@ export class Level {
         cp.frame = 0;
         cp.frameTimer = 0;
     });
-    
+
     this.traps.forEach(trap => {
         trap.reset(eventBus);
     });
