@@ -67,7 +67,6 @@ export class ArrowBubble extends Trap {
     render(ctx, assets, camera) {
         if (this.state === 'inactive') return;
 
-        // --- MODIFICATION START ---
         // Use world coordinates; the main renderer handles the camera offset.
         // Add a visibility check for performance.
         const worldX = this.x - this.width / 2;
@@ -75,7 +74,6 @@ export class ArrowBubble extends Trap {
         if (!camera.isVisible(worldX, worldY, this.width, this.height)) {
             return;
         }
-        // --- MODIFICATION END ---
 
         const sprite = this.state === 'idle' ? assets.arrow_idle : assets.arrow_hit;
         const frame = this.state === 'idle' ? this.idleAnimation.currentFrame : this.hitAnimation.currentFrame;
@@ -86,10 +84,8 @@ export class ArrowBubble extends Trap {
             const frameHeight = sprite.height;
 
             ctx.save();
-            // --- MODIFICATION: Translate to the object's world center ---
             ctx.translate(this.x, this.y);
 
-            // --- MODIFICATION START: Correct rotation angles ---
             // Assumes the base sprite points UP.
             let angle = 0;
             switch (this.direction) {
@@ -98,7 +94,6 @@ export class ArrowBubble extends Trap {
                 case 'down': angle = Math.PI; break;
                 case 'left': default: angle = -Math.PI / 2; break;
             }
-            // --- MODIFICATION END ---
             ctx.rotate(angle);
 
             ctx.drawImage(
@@ -127,26 +122,22 @@ export class ArrowBubble extends Trap {
         
         eventBus.publish('playSound', { key: 'arrow_pop', volume: 0.8, channel: 'SFX' });
 
-        let knockbackVx = 0;
-        let knockbackVy = 0;
+        const { vel } = player;
 
         switch (this.direction) {
-            case 'up': knockbackVy = -this.knockbackSpeed; break;
-            case 'down': knockbackVy = this.knockbackSpeed; break;
-            case 'left': knockbackVx = -this.knockbackSpeed; break;
-            case 'right': knockbackVx = this.knockbackSpeed; break;
+            case 'up':
+                vel.vy = -this.knockbackSpeed;
+                break;
+            case 'down':
+                vel.vy = this.knockbackSpeed;
+                break;
+            case 'left':
+                vel.vx = -this.knockbackSpeed;
+                break;
+            case 'right':
+                vel.vx = this.knockbackSpeed;
+                break;
         }
-
-        eventBus.publish('collisionEvent', {
-            type: 'hazard',
-            entityId: player.entityId,
-            entityManager: player.entityManager,
-            damage: 0,
-            knockback: {
-                vx: knockbackVx,
-                vy: knockbackVy,
-            },
-        });
     }
 
     /**
