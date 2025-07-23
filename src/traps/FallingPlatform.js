@@ -7,7 +7,8 @@ export class FallingPlatform extends Trap {
         this.solid = true;
         this.initialX = x;
         this.initialY = y;
-        this.state = 'idle'; // 'idle', 'shaking', 'falling', 'respawning'
+        this.state = 'idle'; // 'idle', 'active', 'shaking', 'falling', 'respawning'
+        
         this.playerOnTimer = 0;
         this.shakeTimer = 0;
         this.respawnTimer = 0;
@@ -15,15 +16,15 @@ export class FallingPlatform extends Trap {
         this.opacity = 1;
 
         // Bobbing motion properties
-        this.bobbingTimer = Math.random() * Math.PI * 2; // Start at a random point in the cycle
-        this.bobbingAmplitude = Math.random() * 5 + 5; // 10-20 pixel total movement (5-10 amplitude)
+        this.bobbingTimer = Math.random() * Math.PI * 2;
+        this.bobbingAmplitude = Math.random() * 5 + 5;
 
         // Constants
-        this.PLAYER_ON_DURATION = 0.5;
-        this.SHAKE_DURATION = 0.3;
-        this.RESPAWN_DURATION = 3.0;
-        this.FALL_ACCELERATION = 250;
-        this.MAX_FALL_SPEED = 400;
+        this.PLAYER_ON_DURATION = 0.3;
+        this.SHAKE_DURATION = 0.15;
+        this.RESPAWN_DURATION = 5.0;
+        this.FALL_ACCELERATION = 220;
+        this.MAX_FALL_SPEED = 500;
 
         // Animation
         this.animation = {
@@ -35,9 +36,21 @@ export class FallingPlatform extends Trap {
         this.particleTimer = 0;
     }
 
+    _isPlayerOnTop(playerData) {
+        if (!playerData) return false;
+        const playerBottom = playerData.y + playerData.height;
+        const platformTop = this.y - this.height / 2;
+
+        return (
+            playerData.x < this.x + this.width / 2 &&
+            playerData.x + playerData.width > this.x - this.width / 2 &&
+            Math.abs(playerBottom - platformTop) < 5 // Small tolerance
+        );
+    }
+    
     update(dt, playerData, eventBus) {
-        // State-independent animation updates
-        if (this.state === 'shaking' || this.state === 'falling') {
+        // Animation should play when the fan is supposed to be on
+        if (this.state === 'idle' || this.state === 'active') {
             this.animation.frameTimer += dt;
             if (this.animation.frameTimer >= this.animation.frameSpeed) {
                 this.animation.frameTimer = 0;
@@ -45,35 +58,48 @@ export class FallingPlatform extends Trap {
             }
         }
 
-        // State machine
         switch (this.state) {
             case 'idle':
                 this.bobbingTimer += dt * 2;
                 this.y = this.initialY + Math.sin(this.bobbingTimer) * this.bobbingAmplitude;
                 break;
+            
+            case 'active':
+                this.playerOnTimer -= dt;
+                // If player jumps off before timer ends, reset
+                if (!this._isPlayerOnTop(playerData)) {
+                    this.reset();
+                    return;
+                }
+                if (this.playerOnTimer <= 0) {
+                    this.state = 'shaking';
+                    this.shakeTimer = this.SHAKE_DURATION;
+                    eventBus.publish('playSound', { key: 'falling_platform', volume: 0.7, channel: 'SFX' });
+                }
+                break;
 
             case 'shaking':
                 this.shakeTimer -= dt;
-                // Add a small random shake effect by slightly moving the original x position
-                this.x = this.initialX + (Math.random() - 0.5) * 2;
+                this.x = this.initialX + (Math.random() - 0.5) * 4; // More noticeable shake
+                this.y = this.initialY + (Math.random() - 0.5) * 2;
                 if (this.shakeTimer <= 0) {
                     this.state = 'falling';
-                    this.x = this.initialX; // Reset x position before falling
+                    this.x = this.initialX; // Reset position before falling
+                    this.y = this.initialY;
                 }
                 break;
 
             case 'falling':
                 this.fallSpeed = Math.min(this.MAX_FALL_SPEED, this.fallSpeed + this.FALL_ACCELERATION * dt);
                 this.y += this.fallSpeed * dt;
-                this.opacity -= dt * 0.5; // Fades out over 2 seconds
+                this.opacity -= dt * 0.5;
 
-                // Dust particles
                 this.particleTimer += dt;
                 if (this.particleTimer > 0.05) {
                     this.particleTimer = 0;
                     eventBus.publish('createParticles', {
                         x: this.x,
-                        y: this.y + this.height / 2, // Under the platform
+                        y: this.y - this.height / 2,
                         type: 'walk_dust',
                         particleSpeed: 50
                     });
@@ -82,7 +108,7 @@ export class FallingPlatform extends Trap {
                 if (this.opacity <= 0) {
                     this.state = 'respawning';
                     this.respawnTimer = this.RESPAWN_DURATION;
-                    this.solid = false; // Become non-solid while respawning
+                    this.solid = false;
                 }
                 break;
 
@@ -103,18 +129,20 @@ export class FallingPlatform extends Trap {
 
         if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
 
-        const isAnimating = this.state === 'shaking' || this.state === 'falling';
-        const sprite = isAnimating ? assets.falling_platform_on : assets.falling_platform_off;
+        // The fan is ON (animated) when idle or active. It's OFF (static) when shaking or falling.
+        const isFanOn = this.state === 'idle' || this.state === 'active';
+        const sprite = isFanOn ? assets.falling_platform_on : assets.falling_platform_off;
+        
         if (!sprite) return;
 
         ctx.globalAlpha = this.opacity;
 
-        if (isAnimating) {
+        if (isFanOn) {
             const frameWidth = sprite.width / this.animation.frameCount;
             const srcX = this.animation.currentFrame * frameWidth;
             ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY, this.width, this.height);
         } else {
-            // idle state
+            // State is 'shaking' or 'falling', draw the static "off" sprite
             ctx.drawImage(sprite, drawX, drawY, this.width, this.height);
         }
 
@@ -123,8 +151,8 @@ export class FallingPlatform extends Trap {
 
     onLanded() {
         if (this.state === 'idle') {
-            this.state = 'shaking';
-            this.shakeTimer = this.SHAKE_DURATION;
+            this.state = 'active';
+            this.playerOnTimer = this.PLAYER_ON_DURATION;
         }
     }
 
@@ -137,5 +165,6 @@ export class FallingPlatform extends Trap {
         this.playerOnTimer = 0;
         this.solid = true;
         this.animation.currentFrame = 0;
+        this.animation.frameTimer = 0;
     }
 }

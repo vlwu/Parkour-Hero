@@ -35,7 +35,9 @@ export class CollisionSystem {
     }
 
     level.traps.forEach(trap => {
-        if (trap.solid) {
+        // Only add permanently solid traps to the static grid.
+        // Falling platforms are handled dynamically.
+        if (trap.solid && trap.type !== 'falling_platform') {
             const hitbox = trap.hitbox || {
                 x: trap.x - trap.width / 2,
                 y: trap.y - trap.height / 2,
@@ -75,29 +77,44 @@ export class CollisionSystem {
             continue;
         }
 
+        // --- Get all potential colliders for this frame ---
+        const queryBounds = { x: pos.x, y: pos.y, width: col.width, height: col.height };
+        const staticColliders = this.spatialGrid.query(queryBounds);
+        const dynamicColliders = level.traps
+            .filter(trap => trap.type === 'falling_platform' && trap.solid)
+            .map(trap => ({
+                x: trap.x - trap.width / 2,
+                y: trap.y - trap.height / 2,
+                width: trap.width,
+                height: trap.height,
+                isOneWay: false,
+                surfaceType: 'platform',
+                onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null,
+            }));
+
+        const allColliders = [...staticColliders, ...dynamicColliders];
+
+        // --- Resolve Collisions ---
         pos.x += vel.vx * dt;
-        this._resolveHorizontalCollisions(pos, vel, col);
+        this._resolveHorizontalCollisions(pos, vel, col, allColliders);
 
         pos.y += vel.vy * dt;
-        this._resolveVerticalCollisions(pos, vel, col, dt, entityId);
+        this._resolveVerticalCollisions(pos, vel, col, dt, entityId, allColliders);
 
         pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
         this._checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager);
     }
   }
 
-  _resolveHorizontalCollisions(pos, vel, col) {
+  _resolveHorizontalCollisions(pos, vel, col, colliders) {
     if (vel.vx === 0) {
         col.isAgainstWall = false;
         return;
     }
-
-    const queryBounds = { x: pos.x, y: pos.y, width: col.width, height: col.height };
-    const potentialColliders = this.spatialGrid.query(queryBounds);
-
+    
     col.isAgainstWall = false;
 
-    for (const collider of potentialColliders) {
+    for (const collider of colliders) {
         if (collider.isOneWay) continue;
 
         if (pos.x < collider.x + collider.width && pos.x + col.width > collider.x &&
@@ -113,18 +130,10 @@ export class CollisionSystem {
     }
   }
 
-  _resolveVerticalCollisions(pos, vel, col, dt, entityId) {
-    const queryBounds = {
-        x: pos.x,
-        y: pos.y,
-        width: col.width,
-        height: col.height + 1 // 1px tolerance to prevent ground tunnelling
-    };
-    const potentialColliders = this.spatialGrid.query(queryBounds);
-
+  _resolveVerticalCollisions(pos, vel, col, dt, entityId, colliders) {
     col.isGrounded = false;
 
-    for (const collider of potentialColliders) {
+    for (const collider of colliders) {
         if (pos.x < collider.x + collider.width && pos.x + col.width > collider.x) {
 
             if (vel.vy >= 0) {
@@ -136,7 +145,7 @@ export class CollisionSystem {
                     if (collider.onLanded) {
                         collider.onLanded(eventBus);
                     }
-                    return;
+                    return; // Exit after first solid ground collision
                 }
             }
             if (vel.vy < 0) {
@@ -190,6 +199,7 @@ export class CollisionSystem {
 
 
     for (const trap of level.traps) {
+        // Only check non-solid traps here, as solid ones are handled above
         if (!trap.solid && this._isCollidingWith(pos, col, trap)) {
             trap.onCollision(player, eventBus);
         }
