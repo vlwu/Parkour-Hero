@@ -4,15 +4,58 @@ import { PositionComponent } from '../components/PositionComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
+import { SpatialGrid } from '../utils/spatial-grid.js';
 
 export class CollisionSystem {
-  constructor() {}
+  constructor() {
+    this.spatialGrid = null;
+    this.currentLevel = null;
+  }
+
+  _initializeGridForLevel(level) {
+    const cellSize = GRID_CONSTANTS.TILE_SIZE * 2;
+    this.spatialGrid = new SpatialGrid(level.width, level.height, cellSize);
+    this.currentLevel = level;
+
+    for (let y = 0; y < level.gridHeight; y++) {
+      for (let x = 0; x < level.gridWidth; x++) {
+        const tile = level.tiles[y][x];
+        if (tile && tile.solid) {
+          this.spatialGrid.insert({
+            x: x * GRID_CONSTANTS.TILE_SIZE,
+            y: y * GRID_CONSTANTS.TILE_SIZE,
+            width: GRID_CONSTANTS.TILE_SIZE,
+            height: GRID_CONSTANTS.TILE_SIZE,
+            isOneWay: tile.oneWay || false,
+            surfaceType: tile.interaction || tile.type,
+            type: 'tile'
+          });
+        }
+      }
+    }
+
+    level.traps.forEach(trap => {
+        if (trap.solid) {
+            const hitbox = trap.hitbox || {
+                x: trap.x - trap.width / 2,
+                y: trap.y - trap.height / 2,
+                width: trap.width,
+                height: trap.height,
+            };
+            this.spatialGrid.insert({
+                ...hitbox,
+                isOneWay: false,
+                surfaceType: trap.type,
+                onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null,
+                type: 'trap'
+            });
+        }
+    });
+  }
 
   update(dt, { entityManager, level }) {
-    for (const trap of level.traps) {
-        if (trap.type === 'fire_trap') {
-            trap.playerIsOnTop = false;
-        }
+    if (level !== this.currentLevel) {
+        this._initializeGridForLevel(level);
     }
 
     const entities = entityManager.query([PositionComponent, VelocityComponent, CollisionComponent]);
@@ -33,112 +76,75 @@ export class CollisionSystem {
         }
 
         pos.x += vel.vx * dt;
-        this._handleTileHorizontalCollisions(pos, vel, col, level);
+        this._resolveHorizontalCollisions(pos, vel, col);
 
         pos.y += vel.vy * dt;
-        this._handleTileVerticalCollisions(pos, vel, col, level, dt, entityId);
-
-        this._handleSolidObjectCollisions(pos, vel, col, level, dt, entityId);
+        this._resolveVerticalCollisions(pos, vel, col, dt, entityId);
 
         pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
-
         this._checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager);
     }
   }
 
-  _handleTileHorizontalCollisions(pos, vel, col, level) {
-    if (vel.vx === 0) { col.isAgainstWall = false; return; }
-    const topTile = Math.floor(pos.y / GRID_CONSTANTS.TILE_SIZE);
-    const bottomTile = Math.floor((pos.y + col.height - 1) / GRID_CONSTANTS.TILE_SIZE);
-    const checkX = vel.vx > 0 ? pos.x + col.width : pos.x;
-    const tileX = Math.floor(checkX / GRID_CONSTANTS.TILE_SIZE);
-
-    for (let y = topTile; y <= bottomTile; y++) {
-      const tile = level.getTileAt(tileX * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE);
-      if (tile && tile.solid && !tile.oneWay) {
-        pos.x = vel.vx > 0 ? tileX * GRID_CONSTANTS.TILE_SIZE - col.width : (tileX + 1) * GRID_CONSTANTS.TILE_SIZE;
-        vel.vx = 0;
-        col.isAgainstWall = !['sand', 'mud', 'ice'].includes(tile.type);
+  _resolveHorizontalCollisions(pos, vel, col) {
+    if (vel.vx === 0) {
+        col.isAgainstWall = false;
         return;
-      }
     }
+
+    const queryBounds = { x: pos.x, y: pos.y, width: col.width, height: col.height };
+    const potentialColliders = this.spatialGrid.query(queryBounds);
+
     col.isAgainstWall = false;
-  }
 
-  _handleTileVerticalCollisions(pos, vel, col, level, dt, entityId) {
-    const leftTile = Math.floor(pos.x / GRID_CONSTANTS.TILE_SIZE);
-    const rightTile = Math.floor((pos.x + col.width - 1) / GRID_CONSTANTS.TILE_SIZE);
+    for (const collider of potentialColliders) {
+        if (collider.isOneWay) continue;
 
-    if (vel.vy < 0) {
-        const tileY = Math.floor(pos.y / GRID_CONSTANTS.TILE_SIZE);
-        for (let x = leftTile; x <= rightTile; x++) {
-            const tile = level.getTileAt(x * GRID_CONSTANTS.TILE_SIZE, tileY * GRID_CONSTANTS.TILE_SIZE);
-            if (tile && tile.solid && !tile.oneWay) {
-                pos.y = (tileY + 1) * GRID_CONSTANTS.TILE_SIZE;
-                vel.vy = 0;
-                return;
+        if (pos.x < collider.x + collider.width && pos.x + col.width > collider.x &&
+            pos.y < collider.y + collider.height && pos.y + col.height > collider.y) {
+            if (vel.vx > 0) {
+                pos.x = collider.x - col.width;
+            } else {
+                pos.x = collider.x + collider.width;
             }
+            vel.vx = 0;
+            col.isAgainstWall = !['sand', 'mud', 'ice'].includes(collider.surfaceType);
         }
     }
+  }
 
-    const checkY = pos.y + col.height;
-    const tileY = Math.floor(checkY / GRID_CONSTANTS.TILE_SIZE);
+  _resolveVerticalCollisions(pos, vel, col, dt, entityId) {
+    const queryBounds = {
+        x: pos.x,
+        y: pos.y,
+        width: col.width,
+        height: col.height + 1 // 1px tolerance to prevent ground tunnelling
+    };
+    const potentialColliders = this.spatialGrid.query(queryBounds);
 
     col.isGrounded = false;
 
-    for (let x = leftTile; x <= rightTile; x++) {
-      const tile = level.getTileAt(x * GRID_CONSTANTS.TILE_SIZE, tileY * GRID_CONSTANTS.TILE_SIZE);
-      if (tile && tile.solid && vel.vy >= 0) {
-        const tileTop = tileY * GRID_CONSTANTS.TILE_SIZE;
-        const playerBottom = pos.y + col.height;
-        const prevPlayerBottom = playerBottom - vel.vy * dt;
+    for (const collider of potentialColliders) {
+        if (pos.x < collider.x + collider.width && pos.x + col.width > collider.x) {
 
-        if (playerBottom >= tileTop && prevPlayerBottom <= tileTop + 1) {
-            this._landOnSurface(pos, vel, col, tileTop, tile.interaction || tile.type, entityId);
-            return;
-        }
-      }
-    }
-  }
+            if (vel.vy >= 0) {
+                const playerBottom = pos.y + col.height;
+                const prevPlayerBottom = playerBottom - vel.vy * dt;
 
-  _handleSolidObjectCollisions(pos, vel, col, level, dt, entityId) {
-    const allSolidObjects = level.traps.filter(t => t.solid);
-
-    for(const obj of allSolidObjects) {
-        const objLeft = obj.x - obj.width / 2;
-        const objRight = obj.x + obj.width / 2;
-        const objTop = obj.y - obj.height / 2;
-        const objBottom = obj.y + obj.height / 2;
-
-        const playerLeft = pos.x;
-        const playerRight = pos.x + col.width;
-        const playerTop = pos.y;
-        const playerBottom = pos.y + col.height;
-
-        if (playerRight < objLeft || playerLeft > objRight || playerBottom < objTop || playerTop > objBottom) {
-            continue;
-        }
-
-
-        if (vel.vy >= 0) {
-             const prevPlayerBottom = playerBottom - vel.vy * dt;
-             if (playerBottom >= objTop && prevPlayerBottom <= objTop + 1) {
-                 this._landOnSurface(pos, vel, col, objTop, obj.type, entityId);
-                 if (typeof obj.onLanded === 'function') {
-                     obj.onLanded(eventBus);
-                 }
-                 continue;
-             }
-        }
-
-
-        if (playerBottom > objTop && playerTop < objBottom) {
-            if (vel.vx > 0 && playerRight > objLeft && playerLeft < objLeft) {
-                pos.x = objLeft - col.width;
-                vel.vx = 0;
-            } else if (vel.vx < 0 && playerLeft < objRight && playerRight > objRight) {
-                pos.x = objRight;
-                vel.vx = 0;
+                if (playerBottom >= collider.y && prevPlayerBottom <= collider.y + 1) {
+                    this._landOnSurface(pos, vel, col, collider.y, collider.surfaceType, entityId);
+                    if (collider.onLanded) {
+                        collider.onLanded(eventBus);
+                    }
+                    return;
+                }
+            }
+            if (vel.vy < 0) {
+                const playerTop = pos.y;
+                if (!collider.isOneWay && playerTop < collider.y + collider.height && playerTop > collider.y) {
+                    pos.y = collider.y + collider.height;
+                    vel.vy = 0;
+                }
             }
         }
     }
@@ -182,36 +188,10 @@ export class CollisionSystem {
   _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
     const player = { pos, vel, col, entityId, entityManager, dt };
 
+
     for (const trap of level.traps) {
-
-        if (trap.type === 'trampoline') {
-
-            if (vel.vy > 0) {
-                const playerBottom = pos.y + col.height;
-                const trampTop = trap.y - trap.height / 2;
-                const trampLeft = trap.x - trap.width / 2;
-                const prevPlayerBottom = playerBottom - vel.vy * dt;
-
-                if (pos.x + col.width > trampLeft && pos.x < trampLeft + trap.width) {
-                    if (playerBottom >= trampTop && prevPlayerBottom <= trampTop + 1) {
-                        trap.onCollision(player, eventBus);
-
-
-                        continue;
-                    }
-                }
-            }
-        } else if (trap.type === 'fan') {
-
-
-            if (this._isCollidingWith(pos, col, trap)) {
-                trap.onCollision(player, eventBus);
-            }
-        } else {
-
-            if (this._isCollidingWith(pos, col, trap)) {
-                trap.onCollision(player, eventBus);
-            }
+        if (!trap.solid && this._isCollidingWith(pos, col, trap)) {
+            trap.onCollision(player, eventBus);
         }
     }
   }
