@@ -14,9 +14,9 @@ export class CollisionSystem {
             trap.playerIsOnTop = false;
         }
     }
-      
+
     const entities = entityManager.query([PositionComponent, VelocityComponent, CollisionComponent]);
-    
+
     for (const entityId of entities) {
         const pos = entityManager.getComponent(entityId, PositionComponent);
         const vel = entityManager.getComponent(entityId, VelocityComponent);
@@ -24,21 +24,21 @@ export class CollisionSystem {
 
         const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
         if (playerCtrl && (playerCtrl.isSpawning || playerCtrl.isDespawning)) {
-            continue; 
+            continue;
         }
 
         if (pos.y > level.height + 50) {
             eventBus.publish('collisionEvent', { type: 'world_bottom', entityId, entityManager });
-            continue; 
+            continue;
         }
 
         pos.x += vel.vx * dt;
         this._handleTileHorizontalCollisions(pos, vel, col, level);
 
         pos.y += vel.vy * dt;
-        this._handleTileVerticalCollisions(pos, vel, col, level, dt);
-        
-        this._handleSolidObjectCollisions(pos, vel, col, level, dt);
+        this._handleTileVerticalCollisions(pos, vel, col, level, dt, entityId);
+
+        this._handleSolidObjectCollisions(pos, vel, col, level, dt, entityId);
 
         pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
 
@@ -59,17 +59,17 @@ export class CollisionSystem {
         pos.x = vel.vx > 0 ? tileX * GRID_CONSTANTS.TILE_SIZE - col.width : (tileX + 1) * GRID_CONSTANTS.TILE_SIZE;
         vel.vx = 0;
         col.isAgainstWall = !['sand', 'mud', 'ice'].includes(tile.type);
-        return; 
+        return;
       }
     }
     col.isAgainstWall = false;
   }
 
-  _handleTileVerticalCollisions(pos, vel, col, level, dt) {
+  _handleTileVerticalCollisions(pos, vel, col, level, dt, entityId) {
     const leftTile = Math.floor(pos.x / GRID_CONSTANTS.TILE_SIZE);
     const rightTile = Math.floor((pos.x + col.width - 1) / GRID_CONSTANTS.TILE_SIZE);
-    
-    if (vel.vy < 0) { // Upward
+
+    if (vel.vy < 0) {
         const tileY = Math.floor(pos.y / GRID_CONSTANTS.TILE_SIZE);
         for (let x = leftTile; x <= rightTile; x++) {
             const tile = level.getTileAt(x * GRID_CONSTANTS.TILE_SIZE, tileY * GRID_CONSTANTS.TILE_SIZE);
@@ -83,7 +83,7 @@ export class CollisionSystem {
 
     const checkY = pos.y + col.height;
     const tileY = Math.floor(checkY / GRID_CONSTANTS.TILE_SIZE);
-    
+
     col.isGrounded = false;
 
     for (let x = leftTile; x <= rightTile; x++) {
@@ -94,14 +94,14 @@ export class CollisionSystem {
         const prevPlayerBottom = playerBottom - vel.vy * dt;
 
         if (playerBottom >= tileTop && prevPlayerBottom <= tileTop + 1) {
-            this._landOnSurface(pos, vel, col, tileTop, tile.interaction || tile.type);
+            this._landOnSurface(pos, vel, col, tileTop, tile.interaction || tile.type, entityId);
             return;
         }
       }
     }
   }
 
-  _handleSolidObjectCollisions(pos, vel, col, level, dt) {
+  _handleSolidObjectCollisions(pos, vel, col, level, dt, entityId) {
     const allSolidObjects = level.traps.filter(t => t.solid);
 
     for(const obj of allSolidObjects) {
@@ -119,19 +119,19 @@ export class CollisionSystem {
             continue;
         }
 
-        // Vertical Collision (Landing on top)
+
         if (vel.vy >= 0) {
              const prevPlayerBottom = playerBottom - vel.vy * dt;
              if (playerBottom >= objTop && prevPlayerBottom <= objTop + 1) {
-                 this._landOnSurface(pos, vel, col, objTop, obj.type);
+                 this._landOnSurface(pos, vel, col, objTop, obj.type, entityId);
                  if (typeof obj.onLanded === 'function') {
                      obj.onLanded(eventBus);
                  }
-                 continue; // Collision handled
+                 continue;
              }
         }
 
-        // Horizontal Collision
+
         if (playerBottom > objTop && playerTop < objBottom) {
             if (vel.vx > 0 && playerRight > objLeft && playerLeft < objLeft) {
                 pos.x = objLeft - col.width;
@@ -144,22 +144,18 @@ export class CollisionSystem {
     }
   }
 
-  _landOnSurface(pos, vel, col, surfaceTopY, surfaceType) {
+  _landOnSurface(pos, vel, col, surfaceTopY, surfaceType, entityId) {
     const landingVelocity = vel.vy;
     if (landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY) {
-        const { FALL_DAMAGE_MIN_VELOCITY, FALL_DAMAGE_MAX_VELOCITY, FALL_DAMAGE_MIN_AMOUNT, FALL_DAMAGE_MAX_AMOUNT } = PLAYER_CONSTANTS;
-        const clampedVelocity = Math.max(FALL_DAMAGE_MIN_VELOCITY, Math.min(landingVelocity, FALL_DAMAGE_MAX_VELOCITY));
-        const progress = (clampedVelocity - FALL_DAMAGE_MIN_VELOCITY) / (FALL_DAMAGE_MAX_VELOCITY - FALL_DAMAGE_MIN_VELOCITY);
-        const damage = Math.round(FALL_DAMAGE_MIN_AMOUNT + progress * (FALL_DAMAGE_MAX_AMOUNT - FALL_DAMAGE_MIN_AMOUNT));
-        eventBus.publish('playerTookDamage', { amount: damage, source: 'fall' });
+        eventBus.publish('playerLandedHard', { entityId, landingVelocity });
     }
-    
+
     pos.y = surfaceTopY - col.height;
     vel.vy = 0;
     col.isGrounded = true;
     col.groundType = surfaceType;
   }
-  
+
   _isCollidingWith(pos, col, other) {
     const hitbox = other.hitbox || {
         x: other.x - (other.width || other.size) / 2,
@@ -182,15 +178,15 @@ export class CollisionSystem {
     this.checkCheckpointCollisions(pos, col, level, entityId, entityManager);
     this._checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager);
   }
-  
+
   _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
     const player = { pos, vel, col, entityId, entityManager, dt };
 
     for (const trap of level.traps) {
-        // Refactored trap interaction logic 
+
         if (trap.type === 'trampoline') {
-            // Trampoline requires a specific "landing on top" check.
-            if (vel.vy > 0) { // Must be falling onto it.
+
+            if (vel.vy > 0) {
                 const playerBottom = pos.y + col.height;
                 const trampTop = trap.y - trap.height / 2;
                 const trampLeft = trap.x - trap.width / 2;
@@ -199,20 +195,20 @@ export class CollisionSystem {
                 if (pos.x + col.width > trampLeft && pos.x < trampLeft + trap.width) {
                     if (playerBottom >= trampTop && prevPlayerBottom <= trampTop + 1) {
                         trap.onCollision(player, eventBus);
-                        // Use 'continue' to prevent other interactions in the same frame after bouncing.
-                        // This fixes a bug where a return statement would exit the function entirely.
+
+
                         continue;
                     }
                 }
             }
         } else if (trap.type === 'fan') {
-            // A fan is a zone of influence. We just need to check if the player overlaps with its wind hitbox.
-            // We use the trap's own 'hitbox' getter which correctly calculates the wind area.
+
+
             if (this._isCollidingWith(pos, col, trap)) {
                 trap.onCollision(player, eventBus);
             }
         } else {
-            // All other traps (like spikes, spiked balls) use a standard overlap check.
+
             if (this._isCollidingWith(pos, col, trap)) {
                 trap.onCollision(player, eventBus);
             }
@@ -231,7 +227,7 @@ export class CollisionSystem {
   _checkTrophyCollision(pos, col, trophy, entityId, entityManager, vel, dt) {
     if (!trophy || trophy.inactive || trophy.acquired) return;
 
-    const collisionOffset = 15; 
+    const collisionOffset = 15;
     const trophyHitbox = {
         x: trophy.x - trophy.size / 2,
         y: (trophy.y - trophy.size / 2) + collisionOffset,
@@ -253,7 +249,7 @@ export class CollisionSystem {
         if (!trophy.isAnimating) {
             trophy.isAnimating = true;
 
-            // Publish events for knockback, sound, and camera shake
+
             eventBus.publish('playerKnockback', { entityId, entityManager, vx: 0, vy: -300 });
             eventBus.publish('playSound', { key: 'trophy_activated', volume: 0.9, channel: 'UI' });
             eventBus.publish('cameraShakeRequested', { intensity: 6, duration: 0.25 });
