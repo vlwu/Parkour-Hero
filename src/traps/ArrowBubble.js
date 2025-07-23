@@ -1,3 +1,5 @@
+// src/traps/ArrowBubble.js
+
 import { Trap } from './templates/Trap.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 
@@ -20,6 +22,8 @@ export class ArrowBubble extends Trap {
         this.knockbackSpeed = config.knockbackSpeed || 450;
         
         this.state = 'idle';
+        this.RESPAWN_DURATION = 4.0; 
+        this.respawnTimer = 0;
 
         this.idleAnimation = {
             frameCount: 10,
@@ -37,7 +41,7 @@ export class ArrowBubble extends Trap {
     }
 
     /**
-     * Updates the bubble's animation state.
+     * Updates the bubble's animation state and respawn timer.
      * @param {number} dt Delta time.
      */
     update(dt) {
@@ -53,23 +57,27 @@ export class ArrowBubble extends Trap {
                 this.hitAnimation.frameTimer = 0;
                 this.hitAnimation.currentFrame++;
                 if (this.hitAnimation.currentFrame >= this.hitAnimation.frameCount) {
-                    this.state = 'inactive';
+                    this.state = 'respawning';
+                    this.respawnTimer = this.RESPAWN_DURATION;
                 }
+            }
+        } else if (this.state === 'respawning') {
+            this.respawnTimer -= dt;
+            if (this.respawnTimer <= 0) {
+                this._resetToIdle();
             }
         }
     }
 
     /**
-     * Renders the arrow bubble based on its state and direction.
+     * Renders the arrow bubble based on its state and direction. It will not render while respawning.
      * @param {CanvasRenderingContext2D} ctx The rendering context.
      * @param {object} assets The game's asset manager.
      * @param {Camera} camera The game camera.
      */
     render(ctx, assets, camera) {
-        if (this.state === 'inactive') return;
+        if (this.state === 'respawning') return;
 
-        // Use world coordinates; the main renderer handles the camera offset.
-        // Add a visibility check for performance.
         const worldX = this.x - this.width / 2;
         const worldY = this.y - this.height / 2;
         if (!camera.isVisible(worldX, worldY, this.width, this.height)) {
@@ -87,7 +95,6 @@ export class ArrowBubble extends Trap {
             ctx.save();
             ctx.translate(this.x, this.y);
 
-            // Assumes the base sprite points UP.
             let angle = 0;
             switch (this.direction) {
                 case 'up': angle = 0; break;
@@ -110,7 +117,7 @@ export class ArrowBubble extends Trap {
     }
 
     /**
-     * Handles collision with the player.
+     * Handles collision with the player, popping the bubble and starting the respawn timer.
      * @param {object} player A simplified object containing player data.
      * @param {object} eventBus The global event bus.
      */
@@ -154,13 +161,21 @@ export class ArrowBubble extends Trap {
     }
 
     /**
-     * Resets the bubble to its initial state for a level restart.
+     * A helper method to restore the bubble to its interactive state.
      */
-    reset() {
+    _resetToIdle() {
         this.state = 'idle';
         this.idleAnimation.currentFrame = 0;
         this.idleAnimation.frameTimer = 0;
         this.hitAnimation.currentFrame = 0;
         this.hitAnimation.frameTimer = 0;
+        this.respawnTimer = 0;
+    }
+
+    /**
+     * Resets the bubble to its initial state for a level restart.
+     */
+    reset() {
+        this._resetToIdle();
     }
 }
