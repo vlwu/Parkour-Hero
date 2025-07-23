@@ -12,12 +12,8 @@ const trapFactory = {
   spiked_ball: Traps.SpikedBall,
   arrow_bubble: Traps.ArrowBubble,
   fan: Traps.Fan,
+  falling_platform: Traps.FallingPlatform,
 };
-
-
-
-
-
 
 export class Level {
   constructor(levelConfig) {

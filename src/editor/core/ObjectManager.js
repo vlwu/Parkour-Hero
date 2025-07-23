@@ -283,6 +283,7 @@ export class ObjectManager {
             case 'spiked_ball': return { width: 28, height: 28 };
             case 'arrow_bubble': return { width: 18, height: 18 };
             case 'fan': return { width: 24, height: 8 };
+            case 'falling_platform': return { width: 32, height: 10 };
             default: return { width: 28, height: 28 }; // Default for fruits
         }
     }
