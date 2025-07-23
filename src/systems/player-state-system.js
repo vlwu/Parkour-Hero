@@ -162,33 +162,36 @@ export class PlayerStateSystem {
         if (input.moveLeft) renderable.direction = 'left';
         else if (input.moveRight) renderable.direction = 'right';
 
-        const justPressedJump = input.jump && !ctrl.jumpPressed;
+        if (!ctrl.vLock) {
+            const justPressedJump = input.jump && !ctrl.jumpPressed;
 
-        if (input.jump) {
-            ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
-        }
+            if (input.jump) {
+                ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
+            }
 
-        if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0) && ctrl.jumpCount === 0) {
-            const jumpForce = ctrl.jumpForce * (col.groundType === 'mud' ? PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER : 1);
-            vel.vy = -jumpForce;
-            ctrl.jumpCount = 1;
-            ctrl.jumpBufferTimer = 0;
-            ctrl.coyoteTimer = 0;
-            eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
-        } else if (justPressedJump && col.isAgainstWall && !col.isGrounded) {
-            vel.vx = (renderable.direction === 'left' ? 1 : -1) * ctrl.speed;
-            renderable.direction = renderable.direction === 'left' ? 'right' : 'left';
-            vel.vy = -ctrl.jumpForce;
-            ctrl.jumpCount = 1;
-            eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
-        } else if (justPressedJump && ctrl.jumpCount === 1 && !col.isGrounded && !col.isAgainstWall) {
-            vel.vy = -ctrl.jumpForce;
-            ctrl.jumpCount = 2;
-            ctrl.jumpBufferTimer = 0;
-            this._setAnimationState(renderable, state, 'double_jump', ctrl);
-            eventBus.publish('playSound', { key: 'double_jump', volume: 0.6, channel: 'SFX' });
-            eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'double_jump' });
+            if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0) && ctrl.jumpCount === 0) {
+                const jumpForce = ctrl.jumpForce * (col.groundType === 'mud' ? PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER : 1);
+                vel.vy = -jumpForce;
+                ctrl.jumpCount = 1;
+                ctrl.jumpBufferTimer = 0;
+                ctrl.coyoteTimer = 0;
+                eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
+            } else if (justPressedJump && col.isAgainstWall && !col.isGrounded) {
+                vel.vx = (renderable.direction === 'left' ? 1 : -1) * ctrl.speed;
+                renderable.direction = renderable.direction === 'left' ? 'right' : 'left';
+                vel.vy = -ctrl.jumpForce;
+                ctrl.jumpCount = 1;
+                eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
+            } else if (justPressedJump && ctrl.jumpCount === 1 && !col.isGrounded && !col.isAgainstWall) {
+                vel.vy = -ctrl.jumpForce;
+                ctrl.jumpCount = 2;
+                ctrl.jumpBufferTimer = 0;
+                this._setAnimationState(renderable, state, 'double_jump', ctrl);
+                eventBus.publish('playSound', { key: 'double_jump', volume: 0.6, channel: 'SFX' });
+                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'double_jump' });
+            }
         }
+        ctrl.vLock = false; // Reset lock for the next frame cycle.
 
         ctrl.jumpPressed = input.jump;
 

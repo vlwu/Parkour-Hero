@@ -42,13 +42,14 @@ export class MovementSystem {
 
     _applyHorizontalMovement(dt, input, vel, col, ctrl) {
         if (ctrl.isDashing || ctrl.isHit) {
+            if (ctrl.isHit) vel.vx = 0;
             return;
         }
 
-        const applyInput = !ctrl.isPushed;
-        ctrl.isPushed = false;
+        const applyInput = !ctrl.hLock;
+        ctrl.hLock = false; // Reset lock for the next frame cycle.
 
-        const GROUND_FRICTION = 1000;
+        const GROUND_FRICTION = 1000; // A sensible default friction value
 
         if (col.isGrounded && col.groundType === 'ice') {
             const acc = PLAYER_CONSTANTS.ICE_ACCELERATION;
@@ -58,12 +59,13 @@ export class MovementSystem {
             } else if (applyInput && input.moveRight) {
                 vel.vx += acc * dt;
             } else {
+                // Correctly apply friction only when moving
                 if (vel.vx > 0) {
                     vel.vx -= fric * dt;
-                    if (vel.vx < 0) vel.vx = 0;
+                    if (vel.vx < 0) vel.vx = 0; // Clamp to zero, prevent overshooting
                 } else if (vel.vx < 0) {
                     vel.vx += fric * dt;
-                    if (vel.vx > 0) vel.vx = 0;
+                    if (vel.vx > 0) vel.vx = 0; // Clamp to zero, prevent overshooting
                 }
             }
             vel.vx = Math.max(-ctrl.speed, Math.min(ctrl.speed, vel.vx));
@@ -74,6 +76,8 @@ export class MovementSystem {
             } else if (applyInput && input.moveRight) {
                 vel.vx = moveSpeed;
             } else {
+                // Apply friction when there is no input, instead of setting velocity to 0.
+                // This allows external forces like fans to work correctly.
                 if (vel.vx > 0) {
                     vel.vx -= GROUND_FRICTION * dt;
                     if (vel.vx < 0) vel.vx = 0;

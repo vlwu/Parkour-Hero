@@ -25,7 +25,8 @@ export class PlayerControlledComponent {
         jumpParticleTimer = 0,
         jumpPressed = false, 
         dashPressed = false,
-        isPushed = false
+        hLock = false,
+        vLock = false
     } = {}) {
         this.speed = speed;
         this.jumpForce = jumpForce;
@@ -50,7 +51,8 @@ export class PlayerControlledComponent {
         this.isDespawning = isDespawning;
         this.despawnAnimationFinished = despawnAnimationFinished;
         this.needsRespawn = needsRespawn;
-        this.isPushed = isPushed;
+        this.hLock = hLock;
+        this.vLock = vLock;
         
         // Input "edge-case" tracking
         this.jumpPressed = jumpPressed;

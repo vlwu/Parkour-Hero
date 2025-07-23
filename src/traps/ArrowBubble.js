@@ -68,6 +68,8 @@ export class ArrowBubble extends Trap {
     render(ctx, assets, camera) {
         if (this.state === 'inactive') return;
 
+        // Use world coordinates; the main renderer handles the camera offset.
+        // Add a visibility check for performance.
         const worldX = this.x - this.width / 2;
         const worldY = this.y - this.height / 2;
         if (!camera.isVisible(worldX, worldY, this.width, this.height)) {
@@ -85,6 +87,7 @@ export class ArrowBubble extends Trap {
             ctx.save();
             ctx.translate(this.x, this.y);
 
+            // Assumes the base sprite points UP.
             let angle = 0;
             switch (this.direction) {
                 case 'up': angle = 0; break;
@@ -123,13 +126,14 @@ export class ArrowBubble extends Trap {
         
         eventBus.publish('playSound', { key: 'arrow_pop', volume: 0.8, channel: 'SFX' });
 
-        ctrl.isPushed = true;
-
         const { vel } = player;
+        const isVertical = this.direction === 'up' || this.direction === 'down';
 
-        if (this.direction === 'up' || this.direction === 'down') {
+        if (isVertical) {
+            ctrl.vLock = true;
             vel.vx = 0;
         } else {
+            ctrl.hLock = true;
             vel.vy = 0;
         }
 
