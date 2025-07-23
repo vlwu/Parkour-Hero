@@ -5,12 +5,13 @@ import { CollisionComponent } from '../components/CollisionComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { PositionComponent } from '../components/PositionComponent.js';
+import { StateComponent } from '../components/StateComponent.js';
 
 export class MovementSystem {
     constructor() {}
 
     update(dt, { entityManager }) {
-        const entities = entityManager.query([PlayerControlledComponent, VelocityComponent, CollisionComponent, InputComponent, PositionComponent]);
+        const entities = entityManager.query([PlayerControlledComponent, VelocityComponent, CollisionComponent, InputComponent, PositionComponent, StateComponent]);
 
         for (const entityId of entities) {
             const vel = entityManager.getComponent(entityId, VelocityComponent);
@@ -18,6 +19,7 @@ export class MovementSystem {
             const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
             const input = entityManager.getComponent(entityId, InputComponent);
             const pos = entityManager.getComponent(entityId, PositionComponent);
+            const state = entityManager.getComponent(entityId, StateComponent);
 
             if (ctrl.isSpawning || ctrl.isDespawning) {
                 vel.vx = 0;
@@ -26,7 +28,7 @@ export class MovementSystem {
             };
 
             this._applyHorizontalMovement(dt, input, vel, col, ctrl);
-            this._applyVerticalMovement(dt, vel, col, ctrl);
+            this._applyVerticalMovement(dt, vel, col, ctrl, state);
             this._updateSurfaceEffects(dt, pos, vel, col, ctrl);
         }
     }
@@ -77,12 +79,12 @@ export class MovementSystem {
         }
     }
 
-    _applyVerticalMovement(dt, vel, col, ctrl) {
+    _applyVerticalMovement(dt, vel, col, ctrl, state) {
         if (!col.isGrounded && !ctrl.isDashing && !ctrl.isHit && !ctrl.isSpawning) {
             vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
         }
 
-        if (col.isAgainstWall && !col.isGrounded) {
+        if (state && state.currentState === 'cling') {
             vel.vy = Math.min(vel.vy, 30);
         }
 

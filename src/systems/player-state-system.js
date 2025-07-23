@@ -228,19 +228,19 @@ export class PlayerStateSystem {
             return;
         }
 
-        if (col.isAgainstWall && !col.isGrounded && vel.vy >= 0) {
-            if (currentState !== 'cling') this._setAnimationState(renderable, state, 'cling', ctrl, col);
-        } else if (!col.isGrounded) {
-            if (vel.vy < 0 && currentState !== 'jump' && currentState !== 'double_jump') {
-                this._setAnimationState(renderable, state, 'jump', ctrl, col);
-            } else if (vel.vy > 0.1 && currentState !== 'fall') {
-                this._setAnimationState(renderable, state, 'fall', ctrl, col);
-            }
-        } else {
+        if (col.isGrounded) {
             if (Math.abs(vel.vx) > 1) {
                 if (currentState !== 'run') this._setAnimationState(renderable, state, 'run', ctrl, col);
             } else {
                 if (currentState !== 'idle') this._setAnimationState(renderable, state, 'idle', ctrl, col);
+            }
+        } else if (col.isAgainstWall && ctrl.coyoteTimer <= 0 && vel.vy >= 0) {
+            if (currentState !== 'cling') this._setAnimationState(renderable, state, 'cling', ctrl, col);
+        } else {
+            if (vel.vy < 0 && currentState !== 'jump' && currentState !== 'double_jump') {
+                this._setAnimationState(renderable, state, 'jump', ctrl, col);
+            } else if (vel.vy > 0.1 && currentState !== 'fall') {
+                this._setAnimationState(renderable, state, 'fall', ctrl, col);
             }
         }
     }
