@@ -15,13 +15,16 @@ export class FallingPlatform extends Trap {
         this.fallSpeed = 0;
         this.opacity = 1;
 
+        this.shakeOffsetX = 0;
+        this.shakeOffsetY = 0;
+
         this.bobbingTimer = Math.random() * Math.PI * 2;
         this.bobbingAmplitude = Math.random() * 5 + 5;
 
         this.PLAYER_ON_DURATION = 0.3;
-        this.SHAKE_DURATION = 0.1;
+        this.SHAKE_DURATION = 0.15;
         this.RESPAWN_DURATION = 5.0;
-        this.FALL_ACCELERATION = 350;
+        this.FALL_ACCELERATION = 250;
         this.MAX_FALL_SPEED = 600;
 
         this.animation = {
@@ -76,13 +79,13 @@ export class FallingPlatform extends Trap {
 
             case 'shaking':
                 this.shakeTimer -= dt;
-                this.x = this.initialX + (Math.random() - 0.5) * 4;
-                this.y = this.initialY + (Math.random() - 0.5) * 2;
+                this.shakeOffsetX = (Math.random() - 0.5) * 4;
+                this.shakeOffsetY = (Math.random() - 0.5) * 2;
                 if (this.shakeTimer <= 0) {
                     this.state = 'falling';
                     this.solid = false;
-                    this.x = this.initialX;
-                    this.y = this.initialY;
+                    this.shakeOffsetX = 0;
+                    this.shakeOffsetY = 0;
                 }
                 break;
 
@@ -120,8 +123,8 @@ export class FallingPlatform extends Trap {
     render(ctx, assets, camera) {
         if (this.state === 'respawning' || this.opacity <= 0) return;
 
-        const drawX = this.x - this.width / 2;
-        const drawY = this.y - this.height / 2;
+        const drawX = (this.x - this.width / 2) + this.shakeOffsetX;
+        const drawY = (this.y - this.height / 2) + this.shakeOffsetY;
 
         if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
 
@@ -160,5 +163,7 @@ export class FallingPlatform extends Trap {
         this.solid = true;
         this.animation.currentFrame = 0;
         this.animation.frameTimer = 0;
+        this.shakeOffsetX = 0;
+        this.shakeOffsetY = 0;
     }
 }
