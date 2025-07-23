@@ -6,3 +6,4 @@ export * from './ArrowBubble.js';
 export * from './Fan.js';
 export * from './FallingPlatform.js';
 export * from './RockHead.js';
+export * from './SpikeHead.js';

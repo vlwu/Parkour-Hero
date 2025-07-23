@@ -13,7 +13,8 @@ export const OBJECT_DESCRIPTIONS = {
     'arrow_bubble': 'Pops on contact and pushes the player toward the indicated direction. Does not snap to surfaces. Direction can be changed in its properties. Properties: knockbackSpeed (how fast the player is pushed).',
     'fan': 'Periodically creates a column of wind. Must be attached to a solid platform. Direction is auto-set but can be changed. Properties: pushStrength (how fast the player is pushed), and windHeight (length of the wind column in pixels).',
     'falling_platform': 'A platform that shakes and falls after being stood on for a second. Does not snap to ground.',
-    'rock_head': 'A stone guardian that hovers in the air. When a player passes underneath, it slams to the ground, killing them instantly.'
+    'rock_head': 'A stone guardian that hovers in the air. When a player passes underneath, it slams to the ground, killing them instantly.',
+    'spike_head': 'A spiked guardian that hovers in the air. When a player passes underneath, it slams to the ground, killing them instantly.'
 };
 
 export const PALETTE_ABBREVIATIONS = {
@@ -26,7 +27,7 @@ export const PALETTE_ABBREVIATIONS = {
     // Traps
     'trampoline': 'TRP', 'spike': 'SPK', 'fire_trap': 'FIR',
     'spiked_ball': 'BAL', 'arrow_bubble': 'ARR', 'fan': 'FAN',
-    'falling_platform': 'FAL', 'rock_head': 'RCK',
+    'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
     // Terrain
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -49,6 +50,7 @@ export function getPaletteColor(type) {
         case 'fan': return '#95a5a6';
         case 'falling_platform': return '#496988ff';
         case 'rock_head': return '#484848ff';
+        case 'spike_head': return '#1e1e1eff';
         case 'fruit_apple': return '#e74c3c';
         case 'fruit_bananas': return '#f1c40f';
         case 'fruit_cherries': return '#c0392b';
