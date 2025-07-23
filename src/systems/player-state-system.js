@@ -8,11 +8,6 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 
-/**
- * Manages the state of player-controlled entities.
- * This includes handling the Finite State Machine (FSM), responding to input
- * to trigger state transitions (like jumping and dashing), and updating animations.
- */
 export class PlayerStateSystem {
     constructor() {
         eventBus.subscribe('playerTookDamage', (e) => this.handleDamageTaken(e));
@@ -24,7 +19,7 @@ export class PlayerStateSystem {
         this.damageEvents = [];
         this.knockbackEvents = [];
     }
-    
+
     clearDamageEvents() {
         this.damageEvents = [];
     }
@@ -32,7 +27,7 @@ export class PlayerStateSystem {
     clearKnockbackEvents() {
         this.knockbackEvents = [];
     }
-    
+
     handleDamageTaken(event) {
         this.damageEvents.push(event);
     }
@@ -43,7 +38,7 @@ export class PlayerStateSystem {
 
     _processDamageEvents(entityManager) {
         if (this.damageEvents.length === 0) return;
-        
+
         const entities = entityManager.query([PlayerControlledComponent, RenderableComponent, StateComponent]);
 
         for (const event of this.damageEvents) {
@@ -51,12 +46,11 @@ export class PlayerStateSystem {
                 const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
                 const renderable = entityManager.getComponent(entityId, RenderableComponent);
                 const state = entityManager.getComponent(entityId, StateComponent);
-                
-                // Add a defensive guard: Do not process damage if the player is in an invulnerable state.
+
                 if (ctrl.isHit || ctrl.isSpawning) {
-                    continue; 
+                    continue;
                 }
-                
+
                 if ((event.source === 'fall' || event.source === 'fire' || event.source === 'hazard') && !ctrl.isHit) {
                     ctrl.isHit = true;
                     ctrl.hitStunTimer = PLAYER_CONSTANTS.HIT_STUN_DURATION;
@@ -65,7 +59,7 @@ export class PlayerStateSystem {
                 }
             }
         }
-        
+
         this.damageEvents = [];
     }
 
@@ -75,7 +69,7 @@ export class PlayerStateSystem {
         for (const event of this.knockbackEvents) {
             const { entityId, vx, vy } = event;
             const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-            
+
             if (ctrl) {
                 const vel = entityManager.getComponent(entityId, VelocityComponent);
                 if (vel) {
@@ -84,7 +78,7 @@ export class PlayerStateSystem {
                 }
             }
         }
-        
+
         this.knockbackEvents = [];
     }
 
@@ -111,22 +105,22 @@ export class PlayerStateSystem {
             this._updateFSM(vel, ctrl, col, renderable, state);
             this._updateAnimation(dt, ctrl, renderable, state);
             this._handleJumpTrail(dt, pos, col, ctrl, state);
-            
+
             if (col.isGrounded) {
                 ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
             }
         }
     }
-    
+
     _handleJumpTrail(dt, pos, col, ctrl, state) {
         if (state.currentState === 'jump' && ctrl.jumpCount === 1) {
             ctrl.jumpParticleTimer -= dt;
             if (ctrl.jumpParticleTimer <= 0) {
                 ctrl.jumpParticleTimer = 0.05;
-                eventBus.publish('createParticles', { 
-                    x: pos.x + col.width / 2, 
+                eventBus.publish('createParticles', {
+                    x: pos.x + col.width / 2,
                     y: pos.y + col.height,
-                    type: 'jump_trail' 
+                    type: 'jump_trail'
                 });
             }
         } else {
@@ -191,7 +185,7 @@ export class PlayerStateSystem {
                 eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'double_jump' });
             }
         }
-        ctrl.vLock = false; // Reset lock for the next frame cycle.
+        ctrl.vLock = false;
 
         ctrl.jumpPressed = input.jump;
 
@@ -214,17 +208,17 @@ export class PlayerStateSystem {
         if ((currentState === 'spawn' && !ctrl.spawnComplete) || currentState === 'despawn') {
             return;
         }
-        
+
         if (currentState === 'spawn' && ctrl.spawnComplete) {
             this._setAnimationState(renderable, state, 'idle', ctrl);
-            return; 
+            return;
         }
 
         if (ctrl.isHit) {
             if (currentState !== 'hit') this._setAnimationState(renderable, state, 'hit', ctrl);
             return;
         }
-        
+
         if (currentState === 'hit' && !ctrl.isHit) {
              this._setAnimationState(renderable, state, 'idle', ctrl);
         }
@@ -239,7 +233,7 @@ export class PlayerStateSystem {
         } else if (!col.isGrounded) {
             if (vel.vy < 0 && currentState !== 'jump' && currentState !== 'double_jump') {
                 this._setAnimationState(renderable, state, 'jump', ctrl);
-            } else if (vel.vy >= 0 && currentState !== 'fall') {
+            } else if (vel.vy > 0.1 && currentState !== 'fall') {
                 this._setAnimationState(renderable, state, 'fall', ctrl);
             }
         } else {
@@ -279,14 +273,14 @@ export class PlayerStateSystem {
         }
 
         if (renderable.animationTimer < speed) return;
-        
+
         renderable.animationTimer -= speed;
-        const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1.
+        const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
         renderable.animationFrame++;
-        
+
         if (stateName === 'spawn' || stateName === 'despawn' || stateName === 'hit') {
             if (renderable.animationFrame >= frameCount) {
-                renderable.animationFrame = frameCount - 1; // Hold on the last frame
+                renderable.animationFrame = frameCount - 1;
                 if (stateName === 'spawn') {
                     ctrl.isSpawning = false;
                     ctrl.spawnComplete = true;
