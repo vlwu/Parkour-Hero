@@ -27,13 +27,14 @@ export const PALETTE_ABBREVIATIONS = {
     // Terrain
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
-    'sand': 'SND', 'mud': 'MUD', 'ice': 'ICE'
+    'sand': 'SND', 'mud': 'MUD', 'ice': 'ICE',
+    'oneway_gold': 'OW-G', 'oneway_wood': 'OW-W', 'oneway_stone': 'OW-S'
 };
 
 // Helper to get the color for a given item or tile type
 export function getPaletteColor(type) {
     switch (type) {
-        case 'dirt': case 'orange_dirt': case 'pink_dirt': return '#8B4513';
+        case 'dirt': return '#8B4513'; case 'orange_dirt': return '#f47114ff'; case 'pink_dirt': return '#da2ac8ff';
         case 'stone': return '#6c757d'; case 'wood': return '#A0522D';
         case 'green_block': return '#28a745'; case 'sand': return '#F4A460';
         case 'mud': return '#5D4037'; case 'ice': return '#5DADE2';
@@ -53,6 +54,9 @@ export function getPaletteColor(type) {
         case 'fruit_strawberry': return '#d35400';
         case 'player_spawn': return '#2980b9';
         case 'trophy': return '#F39C12'; case 'checkpoint': return '#17a2b8';
+        case 'oneway_gold': return '#FFD700';
+        case 'oneway_wood': return '#855E42';
+        case 'oneway_stone': return '#808080';
         case 'empty': return 'rgba(0,0,0,0.3)'; default: return '#34495e';
     }
 }

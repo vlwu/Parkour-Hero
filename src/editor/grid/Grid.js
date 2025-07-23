@@ -63,7 +63,19 @@ export class Grid {
         if (cell) {
             cell.dataset.tileId = tileId;
             const def = TILE_DEFINITIONS[tileId];
-            cell.style.backgroundColor = getPaletteColor(def.type);
+
+            // Reset styles first to handle erasing and switching tile types
+            cell.style.borderTop = '';
+            cell.style.backgroundColor = '';
+
+            if (def && def.oneWay) {
+                // One-way platform: draw only a top border
+                cell.style.borderTop = `5px solid ${getPaletteColor(def.type)}`;
+                cell.style.backgroundColor = 'transparent'; // Ensure cell background is clear to see grid lines
+            } else {
+                // Regular tile: fill the background
+                cell.style.backgroundColor = getPaletteColor(def.type);
+            }
         }
     }
 
