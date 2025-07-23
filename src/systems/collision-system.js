@@ -129,7 +129,7 @@ export class CollisionSystem {
               }
               vel.vx = 0;
               playerRect.x = pos.x;
-              col.isAgainstWall = !['sand', 'mud', 'ice'].includes(collider.surfaceType);
+              col.isAgainstWall = !['sand', 'mud', 'ice', 'platform'].includes(collider.surfaceType);
           }
       }
   }

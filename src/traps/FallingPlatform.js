@@ -7,26 +7,23 @@ export class FallingPlatform extends Trap {
         this.solid = true;
         this.initialX = x;
         this.initialY = y;
-        this.state = 'idle'; // 'idle', 'active', 'shaking', 'falling', 'respawning'
-        
+        this.state = 'idle';
+
         this.playerOnTimer = 0;
         this.shakeTimer = 0;
         this.respawnTimer = 0;
         this.fallSpeed = 0;
         this.opacity = 1;
 
-        // Bobbing motion properties
         this.bobbingTimer = Math.random() * Math.PI * 2;
         this.bobbingAmplitude = Math.random() * 5 + 5;
 
-        // Constants
         this.PLAYER_ON_DURATION = 0.3;
-        this.SHAKE_DURATION = 0.15;
+        this.SHAKE_DURATION = 0.1;
         this.RESPAWN_DURATION = 5.0;
-        this.FALL_ACCELERATION = 220;
-        this.MAX_FALL_SPEED = 500;
+        this.FALL_ACCELERATION = 350;
+        this.MAX_FALL_SPEED = 600;
 
-        // Animation
         this.animation = {
             frameCount: 4,
             frameSpeed: 0.1,
@@ -44,12 +41,11 @@ export class FallingPlatform extends Trap {
         return (
             playerData.x < this.x + this.width / 2 &&
             playerData.x + playerData.width > this.x - this.width / 2 &&
-            Math.abs(playerBottom - platformTop) < 5 // Small tolerance
+            Math.abs(playerBottom - platformTop) < 5
         );
     }
-    
+
     update(dt, playerData, eventBus) {
-        // Animation should play when the fan is supposed to be on
         if (this.state === 'idle' || this.state === 'active') {
             this.animation.frameTimer += dt;
             if (this.animation.frameTimer >= this.animation.frameSpeed) {
@@ -63,10 +59,10 @@ export class FallingPlatform extends Trap {
                 this.bobbingTimer += dt * 2;
                 this.y = this.initialY + Math.sin(this.bobbingTimer) * this.bobbingAmplitude;
                 break;
-            
+
             case 'active':
                 this.playerOnTimer -= dt;
-                // If player jumps off before timer ends, reset
+
                 if (!this._isPlayerOnTop(playerData)) {
                     this.reset();
                     return;
@@ -80,11 +76,12 @@ export class FallingPlatform extends Trap {
 
             case 'shaking':
                 this.shakeTimer -= dt;
-                this.x = this.initialX + (Math.random() - 0.5) * 4; // More noticeable shake
+                this.x = this.initialX + (Math.random() - 0.5) * 4;
                 this.y = this.initialY + (Math.random() - 0.5) * 2;
                 if (this.shakeTimer <= 0) {
                     this.state = 'falling';
-                    this.x = this.initialX; // Reset position before falling
+                    this.solid = false;
+                    this.x = this.initialX;
                     this.y = this.initialY;
                 }
                 break;
@@ -108,7 +105,6 @@ export class FallingPlatform extends Trap {
                 if (this.opacity <= 0) {
                     this.state = 'respawning';
                     this.respawnTimer = this.RESPAWN_DURATION;
-                    this.solid = false;
                 }
                 break;
 
@@ -129,10 +125,9 @@ export class FallingPlatform extends Trap {
 
         if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
 
-        // The fan is ON (animated) when idle or active. It's OFF (static) when shaking or falling.
         const isFanOn = this.state === 'idle' || this.state === 'active';
         const sprite = isFanOn ? assets.falling_platform_on : assets.falling_platform_off;
-        
+
         if (!sprite) return;
 
         ctx.globalAlpha = this.opacity;
@@ -142,7 +137,6 @@ export class FallingPlatform extends Trap {
             const srcX = this.animation.currentFrame * frameWidth;
             ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY, this.width, this.height);
         } else {
-            // State is 'shaking' or 'falling', draw the static "off" sprite
             ctx.drawImage(sprite, drawX, drawY, this.width, this.height);
         }
 
