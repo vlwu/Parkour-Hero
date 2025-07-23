@@ -91,7 +91,7 @@ export class RockHead extends Trap {
             this.animations.blink.frame++;
             if (this.animations.blink.frame >= this.animations.blink.frameCount) {
                 this.state = 'idle';
-                this.timers.blink = Math.random() * 4 + 2;
+                this.timers.blink = Math.random() * 3 + 2;
             }
         }
     }
@@ -118,7 +118,7 @@ export class RockHead extends Trap {
             this.timers.slammed = 0.4;
             this.animations.hit.frame = 0;
             eventBus.publish('playSound', { key: 'rh_slam', volume: 1.5, channel: 'SFX' });
-            eventBus.publish('cameraShakeRequested', { intensity: 15, duration: 0.4 });
+            eventBus.publish('cameraShakeRequested', { intensity: 15, duration: 0.3 });
             eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'walk_dust', particleSpeed: 200 });
             eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'sand', particleSpeed: 200 });
             return;
@@ -152,7 +152,7 @@ export class RockHead extends Trap {
         if (this.y <= this.initialY) {
             this.y = this.initialY;
             this.state = 'idle';
-            this.timers.blink = Math.random() * 4 + 2;
+            this.timers.blink = Math.random() * 3 + 2;
         }
     }
 
@@ -193,7 +193,7 @@ export class RockHead extends Trap {
     reset() {
         this.y = this.initialY;
         this.state = 'idle';
-        this.timers.blink = Math.random() * 4 + 2;
+        this.timers.blink = Math.random() * 3 + 2;
         this.shakeOffset = { x: 0, y: 0 };
         this.animations.blink.frame = 0;
         this.animations.hit.frame = 0;
