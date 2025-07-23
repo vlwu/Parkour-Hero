@@ -95,7 +95,7 @@ export class Renderer {
     this.ctx.drawImage(bgCanvas, sx, sy, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
   }
 
-  renderScene(camera, level, entityManager, collectedFruits) {
+  renderScene(camera, level, entityManager) {
     camera.apply(this.ctx);
 
     this.drawTileGrid(level, camera);
@@ -113,8 +113,6 @@ export class Renderer {
         const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
         this._drawRenderable(pos, renderable, charComp, playerCtrl);
     }
-
-    this.drawCollectedFruits(collectedFruits, camera);
 
     camera.restore(this.ctx);
   }
@@ -242,26 +240,10 @@ export class Renderer {
     }
   }
 
-
-
-
-
-
-
   drawTraps(traps, camera) {
       for (const trap of traps) {
           trap.render(this.ctx, this.assets, camera);
       }
-  }
-
-  drawCollectedFruits(collectedArr, camera) {
-    const sprite = this.assets['fruit_collected']; if (!sprite) return;
-    const frameWidth = sprite.width / 6;
-    for (const collected of collectedArr) {
-      if (!camera.isRectVisible({x: collected.x, y: collected.y, width: collected.size, height: collected.size})) continue;
-      const srcX = collected.frame * frameWidth;
-      this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, collected.x - collected.size / 2, collected.y - collected.size / 2, collected.size, collected.size);
-    }
   }
 
   drawCheckpoints(checkpoints, camera) {
