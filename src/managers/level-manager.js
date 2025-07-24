@@ -11,24 +11,20 @@ export class LevelManager {
     eventBus.subscribe('requestPreviousLevel', () => this.goToPreviousLevel());
   }
 
-
-
-
-
-
+  getLevelData(sectionIndex, levelIndex) {
+    if (sectionIndex >= this.levelSections.length || levelIndex >= this.levelSections[sectionIndex].levels.length) {
+      console.error(`Invalid level index: Section ${sectionIndex}, Level ${levelIndex}`);
+      return null;
+    }
+    return this.levelSections[sectionIndex].levels[levelIndex];
+  }
 
   loadLevel(sectionIndex, levelIndex) {
-    if (sectionIndex >= this.levelSections.length || levelIndex >= this.levelSections[sectionIndex].levels.length) {
-      console.error(`Invalid level: Section ${sectionIndex}, Level ${levelIndex}`);
-      return null;
-    }
-
-    const levelData = this.levelSections[sectionIndex].levels[levelIndex];
+    const levelData = this.getLevelData(sectionIndex, levelIndex);
     if (!levelData) {
-      console.error(`Failed to load level data for Section ${sectionIndex}, Level ${levelIndex}. The JSON file may be missing or failed to fetch.`);
+      console.error(`Failed to load level data for Section ${sectionIndex}, Level ${levelIndex}.`);
       return null;
     }
-
 
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;

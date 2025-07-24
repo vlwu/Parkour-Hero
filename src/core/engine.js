@@ -10,9 +10,10 @@ import { ParticleSystem } from '../systems/particle-system.js';
 import { UISystem } from '../ui/ui-system.js';
 import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
+import { createEnemy } from '../entities/enemy-factory.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
-import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, GRID_CONSTANTS } from '../utils/constants.js';
 import { InputSystem } from '../systems/input-system.js';
 import { GameplaySystem } from '../systems/gameplay-system.js';
 import { PlayerStateSystem } from '../systems/player-state-system.js';
@@ -141,11 +142,10 @@ export class Engine {
   }
 
   loadLevel(sectionIndex, levelIndex) {
-    this.levelManager.gameState = this.gameState;
-    const newLevel = this.levelManager.loadLevel(sectionIndex, levelIndex);
-    if (!newLevel) { this.stop(); return; }
+    const levelData = this.levelManager.getLevelData(sectionIndex, levelIndex);
+    if (!levelData) { this.stop(); return; }
 
-    this.currentLevel = newLevel;
+    this.currentLevel = new Level(levelData);
     this.pauseForMenu = false;
 
     let newState = new GameState(this.gameState);
@@ -167,6 +167,8 @@ export class Engine {
     this.gameFlowSystem.reset(this.isRunning);
 
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
+
+    this.currentLevel.resetEnemies(this.entityManager); // Initial spawn of enemies
 
     this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
     this.camera.snapToPlayer(this.entityManager, this.playerEntityId);
@@ -262,6 +264,8 @@ export class Engine {
         this.currentLevel.trophy.animationTimer = 0;
         this.currentLevel.trophy.inactive = !this.currentLevel.allFruitsCollected();
     }
+    
+    this.currentLevel.resetEnemies(this.entityManager);
 
     const pos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
     const vel = this.entityManager.getComponent(this.playerEntityId, VelocityComponent);

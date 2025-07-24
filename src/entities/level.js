@@ -4,6 +4,8 @@ import * as Traps from '../traps/index.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { SpatialGrid } from '../utils/spatial-grid.js';
+import { EnemyComponent } from '../components/EnemyComponent.js';
+import { createEnemy } from './enemy-factory.js';
 
 
 const trapFactory = {
@@ -48,6 +50,7 @@ export class Level {
     this.checkpoints = [];
     this.traps = [];
     this.trophy = null;
+    this.initialEnemyConfigs = levelConfig.enemies || []; // Store for respawning
 
     (levelConfig.objects || []).forEach(obj => {
       const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
@@ -232,6 +235,19 @@ export class Level {
   isCompleted() {
     if (this.fruits.length && !this.allFruitsCollected()) return false;
     return !this.trophy || this.trophy.acquired;
+  }
+
+  resetEnemies(entityManager) {
+    const currentEnemies = entityManager.query([EnemyComponent]);
+    for (const id of currentEnemies) {
+        entityManager.destroyEntity(id);
+    }
+
+    this.initialEnemyConfigs.forEach(enemyConfig => {
+        const worldX = enemyConfig.x * GRID_CONSTANTS.TILE_SIZE;
+        const worldY = enemyConfig.y * GRID_CONSTANTS.TILE_SIZE;
+        createEnemy(entityManager, enemyConfig.type, worldX, worldY, enemyConfig);
+    });
   }
 
   reset() {
