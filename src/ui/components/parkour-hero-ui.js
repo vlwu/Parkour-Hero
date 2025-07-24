@@ -72,7 +72,6 @@ export class ParkourHeroUI extends LitElement {
     assets: { type: Object, state: true },
     fontRenderer: { type: Object },
     levelCompleteStats: { type: Object, state: true },
-    isLoading: { type: Boolean, state: true },
   };
 
   constructor() {
@@ -86,7 +85,6 @@ export class ParkourHeroUI extends LitElement {
     this.assets = null;
     this.fontRenderer = null;
     this.levelCompleteStats = null;
-    this.isLoading = true;
   }
 
   connectedCallback() {
@@ -116,14 +114,6 @@ export class ParkourHeroUI extends LitElement {
     eventBus.unsubscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
     eventBus.unsubscribe('assetsLoaded', (assets) => this.assets = assets);
     eventBus.unsubscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
-  }
-
-  updated(changedProperties) {
-    super.updated(changedProperties);
-    // Once both assets and the font renderer are available, the UI is ready.
-    if (this.isLoading && this.assets && this.fontRenderer) {
-      this.isLoading = false;
-    }
   }
 
   _handleLevelLoad = ({ gameState }) => {
@@ -223,12 +213,12 @@ export class ParkourHeroUI extends LitElement {
       `;
     }
 
+    const isLoading = !this.assets || !this.fontRenderer;
     // If the game has NOT started, render the main menu screen.
-    // This will show a loading screen until all assets are ready.
     if (!this.gameHasStarted) {
       return html`
         <div class="main-menu-overlay">
-          ${this.isLoading
+          ${isLoading
             ? this.renderLoadingScreen()
             : this.activeModal === 'main-menu'
             ? this.renderMainMenuContent()
