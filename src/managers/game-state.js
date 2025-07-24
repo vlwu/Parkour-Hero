@@ -106,11 +106,13 @@ export class GameState {
   }
 
   incrementAttempts(sectionIndex, levelIndex) {
+    const newState = this._clone();
     const levelId = `${sectionIndex}-${levelIndex}`;
-    if (this.levelStats[levelId]) {
-        this.levelStats[levelId].totalAttempts += 1;
-        this.saveProgress();
+    if (newState.levelStats[levelId]) {
+        newState.levelStats[levelId].totalAttempts += 1;
+        newState.saveProgress();
     }
+    return newState;
   }
   
   onLevelComplete(runStats) {
@@ -168,22 +170,29 @@ export class GameState {
   resetProgress() {
     try {
       localStorage.removeItem('parkourGameState');
-      const defaultState = this._getDefaultState();
-      this.levelProgress = defaultState.levelProgress;
-      this.selectedCharacter = defaultState.selectedCharacter;
-      this.levelStats = defaultState.levelStats;
-      this.currentSection = 0;
-      this.currentLevelIndex = 0;
-      this.ensureStatsForAllLevels();
+      const newState = new GameState(); // Creates a fresh state from defaults
+      newState.saveProgress();
+      return newState;
     } catch (e) {
       console.error("Failed to reset game state in localStorage", e);
+      return this; // Return old state on failure
     }
   }
   
   unlockAllLevels() {
+      const newState = this._clone();
       const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
-      this.levelProgress.unlockedLevels[0] = totalLevels;
-      this.levelProgress.completedLevels = Array.from({length: totalLevels}, (_, i) => `temp-${i}`);
-      this.saveProgress();
+      newState.levelProgress.unlockedLevels[0] = totalLevels;
+      
+      // Mark all levels as completed to ensure characters are unlocked
+      newState.levelProgress.completedLevels = [];
+      levelSections.forEach((section, sIdx) => {
+          section.levels.forEach((_, lIdx) => {
+              newState.levelProgress.completedLevels.push(`${sIdx}-${lIdx}`);
+          });
+      });
+      
+      newState.saveProgress();
+      return newState;
   }
 }

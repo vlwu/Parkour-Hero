@@ -3,6 +3,7 @@ import { GRID_CONSTANTS } from '../utils/constants.js';
 import * as Traps from '../traps/index.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
+import { SpatialGrid } from '../utils/spatial-grid.js';
 
 
 const trapFactory = {
@@ -39,6 +40,8 @@ export class Level {
     this.tiles = levelConfig.layout.map(rowString =>
       [...rowString].map(tileId => TILE_DEFINITIONS[tileId] || TILE_DEFINITIONS['0'])
     );
+    
+    this.spatialGrid = new SpatialGrid(this.width, this.height, GRID_CONSTANTS.TILE_SIZE * 4);
 
 
     this.fruits = [];
@@ -53,30 +56,37 @@ export class Level {
       const TrapClass = trapFactory[obj.type];
 
       if (TrapClass) {
-        this.traps.push(new TrapClass(worldX, worldY, obj));
+        const instance = new TrapClass(worldX, worldY, obj);
+        this.traps.push(instance);
+        this.spatialGrid.insert({ ...(instance.hitbox || { x: worldX, y: worldY, width: 1, height: 1 }), instance });
       } else if (obj.type.startsWith('fruit_')) {
-        this.fruits.push({
+        const instance = {
           x: worldX, y: worldY, size: 28,
           spriteKey: obj.type, frame: 0,
           frameCount: 17, frameSpeed: 0.07,
           frameTimer: 0, collected: false,
           type: 'fruit'
-        });
+        };
+        this.fruits.push(instance);
+        this.spatialGrid.insert({ x: worldX - 14, y: worldY - 14, width: 28, height: 28, instance });
       } else if (obj.type === 'checkpoint') {
-        this.checkpoints.push({
+        const instance = {
           x: worldX, y: worldY, size: 64,
           state: 'inactive', frame: 0,
           frameCount: 26, frameSpeed: 0.07,
           frameTimer: 0, type: 'checkpoint'
-        });
+        };
+        this.checkpoints.push(instance);
+        this.spatialGrid.insert({ x: worldX - 32, y: worldY - 32, width: 64, height: 64, instance });
       } else if (obj.type === 'trophy') {
         this.trophy = {
           x: worldX, y: worldY, size: 64,
           frameCount: 8, animationFrame: 0,
           animationTimer: 0, animationSpeed: 0.07,
           acquired: false, inactive: true, contactMade: false,
-          isAnimating: false,
+          isAnimating: false, type: 'trophy'
         };
+        this.spatialGrid.insert({ x: worldX - 32, y: worldY - 32, width: 64, height: 64, instance: this.trophy });
       }
     });
 
@@ -106,51 +116,74 @@ export class Level {
     return this.tiles[gridY][gridX] || TILE_DEFINITIONS['0'];
   }
 
-  update(dt, entityManager, playerEntityId, eventBus) {
-      this.updateFruits(dt);
-      this.updateTrophyAnimation(dt);
-      this.updateCheckpoints(dt);
-
+  update(dt, entityManager, playerEntityId, eventBus, camera) {
       const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
       const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
-
       const playerData = playerPos && playerCol ? { ...playerPos, width: playerCol.width, height: playerCol.height } : null;
 
-      for (const trap of this.traps) {
-          trap.update(dt, playerData, eventBus, this);
+      const visibleInstances = new Set(this.spatialGrid.query(camera.getViewportBounds()).map(o => o.instance));
+
+      for (const instance of visibleInstances) {
+          switch(instance.type) {
+              case 'trap':
+                  instance.update(dt, playerData, eventBus, this);
+                  break;
+              case 'fruit':
+                  this._updateSingleFruit(instance, dt);
+                  break;
+              case 'checkpoint':
+                  this._updateSingleCheckpoint(instance, dt);
+                  break;
+              case 'trophy':
+                  this._updateSingleTrophy(instance, dt);
+                  break;
+          }
       }
   }
 
-  updateCheckpoints(dt) {
-    for (const cp of this.checkpoints) {
-      if (cp.state === 'activating') {
-        cp.frameTimer += dt;
-        if (cp.frameTimer >= cp.frameSpeed) {
-          cp.frameTimer -= cp.frameSpeed;
-          cp.frame++;
-          if (cp.frame >= cp.frameCount) {
-            cp.frame = 0;
-            cp.state = 'active';
-          }
+  _updateSingleCheckpoint(cp, dt) {
+    if (cp.state === 'activating') {
+      cp.frameTimer += dt;
+      if (cp.frameTimer >= cp.frameSpeed) {
+        cp.frameTimer -= cp.frameSpeed;
+        cp.frame++;
+        if (cp.frame >= cp.frameCount) {
+          cp.frame = 0;
+          cp.state = 'active';
         }
+      }
+    }
+  }
+
+  _updateSingleFruit(fruit, dt) {
+    if (!fruit.collected) {
+      fruit.frameTimer += dt;
+      if (fruit.frameTimer >= fruit.frameSpeed) {
+        fruit.frameTimer -= fruit.frameSpeed;
+        fruit.frame = (fruit.frame + 1) % fruit.frameCount;
+      }
+    }
+  }
+
+  _updateSingleTrophy(trophy, dt) {
+    if (!trophy || !trophy.isAnimating || trophy.acquired) return;
+
+    trophy.animationTimer += dt;
+    if (trophy.animationTimer >= trophy.animationSpeed) {
+      trophy.animationTimer -= trophy.animationSpeed;
+      trophy.animationFrame = (trophy.animationFrame + 1);
+
+
+      if (trophy.animationFrame >= trophy.frameCount) {
+        trophy.animationFrame = trophy.frameCount - 1;
+        trophy.isAnimating = false;
+        trophy.acquired = true;
       }
     }
   }
 
   getInactiveCheckpoints() {
     return this.checkpoints.filter(cp => cp.state === 'inactive');
-  }
-
-  updateFruits(dt) {
-    for (const fruit of this.fruits) {
-      if (!fruit.collected) {
-        fruit.frameTimer += dt;
-        if (fruit.frameTimer >= fruit.frameSpeed) {
-          fruit.frameTimer -= fruit.frameSpeed;
-          fruit.frame = (fruit.frame + 1) % fruit.frameCount;
-        }
-      }
-    }
   }
 
   collectFruit(fruit) {
@@ -183,25 +216,6 @@ export class Level {
     this.collectedFruitCount = this.fruits.reduce((count, fruit) => {
         return count + (fruit.collected ? 1 : 0);
     }, 0);
-  }
-
-  updateTrophyAnimation(dt) {
-    const trophy = this.trophy;
-
-    if (!trophy || !trophy.isAnimating || trophy.acquired) return;
-
-    trophy.animationTimer += dt;
-    if (trophy.animationTimer >= trophy.animationSpeed) {
-      trophy.animationTimer -= trophy.animationSpeed;
-      trophy.animationFrame = (trophy.animationFrame + 1);
-
-
-      if (trophy.animationFrame >= trophy.frameCount) {
-        trophy.animationFrame = trophy.frameCount - 1;
-        trophy.isAnimating = false;
-        trophy.acquired = true;
-      }
-    }
   }
 
   isCompleted() {

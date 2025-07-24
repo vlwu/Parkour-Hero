@@ -27,7 +27,7 @@ export class Renderer {
       for (let x = 0; x < level.gridWidth; x++) {
         const tile = level.tiles[y][x];
 
-        if (tile.solid && !tile.oneWay) {
+        if (tile.solid) { // Render ALL solid tiles, including one-way platforms, to the cache
             const sprite = this.assets[tile.spriteKey];
             if (!sprite) {
                 cacheCtx.fillStyle = 'magenta';
@@ -98,12 +98,30 @@ export class Renderer {
   renderScene(camera, level, entityManager) {
     camera.apply(this.ctx);
 
-    this.drawTileGrid(level, camera);
-    if (level.trophy) this.drawTrophy(level.trophy, camera);
-    this.drawFruits(level.getActiveFruits(), camera);
-    this.drawCheckpoints(level.checkpoints, camera);
+    // Draw the pre-rendered static level cache
+    if (this.staticLayerCache) {
+        this.ctx.drawImage(this.staticLayerCache, 0, 0);
+    }
+    
+    // Get only the visible dynamic objects from the level's spatial grid
+    const visibleInstances = new Set(level.spatialGrid.query(camera.getViewportBounds()).map(o => o.instance));
 
-    this.drawTraps(level.traps, camera);
+    for (const instance of visibleInstances) {
+        switch(instance.type) {
+            case 'trap':
+                instance.render(this.ctx, this.assets, camera);
+                break;
+            case 'fruit':
+                if (!instance.collected) this.drawFruits([instance], camera);
+                break;
+            case 'checkpoint':
+                this.drawCheckpoints([instance], camera);
+                break;
+            case 'trophy':
+                this.drawTrophy(instance, camera);
+                break;
+        }
+    }
 
     const entities = entityManager.query([PositionComponent, RenderableComponent]);
     for(const entityId of entities) {
@@ -168,43 +186,6 @@ export class Renderer {
       renderable.width, renderable.height
     );
     this.ctx.restore();
-  }
-
-  drawTileGrid(level, camera) {
-    if (this.staticLayerCache) {
-        this.ctx.drawImage(this.staticLayerCache, 0, 0);
-    }
-
-    const tileSize = GRID_CONSTANTS.TILE_SIZE;
-    const startCol = Math.floor(camera.x / tileSize), endCol = Math.ceil((camera.x + camera.width) / tileSize);
-    const startRow = Math.floor(camera.y / tileSize), endRow = Math.ceil((camera.y + camera.height) / tileSize);
-
-    for (let y = startRow; y < endRow; y++) {
-      for (let x = startCol; x < endCol; x++) {
-        if (x < 0 || x >= level.gridWidth || y < 0 || y >= level.gridHeight) continue;
-
-        const tile = level.tiles[y][x];
-        if (tile.type === 'empty' || !tile.oneWay) continue;
-        const sprite = this.assets[tile.spriteKey];
-        if (!sprite) { this.ctx.fillStyle = 'magenta'; this.ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize); continue; }
-        const screenX = x * tileSize, screenY = y * tileSize;
-
-        const drawSize = tileSize + 1;
-
-        if (tile.spriteConfig) {
-            const sWidth = tileSize;
-            const sHeight = tile.spriteConfig.height || tileSize;
-            const dWidth = drawSize;
-
-
-            const dHeight = sHeight === tileSize ? drawSize : sHeight;
-
-            this.ctx.drawImage(sprite, tile.spriteConfig.srcX, tile.spriteConfig.srcY, sWidth, sHeight, screenX, screenY, dWidth, dHeight);
-        } else {
-            this.ctx.drawImage(sprite, screenX, screenY, drawSize, drawSize);
-        }
-      }
-    }
   }
 
   drawTrophy(trophy, camera) {

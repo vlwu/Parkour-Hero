@@ -173,7 +173,7 @@ export class Engine {
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) this._respawnPlayer();
 
-    this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus);
+    this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus, this.camera);
 
     const playerHealth = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     eventBus.publish('statsUpdated', {

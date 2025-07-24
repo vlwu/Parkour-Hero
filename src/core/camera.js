@@ -142,6 +142,16 @@ export class Camera {
     this.targetY = this.y;
   }
 
+  getViewportBounds() {
+    const buffer = 32; // A small buffer to update objects just off-screen
+    return {
+      x: this.x - buffer,
+      y: this.y - buffer,
+      width: this.width + buffer * 2,
+      height: this.height + buffer * 2,
+    };
+  }
+
   updateLevelBounds(levelWidth, levelHeight) {
     this.levelWidth = levelWidth;
     this.levelHeight = levelHeight;
