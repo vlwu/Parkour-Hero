@@ -199,20 +199,18 @@ export class Renderer {
   _drawEnemy(pos, renderable) {
     if (!renderable.isVisible) return;
     
-    // Dynamically construct the asset key: e.g., 'mushroom' + '_' + 'run' -> 'mushroom_run'
     const assetKey = `${renderable.spriteKey}_${renderable.animationState}`;
     const sprite = this.assets[assetKey];
     
     if (!sprite) {
-        this.ctx.fillStyle = '#FF00FF'; // Draw a magenta box if sprite is missing
+        console.warn(`Missing enemy sprite for asset key: "${assetKey}"`);
+        this.ctx.fillStyle = '#FF00FF';
         this.ctx.fillRect(pos.x, pos.y, renderable.width, renderable.height);
         return;
     }
     
-    // In the future, animation data will come from ENEMY_DEFINITIONS
-    const frameCount = sprite.width / renderable.width;
-    const frameWidth = renderable.width;
-    const srcX = (renderable.animationFrame % frameCount) * frameWidth;
+    const frameWidth = sprite.width / (ENEMY_DEFINITIONS[renderable.spriteKey.replace('enemy_', '')].animations[renderable.animationState].frameCount || 1);
+    const srcX = (renderable.animationFrame % (sprite.width / frameWidth)) * frameWidth;
 
     this.ctx.save();
     if (renderable.direction === 'left') {

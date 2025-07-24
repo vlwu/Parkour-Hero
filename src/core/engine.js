@@ -27,6 +27,7 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { EnemySystem } from '../systems/enemy-system.js';
+import { Level } from '../entities/level.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -167,8 +168,8 @@ export class Engine {
     this.gameFlowSystem.reset(this.isRunning);
 
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
-
-    this.currentLevel.resetEnemies(this.entityManager); // Initial spawn of enemies
+    
+    this.currentLevel.resetEnemies(this.entityManager);
 
     this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
     this.camera.snapToPlayer(this.entityManager, this.playerEntityId);

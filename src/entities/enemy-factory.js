@@ -26,7 +26,7 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     }
 
     const enemyEntityId = entityManager.createEntity();
-    const initialState = data.ai.type === 'hop' || data.ai.type === 'turret' ? 'idle' : 'patrol';
+    const initialState = data.ai.type === 'hop' || data.ai.type === 'defensive_cycle' || data.ai.type === 'ground_charge' ? 'idle' : 'patrol';
 
     // --- Core Components ---
     entityManager.addComponent(enemyEntityId, new PositionComponent(x, y));
@@ -35,21 +35,21 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     entityManager.addComponent(enemyEntityId, new DynamicColliderComponent());
 
     // --- Enemy-Specific Components ---
-    entityManager.addComponent(enemyEntityId, new EnemyComponent({
-        type: type,
-        patrol: {
+    const aiConfig = {
+        ...data.ai,
+        patrol: { // Ensure patrol data is nested correctly
             startX: x,
             distance: config.patrolDistance || 100,
             speed: data.ai.patrolSpeed || 50
-        },
-        aggroRange: data.ai.aggroRange,
-        ...data.ai, // Spread all AI properties
-        ...config.enemyProps // Allows for overrides from level data
+        }
+    };
+    entityManager.addComponent(enemyEntityId, new EnemyComponent({
+        type: type,
+        ai: aiConfig
     }));
     
     entityManager.addComponent(enemyEntityId, new KillableComponent({
         ...data.killable,
-        ...config.killableProps // Allows for overrides
     }));
 
     // --- Physics and Rendering Components ---
@@ -63,7 +63,7 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
         spriteKey: data.spriteKey,
         width: data.width,
         height: data.height,
-        animationState: initialState === 'idle' ? 'idle' : 'run',
+        animationState: initialState === 'idle' ? 'idle' : (data.spriteKey === 'snail' ? 'walk' : 'run'),
     }));
 
     return enemyEntityId;

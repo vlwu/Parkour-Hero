@@ -24,15 +24,9 @@ export class EnemySystem {
             const collision = entityManager.getComponent(enemyId, CollisionComponent);
 
             if (enemy && !enemy.isDead) {
-                // Special case for Turtle: can only be killed if spikes are in.
                 if (enemy.type === 'turtle' && state.currentState !== 'idle') {
-                    eventBus.publish('playSound', { key: 'hit', volume: 0.9, channel: 'SFX' }); // Sound of hitting spikes
+                    eventBus.publish('playSound', { key: 'hit', volume: 0.9, channel: 'SFX' });
                     continue;
-                }
-
-                // Special case for Snail: creates a shell.
-                if (enemy.type === 'snail') {
-                    // We'll implement shell creation in a future step. For now, it dies normally.
                 }
 
                 enemy.isDead = true;
@@ -49,13 +43,11 @@ export class EnemySystem {
         this.stompEvents = [];
     }
 
-    update(dt, { entityManager, playerEntityId }) {
+    update(dt, { entityManager, playerEntityId, playerCol }) {
         this._processStompEvents(entityManager);
         
         const enemyEntities = entityManager.query([EnemyComponent, PositionComponent, VelocityComponent, StateComponent, RenderableComponent]);
-        
         const playerPos = playerEntityId ? entityManager.getComponent(playerEntityId, PositionComponent) : null;
-        const playerCol = playerEntityId ? entityManager.getComponent(playerEntityId, CollisionComponent) : null;
         const playerData = playerPos && playerCol ? { ...playerPos, ...playerCol } : null;
 
         for (const id of enemyEntities) {
@@ -66,141 +58,127 @@ export class EnemySystem {
             const renderable = entityManager.getComponent(id, RenderableComponent);
 
             if (enemy.isDead) {
-                this._updateDyingState(dt, enemy, vel, renderable, entityManager, id);
-                continue;
-            }
-
-            // --- State Machine ---
-            const aiType = ENEMY_DEFINITIONS[enemy.type].ai.type;
-            switch (aiType) {
-                case 'patrol':
-                    this._updatePatrolAI(pos, vel, enemy, renderable, state);
-                    break;
-                case 'ground_charge':
-                    this._updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData);
-                    break;
-                case 'defensive_cycle':
-                    this._updateDefensiveCycleAI(dt, vel, enemy, renderable, state);
-                    break;
-                case 'hop':
-                    this._updateHopAI(dt, vel, enemy, renderable, state, entityManager.getComponent(id, CollisionComponent));
-                    break;
+                this._updateDyingState(dt, enemy, vel, entityManager, id);
+            } else {
+                switch (enemy.ai.type) {
+                    case 'patrol': this._updatePatrolAI(dt, pos, vel, enemy, renderable, state); break;
+                    case 'ground_charge': this._updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData); break;
+                    case 'defensive_cycle': this._updateDefensiveCycleAI(dt, vel, enemy, renderable, state); break;
+                    case 'hop': this._updateHopAI(dt, vel, enemy, renderable, state, entityManager.getComponent(id, CollisionComponent)); break;
+                }
             }
             
-            this._updateAnimation(dt, renderable, enemy.type);
+            this._updateAnimation(dt, id, entityManager);
 
             if (vel.vx > 0) renderable.direction = 'right';
             else if (vel.vx < 0) renderable.direction = 'left';
         }
     }
 
-    // --- AI Behaviors ---
-    _updatePatrolAI(pos, vel, enemy, renderable, state) {
-        const { startX, distance, speed } = enemy.patrol;
+    _updatePatrolAI(dt, pos, vel, enemy, renderable, state) {
+        if (state.currentState === 'idle') {
+            enemy.timer -= dt;
+            if (enemy.timer <= 0) {
+                state.currentState = 'patrol';
+                vel.vx = (renderable.direction === 'right' ? 1 : -1) * enemy.ai.patrol.speed;
+            }
+            return;
+        }
+
+        const { startX, distance, speed } = enemy.ai.patrol;
         const leftBound = startX;
         const rightBound = startX + distance;
 
-        if (vel.vx === 0) vel.vx = speed;
-
-        if (pos.x <= leftBound) { pos.x = leftBound; vel.vx = speed; } 
-        else if (pos.x >= rightBound) { pos.x = rightBound; vel.vx = -speed; }
+        if (pos.x <= leftBound) {
+            pos.x = leftBound; vel.vx = speed; state.currentState = 'idle'; enemy.timer = 0.5;
+        } else if (pos.x >= rightBound) {
+            pos.x = rightBound; vel.vx = -speed; state.currentState = 'idle'; enemy.timer = 0.5;
+        }
         
         renderable.animationState = enemy.type === 'snail' ? 'walk' : 'run';
+        if (state.currentState === 'idle') renderable.animationState = 'idle';
     }
 
     _updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData) {
         switch(state.currentState) {
             case 'idle':
-                vel.vx = 0;
-                renderable.animationState = 'idle';
-                enemy.timer = (enemy.timer || 0) - dt;
-                if (enemy.timer <= 0 && playerData && playerData.isGrounded) {
+                vel.vx = 0; renderable.animationState = 'idle';
+                if (playerData && playerData.isGrounded) {
                      const distance = Math.abs(playerData.x - pos.x);
-                     if (distance <= enemy.aggroRange) {
-                         state.currentState = 'charging';
+                     if (distance <= enemy.ai.aggroRange) {
+                         state.currentState = 'warning';
+                         enemy.timer = enemy.ai.idleTime;
                          renderable.direction = (playerData.x > pos.x) ? 'right' : 'left';
-                         vel.vx = (renderable.direction === 'right' ? 1 : -1) * enemy.chargeSpeed;
-                         enemy.timer = enemy.chargeTime;
                      }
+                }
+                break;
+            case 'warning':
+                vel.vx = 0; renderable.animationState = 'idle';
+                enemy.timer -= dt;
+                if(enemy.timer <= 0) {
+                    state.currentState = 'charging';
+                    vel.vx = (renderable.direction === 'right' ? 1 : -1) * enemy.ai.chargeSpeed;
+                    enemy.timer = enemy.ai.chargeTime;
                 }
                 break;
             case 'charging':
                 renderable.animationState = 'run';
                 enemy.timer -= dt;
                 if(enemy.timer <= 0) {
-                    state.currentState = 'cooldown';
-                    vel.vx = 0;
-                    enemy.timer = enemy.cooldownTime;
+                    state.currentState = 'cooldown'; vel.vx = 0; enemy.timer = enemy.ai.cooldownTime;
                 }
                 break;
             case 'cooldown':
                  renderable.animationState = 'idle';
                  enemy.timer -= dt;
-                 if(enemy.timer <= 0) {
-                     state.currentState = 'idle';
-                     enemy.timer = enemy.idleTime;
-                 }
+                 if(enemy.timer <= 0) { state.currentState = 'idle'; }
                  break;
         }
     }
 
     _updateDefensiveCycleAI(dt, vel, enemy, renderable, state) {
-        vel.vx = 0; // Turtle is immobile
-        enemy.timer = (enemy.timer || 0) - dt;
+        vel.vx = 0;
+        enemy.timer -= dt;
         
-        switch(state.currentState) {
-            case 'idle': // Spikes in
-                renderable.animationState = 'idle1';
-                if (enemy.timer <= 0) {
-                    state.currentState = 'spikes_out_transition';
-                    renderable.animationState = 'spikes_out';
-                    renderable.animationFrame = 0;
-                }
-                break;
-            case 'hiding': // Spikes out
-                if (enemy.timer <= 0) {
-                    state.currentState = 'spikes_in_transition';
-                    renderable.animationState = 'spikes_in';
-                    renderable.animationFrame = 0;
-                }
-                break;
-            case 'spikes_out_transition':
-                // The animation system handles moving to the next state
-                break;
-            case 'spikes_in_transition':
-                // The animation system handles moving to the next state
-                break;
+        if (enemy.timer <= 0) {
+            if (state.currentState === 'idle') { // Spikes are in
+                state.currentState = 'spikes_out_transition';
+                renderable.animationState = 'spikes_out'; renderable.animationFrame = 0;
+            } else if (state.currentState === 'hiding') { // Spikes are out
+                state.currentState = 'spikes_in_transition';
+                renderable.animationState = 'spikes_in'; renderable.animationFrame = 0;
+            }
         }
     }
 
     _updateHopAI(dt, vel, enemy, renderable, state, col) {
-        vel.vx = 0; // Slime only moves when hopping
         if (state.currentState === 'idle' && col.isGrounded) {
-            renderable.animationState = 'idle_run';
-            enemy.timer = (enemy.timer || 0) - dt;
+            vel.vx = 0; renderable.animationState = 'idle_run';
+            enemy.timer -= dt;
             if (enemy.timer <= 0) {
                 state.currentState = 'hopping';
-                vel.vy = -enemy.hopHeight;
-                vel.vx = (Math.random() > 0.5 ? 1 : -1) * enemy.hopSpeed;
+                vel.vy = -enemy.ai.hopHeight;
+                vel.vx = (Math.random() > 0.5 ? 1 : -1) * enemy.ai.hopSpeed;
             }
-        } else if (state.currentState === 'hopping' && col.isGrounded) {
-            state.currentState = 'idle';
-            enemy.timer = enemy.hopInterval;
+        } else if (state.currentState === 'hopping' && col.isGrounded && vel.vy >= 0) {
+            state.currentState = 'idle'; enemy.timer = enemy.ai.hopInterval;
         }
     }
     
-    // --- State & Animation ---
-    _updateDyingState(dt, enemy, vel, renderable, entityManager, entityId) {
-        vel.vx = 0;
-        vel.vy += 200 * dt;
+    _updateDyingState(dt, enemy, vel, entityManager, entityId) {
+        vel.vx = 0; vel.vy += 200 * dt;
         enemy.deathTimer -= dt;
         if (enemy.deathTimer <= 0) {
             entityManager.destroyEntity(entityId);
         }
     }
 
-    _updateAnimation(dt, renderable, type) {
-        const animDef = ENEMY_DEFINITIONS[type]?.animations[renderable.animationState];
+    _updateAnimation(dt, id, entityManager) {
+        const renderable = entityManager.getComponent(id, RenderableComponent);
+        const enemy = entityManager.getComponent(id, EnemyComponent);
+        const state = entityManager.getComponent(id, StateComponent);
+        
+        const animDef = ENEMY_DEFINITIONS[enemy.type]?.animations[renderable.animationState];
         if (!animDef) return;
 
         renderable.animationTimer += dt;
@@ -209,20 +187,16 @@ export class EnemySystem {
             renderable.animationFrame++;
 
             if (renderable.animationFrame >= animDef.frameCount) {
-                // Handle transitions for state machine-driven animations (like turtle)
-                const enemy = entityManager.getComponent(id, EnemyComponent);
-                const state = entityManager.getComponent(id, StateComponent);
-                if (type === 'turtle') {
+                if (enemy.type === 'turtle') {
                     if (renderable.animationState === 'spikes_out') {
                         state.currentState = 'hiding';
-                        enemy.timer = enemy.spikesOutDuration;
+                        enemy.timer = enemy.ai.spikesOutDuration;
                     } else if (renderable.animationState === 'spikes_in') {
                         state.currentState = 'idle';
-                        enemy.timer = enemy.spikesInDuration;
+                        enemy.timer = enemy.ai.spikesInDuration;
                     }
                 }
-                
-                renderable.animationFrame = 0; // Loop animation
+                renderable.animationFrame = 0;
             }
         }
     }
