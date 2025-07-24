@@ -1,4 +1,5 @@
 import { TILE_DEFINITIONS } from '../../entities/tile-definitions.js';
+import { ENEMY_DEFINITIONS } from '../../entities/enemy-definitions.js';
 import { OBJECT_DESCRIPTIONS, PALETTE_ABBREVIATIONS, getPaletteColor } from '../config/EditorSettings.js';
 import { DOM } from './DOM.js';
 
@@ -34,6 +35,14 @@ export class Palette {
             item.style.backgroundColor = getPaletteColor(type);
             DOM.trapsPalette.appendChild(item);
         });
+        
+        // Enemies
+        for (const type of Object.keys(ENEMY_DEFINITIONS)) {
+            const abbreviation = PALETTE_ABBREVIATIONS[type] || '???';
+            const item = this._createPaletteItem('enemy', type, type, abbreviation);
+            item.style.backgroundColor = getPaletteColor(type);
+            DOM.enemiesPalette.appendChild(item);
+        }
         
         this.updateSelectionVisuals();
     }

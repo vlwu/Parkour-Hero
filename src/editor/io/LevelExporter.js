@@ -1,6 +1,6 @@
 export class LevelExporter {
     static export(grid, objectManager, levelName, background) {
-        const { startPos, finalObjects } = objectManager.getObjectsForExport();
+        const { startPos, finalObjects, finalEnemies } = objectManager.getObjectsForExport();
 
         const exportData = {
             name: levelName,
@@ -9,7 +9,8 @@ export class LevelExporter {
             background: background,
             startPosition: startPos,
             layout: grid.getLayout(),
-            objects: finalObjects
+            objects: finalObjects,
+            enemies: finalEnemies
         };
 
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));

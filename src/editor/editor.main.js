@@ -96,22 +96,15 @@ class EditorController {
                 oldValue = this.objectPropChange.oldValue;
                 this.objectPropChange.isChanging = false;
             } else {
-                // Otherwise (for selects, or numbers changed without dragging), it's the current value.
                 oldValue = obj[prop];
             }
             
             const finalValue = typeof value === 'number' ? round(value) : value;
 
             if (oldValue !== finalValue) {
-                // Set the object's property to the final value before pushing to history
                 this.objectManager.updateObjectProp(id, prop, finalValue);
-                this.history.push({
-                    type: 'update_prop', id, prop,
-                    from: oldValue,
-                    to: finalValue,
-                });
+                this.history.push({ type: 'update_prop', id, prop, from: oldValue, to: finalValue });
             } else {
-                // Even if the value hasn't changed (e.g., number input blur), ensure the object is correctly set
                  this.objectManager.updateObjectProp(id, prop, finalValue);
             }
         }
@@ -219,7 +212,7 @@ class EditorController {
                     this.grid.paintCell(index, tileId);
                 });
             });
-            this.objectManager.load(data.objects, data.startPosition);
+            this.objectManager.load(data.objects, data.enemies, data.startPosition);
             this.history.clear();
         });
     }
@@ -293,7 +286,7 @@ class EditorController {
         if (!obj) return;
         this.deselectObject();
         this.selectedObject = obj;
-        this.selectedObject.initialDragPos = { x: obj.x, y: obj.y }; // Store pos for move history
+        this.selectedObject.initialDragPos = { x: obj.x, y: obj.y };
         this.propertiesPanel.displayObject(obj);
         DOM.gridContainer.querySelector(`.dynamic-object[data-id='${obj.id}']`)?.classList.add('selected');
     }

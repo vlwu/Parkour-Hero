@@ -8,6 +8,7 @@ export const DOM = {
     terrainPalette: document.getElementById('terrain-palette'),
     itemsPalette: document.getElementById('items-palette'),
     trapsPalette: document.getElementById('traps-palette'),
+    enemiesPalette: document.getElementById('enemies-palette'),
 
     // Toolbar Inputs
     levelNameInput: document.getElementById('levelNameInput'),

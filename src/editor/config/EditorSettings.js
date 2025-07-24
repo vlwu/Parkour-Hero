@@ -15,7 +15,13 @@ export const OBJECT_DESCRIPTIONS = {
     'falling_platform': 'A platform that shakes and falls after being stood on for a second. Does not snap to ground.',
     'rock_head': 'A stone guardian that hovers in the air. When a player passes underneath, it slams to the ground, killing them instantly.',
     'spike_head': 'A spiked guardian that hovers in the air. When a player passes underneath, it slams to the ground, killing them instantly.',
-    'saw': 'A circular saw that moves back and forth along a path. Properties: direction (horizontal/vertical), distance (path length in pixels), speed (pixels per second).'
+    'saw': 'A circular saw that moves back and forth along a path. Properties: direction (horizontal/vertical), distance (path length in pixels), speed (pixels per second).',
+    // Enemies
+    'mushroom': 'A simple ground enemy that patrols back and forth. Snaps to the ground. Properties: patrolDistance (path length in pixels).',
+    'chicken': 'A ground enemy that charges at the player when they get close. Snaps to the ground.',
+    'snail': 'A slow-moving patrol enemy. Can be jumped on to create a shell projectile (not simulated in editor). Snaps to the ground.',
+    'slime': 'A ground enemy that hops around periodically. Snaps to the ground.',
+    'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.'
 };
 
 export const PALETTE_ABBREVIATIONS = {
@@ -30,6 +36,8 @@ export const PALETTE_ABBREVIATIONS = {
     'spiked_ball': 'BAL', 'arrow_bubble': 'ARR', 'fan': 'FAN',
     'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
     'saw': 'SAW',
+    // Enemies
+    'mushroom': 'MSH', 'chicken': 'CKN', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT',
     // Terrain
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -64,6 +72,9 @@ export function getPaletteColor(type) {
         case 'fruit_strawberry': return '#d35400';
         case 'player_spawn': return '#2980b9';
         case 'trophy': return '#F39C12'; case 'checkpoint': return '#17a2b8';
+        case 'mushroom': return '#d23e39ff'; case 'chicken': return '#f1c40f';
+        case 'snail': return '#d65fdcff'; case 'slime': return '#2ecc71';
+        case 'turtle': return '#67899fff';
         case 'oneway_gold': return '#FFD700';
         case 'oneway_wood': return '#855E42';
         case 'oneway_stone': return '#808080';

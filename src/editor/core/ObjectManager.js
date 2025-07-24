@@ -1,12 +1,13 @@
 import { GRID_CONSTANTS } from '../../utils/constants.js';
 import { getPaletteColor } from '../config/EditorSettings.js';
+import { ENEMY_DEFINITIONS } from '../../entities/enemy-definitions.js';
 import { DOM } from '../ui/DOM.js';
 
 const round = (val) => Math.round(val * 100) / 100;
 
 export class ObjectManager {
     constructor(grid) {
-        this.grid = grid; // A reference to the Grid module to check for solid tiles
+        this.grid = grid;
         this.objects = [];
         this.nextObjectId = 0;
     }
@@ -16,26 +17,20 @@ export class ObjectManager {
         this.render();
     }
 
-    load(objectsData, startPosition) {
+    load(objectsData, enemiesData, startPosition) {
         this.nextObjectId = 0;
-        this.objects = (objectsData || []).map(obj => {
+        this.objects = [];
+
+        // Load standard objects
+        (objectsData || []).forEach(obj => {
             const { width, height } = this._getObjectDimensions(obj.type);
-            const newObj = { ...obj, id: this.nextObjectId++, width, height };
-            if (newObj.type === 'spiked_ball') {
-                newObj.chainLength = obj.chainLength || 100;
-                newObj.swingArc = obj.swingArc || 90;
-                newObj.period = obj.period || 4;
-            }
-            if (newObj.type === 'arrow_bubble') {
-                newObj.direction = obj.direction || 'right';
-                newObj.knockbackSpeed = obj.knockbackSpeed || 300;
-            }
-            if (newObj.type === 'fan') {
-                newObj.direction = obj.direction || 'right';
-                newObj.pushStrength = obj.pushStrength || 250;
-                newObj.windHeight = obj.windHeight || 120;
-            }
-            return newObj;
+            this.objects.push({ ...obj, id: this.nextObjectId++, width, height });
+        });
+        
+        // Load enemies and represent them as editor objects
+        (enemiesData || []).forEach(enemy => {
+             const { width, height } = this._getObjectDimensions(enemy.type);
+             this.objects.push({ ...enemy, id: this.nextObjectId++, width, height });
         });
 
         if (startPosition) {
@@ -53,7 +48,6 @@ export class ObjectManager {
     }
 
     addObject(type, pixelX, pixelY) {
-        // Handle player spawn uniqueness
         let replacedSpawn = null;
         if (type === 'player_spawn') {
             const existingIndex = this.objects.findIndex(o => o.type === 'player_spawn');
@@ -70,29 +64,22 @@ export class ObjectManager {
             y: pixelY / GRID_CONSTANTS.TILE_SIZE,
             width, height
         };
-
-        if (type === 'spiked_ball') {
-            newObject.chainLength = 100;
-            newObject.swingArc = 90;
-            newObject.period = 4;
-            newObject.tiltAmount = 0.5;
-        }
-
-        if (type === 'arrow_bubble') {
-            newObject.direction = 'right'; // Default direction
-            newObject.knockbackSpeed = 300;
-        }
         
-        if (type === 'fan') {
-            newObject.direction = 'right';
-            newObject.pushStrength = 250;
-            newObject.windHeight = 120;
+        // Add default properties for specific object types
+        if (type === 'mushroom') {
+             newObject.patrolDistance = 144; // Default patrol distance in pixels
         }
-
+        if (type === 'spiked_ball') {
+            newObject.chainLength = 100; newObject.swingArc = 90; newObject.period = 4; newObject.tiltAmount = 0.5;
+        }
+        if (type === 'arrow_bubble') {
+            newObject.direction = 'right'; newObject.knockbackSpeed = 300;
+        }
+        if (type === 'fan') {
+            newObject.direction = 'right'; newObject.pushStrength = 250; newObject.windHeight = 120;
+        }
         if (type === 'saw') {
-            newObject.direction = 'horizontal';
-            newObject.distance = 150;
-            newObject.speed = 50;
+            newObject.direction = 'horizontal'; newObject.distance = 150; newObject.speed = 50;
         }
 
         this._applySnapping(newObject);
@@ -135,17 +122,27 @@ export class ObjectManager {
             ? { x: round(playerSpawn.x), y: round(playerSpawn.y) }
             : { x: 1.5, y: this.grid.height - 2.5 };
 
-        const finalObjects = this.objects
-            .filter(obj => obj.type !== 'player_spawn')
-            .map(({ id, width, height, ...rest }) => {
-                const finalObj = {};
-                for (const key in rest) {
-                    finalObj[key] = typeof rest[key] === 'number' ? round(rest[key]) : rest[key];
-                }
-                return finalObj;
-            });
+        const finalObjects = [];
+        const finalEnemies = [];
 
-        return { startPos, finalObjects };
+        this.objects.forEach(obj => {
+            if (obj.type === 'player_spawn') return;
+
+            // Destructure to remove editor-specific properties
+            const { id, width, height, ...rest } = obj;
+            const finalObj = {};
+            for (const key in rest) {
+                finalObj[key] = typeof rest[key] === 'number' ? round(rest[key]) : rest[key];
+            }
+
+            if (ENEMY_DEFINITIONS[obj.type]) {
+                finalEnemies.push(finalObj);
+            } else {
+                finalObjects.push(finalObj);
+            }
+        });
+
+        return { startPos, finalObjects, finalEnemies };
     }
 
     render() {
@@ -164,21 +161,15 @@ export class ObjectManager {
 
             let angle = 0;
             if (obj.type === 'fan') {
-                // Fan sprite rotation (base sprite faces UP)
                 switch (obj.direction) {
-                    case 'up': angle = 0; break;
-                    case 'right': angle = 90; break;
-                    case 'down': angle = 180; break;
-                    case 'left': angle = -90; break;
+                    case 'up': angle = 0; break; case 'right': angle = 90; break;
+                    case 'down': angle = 180; break; case 'left': angle = -90; break;
                     default: angle = 90; break;
                 }
             } else if (obj.type === 'arrow_bubble') {
-                 // Arrow bubble sprite rotation (base sprite faces RIGHT)
                 switch (obj.direction) {
-                    case 'up': angle = -90; break;
-                    case 'left': angle = 180; break;
-                    case 'down': angle = 90; break;
-                    case 'right': default: angle = 0; break;
+                    case 'up': angle = -90; break; case 'left': angle = 180; break;
+                    case 'down': angle = 90; break; case 'right': default: angle = 0; break;
                 }
             }
             el.style.transform = `rotate(${angle}deg)`;
@@ -194,7 +185,7 @@ export class ObjectManager {
     }
 
     _applySnapping(obj) {
-        const groundSnappable = ['trophy', 'checkpoint', 'trampoline', 'spike', 'fire_trap'];
+        const groundSnappable = ['trophy', 'checkpoint', 'trampoline', 'spike', 'fire_trap', ...Object.keys(ENEMY_DEFINITIONS)];
         if (groundSnappable.includes(obj.type)) {
             this._snapToGround(obj);
         } else if (obj.type === 'fan') {
@@ -203,60 +194,25 @@ export class ObjectManager {
     }
 
     _snapFanToEdge(fan) {
-        const gridX = Math.floor(fan.x);
-        const gridY = Math.floor(fan.y);
-        
+        const gridX = Math.floor(fan.x); const gridY = Math.floor(fan.y);
         let bestCandidate = { distSq: Infinity, x: fan.x, y: fan.y, dir: fan.direction };
-
-        const checks = [
-            { dx: 0, dy: -1, dir: 'down' },
-            { dx: 0, dy: 1, dir: 'up' },
-            { dx: -1, dy: 0, dir: 'right' },
-            { dx: 1, dy: 0, dir: 'left' }
-        ];
-        
+        const checks = [{ dx: 0, dy: -1, dir: 'down' },{ dx: 0, dy: 1, dir: 'up' },{ dx: -1, dy: 0, dir: 'right' },{ dx: 1, dy: 0, dir: 'left' }];
         for (const check of checks) {
-            const tileX = gridX + check.dx;
-            const tileY = gridY + check.dy;
-
+            const tileX = gridX + check.dx; const tileY = gridY + check.dy;
             if (this.grid.isTileSolid(tileX, tileY)) {
                 let snapX, snapY;
                 const fanH_half_grid = (fan.height / 2) / GRID_CONSTANTS.TILE_SIZE;
-                
-                // The distance from the fan's center to the surface it attaches to should always be
-                // half of its shortest dimension (its height of 8px), regardless of orientation.
                 switch(check.dir) {
-                    case 'up': // Fan sits on top of a platform.
-                        snapX = tileX + 0.5;
-                        snapY = tileY - fanH_half_grid;
-                        break;
-                    case 'down': // Fan hangs below a platform.
-                        snapX = tileX + 0.5;
-                        snapY = tileY + 1 + fanH_half_grid;
-                        break;
-                    case 'left': // Fan is on the right side of a platform.
-                        snapX = tileX - fanH_half_grid;
-                        snapY = tileY + 0.5;
-                        break;
-                    case 'right': // Fan is on the left side of a platform.
-                        snapX = tileX + 1 + fanH_half_grid;
-                        snapY = tileY + 0.5;
-                        break;
+                    case 'up': snapX = tileX + 0.5; snapY = tileY - fanH_half_grid; break;
+                    case 'down': snapX = tileX + 0.5; snapY = tileY + 1 + fanH_half_grid; break;
+                    case 'left': snapX = tileX - fanH_half_grid; snapY = tileY + 0.5; break;
+                    case 'right': snapX = tileX + 1 + fanH_half_grid; snapY = tileY + 0.5; break;
                 }
-
                 const distSq = (snapX - fan.x)**2 + (snapY - fan.y)**2;
-
-                if (distSq < bestCandidate.distSq) {
-                    bestCandidate = { distSq, x: snapX, y: snapY, dir: check.dir };
-                }
+                if (distSq < bestCandidate.distSq) { bestCandidate = { distSq, x: snapX, y: snapY, dir: check.dir }; }
             }
         }
-        
-        if (bestCandidate.distSq < 4) {
-            fan.x = bestCandidate.x;
-            fan.y = bestCandidate.y;
-            fan.direction = bestCandidate.dir;
-        }
+        if (bestCandidate.distSq < 4) { fan.x = bestCandidate.x; fan.y = bestCandidate.y; fan.direction = bestCandidate.dir; }
     }
 
     _snapToGround(obj) {
@@ -279,19 +235,16 @@ export class ObjectManager {
     }
 
     _getObjectDimensions(type) {
+        if (ENEMY_DEFINITIONS[type]) {
+            return { width: ENEMY_DEFINITIONS[type].width, height: ENEMY_DEFINITIONS[type].height };
+        }
         switch(type) {
-            case 'checkpoint': return { width: 64, height: 64 };
-            case 'trophy': return { width: 64, height: 64 };
-            case 'player_spawn': return { width: 32, height: 32 };
-            case 'trampoline': return { width: 28, height: 28 };
-            case 'spike': return { width: 16, height: 16 };
-            case 'fire_trap': return { width: 16, height: 16 };
-            case 'spiked_ball': return { width: 28, height: 28 };
-            case 'arrow_bubble': return { width: 18, height: 18 };
-            case 'fan': return { width: 24, height: 8 };
-            case 'falling_platform': return { width: 32, height: 10 };
-            case 'rock_head': return { width: 42, height: 42 };
-            case 'spike_head': return { width: 54, height: 52 };
+            case 'checkpoint': return { width: 64, height: 64 }; case 'trophy': return { width: 64, height: 64 };
+            case 'player_spawn': return { width: 32, height: 32 }; case 'trampoline': return { width: 28, height: 28 };
+            case 'spike': return { width: 16, height: 16 }; case 'fire_trap': return { width: 16, height: 16 };
+            case 'spiked_ball': return { width: 28, height: 28 }; case 'arrow_bubble': return { width: 18, height: 18 };
+            case 'fan': return { width: 24, height: 8 }; case 'falling_platform': return { width: 32, height: 10 };
+            case 'rock_head': return { width: 42, height: 42 }; case 'spike_head': return { width: 54, height: 52 };
             case 'saw': return { width: 38, height: 38 };
             default: return { width: 28, height: 28 }; // Default for fruits
         }
