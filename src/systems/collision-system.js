@@ -13,7 +13,7 @@ export class CollisionSystem {
   constructor() {
     this.spatialGrid = null;
     this.currentLevel = null;
-    this.dynamicGridObjects = []; // To track dynamic objects for easy clearing
+    this.dynamicGridObjects = [];
   }
 
   _initializeGridForLevel(level) {
@@ -21,7 +21,7 @@ export class CollisionSystem {
     this.spatialGrid = new SpatialGrid(level.width, level.height, cellSize);
     this.currentLevel = level;
 
-    // Insert only static tiles from the level layout
+
     for (let y = 0; y < level.gridHeight; y++) {
       for (let x = 0; x < level.gridWidth; x++) {
         const tile = level.tiles[y][x];
@@ -39,13 +39,13 @@ export class CollisionSystem {
       }
     }
   }
-  
+
   _updateGridWithDynamicObjects(entityManager, level) {
-      // Clear previous dynamic objects from the grid
+
       this.spatialGrid.removeObjects(this.dynamicGridObjects);
       this.dynamicGridObjects = [];
 
-      // Add solid traps (like falling platforms) to the grid for this frame
+
       level.traps.forEach(trap => {
           if (trap.solid) {
               const hitbox = trap.hitbox || {
@@ -65,14 +65,14 @@ export class CollisionSystem {
               this.dynamicGridObjects.push(gridObject);
           }
       });
-      
-      // Query for and add all dynamic entities (player, enemies, etc.)
+
+
       const dynamicEntities = entityManager.query([PositionComponent, CollisionComponent, DynamicColliderComponent]);
       for (const entityId of dynamicEntities) {
           const pos = entityManager.getComponent(entityId, PositionComponent);
           const col = entityManager.getComponent(entityId, CollisionComponent);
           const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
-          
+
           const gridObject = {
               x: pos.x,
               y: pos.y,
@@ -126,7 +126,7 @@ export class CollisionSystem {
           this._handleVerticalCollisions(pos, vel, col, allColliders, dt, entityId, entityManager);
 
           pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
-          
+
           if (pos.y < 0) {
               pos.y = 0;
               if (vel.vy < 0) {
@@ -160,7 +160,9 @@ export class CollisionSystem {
 
               if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
                   const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
-                  if (!enemy.isDead) {
+                  const killable = entityManager.getComponent(collider.entityId, KillableComponent);
+
+                  if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
                       const knockbackVx = (pos.x + col.width / 2) < (collider.x + collider.width / 2) ? -150 : 150;
                       eventBus.publish('collisionEvent', {
                           type: 'hazard',
@@ -207,9 +209,9 @@ export class CollisionSystem {
                       if (!enemy.isDead && killable && killable.stompable) {
                           eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });
                           pos.y = collider.y - col.height;
-                          vel.vy = 0; 
-                          return; // Stomp handled, exit loop for this entity
-                      } else if (!enemy.isDead) {
+                          vel.vy = 0;
+                          return;
+                      } else if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
                           eventBus.publish('collisionEvent', {
                               type: 'hazard',
                               entityId: entityId,
@@ -230,7 +232,8 @@ export class CollisionSystem {
               if (!collider.isOneWay) {
                   if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
                       const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
-                      if (!enemy.isDead) {
+                       const killable = entityManager.getComponent(collider.entityId, KillableComponent);
+                      if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
                           eventBus.publish('collisionEvent', {
                               type: 'hazard',
                               entityId: entityId,
@@ -260,7 +263,7 @@ export class CollisionSystem {
   }
 
   _isCollidingWith(pos, col, other) {
-    const hitbox = other.hitbox || {
+    const hitbox = other.damageHitbox || other.hitbox || {
         x: other.x - (other.width || other.size) / 2,
         y: other.y - (other.height || other.size) / 2,
         width: other.width || other.size,

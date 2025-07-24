@@ -6,13 +6,14 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
+import { KillableComponent } from '../components/KillableComponent.js';
 
 export class EnemySystem {
     constructor() {
         this.stompEvents = [];
         eventBus.subscribe('enemyStomped', (e) => this.stompEvents.push(e));
     }
-    
+
     _processStompEvents(entityManager) {
         if (this.stompEvents.length === 0) return;
         for (const event of this.stompEvents) {
@@ -21,8 +22,10 @@ export class EnemySystem {
             const state = entityManager.getComponent(enemyId, StateComponent);
             const renderable = entityManager.getComponent(enemyId, RenderableComponent);
             const collision = entityManager.getComponent(enemyId, CollisionComponent);
+            const killable = entityManager.getComponent(enemyId, KillableComponent);
+
             if (enemy && !enemy.isDead) {
-                if (enemy.type === 'turtle' && state.currentState !== 'idle') {
+                if (killable && !killable.stompable) {
                     eventBus.publish('playSound', { key: 'hit', volume: 0.9, channel: 'SFX' });
                     continue;
                 }
@@ -91,7 +94,7 @@ export class EnemySystem {
             enemy.timer = 0.5;
             vel.vx = 0;
         }
-        
+
         if (vel.vx < 0 && pos.x <= leftBound) {
             pos.x = leftBound;
             renderable.direction = 'right';
@@ -99,7 +102,7 @@ export class EnemySystem {
             enemy.timer = 0.5;
             vel.vx = 0;
         }
-        
+
         renderable.animationState = enemy.type === 'snail' ? 'walk' : 'run';
     }
 
@@ -169,7 +172,7 @@ export class EnemySystem {
             state.currentState = 'idle'; enemy.timer = enemy.ai.hopInterval;
         }
     }
-    
+
     _updateDyingState(dt, enemy, vel, entityManager, entityId) {
         vel.vx = 0;
         vel.vy += 200 * dt;
@@ -193,14 +196,25 @@ export class EnemySystem {
             renderable.animationFrame++;
             if (renderable.animationFrame >= animDef.frameCount) {
                 if (enemy.type === 'turtle') {
+                    const killable = entityManager.getComponent(id, KillableComponent);
                     if (renderable.animationState === 'spikes_out') {
                         state.currentState = 'hiding';
+                        renderable.animationState = 'idle1';
                         enemy.timer = enemy.ai.spikesOutDuration;
                         renderable.animationFrame = 0;
+                        if (killable) {
+                            killable.stompable = false;
+                            killable.dealsContactDamage = true;
+                        }
                     } else if (renderable.animationState === 'spikes_in') {
                         state.currentState = 'idle';
+                        renderable.animationState = 'idle2';
                         enemy.timer = enemy.ai.spikesInDuration;
                         renderable.animationFrame = 0;
+                        if (killable) {
+                            killable.stompable = true;
+                            killable.dealsContactDamage = false;
+                        }
                     } else {
                         renderable.animationFrame = 0;
                     }
