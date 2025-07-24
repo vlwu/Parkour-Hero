@@ -68,17 +68,18 @@ export class FireTrap extends Trap {
                 }
                 break;
             case 'on':
+            case 'turning_off':
                 this.frameTimer += dt;
                 if (this.frameTimer >= this.anim.on.speed) {
                     this.frameTimer = 0;
                     this.frame = (this.frame + 1) % this.anim.on.frames;
                 }
-                break;
-            case 'turning_off':
-                this.turnOffTimer -= dt;
-                if (this.turnOffTimer <= 0) {
-                    this.state = 'off';
-                    this.frame = 0;
+                if (this.state === 'turning_off') {
+                    this.turnOffTimer -= dt;
+                    if (this.turnOffTimer <= 0) {
+                        this.state = 'off';
+                        this.frame = 0;
+                    }
                 }
                 break;
         }
@@ -119,14 +120,14 @@ export class FireTrap extends Trap {
             }
         }
 
-        if (this.state === 'off' || this.state === 'turning_off') return;
+        if (this.state === 'off') return;
 
         let sprite, srcX = 0, frameWidth;
         if (this.state === 'activating') {
             sprite = assets.fire_hit;
             frameWidth = sprite.width / this.anim.activating.frames;
             srcX = this.frame * frameWidth;
-        } else {
+        } else { // Covers 'on' and 'turning_off' states
             sprite = assets.fire_on;
             frameWidth = sprite.width / this.anim.on.frames;
             srcX = this.frame * frameWidth;
