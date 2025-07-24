@@ -187,6 +187,7 @@ export class Engine {
     const context = {
         entityManager: this.entityManager,
         playerEntityId: this.playerEntityId,
+        playerCol: this.playerEntityId ? this.entityManager.getComponent(this.playerEntityId, CollisionComponent) : null,
         level: this.currentLevel,
         camera: this.camera,
         isRunning: this.isRunning && this.timeScale > 0,

@@ -3,6 +3,7 @@ import { PositionComponent } from '../components/PositionComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
+import { EnemyComponent } from '../components/EnemyComponent.js';
 
 export class Renderer {
   constructor(ctx, canvas, assets) {
@@ -128,15 +129,21 @@ export class Renderer {
     for(const entityId of entities) {
         const pos = entityManager.getComponent(entityId, PositionComponent);
         const renderable = entityManager.getComponent(entityId, RenderableComponent);
-        const charComp = entityManager.getComponent(entityId, CharacterComponent);
-        const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-        this._drawRenderable(pos, renderable, charComp, playerCtrl);
+        const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
+        
+        if (isPlayer) {
+            const charComp = entityManager.getComponent(entityId, CharacterComponent);
+            const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+            this._drawPlayer(pos, renderable, charComp, playerCtrl);
+        } else if (entityManager.hasComponent(entityId, EnemyComponent)) {
+            this._drawEnemy(pos, renderable);
+        }
     }
 
     camera.restore(this.ctx);
   }
 
-  _drawRenderable(pos, renderable, charComp, playerCtrl) {
+  _drawPlayer(pos, renderable, charComp, playerCtrl) {
     const stateName = renderable.animationState;
     if (!renderable.isVisible || (playerCtrl && playerCtrl.despawnAnimationFinished)) return;
 
@@ -186,6 +193,36 @@ export class Renderer {
       drawOffsetX, 0,
       renderable.width, renderable.height
     );
+    this.ctx.restore();
+  }
+
+  _drawEnemy(pos, renderable) {
+    if (!renderable.isVisible) return;
+    
+    // Dynamically construct the asset key: e.g., 'mushroom' + '_' + 'run' -> 'mushroom_run'
+    const assetKey = `${renderable.spriteKey}_${renderable.animationState}`;
+    const sprite = this.assets[assetKey];
+    
+    if (!sprite) {
+        this.ctx.fillStyle = '#FF00FF'; // Draw a magenta box if sprite is missing
+        this.ctx.fillRect(pos.x, pos.y, renderable.width, renderable.height);
+        return;
+    }
+    
+    // In the future, animation data will come from ENEMY_DEFINITIONS
+    const frameCount = sprite.width / renderable.width;
+    const frameWidth = renderable.width;
+    const srcX = (renderable.animationFrame % frameCount) * frameWidth;
+
+    this.ctx.save();
+    if (renderable.direction === 'left') {
+        this.ctx.scale(-1, 1);
+        this.ctx.translate(-pos.x - renderable.width, pos.y);
+    } else {
+        this.ctx.translate(pos.x, pos.y);
+    }
+
+    this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, 0, 0, renderable.width, renderable.height);
     this.ctx.restore();
   }
 
