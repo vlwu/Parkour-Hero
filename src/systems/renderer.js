@@ -4,6 +4,7 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
+import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 
 export class Renderer {
   constructor(ctx, canvas, assets) {
@@ -202,6 +203,9 @@ export class Renderer {
     const assetKey = `${renderable.spriteKey}_${renderable.animationState}`;
     const sprite = this.assets[assetKey];
     
+    const enemyDef = ENEMY_DEFINITIONS[renderable.spriteKey];
+    if (!enemyDef) return; // Don't try to render if definition is missing
+    
     if (!sprite) {
         console.warn(`Missing enemy sprite for asset key: "${assetKey}"`);
         this.ctx.fillStyle = '#FF00FF';
@@ -209,8 +213,9 @@ export class Renderer {
         return;
     }
     
-    const frameWidth = sprite.width / (ENEMY_DEFINITIONS[renderable.spriteKey.replace('enemy_', '')].animations[renderable.animationState].frameCount || 1);
-    const srcX = (renderable.animationFrame % (sprite.width / frameWidth)) * frameWidth;
+    const frameCount = enemyDef.animations[renderable.animationState]?.frameCount || 1;
+    const frameWidth = sprite.width / frameCount;
+    const srcX = (renderable.animationFrame % frameCount) * frameWidth;
 
     this.ctx.save();
     if (renderable.direction === 'left') {

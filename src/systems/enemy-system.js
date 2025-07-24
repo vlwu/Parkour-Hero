@@ -29,6 +29,10 @@ export class EnemySystem {
                     continue;
                 }
 
+                if (enemy.type === 'snail') {
+                    // We'll implement shell creation in a future step. For now, it dies normally.
+                }
+
                 enemy.isDead = true;
                 state.currentState = 'dying';
                 renderable.animationState = 'hit';
@@ -47,8 +51,7 @@ export class EnemySystem {
         this._processStompEvents(entityManager);
         
         const enemyEntities = entityManager.query([EnemyComponent, PositionComponent, VelocityComponent, StateComponent, RenderableComponent]);
-        const playerPos = playerEntityId ? entityManager.getComponent(playerEntityId, PositionComponent) : null;
-        const playerData = playerPos && playerCol ? { ...playerPos, ...playerCol } : null;
+        const playerData = playerEntityId && playerCol ? { ...entityManager.getComponent(playerEntityId, PositionComponent), ...playerCol } : null;
 
         for (const id of enemyEntities) {
             const enemy = entityManager.getComponent(id, EnemyComponent);
@@ -58,7 +61,10 @@ export class EnemySystem {
             const renderable = entityManager.getComponent(id, RenderableComponent);
 
             if (enemy.isDead) {
-                this._updateDyingState(dt, enemy, vel, entityManager, id);
+                const wasDestroyed = this._updateDyingState(dt, enemy, vel, entityManager, id);
+                if (wasDestroyed) {
+                    continue; // Skip to the next entity if this one was removed
+                }
             } else {
                 switch (enemy.ai.type) {
                     case 'patrol': this._updatePatrolAI(dt, pos, vel, enemy, renderable, state); break;
@@ -75,8 +81,11 @@ export class EnemySystem {
         }
     }
 
+    // --- AI Behaviors ---
     _updatePatrolAI(dt, pos, vel, enemy, renderable, state) {
         if (state.currentState === 'idle') {
+            vel.vx = 0;
+            renderable.animationState = 'idle';
             enemy.timer -= dt;
             if (enemy.timer <= 0) {
                 state.currentState = 'patrol';
@@ -90,13 +99,12 @@ export class EnemySystem {
         const rightBound = startX + distance;
 
         if (pos.x <= leftBound) {
-            pos.x = leftBound; vel.vx = speed; state.currentState = 'idle'; enemy.timer = 0.5;
+            pos.x = leftBound; vel.vx = speed; state.currentState = 'idle'; enemy.timer = 0.5; renderable.direction = 'right';
         } else if (pos.x >= rightBound) {
-            pos.x = rightBound; vel.vx = -speed; state.currentState = 'idle'; enemy.timer = 0.5;
+            pos.x = rightBound; vel.vx = -speed; state.currentState = 'idle'; enemy.timer = 0.5; renderable.direction = 'left';
         }
         
         renderable.animationState = enemy.type === 'snail' ? 'walk' : 'run';
-        if (state.currentState === 'idle') renderable.animationState = 'idle';
     }
 
     _updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData) {
@@ -141,10 +149,10 @@ export class EnemySystem {
         enemy.timer -= dt;
         
         if (enemy.timer <= 0) {
-            if (state.currentState === 'idle') { // Spikes are in
+            if (state.currentState === 'idle') {
                 state.currentState = 'spikes_out_transition';
                 renderable.animationState = 'spikes_out'; renderable.animationFrame = 0;
-            } else if (state.currentState === 'hiding') { // Spikes are out
+            } else if (state.currentState === 'hiding') {
                 state.currentState = 'spikes_in_transition';
                 renderable.animationState = 'spikes_in'; renderable.animationFrame = 0;
             }
@@ -166,11 +174,14 @@ export class EnemySystem {
     }
     
     _updateDyingState(dt, enemy, vel, entityManager, entityId) {
-        vel.vx = 0; vel.vy += 200 * dt;
+        vel.vx = 0;
+        vel.vy += 200 * dt;
         enemy.deathTimer -= dt;
         if (enemy.deathTimer <= 0) {
             entityManager.destroyEntity(entityId);
+            return true; // Indicate that the entity was destroyed
         }
+        return false;
     }
 
     _updateAnimation(dt, id, entityManager) {
@@ -191,12 +202,17 @@ export class EnemySystem {
                     if (renderable.animationState === 'spikes_out') {
                         state.currentState = 'hiding';
                         enemy.timer = enemy.ai.spikesOutDuration;
+                        renderable.animationFrame = 0; // Reset frame for new state if it loops
                     } else if (renderable.animationState === 'spikes_in') {
                         state.currentState = 'idle';
                         enemy.timer = enemy.ai.spikesInDuration;
+                        renderable.animationFrame = 0;
+                    } else {
+                        renderable.animationFrame = 0; // Loop other animations
                     }
+                } else {
+                     renderable.animationFrame = 0; // Loop all other enemy animations
                 }
-                renderable.animationFrame = 0;
             }
         }
     }

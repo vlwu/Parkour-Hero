@@ -7,7 +7,7 @@ export const ENEMY_DEFINITIONS = {
         animations: {
             idle: { frameCount: 14, speed: 0.1 },
             run: { frameCount: 16, speed: 0.1 },
-            hit: { frameCount: 4, speed: 0.1 }
+            hit: { frameCount: 5, speed: 0.1 }
         },
         killable: {
             stompable: true,
