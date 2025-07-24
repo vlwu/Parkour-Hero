@@ -15,6 +15,12 @@ export class HUD {
       health: 100,
       maxHealth: 100
     };
+    
+    // Properties for FPS calculation
+    this.fps = 0;
+    this.frameCount = 0;
+    this.elapsedTime = 0;
+
     eventBus.subscribe('statsUpdated', (newStats) => this.updateStats(newStats));
   }
 
@@ -26,8 +32,17 @@ export class HUD {
     this.stats = { ...this.stats, ...newStats };
   }
 
-  drawGameHUD(ctx) {
+  drawGameHUD(ctx, dt) {
     if (!this.isVisible || !this.fontRenderer) return;
+
+    // --- FPS Calculation ---
+    this.frameCount++;
+    this.elapsedTime += dt;
+    if (this.elapsedTime >= 1) { // Update the FPS display once per second
+      this.fps = this.frameCount;
+      this.frameCount = 0;
+      this.elapsedTime -= 1;
+    }
 
     try {
       ctx.save();
@@ -105,6 +120,19 @@ export class HUD {
       ctx.fillRect(healthBarX, healthBarY, currentHealthWidth, healthBarHeight);
 
       this.fontRenderer.drawText(ctx, `HP`, healthBarX + healthBarWidth + 10, healthBarY + healthBarHeight / 2 - 12, { scale: 2, align: 'left' });
+      
+      // --- FPS DISPLAY ---
+      const fpsText = `FPS: ${this.fps}`;
+      const fpsFontOptions = {
+          scale: 2,
+          align: 'left',
+          color: 'white',
+          outlineColor: 'black',
+          outlineWidth: 1
+      };
+      const fpsX = healthBarX;
+      const fpsY = healthBarY + healthBarHeight + 10; // Position below the health bar
+      this.fontRenderer.drawText(ctx, fpsText, fpsX, fpsY, fpsFontOptions);
 
       ctx.restore();
 
