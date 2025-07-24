@@ -8,6 +8,7 @@ import { PLAYER_CONSTANTS } from '../utils/constants.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
+import { DynamicColliderComponent } from '../components/DynamicColliderComponent.js';
 
 /**
  * Creates a player entity and adds its components to the entity manager.
@@ -46,6 +47,7 @@ export function createPlayer(entityManager, x, y, characterId) {
     entityManager.addComponent(playerEntityId, new InputComponent());
     entityManager.addComponent(playerEntityId, new StateComponent('spawn'));
     entityManager.addComponent(playerEntityId, new HealthComponent());
+    entityManager.addComponent(playerEntityId, new DynamicColliderComponent());
 
     return playerEntityId;
 }

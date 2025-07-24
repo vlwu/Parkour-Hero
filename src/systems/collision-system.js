@@ -5,11 +5,13 @@ import { VelocityComponent } from '../components/VelocityComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { SpatialGrid } from '../utils/spatial-grid.js';
+import { DynamicColliderComponent } from '../components/DynamicColliderComponent.js';
 
 export class CollisionSystem {
   constructor() {
     this.spatialGrid = null;
     this.currentLevel = null;
+    this.dynamicGridObjects = []; // To track dynamic objects for easy clearing
   }
 
   _initializeGridForLevel(level) {
@@ -17,6 +19,7 @@ export class CollisionSystem {
     this.spatialGrid = new SpatialGrid(level.width, level.height, cellSize);
     this.currentLevel = level;
 
+    // Insert only static tiles from the level layout
     for (let y = 0; y < level.gridHeight; y++) {
       for (let x = 0; x < level.gridWidth; x++) {
         const tile = level.tiles[y][x];
@@ -33,30 +36,62 @@ export class CollisionSystem {
         }
       }
     }
-
-    level.traps.forEach(trap => {
-        if (trap.solid && trap.type !== 'falling_platform') {
-            const hitbox = trap.hitbox || {
-                x: trap.x - trap.width / 2,
-                y: trap.y - trap.height / 2,
-                width: trap.width,
-                height: trap.height,
-            };
-            this.spatialGrid.insert({
-                ...hitbox,
-                isOneWay: false,
-                surfaceType: trap.type,
-                onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null,
-                type: 'trap'
-            });
-        }
-    });
   }
+  
+  _updateGridWithDynamicObjects(entityManager, level) {
+      // Clear previous dynamic objects from the grid
+      this.spatialGrid.removeObjects(this.dynamicGridObjects);
+      this.dynamicGridObjects = [];
+
+      // Add solid traps (like falling platforms) to the grid for this frame
+      level.traps.forEach(trap => {
+          if (trap.solid) {
+              const hitbox = trap.hitbox || {
+                  x: trap.x - trap.width / 2,
+                  y: trap.y - trap.height / 2,
+                  width: trap.width,
+                  height: trap.height,
+              };
+              const gridObject = {
+                  ...hitbox,
+                  isOneWay: false,
+                  surfaceType: trap.type === 'falling_platform' ? 'platform' : trap.type,
+                  onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null,
+                  type: 'trap'
+              };
+              this.spatialGrid.insert(gridObject);
+              this.dynamicGridObjects.push(gridObject);
+          }
+      });
+      
+      // Query for and add dynamic entities (like the player)
+      const dynamicEntities = entityManager.query([PositionComponent, CollisionComponent, DynamicColliderComponent]);
+      for (const entityId of dynamicEntities) {
+          const pos = entityManager.getComponent(entityId, PositionComponent);
+          const col = entityManager.getComponent(entityId, CollisionComponent);
+          
+          const gridObject = {
+              x: pos.x,
+              y: pos.y,
+              width: col.width,
+              height: col.height,
+              isOneWay: false,
+              surfaceType: 'entity',
+              type: 'entity',
+              entityId: entityId
+          };
+          this.spatialGrid.insert(gridObject);
+          this.dynamicGridObjects.push(gridObject);
+      }
+  }
+
 
   update(dt, { entityManager, level }) {
       if (level !== this.currentLevel) {
           this._initializeGridForLevel(level);
       }
+
+      this._updateGridWithDynamicObjects(entityManager, level);
 
       const entities = entityManager.query([PositionComponent, VelocityComponent, CollisionComponent]);
 
@@ -82,21 +117,9 @@ export class CollisionSystem {
               height: col.height + Math.abs(vel.vy * dt) * 2,
           };
 
-          const staticColliders = this.spatialGrid.query(broadphaseBounds);
-          const dynamicColliders = level.traps
-              .filter(trap => trap.type === 'falling_platform' && trap.solid)
-              .map(trap => ({
-                  x: trap.x - trap.width / 2,
-                  y: trap.y - trap.height / 2,
-                  width: trap.width,
-                  height: trap.height,
-                  isOneWay: false,
-                  surfaceType: 'platform',
-                  onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null,
-              }));
-          const allColliders = [...staticColliders, ...dynamicColliders];
+          const allColliders = this.spatialGrid.query(broadphaseBounds);
 
-          this._handleHorizontalCollisions(pos, vel, col, allColliders, dt);
+          this._handleHorizontalCollisions(pos, vel, col, allColliders, dt, entityId);
           this._handleVerticalCollisions(pos, vel, col, allColliders, dt, entityId);
 
           pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
@@ -120,12 +143,13 @@ export class CollisionSystem {
       );
   }
 
-  _handleHorizontalCollisions(pos, vel, col, colliders, dt) {
+  _handleHorizontalCollisions(pos, vel, col, colliders, dt, entityId) {
       pos.x += vel.vx * dt;
       col.isAgainstWall = false;
       const playerRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
 
       for (const collider of colliders) {
+          if (collider.type === 'entity' && collider.entityId === entityId) continue;
           if (collider.isOneWay) continue;
 
           if (this._isRectColliding(playerRect, collider)) {
@@ -147,13 +171,13 @@ export class CollisionSystem {
       const playerRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
 
       for (const collider of colliders) {
+          if (collider.type === 'entity' && collider.entityId === entityId) continue;
           if (!this._isRectColliding(playerRect, collider)) {
               continue;
           }
 
-          if (vel.vy >= 0) { // Moving down or stationary
+          if (vel.vy >= 0) { 
               const prevPlayerBottom = (pos.y - vel.vy * dt) + col.height;
-              // Add a small tolerance to handle floating point inaccuracies and the "pause" scenario
               const landingTolerance = 1;
               if (prevPlayerBottom <= collider.y + landingTolerance) {
                   this._landOnSurface(pos, vel, col, collider.y, collider.surfaceType, entityId);
@@ -162,7 +186,7 @@ export class CollisionSystem {
                       collider.onLanded(eventBus);
                   }
               }
-          } else if (vel.vy < 0) { // Moving up
+          } else if (vel.vy < 0) {
               if (!collider.isOneWay) {
                   pos.y = collider.y + collider.height;
                   vel.vy = 0;
