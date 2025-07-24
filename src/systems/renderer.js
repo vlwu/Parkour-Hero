@@ -217,8 +217,7 @@ export class Renderer {
     const frameWidth = sprite.width / frameCount;
     const srcX = (renderable.animationFrame % frameCount) * frameWidth;
 
-    // CORRECTED LOGIC: Because enemy sprites face left by default, we only need to flip them
-    // when their desired direction is 'right'.
+    // Because enemy sprites face left by default, flip them when their desired direction is 'right'.
     const shouldFlip = (renderable.direction === 'right');
 
     this.ctx.save();

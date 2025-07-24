@@ -80,7 +80,7 @@ export class MovementSystem {
     }
 
     _applyVerticalMovement(dt, vel, col, ctrl, state) {
-        if (!col.isGrounded && !ctrl.isDashing && !ctrl.isHit && !ctrl.isSpawning) {
+        if (!col.isGrounded && !ctrl.isDashing && !ctrl.isSpawning) {
             vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
         }
 

@@ -133,7 +133,7 @@ export class ObjectManager {
     }
 
     render() {
-        DOM.gridContainer.querySelectorAll('.dynamic-object').forEach(el => el.remove());
+        DOM.gridContainer.querySelectorAll('.dynamic-object, .chain-link-visual').forEach(el => el.remove());
         this.objects.forEach(obj => {
             const el = document.createElement('div');
             el.className = 'dynamic-object';
@@ -164,6 +164,27 @@ export class ObjectManager {
                 el.style.display = 'flex'; el.style.justifyContent = 'center'; el.style.alignItems = 'center';
             }
             DOM.gridContainer.appendChild(el);
+
+            if (obj.type === 'fire_trap' && obj.chainLength > 1) {
+                const startX = obj.x * GRID_CONSTANTS.TILE_SIZE - (obj.width / 2);
+                const startY = obj.y * GRID_CONSTANTS.TILE_SIZE - (obj.height / 2);
+
+                for (let i = 1; i < obj.chainLength; i++) {
+                    const visualEl = document.createElement('div');
+                    visualEl.className = 'chain-link-visual';
+                    visualEl.style.position = 'absolute';
+                    visualEl.style.pointerEvents = 'none';
+                    visualEl.style.width = `${obj.width}px`;
+                    visualEl.style.height = `${obj.height}px`;
+                    visualEl.style.left = `${startX + i * obj.width}px`;
+                    visualEl.style.top = `${startY}px`;
+                    visualEl.style.backgroundColor = getPaletteColor(obj.type);
+                    visualEl.style.opacity = '0.7';
+                    visualEl.style.boxSizing = 'border-box';
+                    visualEl.style.border = '1px dashed rgba(255, 255, 255, 0.4)';
+                    DOM.gridContainer.appendChild(visualEl);
+                }
+            }
         });
     }
 
@@ -234,19 +255,10 @@ export class ObjectManager {
         const fullSnapTypes = ['mushroom', 'slime'];
         if (fullSnapTypes.includes(enemyObj.type)) {
             const platformCenterPixels = (leftBound * TILE_SIZE) + (platformWidthInPixels / 2);
-            const enemyDropPosPixels = enemyObj.x * TILE_SIZE;
             
-            const halfWidthInGrid = (enemyObj.width / 2) / TILE_SIZE;
-            
-            if (enemyDropPosPixels < platformCenterPixels) {
-                // Snap to left edge: The center should be at the platform's start + half the enemy's width.
-                enemyObj.x = leftBound + halfWidthInGrid;
-                enemyObj.startDirection = 'right';
-            } else {
-                // Snap to right edge: The center should be at the platform's end - half the enemy's width.
-                enemyObj.x = (rightBound + 1) - halfWidthInGrid;
-                enemyObj.startDirection = 'left';
-            }
+            enemyObj.x = platformCenterPixels / TILE_SIZE;
+
+            enemyObj.startDirection = Math.random() < 0.5 ? 'left' : 'right';
         }
     }
 

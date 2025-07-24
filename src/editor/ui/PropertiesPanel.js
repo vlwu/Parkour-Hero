@@ -50,6 +50,9 @@ export class PropertiesPanel {
             propertiesHTML += this._createNumberInput('distance', 'Path Distance (pixels)', obj.distance || 150, 5);
             propertiesHTML += this._createNumberInput('speed', 'Speed (px/sec)', obj.speed || 50, 5);
         }
+        if (obj.type === 'fire_trap') {
+            propertiesHTML += this._createNumberInput('chainLength', 'Chain Length (units)', obj.chainLength || 1, 1);
+        }
         
         // Enemy Properties
         if (obj.type === 'mushroom') {
@@ -90,6 +93,7 @@ export class PropertiesPanel {
         if (obj.type === 'arrow_bubble') { attach('knockbackSpeed'); }
         if (obj.type === 'fan') { attach('pushStrength'); attach('windHeight'); }
         if (obj.type === 'saw') { attach('direction', 'select'); attach('distance'); attach('speed'); }
+        if (obj.type === 'fire_trap') { attach('chainLength'); }
         if (obj.type === 'mushroom') { attach('patrolDistance'); }
     }
 
@@ -102,7 +106,10 @@ export class PropertiesPanel {
         let value;
         if (element.type === 'number') {
             value = parseFloat(element.value);
-            if(isNaN(value)) return;
+            if(isNaN(value) || value < 1) {
+                value = 1; // Ensure chain length is at least 1
+                element.value = 1;
+            }
         } else { value = element.value; }
         this.onPropertyUpdate(id, prop, value, 'final');
     }

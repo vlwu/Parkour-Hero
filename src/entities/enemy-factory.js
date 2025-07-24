@@ -30,10 +30,10 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
 
     // The patrol AI needs the absolute leftmost coordinate of its path (`startX`).
     let patrolStartX = initialTopLeftX;
-    if (data.ai.type === 'patrol' && config.startDirection === 'left') {
-        // If the enemy starts at the right and moves left, its initial position is the
-        // rightmost boundary. We calculate the leftmost boundary for the AI.
-        patrolStartX = initialTopLeftX - (config.patrolDistance || 0);
+    if (data.ai.type === 'patrol') {
+        // Since the initial position is now the center of the patrol path,
+        // we calculate the leftmost boundary (startX) from the center.
+        patrolStartX = initialTopLeftX - (config.patrolDistance / 2);
     }
     
     const aiConfig = {

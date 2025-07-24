@@ -3,8 +3,13 @@ import { TRAP_CONSTANTS } from '../utils/constants.js';
 
 export class FireTrap extends Trap {
     constructor(x, y, config) {
-        super(x, y, { ...config, width: 16, height: 16 });
+        const baseWidth = 16;
+        super(x, y, { ...config, width: baseWidth, height: 16 });
 
+        this.chainLength = config.chainLength || 1;
+        this.width = baseWidth * this.chainLength;
+        this.x = x + (this.width - baseWidth) / 2;
+        
         this.solid = true;
         this.state = 'off';
         this.frame = 0;
@@ -26,7 +31,7 @@ export class FireTrap extends Trap {
         return (
             playerData.x < this.x + this.width / 2 &&
             playerData.x + playerData.width > this.x - this.width / 2 &&
-            Math.abs(playerBottom - platformTop) < 5 // Small tolerance
+            Math.abs(playerBottom - platformTop) < 5
         );
     }
 
@@ -83,6 +88,7 @@ export class FireTrap extends Trap {
             const playerRect = { x: playerData.x, y: playerData.y, width: playerData.width, height: playerData.height };
             
             if (
+                hazardHitbox &&
                 playerRect.x < hazardHitbox.x + hazardHitbox.width &&
                 playerRect.x + playerRect.width > hazardHitbox.x &&
                 playerRect.y < hazardHitbox.y + hazardHitbox.height &&
@@ -100,14 +106,17 @@ export class FireTrap extends Trap {
     }
 
     render(ctx, assets, camera) {
-        if (!camera.isVisible(this.x, this.y - this.height, this.width, this.height * 2)) return;
+        const baseWidth = 16;
+        const startX = this.x - this.width / 2;
 
-        const drawX = this.x - this.width / 2;
-        const drawY = this.y - this.height / 2;
+        if (!camera.isVisible(startX, this.y - this.height, this.width, this.height * 2)) return;
 
         const baseSprite = assets.fire_off;
+        
         if (baseSprite) {
-            ctx.drawImage(baseSprite, 0, 16, 16, 16, drawX, drawY, this.width, this.height);
+            for (let i = 0; i < this.chainLength; i++) {
+                ctx.drawImage(baseSprite, 0, 16, 16, 16, startX + i * baseWidth, this.y - this.height / 2, baseWidth, this.height);
+            }
         }
 
         if (this.state === 'off' || this.state === 'turning_off') return;
@@ -124,7 +133,9 @@ export class FireTrap extends Trap {
         }
 
         if (sprite) {
-            ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY - this.height, this.width, this.height * 2);
+            for (let i = 0; i < this.chainLength; i++) {
+                ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, startX + i * baseWidth, this.y - this.height * 1.5, baseWidth, this.height * 2);
+            }
         }
     }
 
