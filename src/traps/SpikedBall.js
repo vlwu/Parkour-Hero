@@ -2,11 +2,6 @@ import { Trap } from './templates/Trap.js';
 import { TRAP_CONSTANTS } from '../utils/constants.js';
 
 export class SpikedBall extends Trap {
-
-
-
-
-
     constructor(x, y, config) {
         super(x, y, { ...config, width: 28, height: 28 });
 
@@ -21,11 +16,7 @@ export class SpikedBall extends Trap {
         this.ballY = this.anchorY + this.chainLength;
         this.swingTimer = 0;
         this.maxAngle = (this.swingArc / 2) * (Math.PI / 180);
-
-
-
         this.rotation = 0;
-
     }
 
     get hitbox() {
@@ -40,15 +31,9 @@ export class SpikedBall extends Trap {
     update(dt) {
         this.swingTimer += dt;
         const currentAngle = this.maxAngle * Math.sin((this.swingTimer / this.period) * 2 * Math.PI);
-
-
-
-
         const angularVelocity = this.maxAngle * Math.cos((this.swingTimer / this.period) * 2 * Math.PI);
 
         this.rotation = angularVelocity * this.tiltAmount;
-
-
         this.ballX = this.anchorX + this.chainLength * Math.sin(currentAngle);
         this.ballY = this.anchorY + this.chainLength * Math.cos(currentAngle);
     }
@@ -60,7 +45,6 @@ export class SpikedBall extends Trap {
 
         const ballSprite = assets.spiked_ball;
         const chainSprite = assets.spiked_ball_chain;
-
 
         if (chainSprite) {
             const chainSpriteSize = 8;
@@ -79,18 +63,10 @@ export class SpikedBall extends Trap {
             ctx.restore();
         }
 
-
         if (ballSprite) {
-
             ctx.save();
-
-
             ctx.translate(this.ballX, this.ballY);
-
-
             ctx.rotate(this.rotation);
-
-
             ctx.drawImage(
                 ballSprite,
                 -this.width / 2,
@@ -98,9 +74,7 @@ export class SpikedBall extends Trap {
                 this.width,
                 this.height
             );
-
             ctx.restore();
-
         } else {
             ctx.fillStyle = 'red';
             ctx.fillRect(this.hitbox.x, this.hitbox.y, this.width, this.height);
