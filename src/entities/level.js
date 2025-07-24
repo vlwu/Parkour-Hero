@@ -58,7 +58,6 @@ export class Level {
       if (TrapClass) {
         const instance = new TrapClass(worldX, worldY, obj);
         this.traps.push(instance);
-        this.spatialGrid.insert({ ...(instance.hitbox || { x: worldX, y: worldY, width: 1, height: 1 }), instance });
       } else if (obj.type.startsWith('fruit_')) {
         const instance = {
           x: worldX, y: worldY, size: 28,
@@ -68,7 +67,6 @@ export class Level {
           type: 'fruit'
         };
         this.fruits.push(instance);
-        this.spatialGrid.insert({ x: worldX - 14, y: worldY - 14, width: 28, height: 28, instance });
       } else if (obj.type === 'checkpoint') {
         const instance = {
           x: worldX, y: worldY, size: 64,
@@ -77,7 +75,6 @@ export class Level {
           frameTimer: 0, type: 'checkpoint'
         };
         this.checkpoints.push(instance);
-        this.spatialGrid.insert({ x: worldX - 32, y: worldY - 32, width: 64, height: 64, instance });
       } else if (obj.type === 'trophy') {
         this.trophy = {
           x: worldX, y: worldY, size: 64,
@@ -86,13 +83,24 @@ export class Level {
           acquired: false, inactive: true, contactMade: false,
           isAnimating: false, type: 'trophy'
         };
-        this.spatialGrid.insert({ x: worldX - 32, y: worldY - 32, width: 64, height: 64, instance: this.trophy });
       }
     });
+
+    this._populateSpatialGrid();
 
     this.totalFruitCount = this.fruits.length;
     this.collectedFruitCount = 0;
     this.completed = false;
+  }
+
+  _populateSpatialGrid() {
+      this.spatialGrid.clear();
+      this.traps.forEach(instance => this.spatialGrid.insert({ ...(instance.hitbox || { x: instance.x, y: instance.y, width: 1, height: 1 }), instance, type: 'trap' }));
+      this.fruits.forEach(instance => this.spatialGrid.insert({ x: instance.x - 14, y: instance.y - 14, width: 28, height: 28, instance, type: 'fruit' }));
+      this.checkpoints.forEach(instance => this.spatialGrid.insert({ x: instance.x - 32, y: instance.y - 32, width: 64, height: 64, instance, type: 'checkpoint' }));
+      if (this.trophy) {
+          this.spatialGrid.insert({ x: this.trophy.x - 32, y: this.trophy.y - 32, width: 64, height: 64, instance: this.trophy, type: 'trophy' });
+      }
   }
 
   getTileAt(worldX, worldY) {
@@ -121,22 +129,25 @@ export class Level {
       const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
       const playerData = playerPos && playerCol ? { ...playerPos, width: playerCol.width, height: playerCol.height } : null;
 
-      const visibleInstances = new Set(this.spatialGrid.query(camera.getViewportBounds()).map(o => o.instance));
+      const visibleObjects = this.spatialGrid.query(camera.getViewportBounds());
 
-      for (const instance of visibleInstances) {
-          switch(instance.type) {
-              case 'trap':
-                  instance.update(dt, playerData, eventBus, this);
-                  break;
-              case 'fruit':
-                  this._updateSingleFruit(instance, dt);
-                  break;
-              case 'checkpoint':
-                  this._updateSingleCheckpoint(instance, dt);
-                  break;
-              case 'trophy':
-                  this._updateSingleTrophy(instance, dt);
-                  break;
+      for (const obj of visibleObjects) {
+          if (obj.instance) {
+              const instance = obj.instance;
+              switch(instance.type) {
+                  case 'trap':
+                      instance.update(dt, playerData, eventBus, this);
+                      break;
+                  case 'fruit':
+                      this._updateSingleFruit(instance, dt);
+                      break;
+                  case 'checkpoint':
+                      this._updateSingleCheckpoint(instance, dt);
+                      break;
+                  case 'trophy':
+                      this._updateSingleTrophy(instance, dt);
+                      break;
+              }
           }
       }
   }
@@ -248,6 +259,8 @@ export class Level {
       this.trophy.animationFrame = 0;
       this.trophy.animationTimer = 0;
     }
+    
+    this._populateSpatialGrid();
     this.completed = false;
   }
 }

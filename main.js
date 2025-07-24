@@ -123,18 +123,18 @@ loadAssets().then((assets) => {
 
     window.unlockAllLevels = () => {
         if (engine && engine.gameState) {
-            engine.gameState.unlockAllLevels();
+            engine.gameState = engine.gameState.unlockAllLevels();
             eventBus.publish('gameStateUpdated', engine.gameState);
+            console.log("All levels have been unlocked.");
         }
     };
     console.log('Developer command available: Type `unlockAllLevels()` in the console to unlock all levels.');
 
     window.resetProgress = () => {
         if (engine && engine.gameState) {
-            engine.gameState.resetProgress();
-            engine.loadLevel(0, 0);
-            console.log("Game reset to Level 1.");
-            eventBus.publish('gameStateUpdated', engine.gameState);
+            engine.gameState = engine.gameState.resetProgress();
+            engine.loadLevel(0, 0); // This will use the newly reset state
+            console.log("Game progress has been reset.");
         }
     };
     console.log('Developer command available: Type `resetProgress()` in the console to reset all saved data.');

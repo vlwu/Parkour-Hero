@@ -124,12 +124,15 @@ export class Engine {
     this.currentLevel = newLevel;
     this.pauseForMenu = false;
 
-    const newState = new GameState(this.gameState);
+    let newState = new GameState(this.gameState);
     newState.showingLevelComplete = false;
     newState.currentSection = sectionIndex;
     newState.currentLevelIndex = levelIndex;
+    
+    // incrementAttempts returns the *new* modified state
+    newState = newState.incrementAttempts(sectionIndex, levelIndex);
+    
     this.gameState = newState;
-    this.gameState.incrementAttempts(sectionIndex, levelIndex);
     eventBus.publish('gameStateUpdated', this.gameState);
 
     this.lastCheckpoint = null;

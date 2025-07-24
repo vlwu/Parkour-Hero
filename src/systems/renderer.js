@@ -36,7 +36,7 @@ export class Renderer {
             }
             const screenX = x * tileSize;
             const screenY = y * tileSize;
-            const drawSize = tileSize + 1;
+            const drawSize = tileSize + 1; // Overlap slightly to prevent seams
 
             if (tile.spriteConfig) {
                 const sWidth = tileSize;
@@ -98,15 +98,17 @@ export class Renderer {
   renderScene(camera, level, entityManager) {
     camera.apply(this.ctx);
 
-    // Draw the pre-rendered static level cache
     if (this.staticLayerCache) {
         this.ctx.drawImage(this.staticLayerCache, 0, 0);
     }
     
-    // Get only the visible dynamic objects from the level's spatial grid
-    const visibleInstances = new Set(level.spatialGrid.query(camera.getViewportBounds()).map(o => o.instance));
+    const visibleObjects = level.spatialGrid.query(camera.getViewportBounds());
 
-    for (const instance of visibleInstances) {
+    for (const obj of visibleObjects) {
+        if (!obj.instance) continue;
+        const instance = obj.instance;
+        
+        // This unified loop now handles rendering all dynamic/interactive level objects
         switch(instance.type) {
             case 'trap':
                 instance.render(this.ctx, this.assets, camera);
@@ -219,12 +221,6 @@ export class Renderer {
       const frameWidth = img.width / fruit.frameCount, srcX = frameWidth * fruit.frame;
       this.ctx.drawImage(img, srcX, 0, frameWidth, img.height, fruit.x - fruit.size / 2, fruit.y - fruit.size / 2, fruit.size, fruit.size);
     }
-  }
-
-  drawTraps(traps, camera) {
-      for (const trap of traps) {
-          trap.render(this.ctx, this.assets, camera);
-      }
   }
 
   drawCheckpoints(checkpoints, camera) {
