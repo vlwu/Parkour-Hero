@@ -51,16 +51,51 @@ export class RockHead extends Trap {
         };
     }
 
-    isPlayerInZone(playerData) {
+    isPlayerInZone(playerData, level) {
         if (!playerData) return false;
+
         const zone = this.detectionZone;
         const playerHitbox = { x: playerData.x, y: playerData.y, width: playerData.width, height: playerData.height };
+
+        // Quick check: Is player horizontally aligned and generally below?
+        if (playerHitbox.x + playerHitbox.width <= zone.x || playerHitbox.x >= zone.x + zone.width || playerHitbox.y < this.y) {
+            return false;
+        }
+
+        // Determine the actual bottom of the detection zone by checking for solid tiles
+        let detectionBottomY = this.y + this.height / 2 + zone.height;
+
+        const startGridY = Math.floor((this.y + this.height / 2) / GRID_CONSTANTS.TILE_SIZE);
+        const endGridY = Math.floor(detectionBottomY / GRID_CONSTANTS.TILE_SIZE);
+        const startGridX = Math.floor(zone.x / GRID_CONSTANTS.TILE_SIZE);
+        const endGridX = Math.floor((zone.x + zone.width) / GRID_CONSTANTS.TILE_SIZE);
+
+        for (let y = startGridY; y <= endGridY; y++) {
+            for (let x = startGridX; x <= endGridX; x++) {
+                const tile = level.getTileAt(x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE);
+                if (tile && tile.solid && !tile.oneWay) {
+                    // We found a solid tile. This is our new floor for detection.
+                    detectionBottomY = y * GRID_CONSTANTS.TILE_SIZE;
+                    // Break both loops
+                    y = endGridY + 1;
+                    break;
+                }
+            }
+        }
         
+        // Now check if player is within the *actual* detection zone
+        const actualZone = {
+            x: zone.x,
+            y: this.y + this.height / 2,
+            width: zone.width,
+            height: detectionBottomY - (this.y + this.height / 2),
+        };
+
         return (
-            playerHitbox.x < zone.x + zone.width &&
-            playerHitbox.x + playerHitbox.width > zone.x &&
-            playerHitbox.y < zone.y + zone.height &&
-            playerHitbox.y + playerHitbox.height > zone.y
+            playerHitbox.x < actualZone.x + actualZone.width &&
+            playerHitbox.x + playerHitbox.width > actualZone.x &&
+            playerHitbox.y < actualZone.y + actualZone.height &&
+            playerHitbox.y + playerHitbox.height > actualZone.y
         );
     }
 
@@ -69,7 +104,7 @@ export class RockHead extends Trap {
         this[`_update_${this.state}`]?.(dt, playerData, eventBus, level);
     }
 
-    _update_idle(dt, playerData, eventBus) {
+    _update_idle(dt, playerData, eventBus, level) {
         this.timers.blink -= dt;
         if (this.timers.blink <= 0) {
             this.state = 'blinking';
@@ -78,7 +113,7 @@ export class RockHead extends Trap {
             return;
         }
 
-        if (this.isPlayerInZone(playerData)) {
+        if (this.isPlayerInZone(playerData, level)) {
             this.state = 'warning';
             this.timers.warning = 0.5;
         }

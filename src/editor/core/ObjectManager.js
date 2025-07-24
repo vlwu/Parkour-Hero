@@ -89,6 +89,12 @@ export class ObjectManager {
             newObject.windHeight = 120;
         }
 
+        if (type === 'saw') {
+            newObject.direction = 'horizontal';
+            newObject.distance = 150;
+            newObject.speed = 50;
+        }
+
         this._applySnapping(newObject);
         newObject.x = round(newObject.x);
         newObject.y = round(newObject.y);
@@ -286,6 +292,7 @@ export class ObjectManager {
             case 'falling_platform': return { width: 32, height: 10 };
             case 'rock_head': return { width: 42, height: 42 };
             case 'spike_head': return { width: 54, height: 52 };
+            case 'saw': return { width: 38, height: 38 };
             default: return { width: 28, height: 28 }; // Default for fruits
         }
     }

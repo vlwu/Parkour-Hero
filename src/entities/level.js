@@ -15,6 +15,7 @@ const trapFactory = {
   falling_platform: Traps.FallingPlatform,
   rock_head: Traps.RockHead,
   spike_head: Traps.SpikeHead,
+  saw: Traps.Saw,
 };
 
 export class Level {

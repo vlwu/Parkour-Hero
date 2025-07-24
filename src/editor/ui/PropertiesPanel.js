@@ -48,6 +48,13 @@ export class PropertiesPanel {
             propertiesHTML += this._createNumberInput('windHeight', 'Wind Height (pixels)', obj.windHeight || 120, 5);
         }
         
+        if (obj.type === 'saw') {
+            const directions = ['horizontal', 'vertical'];
+            propertiesHTML += this._createSelectInput('direction', 'Direction', directions, obj.direction);
+            propertiesHTML += this._createNumberInput('distance', 'Path Distance (pixels)', obj.distance || 150, 5);
+            propertiesHTML += this._createNumberInput('speed', 'Speed (px/sec)', obj.speed || 50, 5);
+        }
+        
         DOM.propertiesPanel.innerHTML = propertiesHTML;
         this._attachEventListeners(obj);
     }
@@ -104,6 +111,12 @@ export class PropertiesPanel {
         if (obj.type === 'fan') {
             attach('pushStrength');
             attach('windHeight');
+        }
+
+        if (obj.type === 'saw') {
+            attach('direction', 'select');
+            attach('distance');
+            attach('speed');
         }
     }
 

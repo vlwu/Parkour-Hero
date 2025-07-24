@@ -7,7 +7,6 @@ export class FireTrap extends Trap {
 
         this.solid = true;
         this.state = 'off';
-        this.playerIsOnTop = false;
         this.frame = 0;
         this.frameTimer = 0;
         this.turnOffTimer = 0;
@@ -18,10 +17,18 @@ export class FireTrap extends Trap {
         };
     }
 
+    _isPlayerOnTop(playerData) {
+        if (!playerData) return false;
+        
+        const playerBottom = playerData.y + playerData.height;
+        const platformTop = this.y - this.height / 2;
 
-
-
-
+        return (
+            playerData.x < this.x + this.width / 2 &&
+            playerData.x + playerData.width > this.x - this.width / 2 &&
+            Math.abs(playerBottom - platformTop) < 5 // Small tolerance
+        );
+    }
 
     get hitbox() {
         if (this.state === 'on' || this.state === 'activating') {
@@ -32,17 +39,13 @@ export class FireTrap extends Trap {
                 height: this.height * 2
             };
         }
-
-        return {
-            x: this.x - this.width / 2,
-            y: this.y - this.height / 2,
-            width: this.width,
-            height: this.height
-        };
+        return null;
     }
 
-    update(dt) {
-        if (!this.playerIsOnTop && this.state === 'on') {
+    update(dt, playerData, eventBus) {
+        const playerIsCurrentlyOnTop = this._isPlayerOnTop(playerData);
+
+        if (!playerIsCurrentlyOnTop && this.state === 'on') {
             this.state = 'turning_off';
             this.turnOffTimer = 2.0;
         }
@@ -75,10 +78,24 @@ export class FireTrap extends Trap {
                 break;
         }
 
-        if (this.state === 'on') {
-            this.damageTimer += dt;
-        } else if (!this.playerIsOnTop) {
-            this.damageTimer = TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL;
+        if (this.state === 'on' && playerData) {
+            const hazardHitbox = this.hitbox;
+            const playerRect = { x: playerData.x, y: playerData.y, width: playerData.width, height: playerData.height };
+            
+            if (
+                playerRect.x < hazardHitbox.x + hazardHitbox.width &&
+                playerRect.x + playerRect.width > hazardHitbox.x &&
+                playerRect.y < hazardHitbox.y + hazardHitbox.height &&
+                playerRect.y + playerRect.height > hazardHitbox.y
+            ) {
+                this.damageTimer += dt;
+                if (this.damageTimer >= TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL) {
+                    this.damageTimer -= TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL;
+                    eventBus.publish('playerTookDamage', { amount: TRAP_CONSTANTS.FIRE_TRAP_DAMAGE, source: 'fire' });
+                }
+            }
+        } else {
+             this.damageTimer = TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL;
         }
     }
 
@@ -112,7 +129,6 @@ export class FireTrap extends Trap {
     }
 
     onLanded(eventBus) {
-        this.playerIsOnTop = true;
         if (this.state === 'off' || this.state === 'turning_off') {
             this.state = 'activating';
             this.frame = 0;
@@ -121,18 +137,8 @@ export class FireTrap extends Trap {
         }
     }
 
-    onCollision(player, eventBus) {
-        if (this.state !== 'on') return;
-
-        if (this.damageTimer >= TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL) {
-            this.damageTimer -= TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL;
-            eventBus.publish('playerTookDamage', { amount: TRAP_CONSTANTS.FIRE_TRAP_DAMAGE, source: 'fire' });
-        }
-    }
-
     reset() {
         this.state = 'off';
-        this.playerIsOnTop = false;
         this.frame = 0;
         this.frameTimer = 0;
         this.turnOffTimer = 0;
