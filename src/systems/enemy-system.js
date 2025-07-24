@@ -7,6 +7,7 @@ import { CollisionComponent } from '../components/CollisionComponent.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 import { KillableComponent } from '../components/KillableComponent.js';
+import { GRID_CONSTANTS } from '../utils/constants.js';
 
 export class EnemySystem {
     constructor() {
@@ -42,7 +43,7 @@ export class EnemySystem {
         this.stompEvents = [];
     }
 
-    update(dt, { entityManager, playerEntityId, playerCol }) {
+    update(dt, { entityManager, playerEntityId, playerCol, level }) {
         this._processStompEvents(entityManager);
         const enemyEntities = entityManager.query([EnemyComponent, PositionComponent, VelocityComponent, StateComponent, RenderableComponent]);
         const playerData = playerEntityId && playerCol ? { ...entityManager.getComponent(playerEntityId, PositionComponent), ...playerCol } : null;
@@ -52,19 +53,53 @@ export class EnemySystem {
             const vel = entityManager.getComponent(id, VelocityComponent);
             const state = entityManager.getComponent(id, StateComponent);
             const renderable = entityManager.getComponent(id, RenderableComponent);
+            const col = entityManager.getComponent(id, CollisionComponent);
             if (enemy.isDead) {
                 const wasDestroyed = this._updateDyingState(dt, enemy, vel, entityManager, id);
                 if (wasDestroyed) { continue; }
             } else {
                 switch (enemy.ai.type) {
                     case 'patrol': this._updatePatrolAI(dt, pos, vel, enemy, renderable, state); break;
-                    case 'ground_charge': this._updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData); break;
+                    case 'ground_charge': this._updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData, col, level); break;
                     case 'defensive_cycle': this._updateDefensiveCycleAI(dt, vel, enemy, renderable, state); break;
                     case 'hop': this._updateHopAI(dt, vel, enemy, renderable, state, entityManager.getComponent(id, CollisionComponent)); break;
                 }
             }
             this._updateAnimation(dt, id, entityManager);
         }
+    }
+
+    _findPlatformEdges(pos, col, level) {
+        if (!level || !col.isGrounded) return null;
+
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const checkY = Math.floor((pos.y + col.height + 1) / TILE_SIZE);
+
+        if (checkY >= level.gridHeight) return null;
+
+        const startGridX = Math.floor((pos.x + col.width / 2) / TILE_SIZE);
+        
+        const initialTile = level.getTileAt(startGridX * TILE_SIZE, checkY * TILE_SIZE);
+        if(!initialTile || !initialTile.solid || initialTile.oneWay) return null;
+
+        let leftGridX = startGridX;
+        while(leftGridX > 0) {
+            const tile = level.getTileAt((leftGridX - 1) * TILE_SIZE, checkY * TILE_SIZE);
+            if (!tile || !tile.solid || tile.oneWay) break;
+            leftGridX--;
+        }
+
+        let rightGridX = startGridX;
+        while(rightGridX < level.gridWidth - 1) {
+            const tile = level.getTileAt((rightGridX + 1) * TILE_SIZE, checkY * TILE_SIZE);
+            if (!tile || !tile.solid || tile.oneWay) break;
+            rightGridX++;
+        }
+
+        return {
+            left: leftGridX * TILE_SIZE,
+            right: (rightGridX + 1) * TILE_SIZE
+        };
     }
 
     _updatePatrolAI(dt, pos, vel, enemy, renderable, state) {
@@ -106,40 +141,78 @@ export class EnemySystem {
         renderable.animationState = enemy.type === 'snail' ? 'walk' : 'run';
     }
 
-    _updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData) {
-        switch(state.currentState) {
+    _updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData, col, level) {
+        const ai = enemy.ai;
+
+        switch (state.currentState) {
             case 'idle':
-                vel.vx = 0; renderable.animationState = 'idle';
-                if (playerData && playerData.isGrounded) {
-                     const distance = Math.abs(playerData.x - pos.x);
-                     if (distance <= enemy.ai.aggroRange) {
-                         state.currentState = 'warning';
-                         enemy.timer = enemy.ai.idleTime;
-                         renderable.direction = (playerData.x > pos.x) ? 'right' : 'left';
-                     }
+                vel.vx = 0;
+                renderable.animationState = 'idle';
+    
+                if (col.isGrounded) {
+                    const edges = this._findPlatformEdges(pos, col, level);
+                    if (edges) {
+                        const platformCenter = edges.left + (edges.right - edges.left) / 2;
+                        renderable.direction = (pos.x + col.width / 2 < platformCenter) ? 'right' : 'left';
+                    }
+                }
+    
+                if (playerData && playerData.isGrounded && Math.abs((playerData.y + playerData.height) - (pos.y + col.height)) < 2) {
+                    const isPlayerRight = playerData.x > pos.x;
+                    const isChickenFacingRight = renderable.direction === 'right';
+                    const distance = Math.abs(playerData.x - pos.x);
+    
+                    if (distance <= ai.aggroRange && isPlayerRight === isChickenFacingRight) {
+                        state.currentState = 'warning';
+                        enemy.timer = ai.idleTime;
+                    }
                 }
                 break;
+    
             case 'warning':
-                vel.vx = 0; renderable.animationState = 'idle';
+                vel.vx = 0;
+                renderable.animationState = 'idle';
                 enemy.timer -= dt;
-                if(enemy.timer <= 0) {
+                if (enemy.timer <= 0) {
                     state.currentState = 'charging';
-                    vel.vx = (renderable.direction === 'right' ? 1 : -1) * enemy.ai.chargeSpeed;
-                    enemy.timer = enemy.ai.chargeTime;
+                    vel.vx = (renderable.direction === 'right' ? 1 : -1) * ai.chargeSpeed;
+                    enemy.timer = ai.chargeTime;
                 }
                 break;
+    
             case 'charging':
                 renderable.animationState = 'run';
                 enemy.timer -= dt;
-                if(enemy.timer <= 0) {
-                    state.currentState = 'cooldown'; vel.vx = 0; enemy.timer = enemy.ai.cooldownTime;
+    
+                const edges = this._findPlatformEdges(pos, col, level);
+                let atEdge = false;
+                if (edges) {
+                    if (vel.vx > 0 && (pos.x + col.width) >= edges.right) {
+                        atEdge = true;
+                        pos.x = edges.right - col.width;
+                    } else if (vel.vx < 0 && pos.x <= edges.left) {
+                        atEdge = true;
+                        pos.x = edges.left;
+                    }
+                } else {
+                    atEdge = true; 
+                }
+    
+                if (enemy.timer <= 0 || atEdge) {
+                    state.currentState = 'cooldown';
+                    vel.vx = 0;
+                    enemy.timer = ai.cooldownTime;
                 }
                 break;
+    
             case 'cooldown':
-                 renderable.animationState = 'idle';
-                 enemy.timer -= dt;
-                 if(enemy.timer <= 0) { state.currentState = 'idle'; }
-                 break;
+                vel.vx = 0;
+                renderable.animationState = 'idle';
+                enemy.timer -= dt;
+                if (enemy.timer <= 0) {
+                    state.currentState = 'idle';
+                }
+                break;
         }
     }
 

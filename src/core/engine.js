@@ -56,7 +56,7 @@ export class Engine {
 
     this.levelManager = new LevelManager(this.gameState);
 
-    // Systems Initialization
+
     this.inputSystem = new InputSystem(this.entityManager);
     this.playerStateSystem = new PlayerStateSystem();
     this.movementSystem = new MovementSystem();
@@ -71,9 +71,9 @@ export class Engine {
     this.systems = [
         this.inputSystem,
         this.playerStateSystem,
-        this.enemySystem,
         this.movementSystem,
         this.collisionSystem,
+        this.enemySystem,
         this.gameplaySystem,
         this.particleSystem,
         this.effectsSystem,
@@ -130,15 +130,15 @@ export class Engine {
 
   gameLoop(currentTime = performance.now()) {
     if (!this.isRunning) return;
-    
+
     const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.033);
     this.lastFrameTime = currentTime;
-    
+
     const effectiveDeltaTime = deltaTime * this.timeScale;
-    
+
     this.update(effectiveDeltaTime);
     this.render(deltaTime);
-    
+
     requestAnimationFrame((time) => this.gameLoop(time));
   }
 
@@ -153,9 +153,9 @@ export class Engine {
     newState.showingLevelComplete = false;
     newState.currentSection = sectionIndex;
     newState.currentLevelIndex = levelIndex;
-    
+
     newState = newState.incrementAttempts(sectionIndex, levelIndex);
-    
+
     this.gameState = newState;
     eventBus.publish('gameStateUpdated', this.gameState);
 
@@ -168,7 +168,7 @@ export class Engine {
     this.gameFlowSystem.reset(this.isRunning);
 
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
-    
+
     this.currentLevel.resetEnemies(this.entityManager);
 
     this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
@@ -179,7 +179,7 @@ export class Engine {
     if (!this.gameHasStarted) {
       this.start();
     }
-    
+
     eventBus.publish('levelLoaded', { gameState: this.gameState });
   }
 
@@ -265,7 +265,7 @@ export class Engine {
         this.currentLevel.trophy.animationTimer = 0;
         this.currentLevel.trophy.inactive = !this.currentLevel.allFruitsCollected();
     }
-    
+
     this.currentLevel.resetEnemies(this.entityManager);
 
     const pos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
