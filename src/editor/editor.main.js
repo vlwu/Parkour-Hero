@@ -164,7 +164,7 @@ class EditorController {
     _onObjectDragEnd(id) {
         const obj = this.objectManager.getObject(id);
         this.objectManager._applySnapping(obj);
-        this.objectManager.updatePatrolForEnemy(obj);
+        this.objectManager._updateGroundedEnemyBehavior(obj); // Corrected function name
         
         const finalX = round(obj.x);
         const finalY = round(obj.y);
@@ -243,7 +243,7 @@ class EditorController {
                 if (movedObj) {
                     const pos = isUndo ? action.from : action.to;
                     movedObj.x = pos.x; movedObj.y = pos.y;
-                    this.objectManager.updatePatrolForEnemy(movedObj);
+                    this.objectManager._updateGroundedEnemyBehavior(movedObj); // Also update on undo/redo
                     this.objectManager.render();
                     if (this.selectedObject?.id === action.id) this.propertiesPanel.displayObject(movedObj);
                 }

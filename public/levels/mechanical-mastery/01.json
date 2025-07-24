@@ -32,8 +32,12 @@
     },
     {
       "type": "fruit_bananas",
-      "x": 7.81,
-      "y": 6.25
+      "x": 7.46,
+      "y": 4.91,
+      "initialDragPos": {
+        "x": 7.81,
+        "y": 6.25
+      }
     },
     {
       "type": "fruit_cherries",
@@ -42,28 +46,36 @@
     },
     {
       "type": "fruit_kiwi",
-      "x": 17.71,
-      "y": 4.17
+      "x": 17.09,
+      "y": 3.79,
+      "initialDragPos": {
+        "x": 16.52,
+        "y": 3.04
+      }
     },
     {
       "type": "fruit_melon",
       "x": 20.83,
-      "y": 3.125
+      "y": 3.13
     },
     {
       "type": "fruit_orange",
-      "x": 4.6875,
+      "x": 4.69,
       "y": 6.67
     },
     {
       "type": "fruit_pineapple",
-      "x": 9.895833333333334,
-      "y": 5.625
+      "x": 9.9,
+      "y": 5.63
     },
     {
       "type": "fruit_strawberry",
-      "x": 14.0625,
-      "y": 4.58
+      "x": 13.88,
+      "y": 3.57,
+      "initialDragPos": {
+        "x": 14.0625,
+        "y": 4.58
+      }
     },
     {
       "type": "trophy",
@@ -74,9 +86,23 @@
   "enemies": [
     {
       "type": "mushroom",
-      "x": 5,
-      "y": 5,
-      "patrolDistance": 144
+      "x": 6,
+      "y": 6.67,
+      "patrolDistance": 112,
+      "initialDragPos": {
+        "x": 6,
+        "y": 6.67
+      },
+      "startDirection": "right"
+    },
+    {
+      "type": "chicken",
+      "x": 18.53,
+      "y": 4.65,
+      "initialDragPos": {
+        "x": 18.48,
+        "y": 4.65
+      }
     }
   ]
 }

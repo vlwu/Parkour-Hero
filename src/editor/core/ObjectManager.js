@@ -80,7 +80,7 @@ export class ObjectManager {
         }
 
         this._applySnapping(newObject);
-        this.updatePatrolForEnemy(newObject);
+        this._updateGroundedEnemyBehavior(newObject);
 
         newObject.x = round(newObject.x);
         newObject.y = round(newObject.y);
@@ -212,15 +212,13 @@ export class ObjectManager {
         }
     }
 
-    updatePatrolForEnemy(enemyObj) {
-        if (ENEMY_DEFINITIONS[enemyObj.type]?.ai.type !== 'patrol') return;
-
+    _updateGroundedEnemyBehavior(enemyObj) {
         const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
         const platformGridY = Math.floor(enemyObj.y + (enemyObj.height / 2 / TILE_SIZE));
         const startGridX = Math.floor(enemyObj.x);
 
         if (!this.grid.isTileSolid(startGridX, platformGridY)) {
-            enemyObj.patrolDistance = 0;
+            if (enemyObj.hasOwnProperty('patrolDistance')) enemyObj.patrolDistance = 0;
             return;
         }
 
@@ -231,21 +229,29 @@ export class ObjectManager {
         while (rightBound < this.grid.width - 1 && this.grid.isTileSolid(rightBound + 1, platformGridY)) { rightBound++; }
         
         const platformWidthInPixels = (rightBound - leftBound + 1) * TILE_SIZE;
-        enemyObj.patrolDistance = Math.max(0, platformWidthInPixels - enemyObj.width);
         
-        const platformCenterPixels = (leftBound * TILE_SIZE) + (platformWidthInPixels / 2);
-        const enemyDropPosPixels = enemyObj.x * TILE_SIZE;
+        // Auto-calculate patrol distance for any enemy that has the property
+        if (enemyObj.hasOwnProperty('patrolDistance')) {
+            enemyObj.patrolDistance = Math.max(0, platformWidthInPixels - enemyObj.width);
+        }
 
-        const patrolStartXPx = leftBound * TILE_SIZE;
-        enemyObj.patrolStartX = patrolStartXPx / TILE_SIZE;
+        // Apply horizontal snapping and direction ONLY for specified types
+        const fullSnapTypes = ['mushroom', 'slime'];
+        if (fullSnapTypes.includes(enemyObj.type)) {
+            const platformCenterPixels = (leftBound * TILE_SIZE) + (platformWidthInPixels / 2);
+            const enemyDropPosPixels = enemyObj.x * TILE_SIZE;
+            
+            const patrolStartXPx = leftBound * TILE_SIZE;
+            enemyObj.patrolStartX = patrolStartXPx / TILE_SIZE;
 
-        if (enemyDropPosPixels < platformCenterPixels) {
-            enemyObj.x = (patrolStartXPx + enemyObj.width / 2) / TILE_SIZE;
-            enemyObj.startDirection = 'right';
-        } else {
-            const patrolEndXPx = (rightBound + 1) * TILE_SIZE;
-            enemyObj.x = (patrolEndXPx - enemyObj.width / 2) / TILE_SIZE;
-            enemyObj.startDirection = 'left';
+            if (enemyDropPosPixels < platformCenterPixels) {
+                enemyObj.x = (patrolStartXPx + enemyObj.width / 2) / TILE_SIZE;
+                enemyObj.startDirection = 'right';
+            } else {
+                const patrolEndXPx = (rightBound + 1) * TILE_SIZE;
+                enemyObj.x = (patrolEndXPx - enemyObj.width / 2) / TILE_SIZE;
+                enemyObj.startDirection = 'left';
+            }
         }
     }
 

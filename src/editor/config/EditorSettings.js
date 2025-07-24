@@ -17,10 +17,10 @@ export const OBJECT_DESCRIPTIONS = {
     'spike_head': 'A spiked guardian that hovers in the air. When a player passes underneath, it slams to the ground, killing them instantly.',
     'saw': 'A circular saw that moves back and forth along a path. Properties: direction (horizontal/vertical), distance (path length in pixels), speed (pixels per second).',
     // Enemies
-    'mushroom': 'A simple ground enemy that patrols back and forth. Snaps to the ground. Properties: patrolDistance (path length in pixels).',
-    'chicken': 'A ground enemy that charges at the player when they get close. Snaps to the ground.',
+    'mushroom': 'Patrols on a platform. Snaps vertically and to the platform\'s edge (left/right based on drop location). Patrol distance is set automatically.',
+    'chicken': 'Charges at the player. Snaps vertically to the ground but stays at the horizontal position where it is placed.',
     'snail': 'A slow-moving patrol enemy. Can be jumped on to create a shell projectile (not simulated in editor). Snaps to the ground.',
-    'slime': 'A ground enemy that hops around periodically. Snaps to the ground.',
+    'slime': 'A hopping enemy. Snaps vertically and to the platform\'s edge (left/right based on drop location).',
     'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.'
 };
 
@@ -72,9 +72,9 @@ export function getPaletteColor(type) {
         case 'fruit_strawberry': return '#d35400';
         case 'player_spawn': return '#2980b9';
         case 'trophy': return '#F39C12'; case 'checkpoint': return '#17a2b8';
-        case 'mushroom': return '#d23e39ff'; case 'chicken': return '#f1c40f';
-        case 'snail': return '#d65fdcff'; case 'slime': return '#2ecc71';
-        case 'turtle': return '#67899fff';
+        case 'mushroom': return '#e6341cff'; case 'chicken': return '#f1c40f';
+        case 'snail': return '#cc37e7ff'; case 'slime': return '#2ecc71';
+        case 'turtle': return '#6198d7ff';
         case 'oneway_gold': return '#FFD700';
         case 'oneway_wood': return '#855E42';
         case 'oneway_stone': return '#808080';
