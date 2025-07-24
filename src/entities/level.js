@@ -134,7 +134,7 @@ export class Level {
       for (const obj of visibleObjects) {
           if (obj.instance) {
               const instance = obj.instance;
-              switch(instance.type) {
+              switch(obj.type) { 
                   case 'trap':
                       instance.update(dt, playerData, eventBus, this);
                       break;
@@ -260,7 +260,7 @@ export class Level {
       this.trophy.animationTimer = 0;
     }
     
-    this._populateSpatialGrid();
+    this._populateSpatialGrid(); 
     this.completed = false;
   }
 }

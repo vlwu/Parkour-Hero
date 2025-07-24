@@ -27,7 +27,7 @@ export class Renderer {
       for (let x = 0; x < level.gridWidth; x++) {
         const tile = level.tiles[y][x];
 
-        if (tile.solid) { // Render ALL solid tiles, including one-way platforms, to the cache
+        if (tile.solid) {
             const sprite = this.assets[tile.spriteKey];
             if (!sprite) {
                 cacheCtx.fillStyle = 'magenta';
@@ -36,7 +36,7 @@ export class Renderer {
             }
             const screenX = x * tileSize;
             const screenY = y * tileSize;
-            const drawSize = tileSize + 1; // Overlap slightly to prevent seams
+            const drawSize = tileSize + 1;
 
             if (tile.spriteConfig) {
                 const sWidth = tileSize;
@@ -108,8 +108,7 @@ export class Renderer {
         if (!obj.instance) continue;
         const instance = obj.instance;
         
-        // This unified loop now handles rendering all dynamic/interactive level objects
-        switch(instance.type) {
+        switch(obj.type) { 
             case 'trap':
                 instance.render(this.ctx, this.assets, camera);
                 break;

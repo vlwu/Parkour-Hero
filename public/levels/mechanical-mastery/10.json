@@ -2,7 +2,7 @@
   "name": "Level 10: Introduction Finale",
   "gridWidth": 28,
   "gridHeight": 21,
-  "background": "background_blue",
+  "background": "background_gray",
   "startPosition": {
     "x": 1.04,
     "y": 6.25

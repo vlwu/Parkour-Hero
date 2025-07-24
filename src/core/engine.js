@@ -36,6 +36,7 @@ export class Engine {
     this.isRunning = false;
     this.gameHasStarted = false;
     this.pauseForMenu = false;
+    this.timeScale = 1.0; // The new time scale property
 
     this.entityManager = new EntityManager();
     this.lastCheckpoint = null;
@@ -104,15 +105,38 @@ export class Engine {
   start() { if (this.isRunning) return; this.isRunning = true; this.gameHasStarted = true; this.lastFrameTime = performance.now(); eventBus.publish('gameStarted'); eventBus.publish('gameResumed'); this.gameLoop(); }
   stop() { this.isRunning = false; this.soundManager.stopAll(); }
 
-  pause() { if (!this.isRunning) return; this.isRunning = false; this.soundManager.stopAll({ except: ['UI'] }); const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent); if (playerCtrl) playerCtrl.needsRespawn = false; eventBus.publish('gamePaused'); }
-  resume() { if (this.pauseForMenu || this.isRunning || !this.gameHasStarted || this.gameState.showingLevelComplete) return; this.isRunning = true; this.lastFrameTime = performance.now(); eventBus.publish('gameResumed'); this.gameLoop(); const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent); if (playerCtrl) playerCtrl.needsRespawn = false; }
+  // CORRECTED: pause() now sets the time scale to 0
+  pause() {
+    if (this.timeScale === 0.0) return;
+    this.timeScale = 0.0;
+    this.soundManager.stopAll({ except: ['UI'] });
+    const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
+    if (playerCtrl) playerCtrl.needsRespawn = false;
+    eventBus.publish('gamePaused');
+  }
 
+  // CORRECTED: resume() now sets the time scale to 1.0, respecting menu state
+  resume() {
+    if (this.pauseForMenu || !this.gameHasStarted || this.gameState.showingLevelComplete) return;
+    if (this.timeScale === 1.0) return;
+    this.timeScale = 1.0;
+    eventBus.publish('gameResumed');
+    const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
+    if (playerCtrl) playerCtrl.needsRespawn = false;
+  }
+
+  // CORRECTED: The game loop now runs continuously and uses an effectiveDeltaTime
   gameLoop(currentTime = performance.now()) {
     if (!this.isRunning) return;
-    const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.016);
+    
+    const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.033);
     this.lastFrameTime = currentTime;
-    this.update(deltaTime);
-    this.render(deltaTime);
+    
+    const effectiveDeltaTime = deltaTime * this.timeScale;
+    
+    this.update(effectiveDeltaTime); // Pass the scaled time to the update logic
+    this.render(deltaTime); // Pass real time to rendering for UI animations if needed
+    
     requestAnimationFrame((time) => this.gameLoop(time));
   }
 
@@ -129,7 +153,6 @@ export class Engine {
     newState.currentSection = sectionIndex;
     newState.currentLevelIndex = levelIndex;
     
-    // incrementAttempts returns the *new* modified state
     newState = newState.incrementAttempts(sectionIndex, levelIndex);
     
     this.gameState = newState;
@@ -149,11 +172,15 @@ export class Engine {
     this.camera.snapToPlayer(this.entityManager, this.playerEntityId);
     this.renderer.preRenderLevel(this.currentLevel);
 
-    if (this.gameHasStarted) this.resume(); else this.start();
+    this.timeScale = 1.0; // Ensure time scale is reset for the new level
+    if (!this.gameHasStarted) {
+      this.start();
+    }
+    
     eventBus.publish('levelLoaded', { gameState: this.gameState });
   }
 
-  update(dt) {
+  update(dt) { // Now receives effectiveDeltaTime
     if (!this.currentLevel) return;
     this.camera.update(this.entityManager, this.playerEntityId, dt);
 
@@ -162,7 +189,7 @@ export class Engine {
         playerEntityId: this.playerEntityId,
         level: this.currentLevel,
         camera: this.camera,
-        isRunning: this.isRunning,
+        isRunning: this.isRunning && this.timeScale > 0, // isRunning reflects the scaled time now
         gameState: this.gameState,
         keybinds: this.keybinds,
         dt,
@@ -174,7 +201,9 @@ export class Engine {
     }
 
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
-    if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.isRunning) this._respawnPlayer();
+    if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.timeScale > 0) {
+      this._respawnPlayer();
+    }
 
     this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus, this.camera);
 
@@ -295,7 +324,7 @@ export class Engine {
       if (this.camera) this.camera.shake(intensity, duration);
   }
 
-  render(dt) {
+  render(dt) { // Receives real deltaTime
     if (!this.currentLevel) return;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.renderer.drawScrollingBackground(this.currentLevel, dt);
@@ -303,6 +332,8 @@ export class Engine {
     this.particleSystem.render(this.ctx, this.camera);
     this.effectsSystem.render(this.ctx, this.camera);
     this.hud.drawGameHUD(this.ctx);
-    this.uiSystem.render(this.ctx, this.isRunning);
+    // The UI system needs to know if the game is logically paused (timeScale === 0)
+    // to render the correct play/pause button icon.
+    this.uiSystem.render(this.ctx, this.timeScale > 0);
   }
 }
