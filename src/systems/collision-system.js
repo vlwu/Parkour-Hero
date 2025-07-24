@@ -1,4 +1,4 @@
-import { PLAYER_CONSTANTS, GRID_CONSTANTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, GRID_CONSTANTS, TRAP_CONSTANTS } from '../utils/constants.js';
 import { eventBus } from '../utils/event-bus.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
@@ -6,6 +6,8 @@ import { CollisionComponent } from '../components/CollisionComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { SpatialGrid } from '../utils/spatial-grid.js';
 import { DynamicColliderComponent } from '../components/DynamicColliderComponent.js';
+import { EnemyComponent } from '../components/EnemyComponent.js';
+import { KillableComponent } from '../components/KillableComponent.js';
 
 export class CollisionSystem {
   constructor() {
@@ -64,11 +66,12 @@ export class CollisionSystem {
           }
       });
       
-      // Query for and add dynamic entities (like the player)
+      // Query for and add all dynamic entities (player, enemies, etc.)
       const dynamicEntities = entityManager.query([PositionComponent, CollisionComponent, DynamicColliderComponent]);
       for (const entityId of dynamicEntities) {
           const pos = entityManager.getComponent(entityId, PositionComponent);
           const col = entityManager.getComponent(entityId, CollisionComponent);
+          const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
           
           const gridObject = {
               x: pos.x,
@@ -76,7 +79,7 @@ export class CollisionSystem {
               width: col.width,
               height: col.height,
               isOneWay: false,
-              surfaceType: 'entity',
+              surfaceType: isEnemy ? 'enemy' : 'entity',
               type: 'entity',
               entityId: entityId
           };
@@ -119,8 +122,8 @@ export class CollisionSystem {
 
           const allColliders = this.spatialGrid.query(broadphaseBounds);
 
-          this._handleHorizontalCollisions(pos, vel, col, allColliders, dt, entityId);
-          this._handleVerticalCollisions(pos, vel, col, allColliders, dt, entityId);
+          this._handleHorizontalCollisions(pos, vel, col, allColliders, dt, entityId, entityManager);
+          this._handleVerticalCollisions(pos, vel, col, allColliders, dt, entityId, entityManager);
 
           pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
           
@@ -143,7 +146,7 @@ export class CollisionSystem {
       );
   }
 
-  _handleHorizontalCollisions(pos, vel, col, colliders, dt, entityId) {
+  _handleHorizontalCollisions(pos, vel, col, colliders, dt, entityId, entityManager) {
       pos.x += vel.vx * dt;
       col.isAgainstWall = false;
       const playerRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
@@ -153,6 +156,15 @@ export class CollisionSystem {
           if (collider.isOneWay) continue;
 
           if (this._isRectColliding(playerRect, collider)) {
+              const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
+
+              if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
+                  const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
+                  if (!enemy.isDead) {
+                      eventBus.publish('collisionEvent', { type: 'hazard', entityId: entityId, damage: 20 });
+                  }
+              }
+
               if (vel.vx > 0) {
                   pos.x = collider.x - col.width;
               } else if (vel.vx < 0) {
@@ -160,12 +172,12 @@ export class CollisionSystem {
               }
               vel.vx = 0;
               playerRect.x = pos.x;
-              col.isAgainstWall = !['sand', 'mud', 'ice', 'platform'].includes(collider.surfaceType);
+              col.isAgainstWall = !['sand', 'mud', 'ice', 'platform', 'enemy'].includes(collider.surfaceType);
           }
       }
   }
 
-  _handleVerticalCollisions(pos, vel, col, colliders, dt, entityId) {
+  _handleVerticalCollisions(pos, vel, col, colliders, dt, entityId, entityManager) {
       pos.y += vel.vy * dt;
       col.isGrounded = false;
       const playerRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
@@ -176,10 +188,25 @@ export class CollisionSystem {
               continue;
           }
 
-          if (vel.vy >= 0) { 
+          const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
+
+          if (vel.vy >= 0) {
               const prevPlayerBottom = (pos.y - vel.vy * dt) + col.height;
-              const landingTolerance = 1;
+              const landingTolerance = 2;
               if (prevPlayerBottom <= collider.y + landingTolerance) {
+                  if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
+                      const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
+                      const killable = entityManager.getComponent(collider.entityId, KillableComponent);
+                      if (!enemy.isDead && killable && killable.stompable) {
+                          eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });
+                          pos.y = collider.y - col.height;
+                          vel.vy = 0; 
+                          return; // Stomp handled, exit loop for this entity
+                      } else if (!enemy.isDead) {
+                          eventBus.publish('collisionEvent', { type: 'hazard', entityId: entityId, damage: 20 });
+                      }
+                  }
+
                   this._landOnSurface(pos, vel, col, collider.y, collider.surfaceType, entityId);
                   playerRect.y = pos.y;
                   if (collider.onLanded) {
@@ -188,6 +215,12 @@ export class CollisionSystem {
               }
           } else if (vel.vy < 0) {
               if (!collider.isOneWay) {
+                  if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
+                      const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
+                      if (!enemy.isDead) {
+                          eventBus.publish('collisionEvent', { type: 'hazard', entityId: entityId, damage: 20 });
+                      }
+                  }
                   pos.y = collider.y + collider.height;
                   vel.vy = 0;
                   playerRect.y = pos.y;

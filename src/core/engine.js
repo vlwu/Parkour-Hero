@@ -25,6 +25,7 @@ import { VelocityComponent } from '../components/VelocityComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
+import { EnemySystem } from '../systems/enemy-system.js';
 
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
@@ -63,10 +64,12 @@ export class Engine {
     this.effectsSystem = new EffectsSystem(assets);
     this.gameFlowSystem = new GameFlowSystem();
     this.uiSystem = new UISystem(canvas, assets);
+    this.enemySystem = new EnemySystem();
 
     this.systems = [
         this.inputSystem,
         this.playerStateSystem,
+        this.enemySystem,
         this.movementSystem,
         this.collisionSystem,
         this.gameplaySystem,

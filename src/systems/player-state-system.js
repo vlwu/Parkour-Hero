@@ -14,43 +14,32 @@ export class PlayerStateSystem {
         eventBus.subscribe('playerRespawned', () => {
             this.clearDamageEvents();
             this.clearKnockbackEvents();
+            this.clearStompEvents();
         });
         eventBus.subscribe('playerKnockback', (e) => this.handleKnockback(e));
+        eventBus.subscribe('enemyStomped', (e) => this.handleEnemyStomped(e));
         this.damageEvents = [];
         this.knockbackEvents = [];
+        this.stompEvents = [];
     }
 
-    clearDamageEvents() {
-        this.damageEvents = [];
-    }
+    clearDamageEvents() { this.damageEvents = []; }
+    clearKnockbackEvents() { this.knockbackEvents = []; }
+    clearStompEvents() { this.stompEvents = []; }
 
-    clearKnockbackEvents() {
-        this.knockbackEvents = [];
-    }
-
-    handleDamageTaken(event) {
-        this.damageEvents.push(event);
-    }
-
-    handleKnockback(event) {
-        this.knockbackEvents.push(event);
-    }
+    handleDamageTaken(event) { this.damageEvents.push(event); }
+    handleKnockback(event) { this.knockbackEvents.push(event); }
+    handleEnemyStomped(event) { this.stompEvents.push(event); }
 
     _processDamageEvents(entityManager) {
         if (this.damageEvents.length === 0) return;
-
         const entities = entityManager.query([PlayerControlledComponent, RenderableComponent, StateComponent]);
-
         for (const event of this.damageEvents) {
             for (const entityId of entities) {
                 const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
                 const renderable = entityManager.getComponent(entityId, RenderableComponent);
                 const state = entityManager.getComponent(entityId, StateComponent);
-
-                if (ctrl.isHit || ctrl.isSpawning) {
-                    continue;
-                }
-
+                if (ctrl.isHit || ctrl.isSpawning) continue;
                 if ((event.source === 'fall' || event.source === 'fire' || event.source === 'hazard') && !ctrl.isHit) {
                     ctrl.isHit = true;
                     ctrl.hitStunTimer = PLAYER_CONSTANTS.HIT_STUN_DURATION;
@@ -59,17 +48,14 @@ export class PlayerStateSystem {
                 }
             }
         }
-
         this.damageEvents = [];
     }
 
     _processKnockbackEvents(entityManager) {
         if (this.knockbackEvents.length === 0) return;
-
         for (const event of this.knockbackEvents) {
             const { entityId, vx, vy } = event;
             const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-
             if (ctrl) {
                 const vel = entityManager.getComponent(entityId, VelocityComponent);
                 if (vel) {
@@ -78,13 +64,27 @@ export class PlayerStateSystem {
                 }
             }
         }
-
         this.knockbackEvents = [];
+    }
+
+    _processStompEvents(entityManager) {
+        if (this.stompEvents.length === 0) return;
+        const entities = entityManager.query([PlayerControlledComponent, VelocityComponent]);
+        for (const event of this.stompEvents) {
+            for (const entityId of entities) {
+                const vel = entityManager.getComponent(entityId, VelocityComponent);
+                const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+                vel.vy = -event.stompBounceVelocity; // Apply upward bounce
+                ctrl.jumpCount = 1; // Allow a double jump after a stomp
+            }
+        }
+        this.stompEvents = [];
     }
 
     update(dt, { entityManager }) {
         this._processDamageEvents(entityManager);
         this._processKnockbackEvents(entityManager);
+        this._processStompEvents(entityManager);
 
         const entities = entityManager.query([
             PlayerControlledComponent, PositionComponent, VelocityComponent, CollisionComponent,
