@@ -161,7 +161,14 @@ export class CollisionSystem {
               if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
                   const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                   if (!enemy.isDead) {
-                      eventBus.publish('collisionEvent', { type: 'hazard', entityId: entityId, damage: 20 });
+                      const knockbackVx = (pos.x + col.width / 2) < (collider.x + collider.width / 2) ? -150 : 150;
+                      eventBus.publish('collisionEvent', {
+                          type: 'hazard',
+                          entityId: entityId,
+                          entityManager: entityManager,
+                          damage: 20,
+                          knockback: { vx: knockbackVx, vy: -150 }
+                      });
                   }
               }
 
@@ -203,7 +210,13 @@ export class CollisionSystem {
                           vel.vy = 0; 
                           return; // Stomp handled, exit loop for this entity
                       } else if (!enemy.isDead) {
-                          eventBus.publish('collisionEvent', { type: 'hazard', entityId: entityId, damage: 20 });
+                          eventBus.publish('collisionEvent', {
+                              type: 'hazard',
+                              entityId: entityId,
+                              entityManager: entityManager,
+                              damage: 20,
+                              knockback: { vx: vel.vx > 0 ? 50 : -50, vy: -150 }
+                          });
                       }
                   }
 
@@ -218,7 +231,13 @@ export class CollisionSystem {
                   if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
                       const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                       if (!enemy.isDead) {
-                          eventBus.publish('collisionEvent', { type: 'hazard', entityId: entityId, damage: 20 });
+                          eventBus.publish('collisionEvent', {
+                              type: 'hazard',
+                              entityId: entityId,
+                              entityManager: entityManager,
+                              damage: 20,
+                              knockback: { vx: vel.vx > 0 ? 50 : -50, vy: 150 }
+                          });
                       }
                   }
                   pos.y = collider.y + collider.height;
