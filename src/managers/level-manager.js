@@ -9,6 +9,7 @@ export class LevelManager {
 
     eventBus.subscribe('requestNextLevel', () => this.goToNextLevel());
     eventBus.subscribe('requestPreviousLevel', () => this.goToPreviousLevel());
+    eventBus.subscribe('gameStateUpdated', (newGameState) => this.gameState = newGameState);
   }
 
   getLevelData(sectionIndex, levelIndex) {
