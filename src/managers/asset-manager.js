@@ -183,10 +183,35 @@ export async function loadAssets() {
     sh_blink: '/assets/Traps/Spike Head/Blink.png', // SH stands for Spike Head
     sh_idle: '/assets/Traps/Spike Head/Idle.png',
     sh_bottom_hit: '/assets/Traps/Spike Head/Bottom Hit.png',
-
     sand_mud_ice: '/assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
     trampoline_idle: '/assets/Traps/Trampoline/Idle.png',
     trampoline_jump: '/assets/Traps/Trampoline/Jump.png',
+    // Enemies 
+    mushroom_hit: '/assets/Enemies/Mushroom/Hit.png',
+    mushroom_idle: '/assets/Enemies/Mushroom/Idle.png',
+    mushroom_run: '/assets/Enemies/Mushroom/Run.png',
+
+    chicken_hit: '/assets/Enemies/Chicken/Hit.png',
+    chicken_idle: '/assets/Enemies/Chicken/Idle.png',
+    chicken_run: '/assets/Enemies/Chicken/Run.png',
+
+    snail_hit: '/assets/Enemies/Snail/Hit.png',
+    snail_idle: '/assets/Enemies/Snail/Idle.png',
+    snail_walk: '/assets/Enemies/Snail/Walk.png',
+    snail_die: '/assets/Enemies/Snail/Snail without shell.png',
+    shell_idle: '/assets/Enemies/Snail/Shell Idle.png',
+    shell_top_hit: '/assets/Enemies/Snail/Shell Top Hit.png',
+    shell_wall_hit: '/assets/Enemies/Snail/Shell Wall Hit.png',
+
+    slime_hit: '/assets/Enemies/Slime/Hit.png',
+    slime_idle_run: '/assets/Enemies/Slime/Idle-Run.png',
+    slime_particles: '/assets/Enemies/Slime/Particles.png',
+
+    turtle_hit: '/assets/Enemies/Turtle/Hit.png',
+    turtle_idle1: '/assets/Enemies/Turtle/Idle 1.png',
+    turtle_idle2: '/assets/Enemies/Turtle/Idle 2.png',
+    turtle_spikes_in: '/assets/Enemies/Turtle/Spikes in.png',
+    turtle_spikes_out: '/assets/Enemies/Turtle/Spikes out.png',
     // Other assets
     dust_particle: '/assets/Other/Dust Particle.png',
     ice_particle: '/assets/Traps/Sand Mud Ice/Ice Particle.png',
@@ -205,6 +230,7 @@ export async function loadAssets() {
     dash: '/assets/Sounds/Whoosh.mp3',
     checkpoint_activated: '/assets/Sounds/Checkpoint (Activation).mp3',
     hit: '/assets/Sounds/Hit.mp3',
+    enemy_stomp: '/assets/Sounds/Enemy Stomp.mp3',
     sand_walk: '/assets/Sounds/Sand Walk.mp3',
     mud_run: '/assets/Sounds/Mud Run.mp3',
     ice_run: '/assets/Sounds/Ice Run.mp3',
