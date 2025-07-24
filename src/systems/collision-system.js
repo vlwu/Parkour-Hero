@@ -144,9 +144,11 @@ export class CollisionSystem {
               continue;
           }
 
-          if (vel.vy > 0) { // Moving down
+          if (vel.vy >= 0) { // Moving down or stationary
               const prevPlayerBottom = (pos.y - vel.vy * dt) + col.height;
-              if (prevPlayerBottom <= collider.y) {
+              // Add a small tolerance to handle floating point inaccuracies and the "pause" scenario
+              const landingTolerance = 1;
+              if (prevPlayerBottom <= collider.y + landingTolerance) {
                   this._landOnSurface(pos, vel, col, collider.y, collider.surfaceType, entityId);
                   playerRect.y = pos.y;
                   if (collider.onLanded) {

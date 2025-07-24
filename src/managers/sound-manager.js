@@ -104,7 +104,6 @@ export class SoundManager {
     if (!this.settings.enabled || !this.sounds[key] || !this.channels[channel]) {
       return;
     }
-    // Ensure we don't start the same loop twice.
     if (Array.from(this.channels[channel]).some(audio => audio.src === this.sounds[key].src)) {
         return;
     }

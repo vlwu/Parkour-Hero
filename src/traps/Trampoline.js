@@ -56,7 +56,6 @@ export class Trampoline extends Trap {
     }
 
     onCollision(player, eventBus) {
-        // CRITICAL FIX: Destructure `col` from the player object.
         const { pos, vel, col } = player;
 
         vel.vy = -PLAYER_CONSTANTS.JUMP_FORCE * PLAYER_CONSTANTS.TRAMPOLINE_BOUNCE_MULTIPLIER;

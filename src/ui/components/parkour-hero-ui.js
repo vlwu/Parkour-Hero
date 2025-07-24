@@ -129,7 +129,6 @@ export class ParkourHeroUI extends LitElement {
   _handleLevelLoad = ({ gameState }) => {
       this.gameState = gameState;
       this.levelCompleteStats = null;
-      // FIX: Ensure the UI knows the game has started when a level loads.
       if (!this.gameHasStarted) {
           this.gameHasStarted = true;
       }
@@ -187,9 +186,6 @@ export class ParkourHeroUI extends LitElement {
   
   _handleLevelSelected(e) {
     const { sectionIndex, levelIndex } = e.detail;
-    // FIX: When a level is selected, whether from the main menu or pause menu,
-    // we simply publish the request. The engine and the `_handleLevelLoad`
-    // callback will handle the state transitions.
     eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
   }
   
@@ -254,7 +250,6 @@ export class ParkourHeroUI extends LitElement {
       `;
   }
 
-  // FIX: Created a new method for just the main menu's content.
   renderMainMenuContent() {
     const buttonTexts = [
       { text: 'Start Game', action: () => eventBus.publish('requestStartGame') },

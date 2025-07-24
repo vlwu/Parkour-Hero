@@ -74,7 +74,6 @@ export class RockHead extends Trap {
             for (let x = startGridX; x <= endGridX; x++) {
                 const tile = level.getTileAt(x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE);
                 if (tile && tile.solid && !tile.oneWay) {
-                    // We found a solid tile. This is our new floor for detection.
                     detectionBottomY = y * GRID_CONSTANTS.TILE_SIZE;
                     // Break both loops
                     y = endGridY + 1;

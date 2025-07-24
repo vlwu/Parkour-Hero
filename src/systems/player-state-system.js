@@ -10,14 +10,30 @@ import { StateComponent } from '../components/StateComponent.js';
 
 export class PlayerStateSystem {
     constructor() {
+        this.entityManager = null;
         eventBus.subscribe('playerTookDamage', (e) => this.handleDamageTaken(e));
         eventBus.subscribe('playerRespawned', () => {
             this.clearDamageEvents();
             this.clearKnockbackEvents();
         });
         eventBus.subscribe('playerKnockback', (e) => this.handleKnockback(e));
+        eventBus.subscribe('gamePaused', () => this.onPause());
+
         this.damageEvents = [];
         this.knockbackEvents = [];
+    }
+    
+    onPause() {
+        if (!this.entityManager) return;
+        
+        const entities = this.entityManager.query([PlayerControlledComponent]);
+        for (const entityId of entities) {
+            const ctrl = this.entityManager.getComponent(entityId, PlayerControlledComponent);
+            if (ctrl) {
+                // Clear the jump buffer to prevent an accidental jump on resume.
+                ctrl.jumpBufferTimer = 0;
+            }
+        }
     }
 
     clearDamageEvents() {
@@ -83,6 +99,7 @@ export class PlayerStateSystem {
     }
 
     update(dt, { entityManager }) {
+        this.entityManager = entityManager;
         this._processDamageEvents(entityManager);
         this._processKnockbackEvents(entityManager);
 

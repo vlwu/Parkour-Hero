@@ -25,7 +25,6 @@ export class BitmapText extends LitElement {
   updated(changedProperties) {
     super.updated(changedProperties);
     
-    // We only need to re-render the canvas if a property that affects the text has changed.
     if (!this.fontRenderer || !this.shadowRoot) return;
 
     this.renderCanvas();

@@ -12,7 +12,6 @@ export class UISystem {
         const buttonGap = 10;
         const buttonX = this.canvas.width - buttonSize - rightPadding;
 
-        // FIX: Uncommented the missing button definitions
         this.uiButtons = [
             { id: 'settings', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 0, width: buttonSize, height: buttonSize, assetKey: 'settings_icon', visible: false },
             { id: 'pause', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 1, width: buttonSize, height: buttonSize, assetKey: 'pause_icon', visible: false },

@@ -92,7 +92,6 @@ class EditorController {
             this.objectManager.updateObjectProp(id, prop, value);
         } else if (type === 'final') { // On 'change' event
             let oldValue;
-            // If we were live-dragging a number, the "from" is the value before dragging started.
             if (this.objectPropChange.isChanging) {
                 oldValue = this.objectPropChange.oldValue;
                 this.objectPropChange.isChanging = false;
