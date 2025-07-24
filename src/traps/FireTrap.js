@@ -9,7 +9,7 @@ export class FireTrap extends Trap {
         this.chainLength = config.chainLength || 1;
         this.width = baseWidth * this.chainLength;
         this.x = x + (this.width - baseWidth) / 2;
-        
+
         this.solid = true;
         this.state = 'off';
         this.frame = 0;
@@ -24,7 +24,7 @@ export class FireTrap extends Trap {
 
     _isPlayerOnTop(playerData) {
         if (!playerData) return false;
-        
+
         const playerBottom = playerData.y + playerData.height;
         const platformTop = this.y - this.height / 2;
 
@@ -35,7 +35,7 @@ export class FireTrap extends Trap {
         );
     }
 
-    get hitbox() {
+    get damageHitbox() {
         if (this.state === 'on' || this.state === 'activating') {
             return {
                 x: this.x - this.width / 2,
@@ -84,9 +84,9 @@ export class FireTrap extends Trap {
         }
 
         if (this.state === 'on' && playerData) {
-            const hazardHitbox = this.hitbox;
+            const hazardHitbox = this.damageHitbox;
             const playerRect = { x: playerData.x, y: playerData.y, width: playerData.width, height: playerData.height };
-            
+
             if (
                 hazardHitbox &&
                 playerRect.x < hazardHitbox.x + hazardHitbox.width &&
@@ -112,7 +112,7 @@ export class FireTrap extends Trap {
         if (!camera.isVisible(startX, this.y - this.height, this.width, this.height * 2)) return;
 
         const baseSprite = assets.fire_off;
-        
+
         if (baseSprite) {
             for (let i = 0; i < this.chainLength; i++) {
                 ctx.drawImage(baseSprite, 0, 16, 16, 16, startX + i * baseWidth, this.y - this.height / 2, baseWidth, this.height);
