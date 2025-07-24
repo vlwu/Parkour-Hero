@@ -100,6 +100,13 @@ export class CollisionSystem {
           this._handleVerticalCollisions(pos, vel, col, allColliders, dt, entityId);
 
           pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
+          
+          if (pos.y < 0) {
+              pos.y = 0;
+              if (vel.vy < 0) {
+                  vel.vy = 0;
+              }
+          }
           this._checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager);
       }
   }
