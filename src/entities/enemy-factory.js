@@ -8,16 +8,6 @@ import { EnemyComponent } from '../components/EnemyComponent.js';
 import { KillableComponent } from '../components/KillableComponent.js';
 import { ENEMY_DEFINITIONS } from './enemy-definitions.js';
 
-/**
- * Creates an enemy entity and adds its components to the entity manager.
- * This function acts as a recipe for creating different enemy types.
- * @param {EntityManager} entityManager The entity manager instance.
- * @param {string} type The type of enemy to create (e.g., 'mushroom').
- * @param {number} x The initial x-position in world coordinates.
- * @param {number} y The initial y-position in world coordinates.
- * @param {object} [config={}] Additional configuration from the level data.
- * @returns {number|null} The ID of the newly created enemy entity, or null if type is unknown.
- */
 export function createEnemy(entityManager, type, x, y, config = {}) {
     const data = ENEMY_DEFINITIONS[type];
     if (!data) {
@@ -28,16 +18,14 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     const enemyEntityId = entityManager.createEntity();
     const initialState = data.ai.type === 'hop' || data.ai.type === 'defensive_cycle' || data.ai.type === 'ground_charge' ? 'idle' : 'patrol';
 
-    // --- Core Components ---
     entityManager.addComponent(enemyEntityId, new PositionComponent(x, y));
     entityManager.addComponent(enemyEntityId, new VelocityComponent());
     entityManager.addComponent(enemyEntityId, new StateComponent(initialState));
     entityManager.addComponent(enemyEntityId, new DynamicColliderComponent());
 
-    // --- Enemy-Specific Components ---
     const aiConfig = {
         ...data.ai,
-        patrol: { // Ensure patrol data is nested correctly
+        patrol: {
             startX: x,
             distance: config.patrolDistance || 100,
             speed: data.ai.patrolSpeed || 50
@@ -48,11 +36,8 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
         ai: aiConfig
     }));
     
-    entityManager.addComponent(enemyEntityId, new KillableComponent({
-        ...data.killable,
-    }));
+    entityManager.addComponent(enemyEntityId, new KillableComponent({ ...data.killable }));
 
-    // --- Physics and Rendering Components ---
     entityManager.addComponent(enemyEntityId, new CollisionComponent({
         type: 'solid',
         width: data.width,
@@ -64,6 +49,7 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
         width: data.width,
         height: data.height,
         animationState: initialState === 'idle' ? 'idle' : (data.spriteKey === 'snail' ? 'walk' : 'run'),
+        direction: config.startDirection || 'right', // Use startDirection from JSON, default to right
     }));
 
     return enemyEntityId;

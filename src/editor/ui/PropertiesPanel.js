@@ -53,7 +53,7 @@ export class PropertiesPanel {
         
         // Enemy Properties
         if (obj.type === 'mushroom') {
-             propertiesHTML += this._createNumberInput('patrolDistance', 'Patrol Distance (pixels)', obj.patrolDistance || 144, 1);
+             propertiesHTML += this._createNumberInput('patrolDistance', 'Patrol Distance (pixels)', obj.patrolDistance || 144, 1, true); // Added 'true' for disabled
         }
         
         DOM.propertiesPanel.innerHTML = propertiesHTML;
@@ -64,8 +64,8 @@ export class PropertiesPanel {
         DOM.propertiesPanel.innerHTML = `<p>Select an object or palette item for info.</p>`;
     }
 
-    _createNumberInput(id, label, value, step) {
-        return `<label for="prop-${id}">${label}:</label><input type="number" id="prop-${id}" step="${step}" value="${value}">`;
+    _createNumberInput(id, label, value, step, disabled = false) {
+        return `<label for="prop-${id}">${label}:</label><input type="number" id="prop-${id}" step="${step}" value="${value}" ${disabled ? 'disabled' : ''}>`;
     }
 
     _createSelectInput(id, label, options, selectedValue) {
@@ -76,7 +76,7 @@ export class PropertiesPanel {
     _attachEventListeners(obj) {
         const attach = (prop, inputType = 'number') => {
             const element = document.getElementById(`prop-${prop}`);
-            if (element) {
+            if (element && !element.disabled) {
                 if (inputType === 'number') {
                     element.addEventListener('input', (e) => this._handleInput(obj.id, prop, e.target));
                 }

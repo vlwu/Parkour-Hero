@@ -63,7 +63,7 @@ class EditorController {
             if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); this._onUndo(); }
             if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); this._onRedo(); }
         });
-        this._onPaletteSelection(this.palette.getSelection()); // Show initial description
+        this._onPaletteSelection(this.palette.getSelection());
     }
     
     resetEditor(width, height) {
@@ -73,8 +73,6 @@ class EditorController {
         this.deselectObject();
     }
     
-    // --- Callback Methods ---
-
     _onPaletteSelection(selection) {
         this.deselectObject();
         this.propertiesPanel.showItemDescription(selection.type, selection.id);
@@ -84,13 +82,13 @@ class EditorController {
         const obj = this.objectManager.getObject(id);
         if (!obj) return;
     
-        if (type === 'live') { // For live dragging of a number input
+        if (type === 'live') {
             if (!this.objectPropChange.isChanging) {
                 this.objectPropChange.isChanging = true;
                 this.objectPropChange.oldValue = obj[prop];
             }
             this.objectManager.updateObjectProp(id, prop, value);
-        } else if (type === 'final') { // On 'change' event
+        } else if (type === 'final') {
             let oldValue;
             if (this.objectPropChange.isChanging) {
                 oldValue = this.objectPropChange.oldValue;
@@ -98,9 +96,7 @@ class EditorController {
             } else {
                 oldValue = obj[prop];
             }
-            
             const finalValue = typeof value === 'number' ? round(value) : value;
-
             if (oldValue !== finalValue) {
                 this.objectManager.updateObjectProp(id, prop, finalValue);
                 this.history.push({ type: 'update_prop', id, prop, from: oldValue, to: finalValue });
@@ -118,7 +114,6 @@ class EditorController {
         if (!this.currentPaintAction) return;
         tileId = tileId ?? this.palette.getSelection().id;
         const oldId = this.grid.getTileId(index);
-
         if (oldId !== tileId && !this.currentPaintAction.changes.some(c => c.index === index)) {
             this.currentPaintAction.changes.push({ index, from: oldId, to: tileId });
             this.grid.paintCell(index, tileId);
@@ -133,12 +128,11 @@ class EditorController {
     }
 
     _onObjectPlace(pixelX, pixelY) {
-        const type = this.palette.getSelection().id;
+        const selection = this.palette.getSelection();
+        const type = selection.id;
         const { newObject, replacedSpawn } = this.objectManager.addObject(type, pixelX, pixelY);
         const action = { type: 'place_object', obj: newObject };
-        if (replacedSpawn) {
-            action.replaced = replacedSpawn;
-        }
+        if (replacedSpawn) { action.replaced = replacedSpawn; }
         this.history.push(action);
         this.selectObject(newObject);
     }
@@ -150,11 +144,8 @@ class EditorController {
             alert('The Player Spawn cannot be deleted. To move it, simply left-click and drag it to a new position.');
             return;
         }
-
         this.history.push({ type: 'delete_object', obj: objectToDelete });
-        if (this.selectedObject && this.selectedObject.id === id) {
-            this.deselectObject();
-        }
+        if (this.selectedObject && this.selectedObject.id === id) { this.deselectObject(); }
         this.objectManager.deleteObject(id);
     }
 
@@ -173,6 +164,7 @@ class EditorController {
     _onObjectDragEnd(id) {
         const obj = this.objectManager.getObject(id);
         this.objectManager._applySnapping(obj);
+        this.objectManager.updatePatrolForEnemy(obj);
         
         const finalX = round(obj.x);
         const finalY = round(obj.y);
@@ -186,8 +178,7 @@ class EditorController {
             });
         }
         
-        obj.x = finalX;
-        obj.y = finalY;
+        obj.x = finalX; obj.y = finalY;
         this.objectManager.render();
         this.propertiesPanel.displayObject(obj);
     }
@@ -195,9 +186,7 @@ class EditorController {
     _onResize() {
         const w = parseInt(prompt("Enter new grid width:", this.grid.width));
         const h = parseInt(prompt("Enter new grid height:", this.grid.height));
-        if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0) {
-            this.resetEditor(w, h);
-        }
+        if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0) { this.resetEditor(w, h); }
     }
 
     _onFileLoad(e) {
@@ -218,15 +207,8 @@ class EditorController {
     }
 
     _onExport() {
-        LevelExporter.export(
-            this.grid,
-            this.objectManager,
-            DOM.levelNameInput.value,
-            DOM.backgroundInput.value
-        );
+        LevelExporter.export(this.grid, this.objectManager, DOM.levelNameInput.value, DOM.backgroundInput.value);
     }
-
-    // --- History Execution ---
 
     _onUndo() {
         const action = this.history.undo();
@@ -242,8 +224,7 @@ class EditorController {
         const isUndo = direction === 'undo';
         switch (action.type) {
             case 'paint':
-                action.changes.forEach(c => this.grid.paintCell(c.index, isUndo ? c.from : c.to));
-                break;
+                action.changes.forEach(c => this.grid.paintCell(c.index, isUndo ? c.from : c.to)); break;
             case 'place_object':
                 if (isUndo) {
                     this.objectManager.deleteObject(action.obj.id);
@@ -252,19 +233,17 @@ class EditorController {
                     if(action.replaced) this.objectManager.deleteObject(action.replaced.id);
                     this.objectManager.objects.push(action.obj);
                 }
-                this.objectManager.render();
-                break;
+                this.objectManager.render(); break;
             case 'delete_object':
                 if (isUndo) this.objectManager.objects.push(action.obj);
                 else this.objectManager.deleteObject(action.obj.id);
-                this.objectManager.render();
-                break;
+                this.objectManager.render(); break;
             case 'move_object':
                 const movedObj = this.objectManager.getObject(action.id);
                 if (movedObj) {
                     const pos = isUndo ? action.from : action.to;
-                    movedObj.x = pos.x;
-                    movedObj.y = pos.y;
+                    movedObj.x = pos.x; movedObj.y = pos.y;
+                    this.objectManager.updatePatrolForEnemy(movedObj);
                     this.objectManager.render();
                     if (this.selectedObject?.id === action.id) this.propertiesPanel.displayObject(movedObj);
                 }
@@ -279,8 +258,6 @@ class EditorController {
                 break;
         }
     }
-
-    // --- Helper Methods ---
 
     selectObject(obj) {
         if (!obj) return;

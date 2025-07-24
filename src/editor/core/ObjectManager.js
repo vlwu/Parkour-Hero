@@ -21,13 +21,11 @@ export class ObjectManager {
         this.nextObjectId = 0;
         this.objects = [];
 
-        // Load standard objects
         (objectsData || []).forEach(obj => {
             const { width, height } = this._getObjectDimensions(obj.type);
             this.objects.push({ ...obj, id: this.nextObjectId++, width, height });
         });
         
-        // Load enemies and represent them as editor objects
         (enemiesData || []).forEach(enemy => {
              const { width, height } = this._getObjectDimensions(enemy.type);
              this.objects.push({ ...enemy, id: this.nextObjectId++, width, height });
@@ -65,9 +63,8 @@ export class ObjectManager {
             width, height
         };
         
-        // Add default properties for specific object types
-        if (type === 'mushroom') {
-             newObject.patrolDistance = 144; // Default patrol distance in pixels
+        if (ENEMY_DEFINITIONS[type]?.ai.type === 'patrol') {
+             newObject.patrolDistance = 0;
         }
         if (type === 'spiked_ball') {
             newObject.chainLength = 100; newObject.swingArc = 90; newObject.period = 4; newObject.tiltAmount = 0.5;
@@ -83,6 +80,8 @@ export class ObjectManager {
         }
 
         this._applySnapping(newObject);
+        this.updatePatrolForEnemy(newObject);
+
         newObject.x = round(newObject.x);
         newObject.y = round(newObject.y);
 
@@ -94,7 +93,6 @@ export class ObjectManager {
     deleteObject(id) {
         const index = this.objects.findIndex(o => o.id === id);
         if (index === -1) return null;
-
         const deletedObject = this.objects.splice(index, 1)[0];
         this.render();
         return deletedObject;
@@ -102,10 +100,7 @@ export class ObjectManager {
 
     updateObjectProp(id, prop, value) {
         const obj = this.getObject(id);
-        if (obj) {
-            obj[prop] = value;
-            this.render();
-        }
+        if (obj) { obj[prop] = value; this.render(); }
     }
     
     getObject(id) {
@@ -118,30 +113,25 @@ export class ObjectManager {
 
     getObjectsForExport() {
         const playerSpawn = this.objects.find(obj => obj.type === 'player_spawn');
-        const startPos = playerSpawn
-            ? { x: round(playerSpawn.x), y: round(playerSpawn.y) }
-            : { x: 1.5, y: this.grid.height - 2.5 };
-
+        const startPos = playerSpawn ? { x: round(playerSpawn.x), y: round(playerSpawn.y) } : { x: 1.5, y: this.grid.height - 2.5 };
         const finalObjects = [];
         const finalEnemies = [];
-
         this.objects.forEach(obj => {
             if (obj.type === 'player_spawn') return;
 
-            // Destructure to remove editor-specific properties
-            const { id, width, height, ...rest } = obj;
+            const { id, width, height, patrolStartX, ...rest } = obj;
             const finalObj = {};
-            for (const key in rest) {
-                finalObj[key] = typeof rest[key] === 'number' ? round(rest[key]) : rest[key];
-            }
+            for (const key in rest) { finalObj[key] = typeof rest[key] === 'number' ? round(rest[key]) : rest[key]; }
 
             if (ENEMY_DEFINITIONS[obj.type]) {
+                if (patrolStartX !== undefined) {
+                    finalObj.x = round(patrolStartX);
+                }
                 finalEnemies.push(finalObj);
             } else {
                 finalObjects.push(finalObj);
             }
         });
-
         return { startPos, finalObjects, finalEnemies };
     }
 
@@ -158,7 +148,6 @@ export class ObjectManager {
             el.title = obj.type;
             el.style.backgroundColor = getPaletteColor(obj.type);
             el.style.opacity = '0.8';
-
             let angle = 0;
             if (obj.type === 'fan') {
                 switch (obj.direction) {
@@ -173,12 +162,9 @@ export class ObjectManager {
                 }
             }
             el.style.transform = `rotate(${angle}deg)`;
-
             if (obj.type === 'player_spawn') {
                 el.innerHTML = '<span style="color: white; font-weight: bold; font-size: 18px;">P</span>';
-                el.style.display = 'flex';
-                el.style.justifyContent = 'center';
-                el.style.alignItems = 'center';
+                el.style.display = 'flex'; el.style.justifyContent = 'center'; el.style.alignItems = 'center';
             }
             DOM.gridContainer.appendChild(el);
         });
@@ -186,11 +172,8 @@ export class ObjectManager {
 
     _applySnapping(obj) {
         const groundSnappable = ['trophy', 'checkpoint', 'trampoline', 'spike', 'fire_trap', ...Object.keys(ENEMY_DEFINITIONS)];
-        if (groundSnappable.includes(obj.type)) {
-            this._snapToGround(obj);
-        } else if (obj.type === 'fan') {
-            this._snapFanToEdge(obj);
-        }
+        if (groundSnappable.includes(obj.type)) { this._snapToGround(obj); }
+        else if (obj.type === 'fan') { this._snapFanToEdge(obj); }
     }
 
     _snapFanToEdge(fan) {
@@ -200,8 +183,7 @@ export class ObjectManager {
         for (const check of checks) {
             const tileX = gridX + check.dx; const tileY = gridY + check.dy;
             if (this.grid.isTileSolid(tileX, tileY)) {
-                let snapX, snapY;
-                const fanH_half_grid = (fan.height / 2) / GRID_CONSTANTS.TILE_SIZE;
+                let snapX, snapY; const fanH_half_grid = (fan.height / 2) / GRID_CONSTANTS.TILE_SIZE;
                 switch(check.dir) {
                     case 'up': snapX = tileX + 0.5; snapY = tileY - fanH_half_grid; break;
                     case 'down': snapX = tileX + 0.5; snapY = tileY + 1 + fanH_half_grid; break;
@@ -217,20 +199,53 @@ export class ObjectManager {
 
     _snapToGround(obj) {
         const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
-        const objBottomY = obj.y + (obj.height / 2) / TILE_SIZE;
-        const gridX = obj.x;
-
+        const objBottomY_grid = obj.y + (obj.height / 2) / TILE_SIZE;
+        const gridX = Math.floor(obj.x);
         for (let yOffset = 0; yOffset < 3; yOffset++) {
-            const checkY = Math.floor(objBottomY) + yOffset;
+            const checkY = Math.floor(objBottomY_grid) + yOffset;
             if (this.grid.isTileSolid(gridX, checkY)) {
-                const platformTopY = checkY;
-                const newCenterY = platformTopY - (obj.height / 2) / TILE_SIZE;
-                
-                if (Math.abs(newCenterY - obj.y) < 2) {
-                    obj.y = newCenterY;
-                    return;
-                }
+                const platformTopY_pixels = checkY * TILE_SIZE;
+                const newCenterY_pixels = platformTopY_pixels - (obj.height / 2);
+                obj.y = newCenterY_pixels / TILE_SIZE;
+                return;
             }
+        }
+    }
+
+    updatePatrolForEnemy(enemyObj) {
+        if (ENEMY_DEFINITIONS[enemyObj.type]?.ai.type !== 'patrol') return;
+
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const platformGridY = Math.floor(enemyObj.y + (enemyObj.height / 2 / TILE_SIZE));
+        const startGridX = Math.floor(enemyObj.x);
+
+        if (!this.grid.isTileSolid(startGridX, platformGridY)) {
+            enemyObj.patrolDistance = 0;
+            return;
+        }
+
+        let leftBound = startGridX;
+        while (leftBound > 0 && this.grid.isTileSolid(leftBound - 1, platformGridY)) { leftBound--; }
+
+        let rightBound = startGridX;
+        while (rightBound < this.grid.width - 1 && this.grid.isTileSolid(rightBound + 1, platformGridY)) { rightBound++; }
+        
+        const platformWidthInPixels = (rightBound - leftBound + 1) * TILE_SIZE;
+        enemyObj.patrolDistance = Math.max(0, platformWidthInPixels - enemyObj.width);
+        
+        const platformCenterPixels = (leftBound * TILE_SIZE) + (platformWidthInPixels / 2);
+        const enemyDropPosPixels = enemyObj.x * TILE_SIZE;
+
+        const patrolStartXPx = leftBound * TILE_SIZE;
+        enemyObj.patrolStartX = patrolStartXPx / TILE_SIZE;
+
+        if (enemyDropPosPixels < platformCenterPixels) {
+            enemyObj.x = (patrolStartXPx + enemyObj.width / 2) / TILE_SIZE;
+            enemyObj.startDirection = 'right';
+        } else {
+            const patrolEndXPx = (rightBound + 1) * TILE_SIZE;
+            enemyObj.x = (patrolEndXPx - enemyObj.width / 2) / TILE_SIZE;
+            enemyObj.startDirection = 'left';
         }
     }
 
