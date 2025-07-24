@@ -78,13 +78,20 @@ export class Camera {
     this.targetX = this.x + moveX;
     this.targetY = this.y + moveY;
     
+    // This logic correctly handles deltaTime = 0, so no change is needed here.
     this.x += (this.targetX - this.x) * this.followSpeed * deltaTime;
     this.y += (this.targetY - this.y) * this.followSpeed * deltaTime;
     
     this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
     this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
     
-    this.updateShake(deltaTime);
+    // If time is paused (deltaTime is 0), reset the visual shake offsets.
+    if (deltaTime > 0) {
+        this.updateShake(deltaTime);
+    } else {
+        this.shakeX = 0;
+        this.shakeY = 0;
+    }
   }
 
   updateShake(deltaTime) {
