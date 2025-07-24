@@ -119,14 +119,11 @@ export class ObjectManager {
         this.objects.forEach(obj => {
             if (obj.type === 'player_spawn') return;
 
-            const { id, width, height, patrolStartX, ...rest } = obj;
+            const { id, width, height, ...rest } = obj;
             const finalObj = {};
             for (const key in rest) { finalObj[key] = typeof rest[key] === 'number' ? round(rest[key]) : rest[key]; }
 
             if (ENEMY_DEFINITIONS[obj.type]) {
-                if (patrolStartX !== undefined) {
-                    finalObj.x = round(patrolStartX);
-                }
                 finalEnemies.push(finalObj);
             } else {
                 finalObjects.push(finalObj);
@@ -230,26 +227,24 @@ export class ObjectManager {
         
         const platformWidthInPixels = (rightBound - leftBound + 1) * TILE_SIZE;
         
-        // Auto-calculate patrol distance for any enemy that has the property
         if (enemyObj.hasOwnProperty('patrolDistance')) {
             enemyObj.patrolDistance = Math.max(0, platformWidthInPixels - enemyObj.width);
         }
 
-        // Apply horizontal snapping and direction ONLY for specified types
         const fullSnapTypes = ['mushroom', 'slime'];
         if (fullSnapTypes.includes(enemyObj.type)) {
             const platformCenterPixels = (leftBound * TILE_SIZE) + (platformWidthInPixels / 2);
             const enemyDropPosPixels = enemyObj.x * TILE_SIZE;
             
-            const patrolStartXPx = leftBound * TILE_SIZE;
-            enemyObj.patrolStartX = patrolStartXPx / TILE_SIZE;
-
+            const halfWidthInGrid = (enemyObj.width / 2) / TILE_SIZE;
+            
             if (enemyDropPosPixels < platformCenterPixels) {
-                enemyObj.x = (patrolStartXPx + enemyObj.width / 2) / TILE_SIZE;
+                // Snap to left edge: The center should be at the platform's start + half the enemy's width.
+                enemyObj.x = leftBound + halfWidthInGrid;
                 enemyObj.startDirection = 'right';
             } else {
-                const patrolEndXPx = (rightBound + 1) * TILE_SIZE;
-                enemyObj.x = (patrolEndXPx - enemyObj.width / 2) / TILE_SIZE;
+                // Snap to right edge: The center should be at the platform's end - half the enemy's width.
+                enemyObj.x = (rightBound + 1) - halfWidthInGrid;
                 enemyObj.startDirection = 'left';
             }
         }

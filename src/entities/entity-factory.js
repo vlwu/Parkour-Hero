@@ -22,7 +22,12 @@ import { DynamicColliderComponent } from '../components/DynamicColliderComponent
 export function createPlayer(entityManager, x, y, characterId) {
     const playerEntityId = entityManager.createEntity();
 
-    entityManager.addComponent(playerEntityId, new PositionComponent(x, y));
+    // The 'x' and 'y' from the level data represent the center of the spawn point.
+    // The PositionComponent requires the top-left coordinates.
+    const topLeftX = x - PLAYER_CONSTANTS.WIDTH / 2;
+    const topLeftY = y - PLAYER_CONSTANTS.HEIGHT / 2;
+
+    entityManager.addComponent(playerEntityId, new PositionComponent(topLeftX, topLeftY));
     entityManager.addComponent(playerEntityId, new VelocityComponent());
     entityManager.addComponent(playerEntityId, new CharacterComponent(characterId));
 

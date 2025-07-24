@@ -18,15 +18,28 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     const enemyEntityId = entityManager.createEntity();
     const initialState = data.ai.type === 'hop' || data.ai.type === 'defensive_cycle' || data.ai.type === 'ground_charge' ? 'idle' : 'patrol';
 
-    entityManager.addComponent(enemyEntityId, new PositionComponent(x, y));
+    // CONSISTENT LOGIC: ALWAYS assume incoming x,y are the entity's center.
+    // Convert to top-left for the PositionComponent.
+    const initialTopLeftX = x - data.width / 2;
+    const topLeftY = y - data.height / 2;
+
+    entityManager.addComponent(enemyEntityId, new PositionComponent(initialTopLeftX, topLeftY));
     entityManager.addComponent(enemyEntityId, new VelocityComponent());
     entityManager.addComponent(enemyEntityId, new StateComponent(initialState));
     entityManager.addComponent(enemyEntityId, new DynamicColliderComponent());
 
+    // The patrol AI needs the absolute leftmost coordinate of its path (`startX`).
+    let patrolStartX = initialTopLeftX;
+    if (data.ai.type === 'patrol' && config.startDirection === 'left') {
+        // If the enemy starts at the right and moves left, its initial position is the
+        // rightmost boundary. We calculate the leftmost boundary for the AI.
+        patrolStartX = initialTopLeftX - (config.patrolDistance || 0);
+    }
+    
     const aiConfig = {
         ...data.ai,
         patrol: {
-            startX: x,
+            startX: patrolStartX,
             distance: config.patrolDistance || 100,
             speed: data.ai.patrolSpeed || 50
         }
@@ -49,7 +62,7 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
         width: data.width,
         height: data.height,
         animationState: initialState === 'idle' ? 'idle' : (data.spriteKey === 'snail' ? 'walk' : 'run'),
-        direction: config.startDirection || 'right', // Use startDirection from JSON, default to right
+        direction: config.startDirection || 'right',
     }));
 
     return enemyEntityId;

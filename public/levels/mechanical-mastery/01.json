@@ -86,14 +86,14 @@
   "enemies": [
     {
       "type": "mushroom",
-      "x": 6,
+      "x": 8.33,
       "y": 6.67,
       "patrolDistance": 112,
       "initialDragPos": {
         "x": 6,
         "y": 6.67
       },
-      "startDirection": "right"
+      "startDirection": "left"
     },
     {
       "type": "chicken",
