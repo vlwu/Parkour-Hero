@@ -204,7 +204,7 @@ export class Renderer {
     const sprite = this.assets[assetKey];
     
     const enemyDef = ENEMY_DEFINITIONS[renderable.spriteKey];
-    if (!enemyDef) return; // Don't try to render if definition is missing
+    if (!enemyDef) return;
     
     if (!sprite) {
         console.warn(`Missing enemy sprite for asset key: "${assetKey}"`);
@@ -217,8 +217,12 @@ export class Renderer {
     const frameWidth = sprite.width / frameCount;
     const srcX = (renderable.animationFrame % frameCount) * frameWidth;
 
+    // CORRECTED LOGIC: Because enemy sprites face left by default, we only need to flip them
+    // when their desired direction is 'right'.
+    const shouldFlip = (renderable.direction === 'right');
+
     this.ctx.save();
-    if (renderable.direction === 'left') {
+    if (shouldFlip) {
         this.ctx.scale(-1, 1);
         this.ctx.translate(-pos.x - renderable.width, pos.y);
     } else {

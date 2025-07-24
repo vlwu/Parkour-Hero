@@ -75,16 +75,13 @@ export class EnemySystem {
             }
             
             this._updateAnimation(dt, id, entityManager);
-
-            if (vel.vx > 0) renderable.direction = 'right';
-            else if (vel.vx < 0) renderable.direction = 'left';
         }
     }
 
     // --- AI Behaviors ---
     _updatePatrolAI(dt, pos, vel, enemy, renderable, state) {
         if (state.currentState === 'idle') {
-            vel.vx = 0;
+            vel.vx = 0; // Ensure velocity is zero during idle state
             renderable.animationState = 'idle';
             enemy.timer -= dt;
             if (enemy.timer <= 0) {
@@ -93,15 +90,31 @@ export class EnemySystem {
             }
             return;
         }
-
+        
+        // --- PATROL STATE ---
         const { startX, distance, speed } = enemy.ai.patrol;
+
+        if (vel.vx === 0) {
+            vel.vx = speed;
+            renderable.direction = 'right';
+        }
+
         const leftBound = startX;
         const rightBound = startX + distance;
 
-        if (pos.x <= leftBound) {
-            pos.x = leftBound; vel.vx = speed; state.currentState = 'idle'; enemy.timer = 0.5; renderable.direction = 'right';
-        } else if (pos.x >= rightBound) {
-            pos.x = rightBound; vel.vx = -speed; state.currentState = 'idle'; enemy.timer = 0.5; renderable.direction = 'left';
+        // Check boundaries and perform an atomic state transition
+        if (vel.vx > 0 && pos.x >= rightBound) { // Moving right, hit right boundary
+            pos.x = rightBound;
+            renderable.direction = 'left'; 
+            state.currentState = 'idle';
+            enemy.timer = 0.5;
+            vel.vx = 0; 
+        } else if (vel.vx < 0 && pos.x <= leftBound) { // Moving left, hit left boundary
+            pos.x = leftBound;
+            renderable.direction = 'right';
+            state.currentState = 'idle';
+            enemy.timer = 0.5;
+            vel.vx = 0; 
         }
         
         renderable.animationState = enemy.type === 'snail' ? 'walk' : 'run';
@@ -166,7 +179,9 @@ export class EnemySystem {
             if (enemy.timer <= 0) {
                 state.currentState = 'hopping';
                 vel.vy = -enemy.ai.hopHeight;
-                vel.vx = (Math.random() > 0.5 ? 1 : -1) * enemy.ai.hopSpeed;
+                const hopDirection = Math.random() > 0.5 ? 1 : -1;
+                vel.vx = hopDirection * enemy.ai.hopSpeed;
+                renderable.direction = hopDirection > 0 ? 'right' : 'left';
             }
         } else if (state.currentState === 'hopping' && col.isGrounded && vel.vy >= 0) {
             state.currentState = 'idle'; enemy.timer = enemy.ai.hopInterval;

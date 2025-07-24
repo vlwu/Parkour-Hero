@@ -74,8 +74,8 @@
   "enemies": [
     {
       "type": "mushroom",
-      "x": 10,
-      "y": 6.3,
+      "x": 5,
+      "y": 5,
       "patrolDistance": 144
     }
   ]
