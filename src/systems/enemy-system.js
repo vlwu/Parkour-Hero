@@ -64,6 +64,14 @@ export class EnemySystem {
                     case 'defensive_cycle': this._updateDefensiveCycleAI(dt, vel, enemy, renderable, state); break;
                     case 'hop': this._updateHopAI(dt, vel, enemy, renderable, state, entityManager.getComponent(id, CollisionComponent)); break;
                 }
+
+                if (enemy.type === 'slime' && enemy.ai.particleDropInterval && col.isGrounded && Math.abs(vel.vx) > 0) {
+                    enemy.particleDropTimer -= dt;
+                    if (enemy.particleDropTimer <= 0) {
+                        enemy.particleDropTimer = enemy.ai.particleDropInterval;
+                        eventBus.publish('createSlimeParticle', { x: pos.x + col.width / 2, y: pos.y + col.height });
+                    }
+                }
             }
             this._updateAnimation(dt, id, entityManager);
         }
@@ -105,9 +113,18 @@ export class EnemySystem {
     }
 
     _updatePatrolAI(dt, pos, vel, enemy, renderable, state) {
+        if (enemy.type === 'slime') {
+            renderable.animationState = 'idle_run';
+        } else {
+            if (state.currentState === 'idle') {
+                renderable.animationState = 'idle';
+            } else {
+                renderable.animationState = enemy.type === 'snail' ? 'walk' : 'run';
+            }
+        }
+    
         if (state.currentState === 'idle') {
             vel.vx = 0;
-            renderable.animationState = 'idle';
             enemy.timer -= dt;
             if (enemy.timer <= 0) {
                 state.currentState = 'patrol';
@@ -139,8 +156,6 @@ export class EnemySystem {
             enemy.timer = 0.5;
             vel.vx = 0;
         }
-
-        renderable.animationState = enemy.type === 'snail' ? 'walk' : 'run';
     }
 
     _updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData, col, level) {

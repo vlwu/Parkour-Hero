@@ -71,7 +71,11 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
                 break;
         }
     } else { // patrol
-        initialAnimationState = (data.spriteKey === 'snail' ? 'walk' : 'run');
+        if (type === 'slime') {
+            initialAnimationState = 'idle_run';
+        } else {
+            initialAnimationState = (data.spriteKey === 'snail' ? 'walk' : 'run');
+        }
     }
 
     entityManager.addComponent(enemyEntityId, new RenderableComponent({

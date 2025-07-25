@@ -16,5 +16,8 @@ export class EnemyComponent {
         this.isDead = false;
         this.deathTimer = 0;
         this.timer = 0; // Generic timer for AI states (e.g., idle, cooldown)
+        if (this.ai.particleDropInterval) {
+            this.particleDropTimer = this.ai.particleDropInterval;
+        }
     }
 }

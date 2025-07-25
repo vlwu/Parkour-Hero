@@ -6,6 +6,7 @@ import { CollisionComponent } from '../components/CollisionComponent.js';
 import { SpatialGrid } from '../utils/spatial-grid.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { createEnemy } from './enemy-factory.js';
+import { eventBus } from '../utils/event-bus.js';
 
 
 const trapFactory = {
@@ -51,6 +52,7 @@ export class Level {
     this.traps = [];
     this.trophy = null;
     this.initialEnemyConfigs = levelConfig.enemies || []; // Store for respawning
+    eventBus.subscribe('createSlimeParticle', (pos) => this.addSlimeParticle(pos));
 
     (levelConfig.objects || []).forEach(obj => {
       const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
@@ -99,9 +101,22 @@ export class Level {
     this.completed = false;
   }
 
+  addSlimeParticle(position) {
+    const particleTrap = new Traps.SlimeParticle(position.x, position.y, {});
+    this.traps.push(particleTrap);
+    
+    const gridObject = { ...(particleTrap.hitbox), instance: particleTrap, type: 'trap' };
+    particleTrap.gridObject = gridObject;
+    this.spatialGrid.insert(gridObject);
+  }
+
   _populateSpatialGrid() {
       this.spatialGrid.clear();
-      this.traps.forEach(instance => this.spatialGrid.insert({ ...(instance.hitbox || { x: instance.x, y: instance.y, width: 1, height: 1 }), instance, type: 'trap' }));
+      this.traps.forEach(instance => {
+        const gridObject = { ...(instance.hitbox || { x: instance.x, y: instance.y, width: 1, height: 1 }), instance, type: 'trap' };
+        instance.gridObject = gridObject;
+        this.spatialGrid.insert(gridObject)
+      });
       this.fruits.forEach(instance => this.spatialGrid.insert({ x: instance.x - 14, y: instance.y - 14, width: 28, height: 28, instance, type: 'fruit' }));
       this.checkpoints.forEach(instance => this.spatialGrid.insert({ x: instance.x - 32, y: instance.y - 32, width: 64, height: 64, instance, type: 'checkpoint' }));
       if (this.trophy) {
@@ -135,15 +150,27 @@ export class Level {
       const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
       const playerData = playerPos && playerCol ? { ...playerPos, width: playerCol.width, height: playerCol.height } : null;
 
-      const visibleObjects = this.spatialGrid.query(camera.getViewportBounds());
+      for (const trap of this.traps) {
+          trap.update(dt, playerData, eventBus, this);
+      }
 
+      const expiredTraps = [];
+      this.traps = this.traps.filter(trap => {
+          if (trap.isExpired && trap.gridObject) {
+              expiredTraps.push(trap.gridObject);
+              return false;
+          }
+          return true;
+      });
+      if (expiredTraps.length > 0) {
+          this.spatialGrid.removeObjects(expiredTraps);
+      }
+
+      const visibleObjects = this.spatialGrid.query(camera.getViewportBounds());
       for (const obj of visibleObjects) {
           if (obj.instance) {
               const instance = obj.instance;
               switch(obj.type) { 
-                  case 'trap':
-                      instance.update(dt, playerData, eventBus, this);
-                      break;
                   case 'fruit':
                       this._updateSingleFruit(instance, dt);
                       break;
