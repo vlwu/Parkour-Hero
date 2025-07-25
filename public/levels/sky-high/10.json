@@ -217,11 +217,11 @@
     },
     {
       "type": "falling_platform",
-      "x": 8.4,
-      "y": 20.83,
+      "x": 9.52,
+      "y": 20.46,
       "initialDragPos": {
-        "x": 8.46,
-        "y": 20.72
+        "x": 8.4,
+        "y": 20.83
       }
     },
     {
@@ -244,30 +244,20 @@
         "x": 19.82,
         "y": 16.18
       }
-    }
-  ],
-  "enemies": [
-    {
-      "type": "mushroom",
-      "x": 12,
-      "y": 21.67,
-      "patrolDistance": 160,
-      "startDirection": "left",
-      "initialDragPos": {
-        "x": 12,
-        "y": 21.67
-      }
     },
     {
-      "type": "slime",
-      "x": 23.5,
-      "y": 9.69,
-      "patrolDistance": 196,
-      "startDirection": "right",
+      "type": "spiked_ball",
+      "x": 12.53,
+      "y": 14.01,
+      "chainLength": 175,
+      "swingArc": 110,
+      "period": 4,
+      "tiltAmount": 1.2,
       "initialDragPos": {
-        "x": 23.5,
-        "y": 9.69
+        "x": 12.55,
+        "y": 14.1
       }
     }
-  ]
+  ],
+  "enemies": []
 }
