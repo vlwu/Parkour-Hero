@@ -22,6 +22,7 @@ import { GameFlowSystem } from '../systems/game-flow-system.js';
 import { EffectsSystem } from '../systems/effects-system.js';
 import { HealthComponent } from '../components/HealthComponent.js';
 import { PositionComponent } from '../components/PositionComponent.js';
+import { PreviousPositionComponent } from '../components/PreviousPositionComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
@@ -29,12 +30,15 @@ import { StateComponent } from '../components/StateComponent.js';
 import { EnemySystem } from '../systems/enemy-system.js';
 import { Level } from '../entities/level.js';
 
+const FIXED_DT = 1 / 60;
+
 export class Engine {
   constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
     this.ctx = ctx;
     this.canvas = canvas;
     this.assets = assets;
     this.lastFrameTime = 0;
+    this.accumulator = 0;
     this.keybinds = initialKeybinds;
     this.isRunning = false;
     this.gameHasStarted = false;
@@ -131,13 +135,23 @@ export class Engine {
   gameLoop(currentTime = performance.now()) {
     if (!this.isRunning) return;
 
-    const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.033);
+    let deltaTime = (currentTime - this.lastFrameTime) / 1000;
     this.lastFrameTime = currentTime;
 
-    const effectiveDeltaTime = deltaTime * this.timeScale;
+    if (deltaTime > 0.25) {
+        deltaTime = 0.25;
+    }
 
-    this.update(effectiveDeltaTime);
-    this.render(deltaTime);
+    this.accumulator += deltaTime;
+
+    while (this.accumulator >= FIXED_DT) {
+        const effectiveDeltaTime = FIXED_DT * this.timeScale;
+        this.update(effectiveDeltaTime);
+        this.accumulator -= FIXED_DT;
+    }
+
+    const alpha = this.accumulator / FIXED_DT;
+    this.render(deltaTime, alpha);
 
     requestAnimationFrame((time) => this.gameLoop(time));
   }
@@ -184,6 +198,19 @@ export class Engine {
 
   update(dt) {
     if (!this.currentLevel) return;
+
+    const entitiesToInterpolate = this.entityManager.query([PositionComponent]);
+    for (const entityId of entitiesToInterpolate) {
+        const pos = this.entityManager.getComponent(entityId, PositionComponent);
+        let prevPos = this.entityManager.getComponent(entityId, PreviousPositionComponent);
+        if (prevPos) {
+            prevPos.x = pos.x;
+            prevPos.y = pos.y;
+        } else {
+            this.entityManager.addComponent(entityId, new PreviousPositionComponent(pos.x, pos.y));
+        }
+    }
+
     this.camera.update(this.entityManager, this.playerEntityId, dt);
 
     const context = {
@@ -274,8 +301,13 @@ export class Engine {
     const collision = this.entityManager.getComponent(this.playerEntityId, CollisionComponent);
     const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
     const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
+    const prevPos = this.entityManager.getComponent(this.playerEntityId, PreviousPositionComponent);
 
     pos.x = respawnPosition.x; pos.y = respawnPosition.y;
+    if (prevPos) {
+        prevPos.x = respawnPosition.x;
+        prevPos.y = respawnPosition.y;
+    }
     vel.vx = 0; vel.vy = 0;
     if (health) health.currentHealth = health.maxHealth;
 
@@ -329,14 +361,14 @@ export class Engine {
       if (this.camera) this.camera.shake(intensity, duration);
   }
 
-  render(dt) {
+  render(deltaTime, alpha) {
     if (!this.currentLevel) return;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.renderer.drawScrollingBackground(this.currentLevel, dt);
-    this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager);
+    this.renderer.drawScrollingBackground(this.currentLevel, deltaTime * this.timeScale);
+    this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager, alpha);
     this.particleSystem.render(this.ctx, this.camera);
     this.effectsSystem.render(this.ctx, this.camera);
-    this.hud.drawGameHUD(this.ctx, dt);
+    this.hud.drawGameHUD(this.ctx, deltaTime);
     this.uiSystem.render(this.ctx, this.timeScale > 0);
   }
 }

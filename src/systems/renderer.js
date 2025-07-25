@@ -1,5 +1,6 @@
 import { PLAYER_CONSTANTS, GRID_CONSTANTS } from '../utils/constants.js';
 import { PositionComponent } from '../components/PositionComponent.js';
+import { PreviousPositionComponent } from '../components/PreviousPositionComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
@@ -97,7 +98,7 @@ export class Renderer {
     this.ctx.drawImage(bgCanvas, sx, sy, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
   }
 
-  renderScene(camera, level, entityManager) {
+  renderScene(camera, level, entityManager, alpha) {
     camera.apply(this.ctx);
 
     if (this.staticLayerCache) {
@@ -129,15 +130,25 @@ export class Renderer {
     const entities = entityManager.query([PositionComponent, RenderableComponent]);
     for(const entityId of entities) {
         const pos = entityManager.getComponent(entityId, PositionComponent);
+        const prevPos = entityManager.getComponent(entityId, PreviousPositionComponent);
         const renderable = entityManager.getComponent(entityId, RenderableComponent);
+        
+        let renderX = pos.x;
+        let renderY = pos.y;
+        if (prevPos) {
+            renderX = prevPos.x + (pos.x - prevPos.x) * alpha;
+            renderY = prevPos.y + (pos.y - prevPos.y) * alpha;
+        }
+        const interpolatedPos = { x: renderX, y: renderY };
+        
         const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
         
         if (isPlayer) {
             const charComp = entityManager.getComponent(entityId, CharacterComponent);
             const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-            this._drawPlayer(pos, renderable, charComp, playerCtrl);
+            this._drawPlayer(interpolatedPos, renderable, charComp, playerCtrl);
         } else if (entityManager.hasComponent(entityId, EnemyComponent)) {
-            this._drawEnemy(pos, renderable);
+            this._drawEnemy(interpolatedPos, renderable);
         }
     }
 
