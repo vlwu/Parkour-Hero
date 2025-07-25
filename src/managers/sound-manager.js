@@ -21,6 +21,22 @@ export class SoundManager {
     };
     this.loadSettings();
     this._setupEventSubscriptions();
+    this._addInteractionListenerForAudioUnlock();
+  }
+
+  _addInteractionListenerForAudioUnlock() {
+    const unlockHandler = async () => {
+        await this.unlockAudio();
+        if (this.audioUnlocked) {
+            window.removeEventListener('click', unlockHandler);
+            window.removeEventListener('keydown', unlockHandler);
+            window.removeEventListener('touchstart', unlockHandler);
+        }
+    };
+
+    window.addEventListener('click', unlockHandler);
+    window.addEventListener('keydown', unlockHandler);
+    window.addEventListener('touchstart', unlockHandler);
   }
 
   _setupEventSubscriptions() {
@@ -163,6 +179,8 @@ export class SoundManager {
         return;
       }
     }
+    
+    if (!this.audioContext) return;
     
     if (this.audioContext.state === 'suspended') {
       await this.audioContext.resume().catch(e => console.error("Failed to resume AudioContext", e));
