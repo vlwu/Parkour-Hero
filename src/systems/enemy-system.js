@@ -65,11 +65,15 @@ export class EnemySystem {
                     case 'hop': this._updateHopAI(dt, vel, enemy, renderable, state, entityManager.getComponent(id, CollisionComponent)); break;
                 }
 
-                if (enemy.type === 'slime' && enemy.ai.particleDropInterval && col.isGrounded && Math.abs(vel.vx) > 0) {
+                if (enemy.type === 'slime' && enemy.ai.particleDropInterval) {
                     enemy.particleDropTimer -= dt;
                     if (enemy.particleDropTimer <= 0) {
                         enemy.particleDropTimer = enemy.ai.particleDropInterval;
-                        eventBus.publish('createSlimeParticle', { x: pos.x + col.width / 2, y: pos.y + col.height });
+                        eventBus.publish('createParticles', {
+                            x: pos.x + col.width / 2,
+                            y: pos.y + col.height,
+                            type: 'slime_drip',
+                        });
                     }
                 }
             }

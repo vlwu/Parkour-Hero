@@ -52,7 +52,6 @@ export class Level {
     this.traps = [];
     this.trophy = null;
     this.initialEnemyConfigs = levelConfig.enemies || []; // Store for respawning
-    eventBus.subscribe('createSlimeParticle', (pos) => this.addSlimeParticle(pos));
 
     (levelConfig.objects || []).forEach(obj => {
       const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
@@ -99,15 +98,6 @@ export class Level {
     this.totalFruitCount = this.fruits.length;
     this.collectedFruitCount = 0;
     this.completed = false;
-  }
-
-  addSlimeParticle(position) {
-    const particleTrap = new Traps.SlimeParticle(position.x, position.y, {});
-    this.traps.push(particleTrap);
-    
-    const gridObject = { ...(particleTrap.hitbox), instance: particleTrap, type: 'trap' };
-    particleTrap.gridObject = gridObject;
-    this.spatialGrid.insert(gridObject);
   }
 
   _populateSpatialGrid() {

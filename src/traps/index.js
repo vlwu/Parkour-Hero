@@ -8,4 +8,3 @@ export * from './FallingPlatform.js';
 export * from './RockHead.js';
 export * from './SpikeHead.js';
 export * from './Saw.js';
-export * from './SlimeParticle.js';

@@ -26,6 +26,7 @@ export class ParticleSystem {
             jump_trail: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.3, gravity: 20 },
             fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
             enemy_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
+            slime_drip: { count: 1, baseSpeed: 10, spriteKey: 'slime_particles', life: 1.5, gravity: 50, animation: { frameCount: 4, frameSpeed: 0.2 } },
         };
 
         const config = particleConfigs[type];
@@ -64,6 +65,10 @@ export class ParticleSystem {
                 }
                 angle = baseAngle + (Math.random() - 0.5) * (Math.PI / 6);
             }
+             else if (type === 'slime_drip') {
+                angle = Math.PI / 2 + (Math.random() - 0.5) * (Math.PI / 8);
+                speed *= (Math.random() * 0.5 + 0.5);
+            }
             else {
                 angle = - (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 4);
             }
@@ -77,10 +82,21 @@ export class ParticleSystem {
             p.vy = Math.sin(angle) * speed;
             p.life = life;
             p.initialLife = life;
-            p.size = 5 + Math.random() * 4;
+            p.size = type === 'slime_drip' ? 16 : 5 + Math.random() * 4;
             p.alpha = 1.0;
             p.spriteKey = config.spriteKey;
             p.gravity = config.gravity;
+
+            if (config.animation) {
+                p.animation = {
+                    frameCount: config.animation.frameCount,
+                    frameSpeed: config.animation.frameSpeed,
+                    frameTimer: 0,
+                    currentFrame: Math.floor(Math.random() * config.animation.frameCount),
+                };
+            } else {
+                p.animation = null;
+            }
 
             this.activeParticles.push(p);
         }
@@ -100,6 +116,14 @@ export class ParticleSystem {
                 p.y += p.vy * dt;
                 p.vy += (p.gravity || 50) * dt;
                 p.alpha = Math.max(0, p.life / p.initialLife);
+
+                if (p.animation) {
+                    p.animation.frameTimer += dt;
+                    if (p.animation.frameTimer >= p.animation.frameSpeed) {
+                        p.animation.frameTimer = 0;
+                        p.animation.currentFrame = (p.animation.currentFrame + 1) % p.animation.frameCount;
+                    }
+                }
             }
         }
     }
@@ -114,7 +138,14 @@ export class ParticleSystem {
             const sprite = this.assets[p.spriteKey] || this.assets.dust_particle;
             if (!sprite || !camera.isVisible(p.x, p.y, p.size, p.size)) continue;
             ctx.globalAlpha = p.alpha;
-            ctx.drawImage(sprite, p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+
+            if (p.animation) {
+                const frameWidth = sprite.width / p.animation.frameCount;
+                const srcX = p.animation.currentFrame * frameWidth;
+                ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+            } else {
+                ctx.drawImage(sprite, p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+            }
         }
 
         camera.restore(ctx);
