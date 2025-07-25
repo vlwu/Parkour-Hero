@@ -107,7 +107,7 @@ export class CollisionSystem {
             const col = entityManager.getComponent(entityId, CollisionComponent);
             const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
 
-            if (playerCtrl && (playerCtrl.isSpawning || playerCtrl.isDespawning)) {
+            if (playerCtrl && (playerCtrl.isSpawning || playerCtrl.isDespawning || playerCtrl.needsRespawn)) {
                 continue;
             }
 
@@ -156,69 +156,43 @@ export class CollisionSystem {
     _handleHorizontalCollisions(pos, vel, col, colliders, dt, entityId, entityManager) {
         pos.x += vel.vx * dt;
         col.isAgainstWall = false;
-        const playerRect = {
-            x: pos.x,
-            y: pos.y,
-            width: col.width,
-            height: col.height
-        };
+        const bodyRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
 
         for (const collider of colliders) {
             if (collider.type === 'entity' && collider.entityId === entityId) continue;
             if (collider.isOneWay) continue;
 
-            if (this._isRectColliding(playerRect, collider)) {
-                const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
-                const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
+            if (this._isRectColliding(bodyRect, collider)) {
+                const isPlayerMoving = entityManager.hasComponent(entityId, PlayerControlledComponent);
+                const isEnemyMoving = entityManager.hasComponent(entityId, EnemyComponent);
+                const isPlayerCollider = collider.type === 'entity' && entityManager.hasComponent(collider.entityId, PlayerControlledComponent);
+                const isEnemyCollider = collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent);
 
-                if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
+                // Check for Player-Enemy collision
+                if (isPlayerMoving && isEnemyCollider) {
                     const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                     const killable = entityManager.getComponent(collider.entityId, KillableComponent);
-
                     if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                        const knockbackVx = (pos.x + col.width / 2) < (collider.x + collider.width / 2) ? -150 : 150;
-                        const knockbackVy = col.isGrounded ? 0 : -150;
-
-                        eventBus.publish('collisionEvent', {
-                            type: 'hazard',
-                            entityId: entityId,
-                            entityManager: entityManager,
-                            damage: 20,
-                            knockback: {
-                                vx: knockbackVx,
-                                vy: knockbackVy
-                            }
-                        });
+                        eventBus.publish('playerDied');
+                        return; // Stop all further processing for the player this frame
                     }
-                } else if (isEnemy && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, PlayerControlledComponent)) {
+                } else if (isEnemyMoving && isPlayerCollider) {
                     const enemy = entityManager.getComponent(entityId, EnemyComponent);
                     const killable = entityManager.getComponent(entityId, KillableComponent);
-    
                     if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                        const playerCol = entityManager.getComponent(collider.entityId, CollisionComponent);
-                        const knockbackVx = (collider.x + playerCol.width / 2) < (pos.x + col.width / 2) ? -150 : 150;
-                        const knockbackVy = playerCol.isGrounded ? 0 : -150;
-    
-                        eventBus.publish('collisionEvent', {
-                            type: 'hazard',
-                            entityId: collider.entityId,
-                            entityManager: entityManager,
-                            damage: 20,
-                            knockback: {
-                                vx: knockbackVx,
-                                vy: knockbackVy
-                            }
-                        });
+                        eventBus.publish('playerDied');
+                        // We don't return here because the enemy still needs its movement stopped by the player collision
                     }
                 }
 
-                if (vel.vx > 0) {
+                // Physics response
+                if (vel.vx > 0) { // Moving right
                     pos.x = collider.x - col.width;
-                } else if (vel.vx < 0) {
+                } else if (vel.vx < 0) { // Moving left
                     pos.x = collider.x + collider.width;
                 }
                 vel.vx = 0;
-                playerRect.x = pos.x;
+                bodyRect.x = pos.x;
                 col.isAgainstWall = !['sand', 'mud', 'ice', 'platform', 'enemy'].includes(collider.surfaceType);
             }
         }
@@ -227,27 +201,24 @@ export class CollisionSystem {
     _handleVerticalCollisions(pos, vel, col, colliders, dt, entityId, entityManager) {
         pos.y += vel.vy * dt;
         col.isGrounded = false;
-        const playerRect = {
-            x: pos.x,
-            y: pos.y,
-            width: col.width,
-            height: col.height
-        };
+        const bodyRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
 
         for (const collider of colliders) {
             if (collider.type === 'entity' && collider.entityId === entityId) continue;
-            if (!this._isRectColliding(playerRect, collider)) {
-                continue;
-            }
+            if (!this._isRectColliding(bodyRect, collider)) continue;
 
-            const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
-            const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
+            const isPlayerMoving = entityManager.hasComponent(entityId, PlayerControlledComponent);
+            const isEnemyMoving = entityManager.hasComponent(entityId, EnemyComponent);
+            const isPlayerCollider = collider.type === 'entity' && entityManager.hasComponent(collider.entityId, PlayerControlledComponent);
+            const isEnemyCollider = collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent);
 
-            if (vel.vy >= 0) {
-                const prevPlayerBottom = (pos.y - vel.vy * dt) + col.height;
-                const landingTolerance = 2;
-                if (prevPlayerBottom <= collider.y + landingTolerance) {
-                    if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
+            if (vel.vy >= 0) { // Moving Down or Still
+                const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
+                const landingTolerance = 2; // Allow landing even if slightly penetrated
+                if (prevBodyBottom <= collider.y + landingTolerance) {
+                    // Potential landing event
+                    if (isPlayerMoving && isEnemyCollider) {
+                        // Player is landing on an enemy
                         const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                         const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                         if (!enemy.isDead && killable && killable.stompable) {
@@ -257,78 +228,52 @@ export class CollisionSystem {
                             });
                             pos.y = collider.y - col.height;
                             vel.vy = 0;
-                            return;
+                            return; // Stomp successful, end vertical collision check for player
                         } else if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                            eventBus.publish('collisionEvent', {
-                                type: 'hazard',
-                                entityId: entityId,
-                                entityManager: entityManager,
-                                damage: 20,
-                                knockback: {
-                                    vx: vel.vx > 0 ? 50 : -50,
-                                    vy: -150
-                                }
-                            });
+                            eventBus.publish('playerDied');
+                            return; // Fatal collision
                         }
-                    } else if (isEnemy && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, PlayerControlledComponent)) {
+                    } else if (isEnemyMoving && isPlayerCollider) {
+                        // Enemy is landing on a player
                         const enemy = entityManager.getComponent(entityId, EnemyComponent);
                         const killable = entityManager.getComponent(entityId, KillableComponent);
                         if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                            eventBus.publish('collisionEvent', {
-                                type: 'hazard',
-                                entityId: collider.entityId,
-                                entityManager: entityManager,
-                                damage: 20,
-                                knockback: {
-                                    vx: vel.vx > 0 ? 50 : -50,
-                                    vy: -150
-                                }
-                            });
+                            eventBus.publish('playerDied');
+                            // No return, enemy needs to land on the player
                         }
                     }
-
+                    
+                    // If it wasn't a fatal or stomping player-enemy interaction, treat it as landing on a surface
                     this._landOnSurface(pos, vel, col, collider.y, collider.surfaceType, entityId);
-                    playerRect.y = pos.y;
+                    bodyRect.y = pos.y;
                     if (collider.onLanded) {
                         collider.onLanded(eventBus);
                     }
                 }
-            } else if (vel.vy < 0) {
+            } else if (vel.vy < 0) { // Moving Up
                 if (!collider.isOneWay) {
-                    if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
+                    if (isPlayerMoving && isEnemyCollider) {
+                        // Player jumps up into an enemy
                         const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                         const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                         if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                            eventBus.publish('collisionEvent', {
-                                type: 'hazard',
-                                entityId: entityId,
-                                entityManager: entityManager,
-                                damage: 20,
-                                knockback: {
-                                    vx: vel.vx > 0 ? 50 : -50,
-                                    vy: 150
-                                }
-                            });
+                            eventBus.publish('playerDied');
+                            return; // Fatal collision
                         }
-                    } else if (isEnemy && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, PlayerControlledComponent)) {
+                    } else if (isEnemyMoving && isPlayerCollider) {
+                        // Enemy jumps up into a player
                         const enemy = entityManager.getComponent(entityId, EnemyComponent);
                         const killable = entityManager.getComponent(entityId, KillableComponent);
                         if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                            eventBus.publish('collisionEvent', {
-                                type: 'hazard',
-                                entityId: collider.entityId,
-                                entityManager: entityManager,
-                                damage: 20,
-                                knockback: {
-                                    vx: vel.vx > 0 ? 50 : -50,
-                                    vy: 150
-                                }
-                            });
+                            eventBus.publish('playerDied');
+                            // No return, enemy physics needs to resolve
                         }
                     }
+                    
+                    // Physics response for hitting something from below
                     pos.y = collider.y + collider.height;
                     vel.vy = 0;
-                    playerRect.y = pos.y;
+                    bodyRect.y = pos.y;
                 }
             }
         }
