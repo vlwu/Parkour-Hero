@@ -11,6 +11,22 @@ function getLinearIndex(sectionIndex, levelIndex, levelSections) {
     return linearIndex;
 }
 
+function getSectionAndLevelFromLinearIndex(linearIndex, levelSections) {
+    let levelCount = 0;
+    for (let i = 0; i < levelSections.length; i++) {
+        const sectionLevelCount = levelSections[i].levels.length;
+        if (linearIndex < levelCount + sectionLevelCount) {
+            return { sectionIndex: i, levelIndex: linearIndex - levelCount };
+        }
+        levelCount += sectionLevelCount;
+    }
+    // Fallback if index is out of bounds (e.g., all levels completed)
+    const lastSectionIndex = levelSections.length - 1;
+    if (lastSectionIndex < 0) return { sectionIndex: 0, levelIndex: 0 };
+    const lastLevelIndex = levelSections[lastSectionIndex].levels.length - 1;
+    return { sectionIndex: lastSectionIndex, levelIndex: lastLevelIndex >= 0 ? lastLevelIndex : 0 };
+}
+
 export class GameState {
   constructor(initialState = null) {
       if (initialState) {
@@ -21,14 +37,18 @@ export class GameState {
           this.selectedCharacter = initialState.selectedCharacter;
           this.levelStats = initialState.levelStats;
       } else {
-          this.currentSection = 0;
-          this.currentLevelIndex = 0;
           this.showingLevelComplete = false;
           const savedState = this.loadProgress();
           this.levelProgress = savedState.levelProgress;
           this.selectedCharacter = savedState.selectedCharacter;
           this.levelStats = savedState.levelStats;
           this.ensureStatsForAllLevels();
+
+          // Determine the level to start/continue on.
+          const lastUnlockedLinearIndex = this.levelProgress.unlockedLevels[0] - 1;
+          const { sectionIndex, levelIndex } = getSectionAndLevelFromLinearIndex(lastUnlockedLinearIndex, levelSections);
+          this.currentSection = sectionIndex;
+          this.currentLevelIndex = levelIndex;
       }
   }
 

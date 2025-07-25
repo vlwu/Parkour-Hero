@@ -241,8 +241,11 @@ export class ParkourHeroUI extends LitElement {
   }
 
   renderMainMenuContent() {
+    const hasProgress = this.gameState && (this.gameState.levelProgress.completedLevels.length > 0 || this.gameState.levelProgress.unlockedLevels[0] > 1);
+    const startButtonText = hasProgress ? 'Continue' : 'Start Game';
+
     const buttonTexts = [
-      { text: 'Start Game', action: () => eventBus.publish('requestStartGame') },
+      { text: startButtonText, action: () => eventBus.publish('requestStartGame') },
       { text: 'Levels', action: () => this._openModalFromMenu('levels') },
       { text: 'Character', action: () => this._openModalFromMenu('character') },
       { text: 'Settings', action: () => this._openModalFromMenu('settings') },
