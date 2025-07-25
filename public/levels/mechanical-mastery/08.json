@@ -198,6 +198,18 @@
         "x": 12.19,
         "y": 6.68
       }
+    },
+    {
+      "type": "fan",
+      "x": 18.08,
+      "y": 6.5,
+      "direction": "right",
+      "pushStrength": 375,
+      "windHeight": 200,
+      "initialDragPos": {
+        "x": 18.08,
+        "y": 6.5
+      }
     }
   ],
   "enemies": [
