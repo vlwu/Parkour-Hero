@@ -212,7 +212,7 @@ export class ObjectManager {
                 if (distSq < bestCandidate.distSq) { bestCandidate = { distSq, x: snapX, y: snapY, dir: check.dir }; }
             }
         }
-        if (bestCandidate.distSq < 4) { fan.x = bestCandidate.x; fan.y = bestCandidate.y; fan.direction = check.dir; }
+        if (bestCandidate.distSq < 4) { fan.x = bestCandidate.x; fan.y = bestCandidate.y; fan.direction = bestCandidate.dir; }
     }
 
     _snapToGround(obj) {
