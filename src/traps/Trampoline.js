@@ -60,8 +60,6 @@ export class Trampoline extends Trap {
 
         vel.vy = -PLAYER_CONSTANTS.JUMP_FORCE * PLAYER_CONSTANTS.TRAMPOLINE_BOUNCE_MULTIPLIER;
         
-        // Use `col.height` (from the CollisionComponent) instead of the non-existent `pos.height`.
-        // This prevents the player's Y-position from becoming NaN.
         pos.y = (this.y - this.height / 2) - col.height;
 
         this.state = 'jumping';
