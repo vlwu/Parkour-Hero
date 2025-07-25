@@ -54,11 +54,6 @@ export class PropertiesPanel {
             propertiesHTML += this._createNumberInput('chainLength', 'Chain Length (units)', obj.chainLength || 1, 1);
         }
         
-        // Enemy Properties
-        if (obj.type === 'mushroom' || obj.type === 'slime') {
-             propertiesHTML += this._createNumberInput('patrolDistance', 'Patrol Distance (pixels)', obj.patrolDistance || 144, 1, true); // Added 'true' for disabled
-        }
-        
         DOM.propertiesPanel.innerHTML = propertiesHTML;
         this._attachEventListeners(obj);
     }
@@ -94,7 +89,6 @@ export class PropertiesPanel {
         if (obj.type === 'fan') { attach('pushStrength'); attach('windHeight'); }
         if (obj.type === 'saw') { attach('direction', 'select'); attach('distance'); attach('speed'); }
         if (obj.type === 'fire_trap') { attach('chainLength'); }
-        if (obj.type === 'mushroom' || obj.type === 'slime') { attach('patrolDistance'); }
     }
 
     _handleInput(id, prop, element) {

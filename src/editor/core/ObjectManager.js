@@ -63,9 +63,6 @@ export class ObjectManager {
             width, height
         };
         
-        if (ENEMY_DEFINITIONS[type]?.ai.type === 'patrol') {
-             newObject.patrolDistance = 0;
-        }
         if (type === 'spiked_ball') {
             newObject.chainLength = 100; newObject.swingArc = 90; newObject.period = 4; newObject.tiltAmount = 0.5;
         }
@@ -283,14 +280,15 @@ export class ObjectManager {
     }
 
     _updateGroundedEnemyBehavior(enemyObj) {
+        // Only snap specific enemy types to the center of their platform for convenience.
+        const fullSnapTypes = ['mushroom', 'slime'];
+        if (!fullSnapTypes.includes(enemyObj.type)) return;
+
         const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
         const platformGridY = Math.floor(enemyObj.y + (enemyObj.height / 2 / TILE_SIZE));
         const startGridX = Math.floor(enemyObj.x);
 
-        if (!this.grid.isTileSolid(startGridX, platformGridY)) {
-            if (enemyObj.hasOwnProperty('patrolDistance')) enemyObj.patrolDistance = 0;
-            return;
-        }
+        if (!this.grid.isTileSolid(startGridX, platformGridY)) return;
 
         let leftBound = startGridX;
         while (leftBound > 0 && this.grid.isTileSolid(leftBound - 1, platformGridY)) { leftBound--; }
@@ -299,19 +297,9 @@ export class ObjectManager {
         while (rightBound < this.grid.width - 1 && this.grid.isTileSolid(rightBound + 1, platformGridY)) { rightBound++; }
         
         const platformWidthInPixels = (rightBound - leftBound + 1) * TILE_SIZE;
+        const platformCenterPixels = (leftBound * TILE_SIZE) + (platformWidthInPixels / 2);
         
-        if (enemyObj.hasOwnProperty('patrolDistance')) {
-            enemyObj.patrolDistance = Math.max(0, platformWidthInPixels - enemyObj.width);
-        }
-
-        const fullSnapTypes = ['mushroom', 'slime'];
-        if (fullSnapTypes.includes(enemyObj.type)) {
-            const platformCenterPixels = (leftBound * TILE_SIZE) + (platformWidthInPixels / 2);
-            
-            enemyObj.x = platformCenterPixels / TILE_SIZE;
-
-            enemyObj.startDirection = Math.random() < 0.5 ? 'left' : 'right';
-        }
+        enemyObj.x = platformCenterPixels / TILE_SIZE;
     }
 
     _getObjectDimensions(type) {
