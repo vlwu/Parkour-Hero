@@ -33,8 +33,9 @@ import { Level } from '../entities/level.js';
 const FIXED_DT = 1 / 60;
 
 export class Engine {
-  constructor(ctx, canvas, assets, initialKeybinds, fontRenderer) {
+  constructor(ctx, gl, canvas, assets, initialKeybinds, fontRenderer) {
     this.ctx = ctx;
+    this.gl = gl; // Store the WebGL context
     this.canvas = canvas;
     this.assets = assets;
     this.lastFrameTime = 0;

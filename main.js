@@ -6,12 +6,14 @@ import './src/ui/ui-main.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const gl = canvas.getContext('webgl2', { alpha: false }); // Request WebGL2 context
+
 const uiRoot = document.getElementById('ui-root');
 
-if (!canvas || !ctx) {
-  console.error('Canvas not found or context not available');
-  document.body.innerHTML = '<h1>Error: Canvas not supported</h1>';
-  throw new Error('Canvas not available');
+if (!canvas || !ctx || !gl) { // Check for WebGL2 context as well
+  console.error('Canvas not found or a required context (2d, webgl2) is not available');
+  document.body.innerHTML = '<h1>Error: Canvas or WebGL2 not supported</h1>';
+  throw new Error('Canvas or WebGL2 not available');
 }
 
 ctx.imageSmoothingEnabled = false;
@@ -107,7 +109,8 @@ loadAssets().then((assets) => {
 
   try {
     const fontRenderer = new FontRenderer(assets.font_spritesheet);
-    engine = new Engine(ctx, canvas, assets, keybinds, fontRenderer);
+    // Pass the new gl context to the engine
+    engine = new Engine(ctx, gl, canvas, assets, keybinds, fontRenderer);
 
     eventBus.publish('assetsLoaded', assets);
 
