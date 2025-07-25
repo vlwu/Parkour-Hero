@@ -270,6 +270,15 @@ export class EnemySystem {
         vel.vy += 200 * dt;
         enemy.deathTimer -= dt;
         if (enemy.deathTimer <= 0) {
+            const pos = entityManager.getComponent(entityId, PositionComponent);
+            const col = entityManager.getComponent(entityId, CollisionComponent);
+            if (pos && col) {
+                eventBus.publish('createParticles', {
+                    x: pos.x + col.width / 2,
+                    y: pos.y + col.height / 2,
+                    type: 'enemy_death'
+                });
+            }
             entityManager.destroyEntity(entityId);
             return true;
         }

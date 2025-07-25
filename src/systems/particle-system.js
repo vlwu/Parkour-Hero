@@ -25,6 +25,7 @@ export class ParticleSystem {
             walk_dust: { count: 1, baseSpeed: 15, spriteKey: 'dust_particle', life: 0.4, gravity: 80 },
             jump_trail: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.3, gravity: 20 },
             fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
+            enemy_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
         };
 
         const config = particleConfigs[type];
@@ -44,7 +45,9 @@ export class ParticleSystem {
             let speed = currentBaseSpeed * (0.8 + Math.random() * 0.4);
 
 
-            if (type === 'dash') {
+            if (type === 'enemy_death') {
+                angle = Math.random() * Math.PI * 2;
+            } else if (type === 'dash') {
                 angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
             } else if (type === 'double_jump') {
                 angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
