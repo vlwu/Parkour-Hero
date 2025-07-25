@@ -133,7 +133,7 @@ export class ObjectManager {
     }
 
     render() {
-        DOM.gridContainer.querySelectorAll('.dynamic-object, .chain-link-visual').forEach(el => el.remove());
+        DOM.gridContainer.querySelectorAll('.dynamic-object, .chain-link-visual, .trap-path-visual').forEach(el => el.remove());
         this.objects.forEach(obj => {
             const el = document.createElement('div');
             el.className = 'dynamic-object';
@@ -184,6 +184,58 @@ export class ObjectManager {
                     visualEl.style.border = '1px dashed rgba(255, 255, 255, 0.4)';
                     DOM.gridContainer.appendChild(visualEl);
                 }
+            }
+            
+            if (obj.type === 'saw') {
+                const line = document.createElement('div');
+                line.className = 'trap-path-visual';
+                line.style.position = 'absolute';
+                line.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                line.style.pointerEvents = 'none';
+                line.style.zIndex = '-1';
+        
+                const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+                const distance = obj.distance || 150;
+        
+                if (obj.direction === 'horizontal') {
+                    line.style.left = `${obj.x * TILE_SIZE - distance / 2}px`;
+                    line.style.top = `${obj.y * TILE_SIZE - 1}px`;
+                    line.style.width = `${distance}px`;
+                    line.style.height = `2px`;
+                } else { // vertical
+                    line.style.left = `${obj.x * TILE_SIZE - 1}px`;
+                    line.style.top = `${obj.y * TILE_SIZE - distance / 2}px`;
+                    line.style.width = `2px`;
+                    line.style.height = `${distance}px`;
+                }
+                DOM.gridContainer.appendChild(line);
+            }
+
+            if (obj.type === 'spiked_ball') {
+                const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+                const chainLength = obj.chainLength || 100;
+                const swingArc = obj.swingArc || 90;
+                const maxAngleRad = (swingArc / 2) * (Math.PI / 180);
+
+                const createLine = (angleRad, color, width) => {
+                    const line = document.createElement('div');
+                    line.className = 'trap-path-visual';
+                    line.style.position = 'absolute';
+                    line.style.backgroundColor = color;
+                    line.style.width = `${width}px`;
+                    line.style.height = `${chainLength}px`;
+                    line.style.left = `${obj.x * TILE_SIZE}px`;
+                    line.style.top = `${obj.y * TILE_SIZE}px`;
+                    line.style.transformOrigin = 'top center';
+                    line.style.transform = `rotate(${angleRad}rad)`;
+                    line.style.pointerEvents = 'none';
+                    line.style.zIndex = '-1';
+                    return line;
+                };
+
+                DOM.gridContainer.appendChild(createLine(0, 'rgba(0,0,0,0.7)', 2));
+                DOM.gridContainer.appendChild(createLine(-maxAngleRad, 'rgba(255,0,0,0.4)', 1));
+                DOM.gridContainer.appendChild(createLine(maxAngleRad, 'rgba(255,0,0,0.4)', 1));
             }
         });
     }
