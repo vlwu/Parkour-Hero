@@ -158,8 +158,6 @@ export class PlayerStateSystem {
         const pos = entityManager.getComponent(entityId, PositionComponent);
 
         if (ctrl.isSpawning || ctrl.isDashing || ctrl.isDespawning || ctrl.isHit) {
-            ctrl.jumpPressed = input.jump;
-            ctrl.dashPressed = input.dash;
             return;
         }
 
@@ -169,7 +167,7 @@ export class PlayerStateSystem {
         if (!ctrl.vLock) {
             if (input.jump) ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
 
-            const justPressedJump = input.jump && !ctrl.jumpPressed;
+            const justPressedJump = input.jumpPressedThisFrame;
 
             if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0) && ctrl.jumpCount === 0) {
                 vel.vy = -ctrl.jumpForce * (col.groundType === 'mud' ? PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER : 1);
@@ -195,7 +193,7 @@ export class PlayerStateSystem {
         }
         ctrl.vLock = false;
         
-        if (input.dash && !ctrl.dashPressed && ctrl.dashCooldownTimer <= 0) {
+        if (input.dashPressedThisFrame && ctrl.dashCooldownTimer <= 0) {
             ctrl.isDashing = true;
             ctrl.dashTimer = ctrl.dashDuration;
             vel.vx = renderable.direction === 'right' ? ctrl.dashSpeed : -ctrl.dashSpeed;
@@ -205,9 +203,6 @@ export class PlayerStateSystem {
             eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: 'dash', direction: renderable.direction });
             this._transitionTo(entityId, new DashState(entityId, entityManager), entityManager);
         }
-
-        ctrl.jumpPressed = input.jump;
-        ctrl.dashPressed = input.dash;
     }
 
     _handleJumpTrail(dt, entityId, entityManager) {

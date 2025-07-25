@@ -6,6 +6,7 @@ export class InputSystem {
   constructor(entityManager) {
     this.entityManager = entityManager;
     this.keys = new Set();
+    this.queue = []; // Event queue for the current frame
     this.initEventListeners();
   }
 
@@ -17,8 +18,11 @@ export class InputSystem {
 
   handleKeyDown(e) {
     const key = e.key.toLowerCase();
+    
+    if (!this.keys.has(key)) {
+        this.queue.push({ key, type: 'down' });
+    }
     this.keys.add(key);
-
 
     const menuActionMap = {
         'enter': 'confirm',
@@ -27,7 +31,6 @@ export class InputSystem {
         'p': 'previous',
         'escape': 'escape_pressed'
     };
-
 
     if (key === ' ') {
         eventBus.publish('action_confirm_pressed');
@@ -42,6 +45,7 @@ export class InputSystem {
   handleKeyUp(e) {
     const key = e.key.toLowerCase();
     this.keys.delete(key);
+    this.queue.push({ key, type: 'up' });
   }
 
   update(dt, { keybinds, isRunning, gameState }) {
@@ -51,10 +55,35 @@ export class InputSystem {
     for (const entityId of entities) {
         const inputComp = this.entityManager.getComponent(entityId, InputComponent);
 
+        // Update held states
         inputComp.moveLeft = canProcessGameplayInput && this.keys.has(keybinds.moveLeft);
         inputComp.moveRight = canProcessGameplayInput && this.keys.has(keybinds.moveRight);
         inputComp.jump = canProcessGameplayInput && this.keys.has(keybinds.jump);
         inputComp.dash = canProcessGameplayInput && this.keys.has(keybinds.dash);
+
+        // Reset "just pressed" states for the new frame
+        inputComp.jumpPressedThisFrame = false;
+        inputComp.dashPressedThisFrame = false;
     }
+
+    // Process the event queue to set "just pressed" states
+    if (canProcessGameplayInput) {
+        for (const event of this.queue) {
+            if (event.type === 'down') {
+                for (const entityId of entities) {
+                    const inputComp = this.entityManager.getComponent(entityId, InputComponent);
+                    if (event.key === keybinds.jump) {
+                        inputComp.jumpPressedThisFrame = true;
+                    }
+                    if (event.key === keybinds.dash) {
+                        inputComp.dashPressedThisFrame = true;
+                    }
+                }
+            }
+        }
+    }
+
+    // Clear the queue for the next frame
+    this.queue = [];
   }
 }

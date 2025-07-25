@@ -5,9 +5,14 @@ export class InputComponent {
      * to operate on any entity with this component.
      */
     constructor() {
+        // Held states
         this.moveLeft = false;
         this.moveRight = false;
         this.jump = false;
         this.dash = false;
+
+        // "Just pressed" states for the current frame
+        this.jumpPressedThisFrame = false;
+        this.dashPressedThisFrame = false;
     }
 }

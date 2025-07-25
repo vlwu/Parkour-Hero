@@ -23,8 +23,6 @@ export class PlayerControlledComponent {
         activeSurfaceSound = null,
         surfaceParticleTimer = 0,
         jumpParticleTimer = 0,
-        jumpPressed = false, 
-        dashPressed = false,
         hLock = false,
         vLock = false
     } = {}) {
@@ -53,10 +51,6 @@ export class PlayerControlledComponent {
         this.needsRespawn = needsRespawn;
         this.hLock = hLock;
         this.vLock = vLock;
-        
-        // Input "edge-case" tracking
-        this.jumpPressed = jumpPressed;
-        this.dashPressed = dashPressed;
         
         // Stats & Sounds
         this.deathCount = deathCount;
