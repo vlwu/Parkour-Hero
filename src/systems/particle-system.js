@@ -16,7 +16,7 @@ export class ParticleSystem {
 
     reset() {
         for (let i = this.activeParticles.length - 1; i >= 0; i--) {
-            const recycledParticle = this.activeParticles.splice(i, 1);
+            const recycledParticle = this.activeParticles.pop();
             this.inactivePool.push(recycledParticle);
         }
     }
@@ -40,8 +40,6 @@ export class ParticleSystem {
 
         for (let i = 0; i < config.count; i++) {
             if (this.inactivePool.length === 0) {
-                // Fallback: if the pool is empty, create a new particle.
-                // This prevents crashes but indicates the pool might need to be larger.
                 this.inactivePool.push({});
             }
 
@@ -77,7 +75,6 @@ export class ParticleSystem {
 
             const life = config.life + Math.random() * 0.3;
 
-            // Reset the particle's properties instead of creating a new object
             p.x = x;
             p.y = y;
             p.vx = Math.cos(angle) * speed;
@@ -110,9 +107,13 @@ export class ParticleSystem {
             p.life -= dt;
 
             if (p.life <= 0) {
-                // Move the dead particle from the active list to the inactive pool
-                const recycledParticle = this.activeParticles.splice(i, 1);
-                this.inactivePool.push(recycledParticle);
+                // Optimized removal: swap with the last element and pop.
+                // This is much faster than splice() as it avoids re-indexing the array.
+                const last = this.activeParticles.pop();
+                if (i < this.activeParticles.length) {
+                    this.activeParticles[i] = last;
+                }
+                this.inactivePool.push(p); // Recycle the dead particle (p).
             } else {
                 p.x += p.vx * dt;
                 p.y += p.vy * dt;
