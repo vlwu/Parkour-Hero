@@ -42,6 +42,9 @@ export class Camera {
     this.targetX = 0;
     this.targetY = 0;
     
+    // Pre-allocate the projection matrix
+    this.projectionMatrix = new Float32Array(16);
+
     console.log('Camera initialized:', {
       viewport: `${this.viewportWidth}x${this.viewportHeight}`,
       zoom: this.zoom,
@@ -78,14 +81,12 @@ export class Camera {
     this.targetX = this.x + moveX;
     this.targetY = this.y + moveY;
     
-    // This logic correctly handles deltaTime = 0, so no change is needed here.
     this.x += (this.targetX - this.x) * this.followSpeed * deltaTime;
     this.y += (this.targetY - this.y) * this.followSpeed * deltaTime;
     
     this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
     this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
     
-    // If time is paused (deltaTime is 0), reset the visual shake offsets.
     if (deltaTime > 0) {
         this.updateShake(deltaTime);
     } else {
@@ -166,6 +167,45 @@ export class Camera {
     this.maxY = Math.max(0, this.levelHeight - this.height);
     this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
     this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
+  }
+
+  getProjectionMatrix() {
+    // Calculate the camera's view boundaries including shake and zoom
+    const left = (this.x + this.shakeX);
+    const right = (this.x + this.shakeX) + this.width;
+    const top = (this.y + this.shakeY);
+    const bottom = (this.y + this.shakeY) + this.height;
+
+    // Orthographic projection matrix components
+    const lr = 1 / (left - right);
+    const bt = 1 / (bottom - top);
+    const nf = 1 / (-1 - 1); // near = -1, far = 1
+
+    // First column
+    this.projectionMatrix[0] = -2 * lr;
+    this.projectionMatrix[1] = 0;
+    this.projectionMatrix[2] = 0;
+    this.projectionMatrix[3] = 0;
+
+    // Second column
+    this.projectionMatrix[4] = 0;
+    this.projectionMatrix[5] = -2 * bt;
+    this.projectionMatrix[6] = 0;
+    this.projectionMatrix[7] = 0;
+
+    // Third column
+    this.projectionMatrix[8] = 0;
+    this.projectionMatrix[9] = 0;
+    this.projectionMatrix[10] = 2 * nf;
+    this.projectionMatrix[11] = 0;
+
+    // Fourth column
+    this.projectionMatrix[12] = (left + right) * lr;
+    this.projectionMatrix[13] = (top + bottom) * bt;
+    this.projectionMatrix[14] = (1 + -1) * nf;
+    this.projectionMatrix[15] = 1;
+
+    return this.projectionMatrix;
   }
 
   isVisible(worldX, worldY, width = 0, height = 0) { return (worldX + width > this.x && worldX < this.x + this.width && worldY + height > this.y && worldY < this.y + this.height); }

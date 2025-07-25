@@ -6,7 +6,7 @@ import { CollisionSystem } from '../systems/collision-system.js';
 import { Renderer } from '../systems/renderer.js';
 import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
-import { ParticleSystem } from '../systems/particle-system.js';
+import { ParticleSystemWebGL } from '../systems/particle-system-webgl.js'; // Import the new system
 import { UISystem } from '../ui/ui-system.js';
 import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
@@ -35,7 +35,7 @@ const FIXED_DT = 1 / 60;
 export class Engine {
   constructor(ctx, gl, canvas, assets, initialKeybinds, fontRenderer) {
     this.ctx = ctx;
-    this.gl = gl; // Store the WebGL context
+    this.gl = gl; 
     this.canvas = canvas;
     this.assets = assets;
     this.lastFrameTime = 0;
@@ -67,7 +67,7 @@ export class Engine {
     this.movementSystem = new MovementSystem();
     this.collisionSystem = new CollisionSystem();
     this.gameplaySystem = new GameplaySystem();
-    this.particleSystem = new ParticleSystem(assets);
+    this.particleSystem = new ParticleSystemWebGL(gl, assets); // Instantiate the new system
     this.effectsSystem = new EffectsSystem(assets);
     this.gameFlowSystem = new GameFlowSystem();
     this.uiSystem = new UISystem(canvas, assets);
@@ -364,10 +364,24 @@ export class Engine {
 
   render(deltaTime, alpha) {
     if (!this.currentLevel) return;
+
+    // The 2D context should not clear the entire canvas anymore,
+    // but it needs to clear its previous frame's drawings.
+    // For simplicity, we can still clear, as the background will be redrawn.
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Clear the WebGL canvas to transparent
+    this.gl.clearColor(0, 0, 0, 0);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+    // Render 2D elements
     this.renderer.drawScrollingBackground(this.currentLevel, deltaTime * this.timeScale);
     this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager, alpha);
-    this.particleSystem.render(this.ctx, this.camera);
+    
+    // Render WebGL particles on top of the 2D scene
+    this.particleSystem.render(this.camera);
+    
+    // Render 2D effects on top of everything
     this.effectsSystem.render(this.ctx, this.camera);
     this.hud.drawGameHUD(this.ctx, deltaTime);
     this.uiSystem.render(this.ctx, this.timeScale > 0);

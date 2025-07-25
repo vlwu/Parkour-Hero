@@ -4,11 +4,17 @@ body {
   overflow: hidden;
 }
 
-#gameCanvas {
+#gameCanvas, #particleCanvas { /* Apply styles to both canvases */
   display: block;
   margin: auto;
-  background-color: #222;
-  border-radius: 8px; /* Rounded corners for canvas */
+  background-color: transparent; /* Make background transparent */
+  border-radius: 8px; 
+}
+
+#particleCanvas {
+    position: absolute; /* Allows layering */
+    pointer-events: none; /* Makes the top canvas ignore mouse events */
+    z-index: 100; /* Ensure it's above the game canvas but below UI */
 }
 
 /* Modal Overlay */

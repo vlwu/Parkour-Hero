@@ -4,14 +4,15 @@ import { eventBus } from './src/utils/event-bus.js';
 import { FontRenderer } from './src/ui/font-renderer.js';
 import './src/ui/ui-main.js';
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const gl = canvas.getContext('webgl2', { alpha: false }); // Request WebGL2 context
+const gameCanvas = document.getElementById('gameCanvas');
+const particleCanvas = document.getElementById('particleCanvas');
+const ctx = gameCanvas.getContext('2d');
+const gl = particleCanvas.getContext('webgl2', { alpha: true });
 
 const uiRoot = document.getElementById('ui-root');
 
-if (!canvas || !ctx || !gl) { // Check for WebGL2 context as well
-  console.error('Canvas not found or a required context (2d, webgl2) is not available');
+if (!gameCanvas || !particleCanvas || !ctx || !gl) {
+  console.error('A required canvas or context is not available');
   document.body.innerHTML = '<h1>Error: Canvas or WebGL2 not supported</h1>';
   throw new Error('Canvas or WebGL2 not available');
 }
@@ -21,10 +22,12 @@ ctx.imageSmoothingEnabled = false;
 const BASE_WIDTH = 1920;
 const BASE_HEIGHT = 1080;
 
-canvas.width = BASE_WIDTH;
-canvas.height = BASE_HEIGHT;
+gameCanvas.width = BASE_WIDTH;
+gameCanvas.height = BASE_HEIGHT;
+particleCanvas.width = BASE_WIDTH;
+particleCanvas.height = BASE_HEIGHT;
 
-console.log(`Canvas initialized: ${BASE_WIDTH}x${BASE_HEIGHT}`);
+console.log(`Canvases initialized: ${BASE_WIDTH}x${BASE_HEIGHT}`);
 
 function resizeCanvas() {
   try {
@@ -46,23 +49,22 @@ function resizeCanvas() {
     const left = `${(window.innerWidth - finalWidth) / 2}px`;
     const top = `${(window.innerHeight - finalHeight) / 2}px`;
 
-    canvas.style.width = `${finalWidth}px`;
-    canvas.style.height = `${finalHeight}px`;
-    canvas.style.position = 'absolute';
-    canvas.style.left = left;
-    canvas.style.top = top;
+    const elementsToResize = [gameCanvas, particleCanvas, uiRoot];
+    elementsToResize.forEach(el => {
+        if (el) {
+            el.style.width = `${finalWidth}px`;
+            el.style.height = `${finalHeight}px`;
+            el.style.position = 'absolute';
+            el.style.left = left;
+            el.style.top = top;
+        }
+    });
 
     if (uiRoot) {
-        uiRoot.style.width = `${finalWidth}px`;
-        uiRoot.style.height = `${finalHeight}px`;
-        uiRoot.style.position = 'absolute';
-        uiRoot.style.left = left;
-        uiRoot.style.top = top;
         uiRoot.style.overflow = 'hidden';
     }
 
-
-    console.log(`Canvas resized to: ${finalWidth}x${finalHeight} (display size)`);
+    console.log(`Canvases resized to: ${finalWidth}x${finalHeight} (display size)`);
   } catch (error) {
     console.error('Error resizing canvas:', error);
   }
@@ -73,17 +75,17 @@ resizeCanvas();
 
 function showLoadingIndicator() {
   ctx.fillStyle = '#222';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
 
   ctx.fillStyle = 'white';
   ctx.font = '24px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('Loading Assets...', canvas.width / 2, canvas.height / 2);
+  ctx.fillText('Loading Assets...', gameCanvas.width / 2, gameCanvas.height / 2);
 
   const barWidth = 300;
   const barHeight = 20;
-  const barX = (canvas.width - barWidth) / 2;
-  const barY = canvas.height / 2 + 30;
+  const barX = (gameCanvas.width - barWidth) / 2;
+  const barY = gameCanvas.height / 2 + 30;
 
   ctx.strokeStyle = 'white';
   ctx.lineWidth = 2;
@@ -109,15 +111,13 @@ loadAssets().then((assets) => {
 
   try {
     const fontRenderer = new FontRenderer(assets.font_spritesheet);
-    // Pass the new gl context to the engine
-    engine = new Engine(ctx, gl, canvas, assets, keybinds, fontRenderer);
+    engine = new Engine(ctx, gl, gameCanvas, assets, keybinds, fontRenderer);
 
     eventBus.publish('assetsLoaded', assets);
 
-
-    const uiRoot = document.querySelector('parkour-hero-ui');
-    if (uiRoot) {
-        uiRoot.fontRenderer = fontRenderer;
+    const uiRootEl = document.querySelector('parkour-hero-ui');
+    if (uiRootEl) {
+        uiRootEl.fontRenderer = fontRenderer;
     }
 
     eventBus.subscribe('requestStartGame', () => {
@@ -147,28 +147,28 @@ loadAssets().then((assets) => {
     console.error('Failed to start game engine:', error);
 
     ctx.fillStyle = '#222';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
     ctx.fillStyle = 'red';
     ctx.font = '24px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Game Failed to Start', canvas.width / 2, canvas.height / 2 - 20);
+    ctx.fillText('Game Failed to Start', gameCanvas.width / 2, gameCanvas.height / 2 - 20);
     ctx.fillStyle = 'white';
     ctx.font = '16px sans-serif';
-    ctx.fillText('Check console for details', canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText('Check console for details', gameCanvas.width / 2, gameCanvas.height / 2 + 20);
   }
 
 }).catch((error) => {
   console.error("Asset loading failed:", error);
 
   ctx.fillStyle = '#222';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
   ctx.fillStyle = 'red';
   ctx.font = '24px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('Failed to Load Assets', canvas.width / 2, canvas.height / 2 - 20);
+  ctx.fillText('Failed to Load Assets', gameCanvas.width / 2, gameCanvas.height / 2 - 20);
   ctx.fillStyle = 'white';
   ctx.font = '16px sans-serif';
-  ctx.fillText('Check console for details', canvas.width / 2, canvas.height / 2 + 20);
+  ctx.fillText('Check console for details', gameCanvas.width / 2, gameCanvas.height / 2 + 20);
 });
 
 window.addEventListener('error', (event) => {
@@ -180,6 +180,6 @@ window.addEventListener('unhandledrejection', (event) => {
 });
 
 console.log('Game initialization started');
-console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+console.log('Canvas dimensions:', gameCanvas.width, 'x', gameCanvas.height);
 console.log('Device pixel ratio:', window.devicePixelRatio);
 console.log('User agent:', navigator.userAgent);
