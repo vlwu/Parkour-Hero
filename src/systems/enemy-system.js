@@ -69,7 +69,7 @@ export class EnemySystem {
                     enemy.particleDropTimer -= dt;
                     if (enemy.particleDropTimer <= 0) {
                         enemy.particleDropTimer = enemy.ai.particleDropInterval;
-                        const particlePos = { x: pos.x + col.width / 2, y: pos.y + col.height };
+                        const particlePos = { x: pos.x + col.width / 2, y: pos.y + col.height - 2 };
                         
                         // Create the VISIBLE particle
                         eventBus.publish('createParticles', { ...particlePos, type: 'slime_puddle' });

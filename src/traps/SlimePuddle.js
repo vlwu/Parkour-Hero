@@ -6,10 +6,12 @@ export class SlimePuddle extends Trap {
         this.type = 'slime_puddle';
         this.solid = false;
         
-        // This trap lives for 4 seconds, just like the visual particle.
-        this.lifespan = 4.0; 
+        this.lifespan = 3.0; 
         this.isExpired = false;
-        this.damageDealt = false; // Ensure it only deals damage once.
+
+        // Timer for periodic damage
+        this.damageInterval = 1; 
+        this.damageTimer = 0;      // Cooldown timer
     }
 
     get hitbox() {
@@ -22,9 +24,15 @@ export class SlimePuddle extends Trap {
     }
 
     update(dt) {
+        // Countdown lifespan to expire the puddle
         this.lifespan -= dt;
         if (this.lifespan <= 0) {
             this.isExpired = true;
+        }
+
+        // Countdown damage cooldown timer
+        if (this.damageTimer > 0) {
+            this.damageTimer -= dt;
         }
     }
 
@@ -34,20 +42,18 @@ export class SlimePuddle extends Trap {
     }
 
     onCollision(player, eventBus) {
-        // Only deal damage if it hasn't already.
-        if (this.damageDealt) return;
-
-        this.damageDealt = true;
-        
-        eventBus.publish('collisionEvent', {
-            type: 'hazard',
-            entityId: player.entityId,
-            entityManager: player.entityManager,
-            damage: 5,
-            knockback: null
-        });
-
-        // The puddle doesn't disappear on contact, it fades over time.
+        // If damage cooldown is over, deal damage and reset timer
+        if (this.damageTimer <= 0) {
+            this.damageTimer = this.damageInterval;
+            
+            eventBus.publish('collisionEvent', {
+                type: 'hazard',
+                entityId: player.entityId,
+                entityManager: player.entityManager,
+                damage: 5,
+                knockback: null
+            });
+        }
     }
 
     reset() {
