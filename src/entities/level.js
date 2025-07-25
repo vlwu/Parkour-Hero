@@ -20,6 +20,7 @@ const trapFactory = {
   rock_head: Traps.RockHead,
   spike_head: Traps.SpikeHead,
   saw: Traps.Saw,
+  slime_puddle: Traps.SlimePuddle,
 };
 
 export class Level {
@@ -52,6 +53,7 @@ export class Level {
     this.traps = [];
     this.trophy = null;
     this.initialEnemyConfigs = levelConfig.enemies || []; // Store for respawning
+    eventBus.subscribe('createSlimePuddle', (pos) => this.addSlimePuddle(pos));
 
     (levelConfig.objects || []).forEach(obj => {
       const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
@@ -98,6 +100,15 @@ export class Level {
     this.totalFruitCount = this.fruits.length;
     this.collectedFruitCount = 0;
     this.completed = false;
+  }
+
+  addSlimePuddle(position) {
+    const puddleTrap = new Traps.SlimePuddle(position.x, position.y, {});
+    this.traps.push(puddleTrap);
+    
+    const gridObject = { ...(puddleTrap.hitbox), instance: puddleTrap, type: 'trap' };
+    puddleTrap.gridObject = gridObject;
+    this.spatialGrid.insert(gridObject);
   }
 
   _populateSpatialGrid() {

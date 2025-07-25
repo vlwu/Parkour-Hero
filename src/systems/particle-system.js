@@ -26,7 +26,7 @@ export class ParticleSystem {
             jump_trail: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.3, gravity: 20 },
             fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
             enemy_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
-            slime_drip: { count: 1, baseSpeed: 10, spriteKey: 'slime_particles', life: 1.5, gravity: 50, animation: { frameCount: 4, frameSpeed: 0.2 } },
+            slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 4.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
         };
 
         const config = particleConfigs[type];
@@ -65,10 +65,6 @@ export class ParticleSystem {
                 }
                 angle = baseAngle + (Math.random() - 0.5) * (Math.PI / 6);
             }
-             else if (type === 'slime_drip') {
-                angle = Math.PI / 2 + (Math.random() - 0.5) * (Math.PI / 8);
-                speed *= (Math.random() * 0.5 + 0.5);
-            }
             else {
                 angle = - (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 4);
             }
@@ -82,7 +78,7 @@ export class ParticleSystem {
             p.vy = Math.sin(angle) * speed;
             p.life = life;
             p.initialLife = life;
-            p.size = type === 'slime_drip' ? 16 : 5 + Math.random() * 4;
+            p.size = type === 'slime_puddle' ? 16 : 5 + Math.random() * 4;
             p.alpha = 1.0;
             p.spriteKey = config.spriteKey;
             p.gravity = config.gravity;
@@ -114,8 +110,8 @@ export class ParticleSystem {
             } else {
                 p.x += p.vx * dt;
                 p.y += p.vy * dt;
-                p.vy += (p.gravity || 50) * dt;
-                p.alpha = Math.max(0, p.life / p.initialLife);
+                p.vy += (p.gravity || 0) * dt;
+                p.alpha = Math.min(1.0, p.life / 1.5);
 
                 if (p.animation) {
                     p.animation.frameTimer += dt;
