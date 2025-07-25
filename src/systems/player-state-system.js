@@ -247,20 +247,10 @@ export class PlayerStateSystem {
 
     _setAnimationState(renderable, state, newState, ctrl, col) {
         if (state.currentState !== newState) {
-            let requiredSound = null;
-            if (newState === 'run' && col.isGrounded) {
-                const surfaceSounds = { 'sand': 'sand_walk', 'mud': 'mud_run', 'ice': 'ice_run' };
-                requiredSound = surfaceSounds[col.groundType] || null;
-            }
-
-            if (requiredSound !== ctrl.activeSurfaceSound) {
-                if (ctrl.activeSurfaceSound) {
-                    eventBus.publish('stopSoundLoop', { key: ctrl.activeSurfaceSound });
-                }
-                if (requiredSound) {
-                    eventBus.publish('startSoundLoop', { key: requiredSound, channel: 'SFX' });
-                }
-                ctrl.activeSurfaceSound = requiredSound;
+            // Stop any playing surface sound when the state changes away from 'run' or to a different surface
+            if (ctrl.activeSurfaceSound) {
+                eventBus.publish('stopSoundLoop', { key: ctrl.activeSurfaceSound });
+                ctrl.activeSurfaceSound = null;
             }
 
             state.currentState = newState;
