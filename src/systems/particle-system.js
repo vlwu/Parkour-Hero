@@ -14,6 +14,12 @@ export class ParticleSystem {
         eventBus.subscribe('createParticles', (data) => this.create(data));
     }
 
+    reset() {
+        for (let i = this.activeParticles.length - 1; i >= 0; i--) {
+            const recycledParticle = this.activeParticles.splice(i, 1);
+            this.inactivePool.push(recycledParticle);
+        }
+    }
 
     create({ x, y, type, direction = 'right', particleSpeed = null }) {
         const particleConfigs = {
@@ -105,7 +111,7 @@ export class ParticleSystem {
 
             if (p.life <= 0) {
                 // Move the dead particle from the active list to the inactive pool
-                const recycledParticle = this.activeParticles.splice(i, 1)[0];
+                const recycledParticle = this.activeParticles.splice(i, 1);
                 this.inactivePool.push(recycledParticle);
             } else {
                 p.x += p.vx * dt;

@@ -164,6 +164,7 @@ export class Engine {
     this.entityManager = new EntityManager();
     this.inputSystem.entityManager = this.entityManager;
     this.effectsSystem.reset();
+    this.particleSystem.reset();
     this.gameFlowSystem.reset(this.isRunning);
 
     this.currentLevel = new Level(levelData, this.entityManager);
