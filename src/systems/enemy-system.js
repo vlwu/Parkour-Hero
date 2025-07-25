@@ -70,17 +70,19 @@ export class EnemySystem {
     }
 
     _findPlatformEdges(pos, col, level) {
-        if (!level || !col.isGrounded) return null;
+        if (!level) return null;
 
         const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
         const checkY = Math.floor((pos.y + col.height + 1) / TILE_SIZE);
 
-        if (checkY >= level.gridHeight) return null;
+        if (checkY >= level.gridHeight || checkY < 0) return null;
 
         const startGridX = Math.floor((pos.x + col.width / 2) / TILE_SIZE);
-        
+
         const initialTile = level.getTileAt(startGridX * TILE_SIZE, checkY * TILE_SIZE);
-        if(!initialTile || !initialTile.solid || initialTile.oneWay) return null;
+        if(!initialTile || !initialTile.solid || initialTile.oneWay) {
+            return null;
+        }
 
         let leftGridX = startGridX;
         while(leftGridX > 0) {
@@ -142,23 +144,13 @@ export class EnemySystem {
     }
 
     _updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData, col, level) {
-        // --- RELIABLE DEBUGGING LOG ---
-        if (playerData) {
-            console.log("Chicken AI Status:", { 
-                state: state.currentState, 
-                chickenPos: { x: pos.x.toFixed(0), y: pos.y.toFixed(0) },
-                playerPos: { x: playerData.x.toFixed(0), y: playerData.y.toFixed(0) },
-                distance: Math.abs((playerData.x + playerData.width / 2) - (pos.x + col.width / 2)).toFixed(0)
-            });
-        }
-        
         const ai = enemy.ai;
-    
+
         switch (state.currentState) {
             case 'idle':
                 vel.vx = 0;
                 renderable.animationState = 'idle';
-    
+
                 if (col.isGrounded) {
                     const edges = this._findPlatformEdges(pos, col, level);
                     if (edges) {
@@ -166,7 +158,7 @@ export class EnemySystem {
                         renderable.direction = (pos.x + col.width / 2 < platformCenter) ? 'right' : 'left';
                     }
                 }
-    
+
                 if (playerData) {
                     const verticalDistance = Math.abs((playerData.y + playerData.height / 2) - (pos.y + col.height / 2));
                     const onSameLevel = verticalDistance < col.height * 1.5;
@@ -177,7 +169,6 @@ export class EnemySystem {
                         const isPlayerRight = (playerData.x + playerData.width / 2) > (pos.x + col.width / 2);
                         const chargeDirection = isPlayerRight ? 'right' : 'left';
                         
-                        // --- FIX: Check if there's room to charge before starting the attack ---
                         const edges = this._findPlatformEdges(pos, col, level);
                         let hasRoomToCharge = true;
                         if (edges) {
@@ -197,7 +188,7 @@ export class EnemySystem {
                     }
                 }
                 break;
-    
+
             case 'warning':
                 vel.vx = 0;
                 renderable.animationState = 'idle';
@@ -205,14 +196,12 @@ export class EnemySystem {
                 if (enemy.timer <= 0) {
                     state.currentState = 'charging';
                     vel.vx = (renderable.direction === 'right' ? 1 : -1) * ai.chargeSpeed;
-                    enemy.timer = ai.chargeTime;
                 }
                 break;
-    
+
             case 'charging':
                 renderable.animationState = 'run';
-                enemy.timer -= dt;
-    
+
                 const edges = this._findPlatformEdges(pos, col, level);
                 let atEdge = false;
                 if (edges) {
@@ -226,14 +215,14 @@ export class EnemySystem {
                 } else {
                     atEdge = true; 
                 }
-    
-                if (enemy.timer <= 0 || atEdge) {
+
+                if (atEdge) {
                     state.currentState = 'cooldown';
                     vel.vx = 0;
                     enemy.timer = ai.cooldownTime;
                 }
                 break;
-    
+
             case 'cooldown':
                 vel.vx = 0;
                 renderable.animationState = 'idle';
@@ -321,7 +310,7 @@ export class EnemySystem {
                         renderable.animationFrame = 0;
                     }
                 } else {
-                     renderable.animationFrame = 0;
+                    renderable.animationFrame = 0;
                 }
             }
         }

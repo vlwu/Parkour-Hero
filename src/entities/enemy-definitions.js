@@ -37,7 +37,7 @@ export const ENEMY_DEFINITIONS = {
             type: 'ground_charge',
             aggroRange: 250,
             chargeSpeed: 200,
-            idleTime: 0.5,
+            idleTime: 1.5,
             chargeTime: 2.0,
             cooldownTime: 1.0,
         }
