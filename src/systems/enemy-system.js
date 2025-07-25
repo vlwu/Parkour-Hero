@@ -250,8 +250,9 @@ export class EnemySystem {
     }
 
     _updateHopAI(dt, vel, enemy, renderable, state, col) {
+        renderable.animationState = 'idle_run'; // Always use the idle_run animation
         if (state.currentState === 'idle' && col.isGrounded) {
-            vel.vx = 0; renderable.animationState = 'idle_run';
+            vel.vx = 0;
             enemy.timer -= dt;
             if (enemy.timer <= 0) {
                 state.currentState = 'hopping';

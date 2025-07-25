@@ -75,10 +75,9 @@ export const ENEMY_DEFINITIONS = {
             stompBounceVelocity: 350,
         },
         ai: {
-            type: 'hop',
-            hopInterval: 2.0,
-            hopSpeed: 100,
-            hopHeight: 250,
+            type: 'patrol',
+            patrolSpeed: 25,
+            particleDropInterval: 0.8,
         }
     },
 

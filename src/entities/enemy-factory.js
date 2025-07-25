@@ -57,9 +57,21 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
         height: data.height,
     }));
 
-    let initialAnimationState = initialState === 'idle' ? 'idle' : (data.spriteKey === 'snail' ? 'walk' : 'run');
-    if (type === 'turtle' && initialState === 'idle') {
-        initialAnimationState = 'idle2';
+    let initialAnimationState;
+    if (initialState === 'idle') {
+        switch(type) {
+            case 'slime':
+                initialAnimationState = 'idle_run';
+                break;
+            case 'turtle':
+                initialAnimationState = 'idle2';
+                break;
+            default:
+                initialAnimationState = 'idle';
+                break;
+        }
+    } else { // patrol
+        initialAnimationState = (data.spriteKey === 'snail' ? 'walk' : 'run');
     }
 
     entityManager.addComponent(enemyEntityId, new RenderableComponent({
