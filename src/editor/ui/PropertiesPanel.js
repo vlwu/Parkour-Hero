@@ -55,7 +55,7 @@ export class PropertiesPanel {
         }
         
         // Enemy Properties
-        if (obj.type === 'mushroom') {
+        if (obj.type === 'mushroom' || obj.type === 'slime') {
              propertiesHTML += this._createNumberInput('patrolDistance', 'Patrol Distance (pixels)', obj.patrolDistance || 144, 1, true); // Added 'true' for disabled
         }
         
@@ -94,7 +94,7 @@ export class PropertiesPanel {
         if (obj.type === 'fan') { attach('pushStrength'); attach('windHeight'); }
         if (obj.type === 'saw') { attach('direction', 'select'); attach('distance'); attach('speed'); }
         if (obj.type === 'fire_trap') { attach('chainLength'); }
-        if (obj.type === 'mushroom') { attach('patrolDistance'); }
+        if (obj.type === 'mushroom' || obj.type === 'slime') { attach('patrolDistance'); }
     }
 
     _handleInput(id, prop, element) {

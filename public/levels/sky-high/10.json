@@ -67,11 +67,11 @@
     },
     {
       "type": "fruit_kiwi",
-      "x": 24.43,
-      "y": 7.92,
+      "x": 21.55,
+      "y": 8.27,
       "initialDragPos": {
-        "x": 24.21,
-        "y": 9.07
+        "x": 21.8,
+        "y": 8.73
       }
     },
     {
@@ -248,24 +248,25 @@
   ],
   "enemies": [
     {
-      "type": "slime",
-      "x": 23.5,
-      "y": 9.69,
-      "startDirection": "left",
-      "initialDragPos": {
-        "x": 23.5,
-        "y": 9.69
-      }
-    },
-    {
       "type": "mushroom",
       "x": 12,
       "y": 21.67,
       "patrolDistance": 160,
-      "startDirection": "right",
+      "startDirection": "left",
       "initialDragPos": {
         "x": 12,
         "y": 21.67
+      }
+    },
+    {
+      "type": "slime",
+      "x": 23.5,
+      "y": 9.69,
+      "patrolDistance": 196,
+      "startDirection": "right",
+      "initialDragPos": {
+        "x": 23.5,
+        "y": 9.69
       }
     }
   ]

@@ -59,7 +59,7 @@ export class EnemySystem {
                 if (wasDestroyed) { continue; }
             } else {
                 switch (enemy.ai.type) {
-                    case 'patrol': this._updatePatrolAI(dt, pos, vel, enemy, renderable, state, col, level); break;
+                    case 'patrol': this._updatePatrolAI(dt, pos, vel, enemy, renderable, state); break;
                     case 'ground_charge': this._updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData, col, level); break;
                     case 'defensive_cycle': this._updateDefensiveCycleAI(dt, vel, enemy, renderable, state); break;
                     case 'hop': this._updateHopAI(dt, vel, enemy, renderable, state, entityManager.getComponent(id, CollisionComponent)); break;
@@ -112,87 +112,57 @@ export class EnemySystem {
         };
     }
 
-    _updatePatrolAI(dt, pos, vel, enemy, renderable, state, col, level) {
-        if (enemy.type === 'slime') {
-            renderable.animationState = 'idle_run'; // Slime always uses this animation
-    
-            if (state.currentState === 'idle') {
-                vel.vx = 0;
-                enemy.timer -= dt;
-                if (enemy.timer <= 0) {
-                    state.currentState = 'patrol';
-                    // The velocity will be set in the patrol state logic below
-                }
-                return; // Exit early while idle
-            }
-            
-            const edges = this._findPlatformEdges(pos, col, level);
-            if (edges) {
-                const leftBound = edges.left;
-                const rightBound = edges.right - col.width;
-    
-                // If the slime is in patrol state but not moving, give it a push.
-                if (vel.vx === 0) {
-                    vel.vx = (renderable.direction === 'right' ? enemy.ai.patrolSpeed : -enemy.ai.patrolSpeed);
-                }
-    
-                if (vel.vx > 0 && pos.x >= rightBound) {
-                    pos.x = rightBound;
-                    renderable.direction = 'left';
-                    state.currentState = 'idle';
-                    enemy.timer = 0.5; // Pause for 0.5 seconds
-                    vel.vx = 0;
-                } else if (vel.vx < 0 && pos.x <= leftBound) {
-                    pos.x = leftBound;
-                    renderable.direction = 'right';
-                    state.currentState = 'idle';
-                    enemy.timer = 0.5; // Pause for 0.5 seconds
-                    vel.vx = 0;
-                }
+    _updatePatrolAI(dt, pos, vel, enemy, renderable, state) {
+        // Step 1: Set animation state based on type and behavior state.
+        if (state.currentState === 'idle') {
+            if (enemy.type === 'slime') {
+                renderable.animationState = 'idle_run'; // Slime always animates.
             } else {
-                vel.vx = 0; // Stop if not on a valid platform
+                renderable.animationState = 'idle'; // Mushroom/Snail stop animating.
             }
-        } else {
-            // Existing logic for Mushroom and Snail
-            if (state.currentState === 'idle') {
-                renderable.animationState = 'idle';
+        } else { // 'patrol' state
+            if (enemy.type === 'slime') {
+                renderable.animationState = 'idle_run';
             } else {
                 renderable.animationState = enemy.type === 'snail' ? 'walk' : 'run';
             }
-
-            if (state.currentState === 'idle') {
-                vel.vx = 0;
-                enemy.timer -= dt;
-                if (enemy.timer <= 0) {
-                    state.currentState = 'patrol';
-                    vel.vx = (renderable.direction === 'right' ? enemy.ai.patrol.speed : -enemy.ai.patrol.speed);
-                }
-                return;
+        }
+    
+        // Step 2: Unified state-driven patrol logic for ALL patrol enemies.
+        if (state.currentState === 'idle') {
+            vel.vx = 0;
+            enemy.timer -= dt;
+            if (enemy.timer <= 0) {
+                state.currentState = 'patrol';
+                vel.vx = (renderable.direction === 'right' ? enemy.ai.patrol.speed : -enemy.ai.patrol.speed);
             }
-
-            const { startX, distance, speed } = enemy.ai.patrol;
-            const leftBound = startX;
-            const rightBound = startX + distance;
-
-            if (vel.vx === 0) {
-                vel.vx = (renderable.direction === 'right' ? speed : -speed);
-            }
-
-            if (vel.vx > 0 && pos.x >= rightBound) {
-                pos.x = rightBound;
-                renderable.direction = 'left';
-                state.currentState = 'idle';
-                enemy.timer = 0.5;
-                vel.vx = 0;
-            }
-
-            if (vel.vx < 0 && pos.x <= leftBound) {
-                pos.x = leftBound;
-                renderable.direction = 'right';
-                state.currentState = 'idle';
-                enemy.timer = 0.5;
-                vel.vx = 0;
-            }
+            return;
+        }
+    
+        // This part runs only when in the 'patrol' state
+        const { startX, distance, speed } = enemy.ai.patrol;
+    
+        if (vel.vx === 0) { // If it's not moving for some reason, give it a push
+            vel.vx = (renderable.direction === 'right' ? speed : -speed);
+        }
+    
+        const leftBound = startX;
+        const rightBound = startX + distance;
+    
+        if (vel.vx > 0 && pos.x >= rightBound) {
+            pos.x = rightBound;
+            renderable.direction = 'left';
+            state.currentState = 'idle';
+            enemy.timer = 0.5; // Pause duration
+            vel.vx = 0;
+        }
+    
+        if (vel.vx < 0 && pos.x <= leftBound) {
+            pos.x = leftBound;
+            renderable.direction = 'right';
+            state.currentState = 'idle';
+            enemy.timer = 0.5; // Pause duration
+            vel.vx = 0;
         }
     }
 

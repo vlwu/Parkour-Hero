@@ -58,8 +58,12 @@
   "objects": [
     {
       "type": "fruit_apple",
-      "x": 7.46,
-      "y": 37.87
+      "x": 7.43,
+      "y": 36.93,
+      "initialDragPos": {
+        "x": 7.46,
+        "y": 37.87
+      }
     },
     {
       "type": "fruit_bananas",
@@ -110,6 +114,19 @@
       "type": "trampoline",
       "x": 12.71,
       "y": 24.71
+    }
+  ],
+  "enemies": [
+    {
+      "type": "slime",
+      "x": 7.5,
+      "y": 38.69,
+      "patrolDistance": 100,
+      "startDirection": "right",
+      "initialDragPos": {
+        "x": 7.5,
+        "y": 38.69
+      }
     }
   ]
 }
