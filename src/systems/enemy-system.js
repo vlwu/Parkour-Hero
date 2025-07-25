@@ -201,6 +201,7 @@ export class EnemySystem {
 
             case 'charging':
                 renderable.animationState = 'run';
+                vel.vx = (renderable.direction === 'right' ? 1 : -1) * ai.chargeSpeed;
 
                 const edges = this._findPlatformEdges(pos, col, level);
                 let atEdge = false;

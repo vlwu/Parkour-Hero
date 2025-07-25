@@ -169,6 +169,7 @@ export class CollisionSystem {
 
             if (this._isRectColliding(playerRect, collider)) {
                 const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
+                const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
 
                 if (isPlayer && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent)) {
                     const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
@@ -176,13 +177,31 @@ export class CollisionSystem {
 
                     if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
                         const knockbackVx = (pos.x + col.width / 2) < (collider.x + collider.width / 2) ? -150 : 150;
-                        // If the player is on the ground, the horizontal knockback from an enemy should not also push them upwards.
-                        // This prevents the vertical collision check from thinking the player is jumping, which would cause them to fall through platforms.
                         const knockbackVy = col.isGrounded ? 0 : -150;
 
                         eventBus.publish('collisionEvent', {
                             type: 'hazard',
                             entityId: entityId,
+                            entityManager: entityManager,
+                            damage: 20,
+                            knockback: {
+                                vx: knockbackVx,
+                                vy: knockbackVy
+                            }
+                        });
+                    }
+                } else if (isEnemy && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, PlayerControlledComponent)) {
+                    const enemy = entityManager.getComponent(entityId, EnemyComponent);
+                    const killable = entityManager.getComponent(entityId, KillableComponent);
+    
+                    if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
+                        const playerCol = entityManager.getComponent(collider.entityId, CollisionComponent);
+                        const knockbackVx = (collider.x + playerCol.width / 2) < (pos.x + col.width / 2) ? -150 : 150;
+                        const knockbackVy = playerCol.isGrounded ? 0 : -150;
+    
+                        eventBus.publish('collisionEvent', {
+                            type: 'hazard',
+                            entityId: collider.entityId,
                             entityManager: entityManager,
                             damage: 20,
                             knockback: {
@@ -222,6 +241,7 @@ export class CollisionSystem {
             }
 
             const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
+            const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
 
             if (vel.vy >= 0) {
                 const prevPlayerBottom = (pos.y - vel.vy * dt) + col.height;
@@ -250,6 +270,21 @@ export class CollisionSystem {
                                 }
                             });
                         }
+                    } else if (isEnemy && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, PlayerControlledComponent)) {
+                        const enemy = entityManager.getComponent(entityId, EnemyComponent);
+                        const killable = entityManager.getComponent(entityId, KillableComponent);
+                        if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
+                            eventBus.publish('collisionEvent', {
+                                type: 'hazard',
+                                entityId: collider.entityId,
+                                entityManager: entityManager,
+                                damage: 20,
+                                knockback: {
+                                    vx: vel.vx > 0 ? 50 : -50,
+                                    vy: -150
+                                }
+                            });
+                        }
                     }
 
                     this._landOnSurface(pos, vel, col, collider.y, collider.surfaceType, entityId);
@@ -267,6 +302,21 @@ export class CollisionSystem {
                             eventBus.publish('collisionEvent', {
                                 type: 'hazard',
                                 entityId: entityId,
+                                entityManager: entityManager,
+                                damage: 20,
+                                knockback: {
+                                    vx: vel.vx > 0 ? 50 : -50,
+                                    vy: 150
+                                }
+                            });
+                        }
+                    } else if (isEnemy && collider.type === 'entity' && entityManager.hasComponent(collider.entityId, PlayerControlledComponent)) {
+                        const enemy = entityManager.getComponent(entityId, EnemyComponent);
+                        const killable = entityManager.getComponent(entityId, KillableComponent);
+                        if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
+                            eventBus.publish('collisionEvent', {
+                                type: 'hazard',
+                                entityId: collider.entityId,
                                 entityManager: entityManager,
                                 damage: 20,
                                 knockback: {
