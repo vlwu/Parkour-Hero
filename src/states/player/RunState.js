@@ -15,6 +15,8 @@ export class RunState extends PlayerBaseState {
 
         state.currentState = 'run';
         renderable.animationState = 'run';
+        renderable.animationFrame = 0;
+        renderable.animationTimer = 0;
         ctrl.jumpCount = 0;
     }
 

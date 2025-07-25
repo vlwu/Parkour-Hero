@@ -10,6 +10,8 @@ export class DoubleJumpState extends PlayerBaseState {
         const renderable = this.entityManager.getComponent(this.entityId, RenderableComponent);
         state.currentState = 'double_jump';
         renderable.animationState = 'double_jump';
+        renderable.animationFrame = 0;
+        renderable.animationTimer = 0;
     }
 
     update(dt) {

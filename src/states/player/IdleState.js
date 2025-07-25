@@ -15,6 +15,8 @@ export class IdleState extends PlayerBaseState {
 
         state.currentState = 'idle';
         renderable.animationState = 'idle';
+        renderable.animationFrame = 0;
+        renderable.animationTimer = 0;
         ctrl.jumpCount = 0;
     }
 

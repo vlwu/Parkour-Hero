@@ -10,6 +10,8 @@ export class HitState extends PlayerBaseState {
         const renderable = this.entityManager.getComponent(this.entityId, RenderableComponent);
         state.currentState = 'hit';
         renderable.animationState = 'hit';
+        renderable.animationFrame = 0;
+        renderable.animationTimer = 0;
     }
 
     update(dt) {

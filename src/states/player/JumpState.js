@@ -10,6 +10,8 @@ export class JumpState extends PlayerBaseState {
         const renderable = this.entityManager.getComponent(this.entityId, RenderableComponent);
         state.currentState = 'jump';
         renderable.animationState = 'jump';
+        renderable.animationFrame = 0;
+        renderable.animationTimer = 0;
     }
 
     update(dt) {

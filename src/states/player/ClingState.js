@@ -13,6 +13,8 @@ export class ClingState extends PlayerBaseState {
         
         state.currentState = 'cling';
         renderable.animationState = 'cling';
+        renderable.animationFrame = 0;
+        renderable.animationTimer = 0;
         ctrl.jumpCount = 1;
     }
 

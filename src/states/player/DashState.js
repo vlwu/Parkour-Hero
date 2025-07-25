@@ -10,6 +10,8 @@ export class DashState extends PlayerBaseState {
         const renderable = this.entityManager.getComponent(this.entityId, RenderableComponent);
         state.currentState = 'dash';
         renderable.animationState = 'dash';
+        renderable.animationFrame = 0;
+        renderable.animationTimer = 0;
     }
 
     update(dt) {

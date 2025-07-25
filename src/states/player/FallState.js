@@ -14,6 +14,8 @@ export class FallState extends PlayerBaseState {
         const renderable = this.entityManager.getComponent(this.entityId, RenderableComponent);
         state.currentState = 'fall';
         renderable.animationState = 'fall';
+        renderable.animationFrame = 0;
+        renderable.animationTimer = 0;
     }
 
     update(dt) {
