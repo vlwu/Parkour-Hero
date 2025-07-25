@@ -61,5 +61,8 @@ export class PlayerControlledComponent {
         // Stats & Sounds
         this.deathCount = deathCount;
         this.activeSurfaceSound = activeSurfaceSound;
+
+        // State Machine
+        this.currentState = null;
     }
 }

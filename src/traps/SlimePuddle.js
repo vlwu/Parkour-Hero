@@ -36,7 +36,6 @@ export class SlimePuddle extends Trap {
         }
     }
 
-    // This trap is invisible, so the render method is empty.
     render(ctx, assets, camera) {
         // Intentionally left blank. This is an invisible damage zone.
     }

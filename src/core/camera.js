@@ -168,7 +168,6 @@ export class Camera {
     this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
   }
 
-  // Other utility methods remain unchanged
   isVisible(worldX, worldY, width = 0, height = 0) { return (worldX + width > this.x && worldX < this.x + this.width && worldY + height > this.y && worldY < this.y + this.height); }
   isRectVisible(rect) { return this.isVisible(rect.x, rect.y, rect.width, rect.height); }
   setFollowSpeed(speed) { this.followSpeed = Math.max(0.1, speed); }

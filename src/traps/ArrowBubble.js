@@ -160,9 +160,8 @@ export class ArrowBubble extends Trap {
         }
     }
 
-    /**
-     * A helper method to restore the bubble to its interactive state.
-     */
+
+    // A helper method to restore the bubble to its interactive state.
     _resetToIdle() {
         this.state = 'idle';
         this.idleAnimation.currentFrame = 0;
@@ -172,9 +171,7 @@ export class ArrowBubble extends Trap {
         this.respawnTimer = 0;
     }
 
-    /**
-     * Resets the bubble to its initial state for a level restart.
-     */
+    // Resets the bubble to its initial state for a level restart.
     reset() {
         this._resetToIdle();
     }

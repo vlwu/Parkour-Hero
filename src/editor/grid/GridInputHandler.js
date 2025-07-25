@@ -18,7 +18,6 @@ export class GridInputHandler {
         this.dragStartX = 0;
         this.dragStartY = 0;
 
-        // Bind methods to ensure 'this' is correct
         this._handleMouseDown = this._handleMouseDown.bind(this);
         this._handleMouseMove = this._handleMouseMove.bind(this);
         this._handleMouseUp = this._handleMouseUp.bind(this);

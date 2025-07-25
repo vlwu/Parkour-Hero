@@ -211,6 +211,38 @@ export class CollisionSystem {
                 }
             }
 
+            // --- FIX START: Ground Stickiness / Probe ---
+            // If after all movement resolution, we're not considered grounded, do one last check.
+            // This prevents the player from "bouncing" off the floor by a sub-pixel amount due to gravity.
+            if (!col.isGrounded && vel.vy >= 0) {
+                const groundProbe = {
+                    x: pos.x,
+                    y: pos.y + col.height,
+                    width: col.width,
+                    height: 1 // A 1-pixel high probe just below the entity's feet.
+                };
+                const potentialGround = this.spatialGrid.query(groundProbe);
+
+                for (const ground of potentialGround) {
+                    if (ground.type === 'entity' && ground.entityId === entityId) continue;
+                    
+                    if (this._isRectColliding(groundProbe, ground)) {
+                         // Check solid platforms or one-way platforms where we're positioned above them
+                         if (!ground.isOneWay) {
+                            this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, entityId);
+                            if (vel.vy > 0) vel.vy = 0; // Ensure no downward velocity
+                            break; // Found ground, no need to check further.
+                         } else if (ground.isOneWay && pos.y + col.height <= ground.y + 2) {
+                            // For one-way platforms, only consider them ground if we're positioned above them
+                            this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, entityId);
+                            if (vel.vy > 0) vel.vy = 0; // Ensure no downward velocity
+                            break; // Found ground, no need to check further.
+                         }
+                    }
+                }
+            }
+            // --- FIX END ---
+
             // 3. Final position clamping and object interactions
             pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
             if (pos.y < 0) {

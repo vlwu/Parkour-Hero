@@ -39,6 +39,7 @@ export function createPlayer(entityManager, x, y, characterId) {
         animationState: 'spawn',
     }));
     
+    // The PlayerControlledComponent is now simpler.
     entityManager.addComponent(playerEntityId, new PlayerControlledComponent());
     
     entityManager.addComponent(playerEntityId, new CollisionComponent({
@@ -50,7 +51,7 @@ export function createPlayer(entityManager, x, y, characterId) {
     
     // Add the components required for the refactored systems.
     entityManager.addComponent(playerEntityId, new InputComponent());
-    entityManager.addComponent(playerEntityId, new StateComponent('spawn'));
+    entityManager.addComponent(playerEntityId, new StateComponent('spawn')); // This component still tracks the string name for simplicity
     entityManager.addComponent(playerEntityId, new HealthComponent());
     entityManager.addComponent(playerEntityId, new DynamicColliderComponent());
 

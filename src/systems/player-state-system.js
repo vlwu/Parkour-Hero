@@ -8,6 +8,15 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 
+// Import all the new state classes
+import { SpawnState } from '../states/player/SpawnState.js';
+import { IdleState } from '../states/player/IdleState.js';
+import { JumpState } from '../states/player/JumpState.js';
+import { DoubleJumpState } from '../states/player/DoubleJumpState.js';
+import { DashState } from '../states/player/DashState.js';
+import { HitState } from '../states/player/HitState.js';
+
+
 export class PlayerStateSystem {
     constructor() {
         eventBus.subscribe('playerTookDamage', (e) => this.handleDamageTaken(e));
@@ -18,11 +27,13 @@ export class PlayerStateSystem {
         });
         eventBus.subscribe('playerKnockback', (e) => this.handleKnockback(e));
         eventBus.subscribe('enemyStomped', (e) => this.handleEnemyStomped(e));
+        
         this.damageEvents = [];
         this.knockbackEvents = [];
         this.stompEvents = [];
     }
 
+    // --- Event Handling ---
     clearDamageEvents() { this.damageEvents = []; }
     clearKnockbackEvents() { this.knockbackEvents = []; }
     clearStompEvents() { this.stompEvents = []; }
@@ -31,22 +42,66 @@ export class PlayerStateSystem {
     handleKnockback(event) { this.knockbackEvents.push(event); }
     handleEnemyStomped(event) { this.stompEvents.push(event); }
 
-    _processDamageEvents(entityManager) {
-        if (this.damageEvents.length === 0) return;
-        const entities = entityManager.query([PlayerControlledComponent, RenderableComponent, StateComponent]);
-        for (const event of this.damageEvents) {
-            for (const entityId of entities) {
-                const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-                const renderable = entityManager.getComponent(entityId, RenderableComponent);
-                const state = entityManager.getComponent(entityId, StateComponent);
-                if (ctrl.isHit || ctrl.isSpawning) continue;
-                if ((event.source === 'fall' || event.source === 'fire' || event.source === 'hazard') && !ctrl.isHit) {
-                    ctrl.isHit = true;
-                    ctrl.hitStunTimer = PLAYER_CONSTANTS.HIT_STUN_DURATION;
-                    this._setAnimationState(renderable, state, 'hit', ctrl, entityManager.getComponent(entityId, CollisionComponent));
-                    eventBus.publish('playSound', { key: 'hit', volume: 0.5, channel: 'SFX' });
+    // --- State Machine Transition ---
+    _transitionTo(entityId, newState, entityManager) {
+        const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+        if (ctrl.currentState) {
+            ctrl.currentState.exit();
+        }
+        ctrl.currentState = newState;
+        ctrl.currentState.enter();
+    }
+    
+    // --- System Update Method ---
+    update(dt, { entityManager }) {
+        // Process discrete events first
+        this._processDamageEvents(entityManager);
+        this._processKnockbackEvents(entityManager);
+        this._processStompEvents(entityManager);
+
+        const entities = entityManager.query([ PlayerControlledComponent, StateComponent ]);
+
+        for (const entityId of entities) {
+            const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+            
+            // Initialize state machine on first run
+            if (!ctrl.currentState) {
+                this._transitionTo(entityId, new SpawnState(entityId, entityManager), entityManager);
+            }
+
+            // Update timers and core logic that affects all states
+            this._updateTimers(dt, ctrl);
+            this._handleGlobalInputLogic(entityId, entityManager);
+
+            // Delegate state-specific logic and check for a returned state transition
+            if (ctrl.currentState) {
+                const nextState = ctrl.currentState.update(dt);
+                if (nextState) {
+                    this._transitionTo(entityId, nextState, entityManager);
                 }
             }
+            
+            // Update animation and other continuous processes
+            this._updateAnimation(dt, entityId, entityManager);
+            this._handleJumpTrail(dt, entityId, entityManager);
+
+            if (entityManager.getComponent(entityId, CollisionComponent).isGrounded) {
+                ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
+            }
+        }
+    }
+
+    _processDamageEvents(entityManager) {
+        if (this.damageEvents.length === 0) return;
+        const entities = entityManager.query([PlayerControlledComponent]);
+        for (const entityId of entities) {
+            const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+            if (ctrl.isHit || ctrl.isSpawning) continue;
+            
+            ctrl.isHit = true;
+            ctrl.hitStunTimer = PLAYER_CONSTANTS.HIT_STUN_DURATION;
+            this._transitionTo(entityId, new HitState(entityId, entityManager), entityManager);
+            eventBus.publish('playSound', { key: 'hit', volume: 0.5, channel: 'SFX' });
         }
         this.damageEvents = [];
     }
@@ -55,13 +110,10 @@ export class PlayerStateSystem {
         if (this.knockbackEvents.length === 0) return;
         for (const event of this.knockbackEvents) {
             const { entityId, vx, vy } = event;
-            const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-            if (ctrl) {
-                const vel = entityManager.getComponent(entityId, VelocityComponent);
-                if (vel) {
-                    vel.vx = vx;
-                    vel.vy = vy;
-                }
+            const vel = entityManager.getComponent(entityId, VelocityComponent);
+            if (vel) {
+                vel.vx = vx;
+                vel.vy = vy;
             }
         }
         this.knockbackEvents = [];
@@ -74,58 +126,11 @@ export class PlayerStateSystem {
             for (const entityId of entities) {
                 const vel = entityManager.getComponent(entityId, VelocityComponent);
                 const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-                vel.vy = -event.stompBounceVelocity; // Apply upward bounce
-                ctrl.jumpCount = 1; // Allow a double jump after a stomp
+                vel.vy = -event.stompBounceVelocity;
+                ctrl.jumpCount = 1;
             }
         }
         this.stompEvents = [];
-    }
-
-    update(dt, { entityManager }) {
-        this._processDamageEvents(entityManager);
-        this._processKnockbackEvents(entityManager);
-        this._processStompEvents(entityManager);
-
-        const entities = entityManager.query([
-            PlayerControlledComponent, PositionComponent, VelocityComponent, CollisionComponent,
-            RenderableComponent, InputComponent, StateComponent
-        ]);
-
-        for (const entityId of entities) {
-            const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-            const pos = entityManager.getComponent(entityId, PositionComponent);
-            const vel = entityManager.getComponent(entityId, VelocityComponent);
-            const col = entityManager.getComponent(entityId, CollisionComponent);
-            const renderable = entityManager.getComponent(entityId, RenderableComponent);
-            const input = entityManager.getComponent(entityId, InputComponent);
-            const state = entityManager.getComponent(entityId, StateComponent);
-
-            this._updateTimers(dt, ctrl);
-            this._handleInput(dt, input, pos, vel, ctrl, col, renderable, state);
-            this._updateFSM(vel, ctrl, col, renderable, state);
-            this._updateAnimation(dt, ctrl, renderable, state);
-            this._handleJumpTrail(dt, pos, col, ctrl, state);
-
-            if (col.isGrounded) {
-                ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
-            }
-        }
-    }
-
-    _handleJumpTrail(dt, pos, col, ctrl, state) {
-        if (state.currentState === 'jump' && ctrl.jumpCount === 1) {
-            ctrl.jumpParticleTimer -= dt;
-            if (ctrl.jumpParticleTimer <= 0) {
-                ctrl.jumpParticleTimer = 0.05;
-                eventBus.publish('createParticles', {
-                    x: pos.x + col.width / 2,
-                    y: pos.y + col.height,
-                    type: 'jump_trail'
-                });
-            }
-        } else {
-            ctrl.jumpParticleTimer = 0;
-        }
     }
 
     _updateTimers(dt, ctrl) {
@@ -135,21 +140,26 @@ export class PlayerStateSystem {
 
         if (ctrl.isHit) {
             ctrl.hitStunTimer -= dt;
-            if (ctrl.hitStunTimer <= 0) {
-                ctrl.isHit = false;
-            }
+            if (ctrl.hitStunTimer <= 0) ctrl.isHit = false;
         }
 
         if (ctrl.isDashing) {
             ctrl.dashTimer -= dt;
-            if (ctrl.dashTimer <= 0) {
-                ctrl.isDashing = false;
-            }
+            if (ctrl.dashTimer <= 0) ctrl.isDashing = false;
         }
     }
+    
+    _handleGlobalInputLogic(entityId, entityManager) {
+        const input = entityManager.getComponent(entityId, InputComponent);
+        const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+        const renderable = entityManager.getComponent(entityId, RenderableComponent);
+        const vel = entityManager.getComponent(entityId, VelocityComponent);
+        const col = entityManager.getComponent(entityId, CollisionComponent);
+        const pos = entityManager.getComponent(entityId, PositionComponent);
 
-    _handleInput(dt, input, pos, vel, ctrl, col, renderable, state) {
         if (ctrl.isSpawning || ctrl.isDashing || ctrl.isDespawning || ctrl.isHit) {
+            ctrl.jumpPressed = input.jump;
+            ctrl.dashPressed = input.dash;
             return;
         }
 
@@ -157,118 +167,75 @@ export class PlayerStateSystem {
         else if (input.moveRight) renderable.direction = 'right';
 
         if (!ctrl.vLock) {
+            if (input.jump) ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
+
             const justPressedJump = input.jump && !ctrl.jumpPressed;
 
-            if (input.jump) {
-                ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
-            }
-
             if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0) && ctrl.jumpCount === 0) {
-                const jumpForce = ctrl.jumpForce * (col.groundType === 'mud' ? PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER : 1);
-                vel.vy = -jumpForce;
+                vel.vy = -ctrl.jumpForce * (col.groundType === 'mud' ? PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER : 1);
                 ctrl.jumpCount = 1;
                 ctrl.jumpBufferTimer = 0;
                 ctrl.coyoteTimer = 0;
                 eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
+                this._transitionTo(entityId, new JumpState(entityId, entityManager), entityManager);
             } else if (justPressedJump && col.isAgainstWall && !col.isGrounded) {
                 vel.vx = (renderable.direction === 'left' ? 1 : -1) * ctrl.speed;
                 renderable.direction = renderable.direction === 'left' ? 'right' : 'left';
                 vel.vy = -ctrl.jumpForce;
-                ctrl.jumpCount = 1;
+                this._transitionTo(entityId, new JumpState(entityId, entityManager), entityManager);
                 eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
             } else if (justPressedJump && ctrl.jumpCount === 1 && !col.isGrounded && !col.isAgainstWall) {
                 vel.vy = -ctrl.jumpForce;
                 ctrl.jumpCount = 2;
                 ctrl.jumpBufferTimer = 0;
-                this._setAnimationState(renderable, state, 'double_jump', ctrl, col);
                 eventBus.publish('playSound', { key: 'double_jump', volume: 0.6, channel: 'SFX' });
                 eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'double_jump' });
+                this._transitionTo(entityId, new DoubleJumpState(entityId, entityManager), entityManager);
             }
         }
         ctrl.vLock = false;
-
-        ctrl.jumpPressed = input.jump;
-
+        
         if (input.dash && !ctrl.dashPressed && ctrl.dashCooldownTimer <= 0) {
             ctrl.isDashing = true;
             ctrl.dashTimer = ctrl.dashDuration;
             vel.vx = renderable.direction === 'right' ? ctrl.dashSpeed : -ctrl.dashSpeed;
             vel.vy = 0;
             ctrl.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN;
-            this._setAnimationState(renderable, state, 'dash', ctrl, col);
             eventBus.publish('playSound', { key: 'dash', volume: 0.7, channel: 'SFX' });
             eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: 'dash', direction: renderable.direction });
+            this._transitionTo(entityId, new DashState(entityId, entityManager), entityManager);
         }
+
+        ctrl.jumpPressed = input.jump;
         ctrl.dashPressed = input.dash;
     }
 
-    _updateFSM(vel, ctrl, col, renderable, state) {
-        const currentState = state.currentState;
-
-        if ((currentState === 'spawn' && !ctrl.spawnComplete) || currentState === 'despawn') {
-            return;
-        }
-
-        if (currentState === 'spawn' && ctrl.spawnComplete) {
-            this._setAnimationState(renderable, state, 'idle', ctrl, col);
-            return;
-        }
-
-        if (ctrl.isHit) {
-            if (currentState !== 'hit') this._setAnimationState(renderable, state, 'hit', ctrl, col);
-            return;
-        }
-
-        if (currentState === 'hit' && !ctrl.isHit) {
-             this._setAnimationState(renderable, state, 'idle', ctrl, col);
-        }
-
-        if (ctrl.isDashing) {
-            if (currentState !== 'dash') this._setAnimationState(renderable, state, 'dash', ctrl, col);
-            return;
-        }
-
-        if (col.isGrounded) {
-            if (Math.abs(vel.vx) > 1) {
-                if (currentState !== 'run') this._setAnimationState(renderable, state, 'run', ctrl, col);
-            } else {
-                if (currentState !== 'idle') this._setAnimationState(renderable, state, 'idle', ctrl, col);
+    _handleJumpTrail(dt, entityId, entityManager) {
+        const state = entityManager.getComponent(entityId, StateComponent);
+        const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+        const pos = entityManager.getComponent(entityId, PositionComponent);
+        const col = entityManager.getComponent(entityId, CollisionComponent);
+        
+        if (state.currentState === 'jump' && ctrl.jumpCount === 1) {
+            ctrl.jumpParticleTimer -= dt;
+            if (ctrl.jumpParticleTimer <= 0) {
+                ctrl.jumpParticleTimer = 0.05;
+                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'jump_trail' });
             }
-        } else if (col.isAgainstWall && ctrl.coyoteTimer <= 0 && vel.vy >= 0) {
-            if (currentState !== 'cling') this._setAnimationState(renderable, state, 'cling', ctrl, col);
         } else {
-            if (vel.vy < 0 && currentState !== 'jump' && currentState !== 'double_jump') {
-                this._setAnimationState(renderable, state, 'jump', ctrl, col);
-            } else if (vel.vy > 0.1 && currentState !== 'fall') {
-                this._setAnimationState(renderable, state, 'fall', ctrl, col);
-            }
+            ctrl.jumpParticleTimer = 0;
         }
     }
+    
+    _updateAnimation(dt, entityId, entityManager) {
+        const renderable = entityManager.getComponent(entityId, RenderableComponent);
+        const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
 
-    _setAnimationState(renderable, state, newState, ctrl, col) {
-        if (state.currentState !== newState) {
-            // Stop any playing surface sound when the state changes away from 'run' or to a different surface
-            if (ctrl.activeSurfaceSound) {
-                eventBus.publish('stopSoundLoop', { key: ctrl.activeSurfaceSound });
-                ctrl.activeSurfaceSound = null;
-            }
-
-            state.currentState = newState;
-            renderable.animationState = newState;
-            renderable.animationFrame = 0;
-            renderable.animationTimer = 0;
-            if (newState === 'cling') {
-                ctrl.jumpCount = 1;
-            } else if (newState === 'idle' || newState === 'run') {
-                ctrl.jumpCount = 0;
-            }
-        }
-    }
-
-    _updateAnimation(dt, ctrl, renderable, state) {
         renderable.animationTimer += dt;
         const stateName = renderable.animationState;
 
+        // --- FIX START ---
+        // Revert to the original, correct logic for determining animation speed.
         let speed;
         if (stateName === 'spawn' || stateName === 'despawn') {
             speed = PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED;
@@ -277,6 +244,7 @@ export class PlayerStateSystem {
         } else {
             speed = PLAYER_CONSTANTS.ANIMATION_SPEED;
         }
+        // --- FIX END ---
 
         if (renderable.animationTimer < speed) return;
 
