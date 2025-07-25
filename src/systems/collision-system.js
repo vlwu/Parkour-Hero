@@ -176,6 +176,10 @@ export class CollisionSystem {
 
                     if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
                         const knockbackVx = (pos.x + col.width / 2) < (collider.x + collider.width / 2) ? -150 : 150;
+                        // If the player is on the ground, the horizontal knockback from an enemy should not also push them upwards.
+                        // This prevents the vertical collision check from thinking the player is jumping, which would cause them to fall through platforms.
+                        const knockbackVy = col.isGrounded ? 0 : -150;
+
                         eventBus.publish('collisionEvent', {
                             type: 'hazard',
                             entityId: entityId,
@@ -183,7 +187,7 @@ export class CollisionSystem {
                             damage: 20,
                             knockback: {
                                 vx: knockbackVx,
-                                vy: -150
+                                vy: knockbackVy
                             }
                         });
                     }
@@ -408,4 +412,5 @@ export class CollisionSystem {
             }
         }
     }
+
 }
