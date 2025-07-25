@@ -142,8 +142,18 @@ export class EnemySystem {
     }
 
     _updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData, col, level) {
+        // --- RELIABLE DEBUGGING LOG ---
+        if (playerData) {
+            console.log("Chicken AI Status:", { 
+                state: state.currentState, 
+                chickenPos: { x: pos.x.toFixed(0), y: pos.y.toFixed(0) },
+                playerPos: { x: playerData.x.toFixed(0), y: playerData.y.toFixed(0) },
+                distance: Math.abs((playerData.x + playerData.width / 2) - (pos.x + col.width / 2)).toFixed(0)
+            });
+        }
+        
         const ai = enemy.ai;
-
+    
         switch (state.currentState) {
             case 'idle':
                 vel.vx = 0;
@@ -157,14 +167,33 @@ export class EnemySystem {
                     }
                 }
     
-                if (playerData && playerData.isGrounded && Math.abs((playerData.y + playerData.height) - (pos.y + col.height)) < 2) {
-                    const isPlayerRight = playerData.x > pos.x;
-                    const isChickenFacingRight = renderable.direction === 'right';
-                    const distance = Math.abs(playerData.x - pos.x);
-    
-                    if (distance <= ai.aggroRange && isPlayerRight === isChickenFacingRight) {
-                        state.currentState = 'warning';
-                        enemy.timer = ai.idleTime;
+                if (playerData) {
+                    const verticalDistance = Math.abs((playerData.y + playerData.height / 2) - (pos.y + col.height / 2));
+                    const onSameLevel = verticalDistance < col.height * 1.5;
+                    const horizontalDistance = Math.abs((playerData.x + playerData.width / 2) - (pos.x + col.width / 2));
+                    const inRange = horizontalDistance <= ai.aggroRange;
+
+                    if (onSameLevel && inRange) {
+                        const isPlayerRight = (playerData.x + playerData.width / 2) > (pos.x + col.width / 2);
+                        const chargeDirection = isPlayerRight ? 'right' : 'left';
+                        
+                        // --- FIX: Check if there's room to charge before starting the attack ---
+                        const edges = this._findPlatformEdges(pos, col, level);
+                        let hasRoomToCharge = true;
+                        if (edges) {
+                            if (chargeDirection === 'right' && (pos.x + col.width) >= edges.right - 1) {
+                                hasRoomToCharge = false;
+                            }
+                            if (chargeDirection === 'left' && pos.x <= edges.left + 1) {
+                                hasRoomToCharge = false;
+                            }
+                        }
+
+                        if (hasRoomToCharge) {
+                            renderable.direction = chargeDirection;
+                            state.currentState = 'warning';
+                            enemy.timer = ai.idleTime;
+                        }
                     }
                 }
                 break;

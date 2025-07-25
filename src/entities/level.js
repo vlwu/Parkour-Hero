@@ -22,7 +22,7 @@ const trapFactory = {
 };
 
 export class Level {
-  constructor(levelConfig) {
+  constructor(levelConfig, entityManager) {
     this.name = levelConfig.name || 'Unnamed Level';
 
 
@@ -89,6 +89,9 @@ export class Level {
       }
     });
 
+    if (entityManager) {
+        this.resetEnemies(entityManager);
+    }
     this._populateSpatialGrid();
 
     this.totalFruitCount = this.fruits.length;

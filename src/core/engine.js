@@ -146,7 +146,6 @@ export class Engine {
     const levelData = this.levelManager.getLevelData(sectionIndex, levelIndex);
     if (!levelData) { this.stop(); return; }
 
-    this.currentLevel = new Level(levelData);
     this.pauseForMenu = false;
 
     let newState = new GameState(this.gameState);
@@ -167,9 +166,8 @@ export class Engine {
     this.effectsSystem.reset();
     this.gameFlowSystem.reset(this.isRunning);
 
+    this.currentLevel = new Level(levelData, this.entityManager);
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
-
-    this.currentLevel.resetEnemies(this.entityManager);
 
     this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
     this.camera.snapToPlayer(this.entityManager, this.playerEntityId);
