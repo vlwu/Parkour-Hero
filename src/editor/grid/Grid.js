@@ -60,22 +60,36 @@ export class Grid {
 
     paintCell(index, tileId) {
         const cell = DOM.gridContainer.children[index];
-        if (cell) {
-            cell.dataset.tileId = tileId;
-            const def = TILE_DEFINITIONS[tileId];
+        if (!cell) return;
 
-            // Reset styles first to handle erasing and switching tile types
-            cell.style.borderTop = '';
-            cell.style.backgroundColor = '';
+        cell.dataset.tileId = tileId;
+        const def = TILE_DEFINITIONS[tileId];
 
-            if (def && def.oneWay) {
-                // One-way platform: draw only a top border
-                cell.style.borderTop = `5px solid ${getPaletteColor(def.type)}`;
-                cell.style.backgroundColor = 'transparent'; // Ensure cell background is clear to see grid lines
-            } else if (def && def.type !== 'empty') {
-                // Regular tile: fill the background
-                cell.style.backgroundColor = getPaletteColor(def.type);
-            }
+        // Reset all visual styles first
+        cell.style.backgroundImage = '';
+        cell.style.backgroundPosition = '';
+        cell.style.backgroundRepeat = '';
+        cell.style.backgroundColor = 'transparent'; // Default for empty or sprite-based tiles
+        cell.style.borderTop = ''; // Clear one-way platform style from previous state
+
+        if (!def || def.type === 'empty') {
+            return; // Cell is empty, we're done
+        }
+
+        // Apply styles based on tile definition
+        if (def.collisionBox) {
+            // This is a fractional block, so it must be rendered with its sprite
+            cell.style.backgroundImage = `url('/assets/Terrain/Terrain.png')`;
+            cell.style.backgroundPosition = `-${def.spriteConfig.srcX}px -${def.spriteConfig.srcY}px`;
+            cell.style.backgroundRepeat = 'no-repeat';
+        } else if (!def.oneWay) {
+            // This is a standard, full-sized, solid block
+            cell.style.backgroundColor = getPaletteColor(def.type);
+        }
+
+        // If the tile is a one-way platform (regardless of size), add the top border style
+        if (def.oneWay) {
+            cell.style.borderTop = `5px solid ${getPaletteColor(def.type)}`;
         }
     }
 

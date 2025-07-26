@@ -42,14 +42,23 @@ export const PALETTE_ABBREVIATIONS = {
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
     'sand': 'SND', 'mud': 'MUD', 'ice': 'ICE',
-    'oneway_gold': 'OW-G', 'oneway_wood': 'OW-W', 'oneway_stone': 'OW-S'
+    'oneway_gold': 'OW-G', 'oneway_wood': 'OW-W', 'oneway_stone': 'OW-S',
+
+    // New Blocks
+    'wood_third_h': 'W-H', 'wood_third_v': 'W-V', 'wood_ninth_sq': 'W-1/9', 'wood_four_ninths_sq': 'W-4/9',
+    'stone_third_h': 'S-H', 'stone_third_v': 'S-V', 'stone_ninth_sq': 'S-1/9', 'stone_four_ninths_sq': 'S-4/9',
+    'gold_third_h': 'G-H', 'gold_third_v': 'G-V', 'gold_ninth_sq': 'G-1/9', 'gold_four_ninths_sq': 'G-4/9',
+    'orange_dirt_third_h': 'O-H', 'orange_dirt_third_v': 'O-V', 'orange_dirt_ninth_sq': 'O-1/9', 'orange_dirt_four_ninths_sq': 'O-4/9',
 };
 
 // Helper to get the color for a given item or tile type
 export function getPaletteColor(type) {
     switch (type) {
-        case 'dirt': return '#8B4513'; case 'orange_dirt': return '#f47114ff'; case 'pink_dirt': return '#da2ac8ff';
-        case 'stone': return '#6c757d'; case 'wood': return '#A0522D';
+        case 'dirt': return '#8B4513';
+        case 'orange_dirt': case 'orange_dirt_third_h': case 'orange_dirt_third_v': case 'orange_dirt_ninth_sq': case 'orange_dirt_four_ninths_sq': return '#f47114ff'; 
+        case 'pink_dirt': return '#da2ac8ff';
+        case 'stone': case 'stone_third_h': case 'stone_third_v': case 'stone_ninth_sq': case 'stone_four_ninths_sq': return '#6c757d'; 
+        case 'wood': case 'wood_third_h': case 'wood_third_v': case 'wood_ninth_sq': case 'wood_four_ninths_sq': return '#A0522D';
         case 'green_block': return '#28a745'; case 'sand': return '#F4A460';
         case 'mud': return '#5D4037'; case 'ice': return '#5DADE2';
         case 'trampoline': return '#8e44ad';
@@ -75,7 +84,7 @@ export function getPaletteColor(type) {
         case 'mushroom': return '#e6341cff'; case 'chicken': return '#f1c40f';
         case 'snail': return '#cc37e7ff'; case 'slime': return '#2ecc71';
         case 'turtle': return '#6198d7ff';
-        case 'oneway_gold': return '#FFD700';
+        case 'oneway_gold': case 'gold_third_h': case 'gold_third_v': case 'gold_ninth_sq': case 'gold_four_ninths_sq': return '#FFD700';
         case 'oneway_wood': return '#855E42';
         case 'oneway_stone': return '#808080';
         case 'empty': return 'rgba(0,0,0,0.3)'; default: return '#34495e';

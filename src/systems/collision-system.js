@@ -26,11 +26,14 @@ export class CollisionSystem {
             for (let x = 0; x < level.gridWidth; x++) {
                 const tile = level.tiles[y][x];
                 if (tile && tile.solid) {
+                    const collisionWidth = tile.collisionBox ? tile.collisionBox.width : GRID_CONSTANTS.TILE_SIZE;
+                    const collisionHeight = tile.collisionBox ? tile.collisionBox.height : GRID_CONSTANTS.TILE_SIZE;
+
                     this.spatialGrid.insert({
                         x: x * GRID_CONSTANTS.TILE_SIZE,
                         y: y * GRID_CONSTANTS.TILE_SIZE,
-                        width: GRID_CONSTANTS.TILE_SIZE,
-                        height: GRID_CONSTANTS.TILE_SIZE,
+                        width: collisionWidth,
+                        height: collisionHeight,
                         isOneWay: tile.oneWay || false,
                         surfaceType: tile.interaction || tile.type,
                         type: 'tile'
