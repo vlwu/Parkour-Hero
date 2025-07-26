@@ -128,19 +128,28 @@ export class CollisionSystem {
                 if (collider.isOneWay) continue;
 
                 if (this._isRectColliding(entityRect, collider)) {
-                    // Handle Player-Enemy horizontal collision
                     const isPlayer = !!playerCtrl;
                     const isEnemyCollider = collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent);
+
+                    // Handle player-enemy specific logic.
                     if (isPlayer && isEnemyCollider) {
                         const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                         const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                         if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
                             eventBus.publish('playerDied');
-                            return; // Stop processing for this player
+                            return; // Stop processing for this player.
                         }
+                        // Player passes through non-damaging enemy.
+                        continue;
+                    }
+                    
+                    // If the current entity is an enemy and it hits the player, let it pass through.
+                    // Damage is only initiated by the player's collision check.
+                    if (collider.type === 'entity') {
+                        continue;
                     }
 
-                    // Physics response
+                    // Physics response for solid tiles and traps
                     if (vel.vx > 0) { // Moving right
                         pos.x = collider.x - col.width;
                     } else if (vel.vx < 0) { // Moving left
@@ -148,7 +157,7 @@ export class CollisionSystem {
                     }
                     vel.vx = 0;
                     entityRect.x = pos.x;
-                    col.isAgainstWall = !['sand', 'mud', 'ice', 'platform', 'enemy'].includes(collider.surfaceType);
+                    col.isAgainstWall = !['sand', 'mud', 'ice', 'platform'].includes(collider.surfaceType);
                 }
             }
 
@@ -166,26 +175,39 @@ export class CollisionSystem {
 
                 const isPlayer = !!playerCtrl;
                 const isEnemyCollider = collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent);
+
+                // Handle player-enemy specific logic.
+                if (isPlayer && isEnemyCollider) {
+                    const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
+                    const killable = entityManager.getComponent(collider.entityId, KillableComponent);
+                    const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
+
+                    // Stomp Condition: Player must be moving down.
+                    if (vel.vy > 0 && prevBodyBottom <= collider.y + 2 && !enemy.isDead && killable?.stompable) {
+                        eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });
+                        pos.y = collider.y - col.height;
+                        vel.vy = 0;
+                        return; // Stomp successful, end processing for player.
+                    }
+                    
+                    // Damage Condition for any other contact.
+                    if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
+                        eventBus.publish('playerDied');
+                        return;
+                    }
+
+                    // If neither stomp nor damage, pass through.
+                    continue;
+                }
+
+                if (collider.type === 'entity') {
+                    continue;
+                }
                 
-                // Vertical collision logic
+                // Physics response for solid tiles and traps
                 if (vel.vy >= 0) { // Moving Down
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
-                    if (prevBodyBottom <= collider.y + 2) { // Allow for slight penetration
-                         if (isPlayer && isEnemyCollider) { // Player landing on an enemy
-                            const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
-                            const killable = entityManager.getComponent(collider.entityId, KillableComponent);
-                            if (!enemy.isDead && killable?.stompable) {
-                                eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });
-                                pos.y = collider.y - col.height;
-                                vel.vy = 0; // The stomp event will set the bounce velocity
-                                return; // End all collision for player this frame
-                            } else if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                                eventBus.publish('playerDied');
-                                return;
-                            }
-                        }
-
-                        // Standard landing
+                    if (prevBodyBottom <= collider.y + 2) {
                         if (!collider.isOneWay || prevBodyBottom <= collider.y) {
                            this._landOnSurface(pos, vel, col, collider.y, collider.surfaceType, entityId);
                            entityRect.y = pos.y;
@@ -196,14 +218,6 @@ export class CollisionSystem {
                     }
                 } else { // Moving Up
                     if (!collider.isOneWay) {
-                         if (isPlayer && isEnemyCollider) { // Player hitting enemy from below
-                            const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
-                            const killable = entityManager.getComponent(collider.entityId, KillableComponent);
-                            if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                                eventBus.publish('playerDied');
-                                return;
-                            }
-                        }
                         pos.y = collider.y + collider.height;
                         vel.vy = 0;
                         entityRect.y = pos.y;
@@ -211,37 +225,39 @@ export class CollisionSystem {
                 }
             }
 
-            // --- FIX START: Ground Stickiness / Probe ---
-            // If after all movement resolution, we're not considered grounded, do one last check.
-            // This prevents the player from "bouncing" off the floor by a sub-pixel amount due to gravity.
+            // Ground Stickiness / Probe
             if (!col.isGrounded && vel.vy >= 0) {
                 const groundProbe = {
                     x: pos.x,
                     y: pos.y + col.height,
                     width: col.width,
-                    height: 1 // A 1-pixel high probe just below the entity's feet.
+                    height: 1 
                 };
                 const potentialGround = this.spatialGrid.query(groundProbe);
 
                 for (const ground of potentialGround) {
                     if (ground.type === 'entity' && ground.entityId === entityId) continue;
                     
+                    // --- BUG FIX START: Prevent probe from landing on entities ---
+                    // The ground probe should only "stick" to level geometry (tiles, solid traps), not other entities.
+                    if (ground.type === 'entity') {
+                        continue;
+                    }
+                    // --- BUG FIX END ---
+
                     if (this._isRectColliding(groundProbe, ground)) {
-                         // Check solid platforms or one-way platforms where we're positioned above them
                          if (!ground.isOneWay) {
                             this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, entityId);
-                            if (vel.vy > 0) vel.vy = 0; // Ensure no downward velocity
-                            break; // Found ground, no need to check further.
+                            if (vel.vy > 0) vel.vy = 0; 
+                            break; 
                          } else if (ground.isOneWay && pos.y + col.height <= ground.y + 2) {
-                            // For one-way platforms, only consider them ground if we're positioned above them
                             this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, entityId);
-                            if (vel.vy > 0) vel.vy = 0; // Ensure no downward velocity
-                            break; // Found ground, no need to check further.
+                            if (vel.vy > 0) vel.vy = 0;
+                            break;
                          }
                     }
                 }
             }
-            // --- FIX END ---
 
             // 3. Final position clamping and object interactions
             pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));

@@ -148,14 +148,14 @@ export class EnemySystem {
     _updatePatrolAI(dt, pos, vel, enemy, renderable, state, col, level) {
         const ai = enemy.ai;
         const speed = ai.patrol.speed;
-
+    
         if (state.currentState === 'idle') {
             renderable.animationState = enemy.type === 'slime' ? 'idle_run' : 'idle';
         } else {
             renderable.animationState = enemy.type === 'snail' ? 'walk' : 'run';
             if (enemy.type === 'slime') renderable.animationState = 'idle_run';
         }
-
+    
         switch (state.currentState) {
             case 'idle':
                 vel.vx = 0;
@@ -164,25 +164,33 @@ export class EnemySystem {
                     state.currentState = 'patrol';
                 }
                 break;
-
+    
             case 'patrol':
                 vel.vx = renderable.direction === 'right' ? speed : -speed;
-
+    
+                // --- BUG FIX START: Self-contained AI movement checks ---
+                // Edge detection: Check for solid ground one step ahead.
                 const groundProbeX = renderable.direction === 'right' 
-                    ? pos.x + col.width + 1 
-                    : pos.x - 1;
-                const groundProbeY = pos.y + col.height + 1;
-                
+                    ? pos.x + col.width // Check at the right edge
+                    : pos.x;           // Check at the left edge
+                const groundProbeY = pos.y + col.height + 1; // 1 pixel below feet
                 const groundAhead = level.getTileAt(groundProbeX, groundProbeY);
-                
                 const atEdge = !groundAhead.solid || groundAhead.oneWay;
-                const hitWall = col.isAgainstWall;
-
+    
+                // Wall detection: Check for a solid wall at mid-height.
+                const wallProbeX = renderable.direction === 'right' 
+                    ? pos.x + col.width + 1  // 1 pixel ahead of right edge
+                    : pos.x - 1;             // 1 pixel ahead of left edge
+                const wallProbeY = pos.y + col.height / 2; // Check at the enemy's vertical center
+                const wallAhead = level.getTileAt(wallProbeX, wallProbeY);
+                const hitWall = wallAhead.solid && !wallAhead.oneWay;
+    
                 if (atEdge || hitWall) {
                     renderable.direction = (renderable.direction === 'right' ? 'left' : 'right');
                     state.currentState = 'idle';
-                    enemy.timer = 0.5; 
+                    enemy.timer = 0.5;
                 }
+                // --- BUG FIX END ---
                 break;
         }
     }
@@ -200,7 +208,11 @@ export class EnemySystem {
                 const groundProbeY = pos.y + col.height + 1;
                 const groundAhead = level.getTileAt(groundProbeX, groundProbeY);
                 const atEdge = !groundAhead.solid || groundAhead.oneWay;
-                const hitWall = col.isAgainstWall;
+
+                const wallProbeX = renderable.direction === 'right' ? pos.x + col.width + 1 : pos.x - 1;
+                const wallProbeY = pos.y + col.height / 2;
+                const wallAhead = level.getTileAt(wallProbeX, wallProbeY);
+                const hitWall = wallAhead.solid && !wallAhead.oneWay;
 
                 if (atEdge || hitWall) {
                     renderable.direction = (renderable.direction === 'right' ? 'left' : 'right');
