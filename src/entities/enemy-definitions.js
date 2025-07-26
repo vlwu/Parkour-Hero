@@ -48,6 +48,7 @@ export const ENEMY_DEFINITIONS = {
         height: 24,
         spriteKey: 'snail',
         animations: {
+            idle: { frameCount: 15, speed: 0.2 },
             walk: { frameCount: 10, speed: 0.15 },
             hit: { frameCount: 5, speed: 0.1 }
         },
