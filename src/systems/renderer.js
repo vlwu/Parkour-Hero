@@ -39,16 +39,28 @@ export class Renderer {
             }
             const screenX = x * tileSize;
             const screenY = y * tileSize;
-            const drawSize = tileSize + 1;
-
+            
             if (tile.spriteConfig) {
-                const sWidth = tileSize;
+                // Use the width/height from spriteConfig for the source rect from the spritesheet.
+                // Fallback to tileSize if not specified (for full blocks).
+                const sWidth = tile.spriteConfig.width || tileSize;
                 const sHeight = tile.spriteConfig.height || tileSize;
-                const dWidth = drawSize;
-                const dHeight = sHeight === tileSize ? drawSize : sHeight;
-                cacheCtx.drawImage(sprite, tile.spriteConfig.srcX, tile.spriteConfig.srcY, sWidth, sHeight, screenX, screenY, dWidth, dHeight);
-            } else {
-                cacheCtx.drawImage(sprite, screenX, screenY, drawSize, drawSize);
+
+                // Use the collisionBox dimensions for the destination rect on the canvas if available.
+                // This correctly sizes fractional blocks. Fallback to tileSize for full blocks.
+                const dWidth = tile.collisionBox ? tile.collisionBox.width : tileSize;
+                const dHeight = tile.collisionBox ? tile.collisionBox.height : tileSize;
+                
+                // For one-way platforms which don't have a collision box, ensure destination height matches source height.
+                const finalDHeight = tile.oneWay && !tile.collisionBox ? sHeight : dHeight;
+
+                cacheCtx.drawImage(
+                    sprite, 
+                    tile.spriteConfig.srcX, tile.spriteConfig.srcY, 
+                    sWidth, sHeight, 
+                    screenX, screenY, 
+                    dWidth, finalDHeight
+                );
             }
         }
       }

@@ -3,10 +3,8 @@ import { GRID_CONSTANTS } from '../../utils/constants.js';
 import { getPaletteColor } from '../config/EditorSettings.js';
 import { DOM } from '../ui/DOM.js';
 
-// IMPORTANT: Replace these values with the actual dimensions of your Terrain.png file
-// I will assume 256x256 based on the last step.
-const TERRAIN_SPRITESHEET_WIDTH = 256;
-const TERRAIN_SPRITESHEET_HEIGHT = 256;
+const TERRAIN_SPRITESHEET_WIDTH = 352;
+const TERRAIN_SPRITESHEET_HEIGHT = 176;
 
 export class Grid {
     constructor(width, height) {
@@ -81,16 +79,26 @@ export class Grid {
         
         // 2. Handle rendering
         if (def.collisionBox) {
-            // It's a fractional block. Render with sprite.
-            const innerBlock = document.createElement('span');
-            innerBlock.style.display = 'block';
-            innerBlock.style.width = `${def.collisionBox.width}px`;
-            innerBlock.style.height = `${def.collisionBox.height}px`;
-            innerBlock.style.backgroundImage = `url('/assets/Terrain/Terrain.png')`;
-            innerBlock.style.backgroundPosition = `-${def.spriteConfig.srcX}px -${def.spriteConfig.srcY}px`;
-            innerBlock.style.backgroundSize = `${TERRAIN_SPRITESHEET_WIDTH}px ${TERRAIN_SPRITESHEET_HEIGHT}px`;
-            innerBlock.style.backgroundRepeat = 'no-repeat';
-            cell.appendChild(innerBlock);
+            // --- FIX START: Use a robust viewport/mover technique for accurate sprite clipping ---
+            const viewport = document.createElement('span');
+            viewport.style.display = 'block';
+            viewport.style.width = `${def.collisionBox.width}px`;
+            viewport.style.height = `${def.collisionBox.height}px`;
+            viewport.style.overflow = 'hidden';
+            viewport.style.position = 'relative';
+
+            const spriteMover = document.createElement('span');
+            spriteMover.style.display = 'block';
+            spriteMover.style.position = 'absolute';
+            spriteMover.style.width = `${TERRAIN_SPRITESHEET_WIDTH}px`;
+            spriteMover.style.height = `${TERRAIN_SPRITESHEET_HEIGHT}px`;
+            spriteMover.style.backgroundImage = `url('/assets/Terrain/Terrain.png')`;
+            spriteMover.style.left = `-${def.spriteConfig.srcX}px`;
+            spriteMover.style.top = `-${def.spriteConfig.srcY}px`;
+
+            viewport.appendChild(spriteMover);
+            cell.appendChild(viewport);
+            // --- FIX END ---
         } else if (!def.oneWay) {
             // It's a standard, full-sized SOLID block. Render with background color.
             cell.style.backgroundColor = getPaletteColor(def.type);
@@ -99,7 +107,6 @@ export class Grid {
         // 3. Add one-way platform indicator (if applicable)
         if (def.oneWay) {
             cell.style.borderTop = `5px solid ${getPaletteColor(def.type)}`;
-            // FIX: Add a subtle background to the cell for better visibility, especially for full-size one-way platforms
             if (!def.collisionBox) {
                  const color = getPaletteColor(def.type);
                  cell.style.backgroundColor = this._hexToRgba(color, 0.3);

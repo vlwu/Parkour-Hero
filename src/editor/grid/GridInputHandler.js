@@ -45,8 +45,27 @@ export class GridInputHandler {
         const clickX = (e.clientX - rect.left) / scale;
         const clickY = (e.clientY - rect.top) / scale;
 
-        if (target.classList.contains('grid-cell')) {
-            const index = parseInt(target.dataset.index);
+        // --- FIX: Use .closest() to find the relevant target, whether it's the element itself or a parent ---
+        const cellTarget = target.closest('.grid-cell');
+        const objectTarget = target.closest('.dynamic-object');
+
+        if (objectTarget) { // Prioritize actions on dynamic objects over the grid cell
+            const id = parseInt(objectTarget.dataset.id);
+            if (e.button === 0) { // Left-click drag
+                this.isDragging = true;
+                this.draggedObjectId = id;
+                const {x, y} = this.callbacks.onObjectDragStart(id);
+                
+                this.dragStartX = e.clientX;
+                this.dragStartY = e.clientY;
+                this.dragInitialX = x;
+                this.dragInitialY = y;
+                objectTarget.classList.add('dragging');
+            } else if (e.button === 2) { // Right-click delete
+                this.callbacks.onObjectDelete(id);
+            }
+        } else if (cellTarget) { // If not an object, check if it was a cell (or a child of a cell)
+            const index = parseInt(cellTarget.dataset.index);
             if (e.button === 0) { // Left-click
                 if (this.callbacks.isTileSelected()) {
                     this.isPainting = true;
@@ -60,21 +79,6 @@ export class GridInputHandler {
                 this.callbacks.onPaintStart();
                 this.callbacks.onErase(index);
             }
-        } else if (target.classList.contains('dynamic-object')) {
-            const id = parseInt(target.dataset.id);
-            if (e.button === 0) { // Left-click drag
-                this.isDragging = true;
-                this.draggedObjectId = id;
-                const {x, y} = this.callbacks.onObjectDragStart(id);
-                
-                this.dragStartX = e.clientX;
-                this.dragStartY = e.clientY;
-                this.dragInitialX = x;
-                this.dragInitialY = y;
-                target.classList.add('dragging');
-            } else if (e.button === 2) { // Right-click delete
-                this.callbacks.onObjectDelete(id);
-            }
         }
     }
 
@@ -87,8 +91,10 @@ export class GridInputHandler {
             const newY = this.dragInitialY + dy;
             this.callbacks.onObjectDrag(this.draggedObjectId, newX, newY);
         } else if (this.isPainting || this.isErasing) {
-            if (e.target.classList.contains('grid-cell')) {
-                const index = parseInt(e.target.dataset.index);
+            // --- FIX: Use .closest() to ensure painting/erasing continues over fractional blocks ---
+            const cellTarget = e.target.closest('.grid-cell');
+            if (cellTarget) {
+                const index = parseInt(cellTarget.dataset.index);
                 if (this.isErasing) {
                     this.callbacks.onErase(index);
                 } else {
