@@ -212,6 +212,31 @@ export async function loadAssets() {
     turtle_idle2: '/assets/Enemies/Turtle/Idle 2.png',
     turtle_spikes_in: '/assets/Enemies/Turtle/Spikes in.png',
     turtle_spikes_out: '/assets/Enemies/Turtle/Spikes out.png',
+
+    bee_hit : '/assets/Enemies/Bee/Hit.png',
+    bee_attack : '/assets/Enemies/Bee/Attack.png',
+    bee_idle : '/assets/Enemies/Bee/Idle.png',
+    bee_bullet: '/assets/Enemies/Bee/Bullet.png',
+
+    bluebird_flying: '/assets/Enemies/BlueBird/Flying.png',
+    bluebird_hit: '/assets/Enemies/BlueBird/Hit.png',
+
+    fatbird_hit: '/assets/Enemies/FatBird/Hit.png',
+    fatbird_idle: '/assets/Enemies/FatBird/Idle.png',
+    fatbird_fall: '/assets/Enemies/FatBird/Fall.png',
+    fatbird_ground: '/assets/Enemies/FatBird/Ground.png',
+
+    radish_hit: '/assets/Enemies/Radish/Hit.png',
+    radish_idle1: '/assets/Enemies/Radish/Idle 1.png',
+    radish_idle2: '/assets/Enemies/Radish/Idle 2.png',
+    radish_leaves: '/assets/Enemies/Radish/Leaves.png',
+    radish_run: '/assets/Enemies/Radish/Run.png',
+
+    bat_hit: '/assets/Enemies/Bat/Hit.png',
+    bat_idle: '/assets/Enemies/Bat/Idle.png',
+    bat_flying: '/assets/Enemies/Bat/Flying.png',
+    bat_ceiling_in: '/assets/Enemies/Bat/Ceiling In.png',
+    bat_ceiling_out: '/assets/Enemies/Bat/Ceiling Out.png',
     // Other assets
     dust_particle: '/assets/Other/Dust Particle.png',
     ice_particle: '/assets/Traps/Sand Mud Ice/Ice Particle.png',
