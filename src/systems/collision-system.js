@@ -237,13 +237,11 @@ export class CollisionSystem {
 
                 for (const ground of potentialGround) {
                     if (ground.type === 'entity' && ground.entityId === entityId) continue;
-                    
-                    // --- BUG FIX START: Prevent probe from landing on entities ---
+
                     // The ground probe should only "stick" to level geometry (tiles, solid traps), not other entities.
                     if (ground.type === 'entity') {
                         continue;
                     }
-                    // --- BUG FIX END ---
 
                     if (this._isRectColliding(groundProbe, ground)) {
                          if (!ground.isOneWay) {

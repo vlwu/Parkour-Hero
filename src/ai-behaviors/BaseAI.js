@@ -23,7 +23,6 @@ export class BaseAI {
         this.level = level;
         this.playerEntityId = playerEntityId;
 
-        // --- FIX START: Use class constructors instead of strings ---
         this.enemy = this.entityManager.getComponent(this.entityId, EnemyComponent);
         this.pos = this.entityManager.getComponent(this.entityId, PositionComponent);
         this.vel = this.entityManager.getComponent(this.entityId, VelocityComponent);
@@ -31,7 +30,6 @@ export class BaseAI {
         this.renderable = this.entityManager.getComponent(this.entityId, RenderableComponent);
         this.col = this.entityManager.getComponent(this.entityId, CollisionComponent);
         this.killable = this.entityManager.getComponent(this.entityId, KillableComponent);
-        // --- FIX END ---
     }
 
     /**

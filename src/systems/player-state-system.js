@@ -229,7 +229,6 @@ export class PlayerStateSystem {
         renderable.animationTimer += dt;
         const stateName = renderable.animationState;
 
-        // --- FIX START ---
         // Revert to the original, correct logic for determining animation speed.
         let speed;
         if (stateName === 'spawn' || stateName === 'despawn') {
@@ -239,7 +238,6 @@ export class PlayerStateSystem {
         } else {
             speed = PLAYER_CONSTANTS.ANIMATION_SPEED;
         }
-        // --- FIX END ---
 
         if (renderable.animationTimer < speed) return;
 
