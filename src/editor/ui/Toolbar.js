@@ -6,6 +6,7 @@ export class Toolbar {
         DOM.resizeBtn.addEventListener('click', callbacks.onResize);
         DOM.loadBtn.addEventListener('click', () => DOM.loadFileInput.click());
         DOM.exportBtn.addEventListener('click', callbacks.onExport);
+        DOM.testLevelBtn.addEventListener('click', callbacks.onTestLevel); // This line was added
 
         DOM.undoBtn.addEventListener('click', callbacks.onUndo);
         DOM.redoBtn.addEventListener('click', callbacks.onRedo);

@@ -12,7 +12,6 @@ import { LevelImporter } from './io/LevelImporter.js';
 import { Engine } from '../core/engine.js';
 import { loadAssets } from '../managers/asset-manager.js';
 import { FontRenderer } from '../ui/font-renderer.js';
-import '../ui/ui-main.js';
 
 const round = (val) => Math.round(val * 100) / 100;
 
