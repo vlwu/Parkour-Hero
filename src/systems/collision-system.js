@@ -59,8 +59,8 @@ export class CollisionSystem {
                 };
                 const gridObject = {
                     ...hitbox,
-                    isOneWay: false,
-                    surfaceType: trap.type === 'falling_platform' ? 'platform' : trap.type,
+                    isOneWay: trap.oneway || false,
+                    surfaceType: trap.surfaceType || (trap.type === 'falling_platform' ? 'platform' : trap.type),
                     onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null,
                     type: 'trap'
                 };

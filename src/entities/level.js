@@ -8,6 +8,52 @@ import { EnemyComponent } from '../components/EnemyComponent.js';
 import { createEnemy } from './enemy-factory.js';
 import { eventBus } from '../utils/event-bus.js';
 
+// Definitions for our new static platform objects
+const staticPlatformDefinitions = {
+    'wood_third_h': { spriteConfig: { srcX: 192, srcY: 0, width: 48, height: 16 }, collisionBox: { width: 48, height: 16 }, oneway: false, surfaceType: 'wood' },
+    'wood_third_v': { spriteConfig: { srcX: 240, srcY: 0, width: 16, height: 48 }, collisionBox: { width: 16, height: 48 }, oneway: false, surfaceType: 'wood' },
+    'wood_ninth_sq': { spriteConfig: { srcX: 192, srcY: 16, width: 16, height: 16 }, collisionBox: { width: 16, height: 16 }, oneway: false, surfaceType: 'wood' },
+    'wood_four_ninths_sq': { spriteConfig: { srcX: 208, srcY: 16, width: 32, height: 32 }, collisionBox: { width: 32, height: 32 }, oneway: false, surfaceType: 'wood' },
+    'stone_third_h': { spriteConfig: { srcX: 192, srcY: 64, width: 48, height: 16 }, collisionBox: { width: 48, height: 16 }, oneway: false, surfaceType: 'stone' },
+    'stone_third_v': { spriteConfig: { srcX: 240, srcY: 64, width: 16, height: 48 }, collisionBox: { width: 16, height: 48 }, oneway: false, surfaceType: 'stone' },
+    'stone_ninth_sq': { spriteConfig: { srcX: 192, srcY: 80, width: 16, height: 16 }, collisionBox: { width: 16, height: 16 }, oneway: false, surfaceType: 'stone' },
+    'stone_four_ninths_sq': { spriteConfig: { srcX: 208, srcY: 80, width: 32, height: 32 }, collisionBox: { width: 32, height: 32 }, oneway: false, surfaceType: 'stone' },
+    'gold_third_h': { spriteConfig: { srcX: 272, srcY: 128, width: 48, height: 16 }, collisionBox: { width: 48, height: 16 }, oneway: true, surfaceType: 'oneway_gold' },
+    'gold_third_v': { spriteConfig: { srcX: 320, srcY: 128, width: 16, height: 48 }, collisionBox: { width: 16, height: 48 }, oneway: true, surfaceType: 'oneway_gold' },
+    'gold_ninth_sq': { spriteConfig: { srcX: 272, srcY: 144, width: 16, height: 16 }, collisionBox: { width: 16, height: 16 }, oneway: true, surfaceType: 'oneway_gold' },
+    'gold_four_ninths_sq': { spriteConfig: { srcX: 288, srcY: 144, width: 32, height: 32 }, collisionBox: { width: 32, height: 32 }, oneway: true, surfaceType: 'oneway_gold' },
+    'orange_dirt_third_h': { spriteConfig: { srcX: 192, srcY: 128, width: 48, height: 16 }, collisionBox: { width: 48, height: 16 }, oneway: false, surfaceType: 'orange_dirt' },
+    'orange_dirt_third_v': { spriteConfig: { srcX: 240, srcY: 128, width: 16, height: 48 }, collisionBox: { width: 16, height: 48 }, oneway: false, surfaceType: 'orange_dirt' },
+    'orange_dirt_ninth_sq': { spriteConfig: { srcX: 192, srcY: 144, width: 16, height: 16 }, collisionBox: { width: 16, height: 16 }, oneway: false, surfaceType: 'orange_dirt' },
+    'orange_dirt_four_ninths_sq': { spriteConfig: { srcX: 208, srcY: 144, width: 32, height: 32 }, collisionBox: { width: 32, height: 32 }, oneway: false, surfaceType: 'orange_dirt' },
+};
+
+class StaticPlatform {
+    constructor(x, y, config) {
+        const def = staticPlatformDefinitions[config.type];
+        this.x = x;
+        this.y = y;
+        this.width = def.collisionBox.width;
+        this.height = def.collisionBox.height;
+        this.type = config.type;
+        this.spriteConfig = def.spriteConfig;
+        this.surfaceType = def.surfaceType;
+        this.solid = true;
+        this.oneway = def.oneway;
+    }
+    get hitbox() { return { x: this.x - this.width / 2, y: this.y - this.height / 2, width: this.width, height: this.height }; }
+    update() {}
+    render(ctx, assets, camera) {
+        const sprite = assets['block'];
+        if (!sprite) return;
+        const drawX = this.x - this.width / 2;
+        const drawY = this.y - this.height / 2;
+        if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
+        ctx.drawImage(sprite, this.spriteConfig.srcX, this.spriteConfig.srcY, this.spriteConfig.width, this.spriteConfig.height, drawX, drawY, this.width, this.height);
+    }
+    reset() {}
+    onCollision() {}
+}
 
 const trapFactory = {
   fire_trap: Traps.FireTrap,
@@ -22,6 +68,11 @@ const trapFactory = {
   saw: Traps.Saw,
   slime_puddle: Traps.SlimePuddle,
 };
+
+Object.keys(staticPlatformDefinitions).forEach(type => {
+    trapFactory[type] = StaticPlatform;
+});
+// --- END NEW ---
 
 export class Level {
   constructor(levelConfig, entityManager) {
@@ -59,10 +110,10 @@ export class Level {
       const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
       const worldY = obj.y * GRID_CONSTANTS.TILE_SIZE;
 
-      const TrapClass = trapFactory[obj.type];
+      const ItemClass = trapFactory[obj.type];
 
-      if (TrapClass) {
-        const instance = new TrapClass(worldX, worldY, obj);
+      if (ItemClass) {
+        const instance = new ItemClass(worldX, worldY, obj);
         this.traps.push(instance);
       } else if (obj.type.startsWith('fruit_')) {
         const instance = {

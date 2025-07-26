@@ -5,6 +5,13 @@ import { DOM } from '../ui/DOM.js';
 
 const round = (val) => Math.round(val * 100) / 100;
 
+const fractionalPlatformTypes = [
+    'wood_third_h', 'wood_third_v', 'wood_ninth_sq', 'wood_four_ninths_sq',
+    'stone_third_h', 'stone_third_v', 'stone_ninth_sq', 'stone_four_ninths_sq',
+    'gold_third_h', 'gold_third_v', 'gold_ninth_sq', 'gold_four_ninths_sq',
+    'orange_dirt_third_h', 'orange_dirt_third_v', 'orange_dirt_ninth_sq', 'orange_dirt_four_ninths_sq'
+];
+
 export class ObjectManager {
     constructor(grid) {
         this.grid = grid;
@@ -239,8 +246,51 @@ export class ObjectManager {
 
     _applySnapping(obj) {
         const groundSnappable = ['trophy', 'checkpoint', 'trampoline', 'spike', 'fire_trap', ...Object.keys(ENEMY_DEFINITIONS)];
-        if (groundSnappable.includes(obj.type)) { this._snapToGround(obj); }
-        else if (obj.type === 'fan') { this._snapFanToEdge(obj); }
+        
+        if (fractionalPlatformTypes.includes(obj.type)) {
+            this._snapFractionalPlatform(obj);
+        } else if (groundSnappable.includes(obj.type)) { 
+            this._snapToGround(obj); 
+        } else if (obj.type === 'fan') { 
+            this._snapFanToEdge(obj); 
+        }
+    }
+
+    _snapFractionalPlatform(obj) {
+        const gridX = Math.floor(obj.x);
+        const gridY = Math.floor(obj.y);
+
+        let snapX, snapY;
+
+        const findClosest = (value, options) => {
+            return options.reduce((prev, curr) => (Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev));
+        };
+
+        if (obj.type.endsWith('_third_h')) {
+            snapX = gridX + 0.5;
+            const yOptions = [gridY + 1/6, gridY + 3/6, gridY + 5/6];
+            snapY = findClosest(obj.y, yOptions);
+        } else if (obj.type.endsWith('_third_v')) {
+            snapY = gridY + 0.5;
+            const xOptions = [gridX + 1/6, gridX + 3/6, gridX + 5/6];
+            snapX = findClosest(obj.x, xOptions);
+        } else if (obj.type.endsWith('_ninth_sq')) {
+            const xOptions = [gridX + 1/6, gridX + 3/6, gridX + 5/6];
+            const yOptions = [gridY + 1/6, gridY + 3/6, gridY + 5/6];
+            snapX = findClosest(obj.x, xOptions);
+            snapY = findClosest(obj.y, yOptions);
+        } else if (obj.type.endsWith('_four_ninths_sq')) {
+            const xOptions = [gridX + 1/3, gridX + 2/3];
+            const yOptions = [gridY + 1/3, gridY + 2/3];
+            snapX = findClosest(obj.x, xOptions);
+            snapY = findClosest(obj.y, yOptions);
+        } else {
+            snapX = obj.x;
+            snapY = obj.y;
+        }
+
+        obj.x = snapX;
+        obj.y = snapY;
     }
 
     _snapFanToEdge(fan) {
@@ -314,6 +364,11 @@ export class ObjectManager {
             case 'fan': return { width: 24, height: 8 }; case 'falling_platform': return { width: 32, height: 10 };
             case 'rock_head': return { width: 42, height: 42 }; case 'spike_head': return { width: 54, height: 52 };
             case 'saw': return { width: 38, height: 38 };
+            // Fractional Platforms
+            case 'wood_third_h': case 'stone_third_h': case 'gold_third_h': case 'orange_dirt_third_h': return { width: 48, height: 16 };
+            case 'wood_third_v': case 'stone_third_v': case 'gold_third_v': case 'orange_dirt_third_v': return { width: 16, height: 48 };
+            case 'wood_ninth_sq': case 'stone_ninth_sq': case 'gold_ninth_sq': case 'orange_dirt_ninth_sq': return { width: 16, height: 16 };
+            case 'wood_four_ninths_sq': case 'stone_four_ninths_sq': case 'gold_four_ninths_sq': case 'orange_dirt_four_ninths_sq': return { width: 32, height: 32 };
             default: return { width: 28, height: 28 }; // Default for fruits
         }
     }
