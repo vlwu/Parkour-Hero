@@ -199,23 +199,37 @@ export class Level {
 
   // Precise collision check method for any point in the world
   isSolidAt(worldX, worldY, ignoreOneWay = false) {
+    // 1. Check the tile grid first.
     const tile = this.getTileAt(worldX, worldY);
-    if (!tile || !tile.solid) return false;
-    if (ignoreOneWay && tile.oneWay) return false;
-    
-    // If it's a fractional block, we need to check if the point is within its collision box
-    if (tile.collisionBox) {
-        const tileStartX = Math.floor(worldX / GRID_CONSTANTS.TILE_SIZE) * GRID_CONSTANTS.TILE_SIZE;
-        const tileStartY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE) * GRID_CONSTANTS.TILE_SIZE;
-        
-        const pointInTileX = worldX - tileStartX;
-        const pointInTileY = worldY - tileStartY;
-        
-        return pointInTileX >= 0 && pointInTileX < tile.collisionBox.width && 
-               pointInTileY >= 0 && pointInTileY < tile.collisionBox.height;
+    if (tile && tile.solid) {
+      // If it's a solid tile and we are NOT ignoring it (if it's a one-way), it's solid.
+      if (!(ignoreOneWay && tile.oneWay)) {
+        // The original check for tile.collisionBox seems to be dead code, as TILE_DEFINITIONS don't contain it.
+        // Assuming all solid tiles from the layout grid are full blocks.
+        return true;
+      }
     }
-    
-    return true; // It's a full solid block
+
+    // 2. Check for solid objects (like static platforms) in the spatial grid.
+    const potentialColliders = this.spatialGrid.query({ x: worldX, y: worldY, width: 1, height: 1 });
+    for (const obj of potentialColliders) {
+      // Check if it's a solid object from our level geometry (traps/platforms).
+      if (obj.instance && obj.instance.solid && obj.type === 'trap') {
+        if (ignoreOneWay && obj.instance.oneway) {
+          continue; // Skip one-way platforms if requested.
+        }
+
+        const hitbox = obj.instance.hitbox;
+        if (
+          worldX >= hitbox.x && worldX < hitbox.x + hitbox.width &&
+          worldY >= hitbox.y && worldY < hitbox.y + hitbox.height
+        ) {
+          return true; // The point is inside a solid object.
+        }
+      }
+    }
+
+    return false; // No solid tile or object found at this point.
   }
 
   update(dt, entityManager, playerEntityId, eventBus, camera) {
