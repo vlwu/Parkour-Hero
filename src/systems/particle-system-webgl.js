@@ -216,7 +216,7 @@ export class ParticleSystemWebGL {
         }
     }
 
-    render(camera) {
+    render(camera, alpha = 1.0) {
         const gl = this.gl;
         if (this.activeParticles.length === 0) return;
 
@@ -225,7 +225,7 @@ export class ParticleSystemWebGL {
         gl.useProgram(this.program);
         gl.bindVertexArray(this.vao);
 
-        gl.uniformMatrix4fv(this.uniformLocations.projection, false, camera.getProjectionMatrix());
+        gl.uniformMatrix4fv(this.uniformLocations.projection, false, camera.getProjectionMatrix(alpha));
 
         gl.activeTexture(gl.TEXTURE0);
         gl.uniform1i(this.uniformLocations.texture, 0);

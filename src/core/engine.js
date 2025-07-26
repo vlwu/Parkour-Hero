@@ -407,10 +407,10 @@ export class Engine {
     // Render all 2D elements first.
     this.renderer.drawScrollingBackground(this.currentLevel, deltaTime * this.timeScale);
     this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager, alpha);
-    this.effectsSystem.render(this.ctx, this.camera);
+    this.effectsSystem.render(this.ctx, this.camera, alpha);
     
     // Render the WebGL particles on top of the 2D scene.
-    this.particleSystem.render(this.camera);
+    this.particleSystem.render(this.camera, alpha);
     
     // Render the 2D HUD and UI on top of everything.
     // Pass FIXED_DT to HUD for correct FPS calculation

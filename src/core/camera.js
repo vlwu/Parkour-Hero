@@ -41,6 +41,10 @@ export class Camera {
     // Smooth movement
     this.targetX = 0;
     this.targetY = 0;
+
+    // --- NEW: For position interpolation ---
+    this.prevX = 0;
+    this.prevY = 0;
     
     // Pre-allocate the projection matrix
     this.projectionMatrix = new Float32Array(16);
@@ -53,6 +57,10 @@ export class Camera {
   }
 
   update(entityManager, playerEntityId, deltaTime) {
+    // --- NEW: Store previous position before updating ---
+    this.prevX = this.x;
+    this.prevY = this.y;
+
     if (playerEntityId === null) return;
     const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
     const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
@@ -119,12 +127,14 @@ export class Camera {
     this.shakeInitialIntensity = intensity;
   }
 
-  apply(ctx) {
+  apply(ctx, alpha = 1.0) {
     ctx.save();
+    const renderX = this.prevX + (this.x - this.prevX) * alpha;
+    const renderY = this.prevY + (this.y - this.prevY) * alpha;
     ctx.scale(this.zoom, this.zoom);
     ctx.translate(
-      -Math.round(this.x + this.shakeX), 
-      -Math.round(this.y + this.shakeY)
+      -Math.round(renderX + this.shakeX), 
+      -Math.round(renderY + this.shakeY)
     );
   }
 
@@ -148,6 +158,9 @@ export class Camera {
     this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
     this.targetX = this.x;
     this.targetY = this.y;
+    // --- NEW: Update previous position on snap ---
+    this.prevX = this.x;
+    this.prevY = this.y;
   }
 
   getViewportBounds() {
@@ -169,12 +182,16 @@ export class Camera {
     this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
   }
 
-  getProjectionMatrix() {
+  getProjectionMatrix(alpha = 1.0) {
+    // --- NEW: Interpolate camera position for the matrix ---
+    const renderX = this.prevX + (this.x - this.prevX) * alpha;
+    const renderY = this.prevY + (this.y - this.prevY) * alpha;
+
     // Calculate the camera's view boundaries including shake and zoom
-    const left = (this.x + this.shakeX);
-    const right = (this.x + this.shakeX) + this.width;
-    const top = (this.y + this.shakeY);
-    const bottom = (this.y + this.shakeY) + this.height;
+    const left = (renderX + this.shakeX);
+    const right = (renderX + this.shakeX) + this.width;
+    const top = (renderY + this.shakeY);
+    const bottom = (renderY + this.shakeY) + this.height;
 
     // Orthographic projection matrix components
     const lr = 1 / (left - right);

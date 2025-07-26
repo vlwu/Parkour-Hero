@@ -38,10 +38,10 @@ export class EffectsSystem {
         }
     }
 
-    render(ctx, camera) {
+    render(ctx, camera, alpha) {
         if (this.activeEffects.length === 0) return;
 
-        camera.apply(ctx);
+        camera.apply(ctx, alpha);
 
         const sprite = this.assets['fruit_collected'];
         if (sprite) {

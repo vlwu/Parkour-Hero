@@ -111,7 +111,7 @@ export class Renderer {
   }
 
   renderScene(camera, level, entityManager, alpha) {
-    camera.apply(this.ctx);
+    camera.apply(this.ctx, alpha);
 
     if (this.staticLayerCache) {
         this.ctx.drawImage(this.staticLayerCache, 0, 0);
@@ -164,7 +164,7 @@ export class Renderer {
         }
     }
 
-    camera.restore(this.ctx);
+    this.ctx.restore();
   }
 
   _drawPlayer(pos, renderable, charComp, playerCtrl) {
