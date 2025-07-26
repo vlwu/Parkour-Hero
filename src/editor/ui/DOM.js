@@ -1,30 +1,45 @@
 export const DOM = {
-    // Panels & Containers
-    gridContainer: document.getElementById('grid-container'),
-    gridParent: document.getElementById('grid-parent'),
-    propertiesPanel: document.getElementById('properties-panel'),
+    // Initialize properties as null
+    gridContainer: null,
+    gridParent: null,
+    propertiesPanel: null,
+    terrainPalette: null,
+    itemsPalette: null,
+    trapsPalette: null,
+    enemiesPalette: null,
+    levelNameInput: null,
+    backgroundInput: null,
+    newBtn: null,
+    resizeBtn: null,
+    loadBtn: null,
+    exportBtn: null,
+    testLevelBtn: null,
+    undoBtn: null,
+    redoBtn: null,
+    zoomInBtn: null,
+    zoomOutBtn: null,
+    loadFileInput: null,
 
-    // Palettes
-    terrainPalette: document.getElementById('terrain-palette'),
-    itemsPalette: document.getElementById('items-palette'),
-    trapsPalette: document.getElementById('traps-palette'),
-    enemiesPalette: document.getElementById('enemies-palette'),
-
-    // Toolbar Inputs
-    levelNameInput: document.getElementById('levelNameInput'),
-    backgroundInput: document.getElementById('backgroundInput'),
-
-    // Toolbar Buttons
-    newBtn: document.getElementById('newBtn'),
-    resizeBtn: document.getElementById('resizeBtn'),
-    loadBtn: document.getElementById('loadBtn'),
-    exportBtn: document.getElementById('exportBtn'),
-    testLevelBtn: document.getElementById('testLevelBtn'),
-    undoBtn: document.getElementById('undoBtn'),
-    redoBtn: document.getElementById('redoBtn'),
-    zoomInBtn: document.getElementById('zoomInBtn'),
-    zoomOutBtn: document.getElementById('zoomOutBtn'),
-
-    // File Input
-    loadFileInput: document.getElementById('loadFile'),
+    // init method to populate the properties
+    init() {
+        this.gridContainer = document.getElementById('grid-container');
+        this.gridParent = document.getElementById('grid-parent');
+        this.propertiesPanel = document.getElementById('properties-panel');
+        this.terrainPalette = document.getElementById('terrain-palette');
+        this.itemsPalette = document.getElementById('items-palette');
+        this.trapsPalette = document.getElementById('traps-palette');
+        this.enemiesPalette = document.getElementById('enemies-palette');
+        this.levelNameInput = document.getElementById('levelNameInput');
+        this.backgroundInput = document.getElementById('backgroundInput');
+        this.newBtn = document.getElementById('newBtn');
+        this.resizeBtn = document.getElementById('resizeBtn');
+        this.loadBtn = document.getElementById('loadBtn');
+        this.exportBtn = document.getElementById('exportBtn');
+        this.testLevelBtn = document.getElementById('testLevelBtn');
+        this.undoBtn = document.getElementById('undoBtn');
+        this.redoBtn = document.getElementById('redoBtn');
+        this.zoomInBtn = document.getElementById('zoomInBtn');
+        this.zoomOutBtn = document.getElementById('zoomOutBtn');
+        this.loadFileInput = document.getElementById('loadFile');
+    }
 };
