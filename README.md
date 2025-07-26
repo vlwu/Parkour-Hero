@@ -2,7 +2,7 @@
 
 **Leap, Dash, and Conquer – All Within Your Browser.**
 
-**Parkour Hero** is a fast-paced 2D platformer delivered as a sleek Chrome extension. It brings console-quality gameplay to your browser — no installs, no load screens, just pure, high-energy platforming available with a single click.
+**Parkour Hero** is a fast-paced 2D platformer delivered as a sleek Chrome extension. It brings console-quality gameplay to your browser — pure, high-energy platforming available with a single click.
 
 ---
 
