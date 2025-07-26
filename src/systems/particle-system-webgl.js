@@ -9,7 +9,7 @@ export class ParticleSystemWebGL {
 
         this.activeParticles = [];
         this.inactivePool = [];
-        this.poolSize = 500; // Increased pool size for WebGL
+        this.poolSize = 500;
 
         for (let i = 0; i < this.poolSize; i++) {
             this.inactivePool.push({});
@@ -60,57 +60,55 @@ export class ParticleSystemWebGL {
             texture: gl.getUniformLocation(this.program, 'u_texture'),
         };
 
-        // Data for a single quad. This will be drawn for each particle instance.
-        const quadVertices = new Float32Array([
-            -0.5, -0.5, 0.0, 1.0,
-             0.5, -0.5, 1.0, 1.0,
-            -0.5,  0.5, 0.0, 0.0,
-             0.5,  0.5, 1.0, 0.0,
-        ]);
+        const quadVertices = new Float32Array([-0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5]);
+        const texCoords = new Float32Array([0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]);
 
         this.quadBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, quadVertices, gl.STATIC_DRAW);
 
-        // Buffer for per-instance particle data (position, size, alpha)
-        this.particleBuffer = gl.createBuffer();
-        // Pre-allocate buffer on GPU
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.poolSize * 4 * Float32Array.BYTES_PER_ELEMENT, gl.DYNAMIC_DRAW);
+        this.texCoordBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
 
-        // --- Vertex Array Object (VAO) Setup ---
+        this.particleBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
+        const strideBytes = 8 * Float32Array.BYTES_PER_ELEMENT;
+        gl.bufferData(gl.ARRAY_BUFFER, this.poolSize * strideBytes, gl.DYNAMIC_DRAW);
+
         this.vao = gl.createVertexArray();
         gl.bindVertexArray(this.vao);
 
-        // 1. Set up the quad vertex attribute
         gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
-        gl.enableVertexAttribArray(0); // a_quad_vertex (location = 0)
-        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 16, 0); // 2 floats, 16 bytes stride, 0 offset
-        gl.enableVertexAttribArray(4); // a_tex_coord (location = 4)
-        gl.vertexAttribPointer(4, 2, gl.FLOAT, false, 16, 8); // 2 floats, 16 bytes stride, 8 offset
+        gl.enableVertexAttribArray(0); // a_quad_vertex
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
-        // 2. Set up the per-instance attributes
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordBuffer);
+        gl.enableVertexAttribArray(1); // a_tex_coord
+        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+
         gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
-        // a_particle_position (location = 1)
-        gl.enableVertexAttribArray(1);
-        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 16, 0);
-        gl.vertexAttribDivisor(1, 1); // This attribute is per-instance
+        const instanceStride = 8 * 4;
 
-        // a_particle_size (location = 2)
-        gl.enableVertexAttribArray(2);
-        gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 16, 8);
-        gl.vertexAttribDivisor(2, 1); // This attribute is per-instance
+        gl.enableVertexAttribArray(2); // a_particle_position
+        gl.vertexAttribPointer(2, 2, gl.FLOAT, false, instanceStride, 0);
+        gl.vertexAttribDivisor(2, 1);
 
-        // a_particle_alpha (location = 3)
-        gl.enableVertexAttribArray(3);
-        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, 16, 12);
-        gl.vertexAttribDivisor(3, 1); // This attribute is per-instance
+        gl.enableVertexAttribArray(3); // a_particle_size
+        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, instanceStride, 8);
+        gl.vertexAttribDivisor(3, 1);
 
-        // Unbind everything
+        gl.enableVertexAttribArray(4); // a_particle_alpha
+        gl.vertexAttribPointer(4, 1, gl.FLOAT, false, instanceStride, 12);
+        gl.vertexAttribDivisor(4, 1);
+
+        gl.enableVertexAttribArray(5); // a_tex_info
+        gl.vertexAttribPointer(5, 4, gl.FLOAT, false, instanceStride, 16);
+        gl.vertexAttribDivisor(5, 1);
+
         gl.bindVertexArray(null);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-        // --- Texture Loading ---
         this.textures = {};
         const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles'];
         for (const key of textureKeys) {
@@ -141,7 +139,7 @@ export class ParticleSystemWebGL {
             jump_trail: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.3, gravity: 20 },
             fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
             enemy_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
-            slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 4.0, gravity: 0 },
+            slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 4.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
         };
 
         const config = particleConfigs[type];
@@ -179,6 +177,7 @@ export class ParticleSystemWebGL {
             p.alpha = 1.0;
             p.spriteKey = config.spriteKey;
             p.gravity = config.gravity;
+            p.animation = config.animation ? { ...config.animation, frameTimer: 0, currentFrame: 0 } : null;
 
             this.activeParticles.push(p);
         }
@@ -200,6 +199,14 @@ export class ParticleSystemWebGL {
                 p.y += p.vy * dt;
                 p.vy += p.gravity * dt;
                 p.alpha = Math.min(1.0, p.life / 1.5);
+
+                if (p.animation) {
+                    p.animation.frameTimer += dt;
+                    if (p.animation.frameTimer >= p.animation.frameSpeed) {
+                        p.animation.frameTimer = 0;
+                        p.animation.currentFrame = (p.animation.currentFrame + 1) % p.animation.frameCount;
+                    }
+                }
             }
         }
     }
@@ -208,7 +215,6 @@ export class ParticleSystemWebGL {
         const gl = this.gl;
         if (this.activeParticles.length === 0) return;
 
-        // CRITICAL FIX: Set the viewport every frame.
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
         gl.useProgram(this.program);
@@ -222,7 +228,6 @@ export class ParticleSystemWebGL {
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-        // OPTIMIZATION: Group particles by texture to minimize texture binding.
         const particlesByTexture = {};
         for (const p of this.activeParticles) {
             if (!particlesByTexture[p.spriteKey]) {
@@ -231,37 +236,40 @@ export class ParticleSystemWebGL {
             particlesByTexture[p.spriteKey].push(p);
         }
 
-        const stride = 4; // 4 floats per instance: x, y, size, alpha
-        const instanceData = new Float32Array(this.activeParticles.length * stride);
-        let offset = 0;
-        
-        // OPTIMIZATION: Build a single data array for all particles.
-        for (const spriteKey in particlesByTexture) {
-            const particles = particlesByTexture[spriteKey];
-            for (const p of particles) {
-                instanceData[offset++] = p.x;
-                instanceData[offset++] = p.y;
-                instanceData[offset++] = p.size;
-                instanceData[offset++] = p.alpha;
-            }
-        }
+        const stride = 8; // 8 floats per instance
 
-        // OPTIMIZATION: Upload all particle data to GPU in one go.
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceData);
-
-        let drawnCount = 0;
         for (const spriteKey in particlesByTexture) {
             const particles = particlesByTexture[spriteKey];
             const count = particles.length;
             if (count === 0) continue;
 
-            gl.bindTexture(gl.TEXTURE_2D, this.textures[spriteKey]);
-            
-            // OPTIMIZATION: Issue a draw call for each texture batch using an offset.
-            gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+            const instanceData = new Float32Array(count * stride);
+            for (let i = 0; i < count; i++) {
+                const p = particles[i];
+                const offset = i * stride;
+                instanceData[offset] = p.x;
+                instanceData[offset + 1] = p.y;
+                instanceData[offset + 2] = p.size;
+                instanceData[offset + 3] = p.alpha;
 
-            drawnCount += count;
+                if (p.animation) {
+                    instanceData[offset + 4] = p.animation.currentFrame / p.animation.frameCount; // texOffX
+                    instanceData[offset + 5] = 0; // texOffY
+                    instanceData[offset + 6] = 1 / p.animation.frameCount; // texScaleX
+                    instanceData[offset + 7] = 1; // texScaleY
+                } else {
+                    instanceData[offset + 4] = 0;
+                    instanceData[offset + 5] = 0;
+                    instanceData[offset + 6] = 1;
+                    instanceData[offset + 7] = 1;
+                }
+            }
+
+            gl.bindTexture(gl.TEXTURE_2D, this.textures[spriteKey]);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceData);
+            
+            gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
         }
 
         gl.bindVertexArray(null);
