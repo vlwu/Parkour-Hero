@@ -162,7 +162,13 @@ export class RockHead extends Trap {
         if (playerData) {
             const playerHitbox = { x: playerData.x, y: playerData.y, width: playerData.width, height: playerData.height };
             if (this._isRectColliding(this.hitbox, playerHitbox)) {
-                eventBus.publish('playerDied');
+                eventBus.publish('collisionEvent', {
+                    type: 'hazard',
+                    entityId: playerData.entityId, // playerData needs to carry entityId
+                    entityManager: playerData.entityManager, // and entityManager
+                    damage: 1000, // Instant kill damage
+                    knockback: { vx: 0, vy: -100 }
+                });
             }
         }
     }

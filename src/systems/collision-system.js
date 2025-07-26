@@ -136,7 +136,7 @@ export class CollisionSystem {
                         const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                         const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                         if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                            eventBus.publish('playerDied');
+                            eventBus.publish('playerTookDamage', { amount: 1000, source: 'enemy_contact' });
                             return; // Stop processing for this player.
                         }
                         // Player passes through non-damaging enemy.
@@ -187,7 +187,7 @@ export class CollisionSystem {
                         eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });
                         pos.y = collider.y - col.height;
                         vel.vy = 0;
-                        return; // Stomp successful, end processing for player.
+                        continue; 
                     }
                     
                     // Damage Condition for any other contact.

@@ -240,6 +240,11 @@ export class EnemySystem {
 
             case 'shell_hit_wall':
                 vel.vx = 0;
+                // Added a timer to ensure the snail doesn't get stuck.
+                enemy.timer = (enemy.timer || 0.2) - dt; // Initialize timer if not set
+                if (enemy.timer <= 0) {
+                    state.currentState = 'shell_patrol';
+                }
                 break;
         }
     }
