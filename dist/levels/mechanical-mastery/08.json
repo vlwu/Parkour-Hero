@@ -217,8 +217,6 @@
       "type": "slime",
       "x": 7,
       "y": 6.69,
-      "patrolDistance": 148,
-      "startDirection": "left",
       "initialDragPos": {
         "x": 7,
         "y": 6.69
@@ -228,7 +226,6 @@
       "type": "snail",
       "x": 13.78,
       "y": 14.75,
-      "patrolDistance": 154,
       "initialDragPos": {
         "x": 13.93,
         "y": 14.75
