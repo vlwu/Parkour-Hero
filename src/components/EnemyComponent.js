@@ -19,5 +19,10 @@ export class EnemyComponent {
         if (this.ai.particleDropInterval) {
             this.particleDropTimer = this.ai.particleDropInterval;
         }
+
+        // Specific state for Snail enemy
+        if (this.type === 'snail') {
+            this.snailState = 'walking'; // 'walking', 'shell', 'dying'
+        }
     }
 }

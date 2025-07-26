@@ -110,9 +110,11 @@ export class ParticleSystemWebGL {
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
         this.textures = {};
-        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles'];
+        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles', 'snail_die'];
         for (const key of textureKeys) {
-            this.textures[key] = this._createTexture(this.assets[key]);
+            if (this.assets[key]) {
+                this.textures[key] = this._createTexture(this.assets[key]);
+            }
         }
     }
 
@@ -140,6 +142,7 @@ export class ParticleSystemWebGL {
             fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
             enemy_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
             slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 4.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
+            snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
         };
 
         const config = particleConfigs[type];
@@ -167,13 +170,15 @@ export class ParticleSystemWebGL {
                     case 'right': default: baseAngle = 0; break;
                 }
                 angle = baseAngle + (Math.random() - 0.5) * (Math.PI / 6);
+            } else if (type === 'snail_flee') {
+                angle = -Math.PI / 2 + (Math.random() - 0.5) * (Math.PI / 4);
             } else angle = - (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 4);
 
             p.x = x; p.y = y;
             p.vx = Math.cos(angle) * speed;
             p.vy = Math.sin(angle) * speed;
             p.life = config.life + Math.random() * 0.3;
-            p.size = type === 'slime_puddle' ? 16 : 5 + Math.random() * 4;
+            p.size = config.size || (type === 'slime_puddle' ? 16 : 5 + Math.random() * 4);
             p.alpha = 1.0;
             p.spriteKey = config.spriteKey;
             p.gravity = config.gravity;

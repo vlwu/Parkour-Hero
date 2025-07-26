@@ -25,7 +25,33 @@ export class EnemySystem {
             const collision = entityManager.getComponent(enemyId, CollisionComponent);
             const killable = entityManager.getComponent(enemyId, KillableComponent);
 
-            if (enemy && !enemy.isDead) {
+            if (enemy.type === 'snail' && !enemy.isDead) {
+                if (enemy.snailState === 'walking') {
+                    enemy.snailState = 'shell';
+                    state.currentState = 'shell_patrol';
+                    renderable.animationState = 'shell_idle';
+                    renderable.animationFrame = 0;
+                    collision.solid = true;
+                    
+                    const pos = entityManager.getComponent(enemyId, PositionComponent);
+                    eventBus.publish('createParticles', {
+                        x: pos.x + collision.width / 2,
+                        y: pos.y + collision.height / 2,
+                        type: 'snail_flee'
+                    });
+                    eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
+
+                } else if (enemy.snailState === 'shell') {
+                    enemy.isDead = true;
+                    state.currentState = 'dying';
+                    renderable.animationState = 'shell_top_hit';
+                    renderable.animationFrame = 0;
+                    renderable.animationTimer = 0;
+                    collision.solid = false;
+                    enemy.deathTimer = 0.5;
+                    eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
+                }
+            } else if (enemy && !enemy.isDead) {
                 if (killable && !killable.stompable) {
                     eventBus.publish('playSound', { key: 'hit', volume: 0.9, channel: 'SFX' });
                     continue;
@@ -58,11 +84,15 @@ export class EnemySystem {
                 const wasDestroyed = this._updateDyingState(dt, enemy, vel, entityManager, id);
                 if (wasDestroyed) { continue; }
             } else {
-                switch (enemy.ai.type) {
-                    case 'patrol': this._updatePatrolAI(dt, pos, vel, enemy, renderable, state, col, level); break;
-                    case 'ground_charge': this._updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData, col, level); break;
-                    case 'defensive_cycle': this._updateDefensiveCycleAI(dt, vel, enemy, renderable, state); break;
-                    case 'hop': this._updateHopAI(dt, vel, enemy, renderable, state, entityManager.getComponent(id, CollisionComponent)); break;
+                if (enemy.type === 'snail' && enemy.snailState === 'shell') {
+                    this._updateShellAI(dt, pos, vel, enemy, renderable, state, col, level);
+                } else {
+                    switch (enemy.ai.type) {
+                        case 'patrol': this._updatePatrolAI(dt, pos, vel, enemy, renderable, state, col, level); break;
+                        case 'ground_charge': this._updateGroundChargeAI(dt, pos, vel, enemy, renderable, state, playerData, col, level); break;
+                        case 'defensive_cycle': this._updateDefensiveCycleAI(dt, vel, enemy, renderable, state); break;
+                        case 'hop': this._updateHopAI(dt, vel, enemy, renderable, state, entityManager.getComponent(id, CollisionComponent)); break;
+                    }
                 }
 
                 if (enemy.type === 'slime' && enemy.ai.particleDropInterval && Math.abs(vel.vx) > 0) {
@@ -71,9 +101,7 @@ export class EnemySystem {
                         enemy.particleDropTimer = enemy.ai.particleDropInterval;
                         const particlePos = { x: pos.x + col.width / 2, y: pos.y + col.height - 2 };
                         
-                        // Create the VISIBLE particle
                         eventBus.publish('createParticles', { ...particlePos, type: 'slime_puddle' });
-                        // Create the INVISIBLE damage trap
                         eventBus.publish('createSlimePuddle', particlePos);
                     }
                 }
@@ -121,7 +149,6 @@ export class EnemySystem {
         const ai = enemy.ai;
         const speed = ai.patrol.speed;
 
-        // Set animation state based on current behavior
         if (state.currentState === 'idle') {
             renderable.animationState = enemy.type === 'slime' ? 'idle_run' : 'idle';
         } else {
@@ -129,7 +156,6 @@ export class EnemySystem {
             if (enemy.type === 'slime') renderable.animationState = 'idle_run';
         }
 
-        // State machine logic for patrol behavior
         switch (state.currentState) {
             case 'idle':
                 vel.vx = 0;
@@ -140,10 +166,8 @@ export class EnemySystem {
                 break;
 
             case 'patrol':
-                // Set velocity based on current direction
                 vel.vx = renderable.direction === 'right' ? speed : -speed;
 
-                // Probe ahead for an edge
                 const groundProbeX = renderable.direction === 'right' 
                     ? pos.x + col.width + 1 
                     : pos.x - 1;
@@ -152,16 +176,43 @@ export class EnemySystem {
                 const groundAhead = level.getTileAt(groundProbeX, groundProbeY);
                 
                 const atEdge = !groundAhead.solid || groundAhead.oneWay;
-
-                // Check if the collision system flagged a wall collision
                 const hitWall = col.isAgainstWall;
 
                 if (atEdge || hitWall) {
-                    // If at an edge or wall, turn around
                     renderable.direction = (renderable.direction === 'right' ? 'left' : 'right');
-                    state.currentState = 'idle'; // Enter idle state to pause
+                    state.currentState = 'idle';
                     enemy.timer = 0.5; 
                 }
+                break;
+        }
+    }
+
+    _updateShellAI(dt, pos, vel, enemy, renderable, state, col, level) {
+        const ai = enemy.ai;
+        const speed = ai.shellSpeed;
+
+        switch (state.currentState) {
+            case 'shell_patrol':
+                renderable.animationState = 'shell_idle';
+                vel.vx = renderable.direction === 'right' ? speed : -speed;
+
+                const groundProbeX = renderable.direction === 'right' ? pos.x + col.width + 1 : pos.x - 1;
+                const groundProbeY = pos.y + col.height + 1;
+                const groundAhead = level.getTileAt(groundProbeX, groundProbeY);
+                const atEdge = !groundAhead.solid || groundAhead.oneWay;
+                const hitWall = col.isAgainstWall;
+
+                if (atEdge || hitWall) {
+                    renderable.direction = (renderable.direction === 'right' ? 'left' : 'right');
+                    state.currentState = 'shell_hit_wall';
+                    renderable.animationState = 'shell_wall_hit';
+                    renderable.animationFrame = 0;
+                    eventBus.publish('playSound', { key: 'hit', volume: 0.7, channel: 'SFX' });
+                }
+                break;
+
+            case 'shell_hit_wall':
+                vel.vx = 0;
                 break;
         }
     }
@@ -343,6 +394,10 @@ export class EnemySystem {
                     } else {
                         renderable.animationFrame = 0;
                     }
+                } else if (enemy.type === 'snail' && renderable.animationState === 'shell_wall_hit') {
+                    state.currentState = 'shell_patrol';
+                    renderable.animationState = 'shell_idle';
+                    renderable.animationFrame = 0;
                 } else {
                     renderable.animationFrame = 0;
                 }

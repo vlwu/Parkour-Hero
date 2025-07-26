@@ -199,9 +199,9 @@ export async function loadAssets() {
     snail_idle: '/assets/Enemies/Snail/Idle.png',
     snail_walk: '/assets/Enemies/Snail/Walk.png',
     snail_die: '/assets/Enemies/Snail/Snail without shell.png',
-    shell_idle: '/assets/Enemies/Snail/Shell Idle.png',
-    shell_top_hit: '/assets/Enemies/Snail/Shell Top Hit.png',
-    shell_wall_hit: '/assets/Enemies/Snail/Shell Wall Hit.png',
+    snail_shell_idle: '/assets/Enemies/Snail/Shell Idle.png',
+    snail_shell_top_hit: '/assets/Enemies/Snail/Shell Top Hit.png',
+    snail_shell_wall_hit: '/assets/Enemies/Snail/Shell Wall Hit.png',
 
     slime_hit: '/assets/Enemies/Slime/Hit.png',
     slime_idle_run: '/assets/Enemies/Slime/Idle-Run.png',

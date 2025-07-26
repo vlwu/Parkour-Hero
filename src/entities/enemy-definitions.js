@@ -50,6 +50,9 @@ export const ENEMY_DEFINITIONS = {
         animations: {
             idle: { frameCount: 15, speed: 0.2 },
             walk: { frameCount: 10, speed: 0.15 },
+            shell_idle: { frameCount: 6, speed: 0.1 },
+            shell_wall_hit: { frameCount: 4, speed: 0.05 },
+            shell_top_hit: { frameCount: 5, speed: 0.1 },
             hit: { frameCount: 5, speed: 0.1 }
         },
         killable: {
@@ -60,6 +63,7 @@ export const ENEMY_DEFINITIONS = {
             type: 'patrol',
             aggroRange: 0,
             patrolSpeed: 20,
+            shellSpeed: 150,
         }
     },
 
