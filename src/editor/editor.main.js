@@ -165,6 +165,8 @@ class EditorController {
         const uiComponent = document.createElement('parkour-hero-ui');
         uiComponent.fontRenderer = this.fontRenderer;
         uiComponent.previewMode = true;
+        uiComponent.assets = this.assets;
+        uiComponent.gameState = this.engine.gameState;
         uiRoot.appendChild(uiComponent);
 
         this.engine.loadLevelFromData(levelData);

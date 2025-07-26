@@ -136,6 +136,11 @@ export class CollisionSystem {
 
                     // Handle player-enemy specific logic.
                     if (isPlayer && isEnemyCollider) {
+                        const playerCtrlCheck = entityManager.getComponent(entityId, PlayerControlledComponent);
+                        if (playerCtrlCheck && playerCtrlCheck.isDashing) {
+                            continue; // Player is dashing, ignore enemy contact.
+                        }
+                        
                         const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                         const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                         if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
@@ -192,6 +197,11 @@ export class CollisionSystem {
                         pos.y = collider.y - col.height;
                         vel.vy = 0;
                         continue; 
+                    }
+
+                    const playerCtrlCheck = entityManager.getComponent(entityId, PlayerControlledComponent);
+                    if (playerCtrlCheck && playerCtrlCheck.isDashing) {
+                        continue; // Player is dashing, ignore enemy contact.
                     }
                     
                     // Damage Condition for any other contact.
