@@ -1,0 +1,1 @@
+export { createAIBehavior } from './ai-behavior-factory.js';
