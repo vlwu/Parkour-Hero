@@ -17,7 +17,6 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
 
     const enemyEntityId = entityManager.createEntity();
     
-    // --- MODIFICATION START: Set initial state correctly based on AI type ---
     let initialState;
     if (data.ai.type === 'flying_patrol') {
         initialState = 'patrolling';
@@ -26,7 +25,6 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     } else {
         initialState = 'patrol'; // Default for patrol, snail, etc.
     }
-    // --- MODIFICATION END ---
 
     const initialTopLeftX = x - data.width / 2;
     const topLeftY = y - data.height / 2;

@@ -105,8 +105,12 @@
     },
     {
       "type": "fruit_strawberry",
-      "x": 16.67,
-      "y": 9.38
+      "x": 15.87,
+      "y": 9.16,
+      "initialDragPos": {
+        "x": 16.67,
+        "y": 9.38
+      }
     },
     {
       "type": "checkpoint",
@@ -157,15 +161,6 @@
     },
     {
       "type": "rock_head",
-      "x": 16.01,
-      "y": 7.9,
-      "initialDragPos": {
-        "x": 16.18,
-        "y": 7.86
-      }
-    },
-    {
-      "type": "rock_head",
       "x": 7.76,
       "y": 36.53,
       "initialDragPos": {
@@ -174,5 +169,30 @@
       }
     }
   ],
-  "enemies": []
+  "enemies": [
+    {
+      "type": "bluebird",
+      "x": 17.38,
+      "y": 8.73,
+      "patrolDistance": 200,
+      "horizontalSpeed": 60,
+      "verticalAmplitude": 10,
+      "initialDragPos": {
+        "x": 17.21,
+        "y": 8.18
+      }
+    },
+    {
+      "type": "bluebird",
+      "x": 10.86,
+      "y": 19.42,
+      "patrolDistance": 200,
+      "horizontalSpeed": 60,
+      "verticalAmplitude": 10,
+      "initialDragPos": {
+        "x": 11.16,
+        "y": 19.28
+      }
+    }
+  ]
 }
