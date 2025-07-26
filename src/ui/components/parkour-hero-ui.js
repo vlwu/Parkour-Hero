@@ -35,6 +35,30 @@ export class ParkourHeroUI extends LitElement {
     .main-menu-buttons button:hover { background-color: #0056b3; transform: translateY(-2px); box-shadow: 0 8px #004a99; }
     .main-menu-buttons button:active { transform: translateY(2px); box-shadow: 0 2px #004a99; }
 
+    .main-menu-icon-buttons {
+      display: flex;
+      gap: 20px;
+    }
+    .icon-button {
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      padding: 4px;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 64px;
+      height: 64px;
+      transition: all 0.2s ease-in-out;
+    }
+    .icon-button:hover {
+      background: rgba(0, 0, 0, 0.6);
+      border-color: #fff;
+      transform: scale(1.1);
+    }
+    .icon-button img {
+      width: 100%;
+      height: 100%;
+    }
+
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -264,15 +288,15 @@ export class ParkourHeroUI extends LitElement {
   renderMainMenuContent() {
     const hasProgress = this.gameState && (this.gameState.levelProgress.completedLevels.length > 0 || this.gameState.levelProgress.unlockedLevels[0] > 1);
     const startButtonText = hasProgress ? 'Continue' : 'Start Game';
-
-    const buttonTexts = [
-      { text: startButtonText, action: () => eventBus.publish('requestStartGame') },
-      { text: 'Levels', action: () => this._openModalFromMenu('levels') },
-      { text: 'Character', action: () => this._openModalFromMenu('character') },
-      { text: 'Settings', action: () => this._openModalFromMenu('settings') },
-      { text: 'How to Play', action: () => this._openModalFromMenu('info') },
-      { text: 'Stats', action: () => this._openModalFromMenu('stats') }
+    
+    const iconButtons = [
+        { id: 'levels', title: 'Levels' },
+        { id: 'character', title: 'Character' },
+        { id: 'settings', title: 'Settings' },
+        { id: 'info', title: 'How to Play' },
     ];
+    
+    const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
     return html`
       <div class="main-menu-container">
@@ -280,11 +304,16 @@ export class ParkourHeroUI extends LitElement {
           .fontRenderer=${this.fontRenderer} text="Parkour Hero" scale="9" outlineColor="black" outlineWidth="2"
         ></bitmap-text>
         <div class="main-menu-buttons">
-          ${buttonTexts.map(btn => html`
-            <button @click=${btn.action}>
-              <bitmap-text .fontRenderer=${this.fontRenderer} text=${btn.text} scale="2.5" outlineColor="#004a99" outlineWidth="1"></bitmap-text>
-            </button>
-          `)}
+          <button @click=${() => { eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' }); eventBus.publish('requestStartGame'); }}>
+              <bitmap-text .fontRenderer=${this.fontRenderer} text=${startButtonText} scale="2.5" outlineColor="#004a99" outlineWidth="1"></bitmap-text>
+          </button>
+        </div>
+        <div class="main-menu-icon-buttons">
+            ${iconButtons.map(btn => html`
+                <button class="icon-button" title=${btn.title} @click=${() => this._openModalFromMenu(btn.id)}>
+                    <img src="/assets/Menu/Buttons/${capitalize(btn.id)}.png" alt=${btn.title}>
+                </button>
+            `)}
         </div>
       </div>
     `;
