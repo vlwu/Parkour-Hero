@@ -58,7 +58,8 @@ export class SoundManager {
 
   loadSounds(assets) {
     const soundKeys = ['button_click', 'jump', 'double_jump', 'collect', 'level_complete', 'trophy_activated', 'death_sound', 'dash', 'checkpoint_activated', 
-      'hit', 'enemy_stomp', 'sand_walk', 'mud_run', 'ice_run', 'trampoline_bounce', 'fire_activated', 'arrow_pop', 'fan_blowing', 'rh_slam', 'sh_slam'];
+      'hit', 'enemy_stomp', 'sand_walk', 'mud_run', 'ice_run', 'trampoline_bounce', 'fire_activated', 'arrow_pop', 'fan_blowing', 'rh_slam', 'sh_slam',
+      'snail_wall_hit'];
     soundKeys.forEach(key => {
       if (assets[key]) {
         this.sounds[key] = assets[key];

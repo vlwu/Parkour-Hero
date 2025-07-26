@@ -207,7 +207,7 @@ export class EnemySystem {
                     state.currentState = 'shell_hit_wall';
                     renderable.animationState = 'shell_wall_hit';
                     renderable.animationFrame = 0;
-                    eventBus.publish('playSound', { key: 'hit', volume: 0.7, channel: 'SFX' });
+                    eventBus.publish('playSound', { key: 'snail_wall_hit', volume: 0.5, channel: 'SFX' });
                 }
                 break;
 
