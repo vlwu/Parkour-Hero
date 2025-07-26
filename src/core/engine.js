@@ -316,6 +316,7 @@ export class Engine {
     else this.currentLevel.fruits.forEach(f => f.collected = false);
     this.currentLevel.recalculateCollectedFruits();
     this.effectsSystem.reset();
+    this.particleSystem.reset();
 
     if (this.currentLevel.trophy) {
         this.currentLevel.trophy.acquired = false;

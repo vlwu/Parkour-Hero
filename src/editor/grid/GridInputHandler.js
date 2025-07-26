@@ -45,7 +45,6 @@ export class GridInputHandler {
         const clickX = (e.clientX - rect.left) / scale;
         const clickY = (e.clientY - rect.top) / scale;
 
-        // --- FIX: Use .closest() to find the relevant target, whether it's the element itself or a parent ---
         const cellTarget = target.closest('.grid-cell');
         const objectTarget = target.closest('.dynamic-object');
 
@@ -91,7 +90,6 @@ export class GridInputHandler {
             const newY = this.dragInitialY + dy;
             this.callbacks.onObjectDrag(this.draggedObjectId, newX, newY);
         } else if (this.isPainting || this.isErasing) {
-            // --- FIX: Use .closest() to ensure painting/erasing continues over fractional blocks ---
             const cellTarget = e.target.closest('.grid-cell');
             if (cellTarget) {
                 const index = parseInt(cellTarget.dataset.index);

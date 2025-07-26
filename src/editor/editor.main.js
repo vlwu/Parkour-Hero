@@ -162,6 +162,9 @@ class EditorController {
         const keybinds = { moveLeft: 'a', moveRight: 'd', jump: 'w', dash: ' ' };
         this.engine = new Engine(ctx, gl, gameCanvas, this.assets, keybinds, this.fontRenderer);
         
+        // Disable the sound manager for the preview to prevent sound pool errors and simplify the experience.
+        this.engine.soundManager.setEnabled(false);
+
         const uiComponent = document.createElement('parkour-hero-ui');
         uiComponent.fontRenderer = this.fontRenderer;
         uiComponent.previewMode = true;
@@ -173,6 +176,8 @@ class EditorController {
         previewContainer.style.display = 'flex';
         
         const exitPreview = () => {
+            if (!this.engine) return;
+
             this.engine.destroy();
             this.engine = null;
             previewContainer.style.display = 'none';

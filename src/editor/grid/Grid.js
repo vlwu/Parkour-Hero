@@ -79,7 +79,6 @@ export class Grid {
         
         // 2. Handle rendering
         if (def.collisionBox) {
-            // --- FIX START: Use a robust viewport/mover technique for accurate sprite clipping ---
             const viewport = document.createElement('span');
             viewport.style.display = 'block';
             viewport.style.width = `${def.collisionBox.width}px`;
@@ -98,7 +97,6 @@ export class Grid {
 
             viewport.appendChild(spriteMover);
             cell.appendChild(viewport);
-            // --- FIX END ---
         } else if (!def.oneWay) {
             // It's a standard, full-sized SOLID block. Render with background color.
             cell.style.backgroundColor = getPaletteColor(def.type);

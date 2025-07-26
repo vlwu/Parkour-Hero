@@ -204,9 +204,9 @@ export class CollisionSystem {
                         continue; // Player is dashing, ignore enemy contact.
                     }
                     
-                    // Damage Condition for any other contact.
+                    // Standardize damage handling. Instead of instantly killing the player, publish a damage event.
                     if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                        eventBus.publish('playerDied');
+                        eventBus.publish('playerTookDamage', { amount: 1000, source: 'enemy_contact' });
                         return;
                     }
 
