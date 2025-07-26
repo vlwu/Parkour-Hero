@@ -6,6 +6,7 @@ import { RenderableComponent } from '../../components/RenderableComponent.js';
 import { PlayerControlledComponent } from '../../components/PlayerControlledComponent.js';
 import { CollisionComponent } from '../../components/CollisionComponent.js';
 import { VelocityComponent } from '../../components/VelocityComponent.js';
+import { InputComponent } from '../../components/InputComponent.js';
 
 export class RunState extends PlayerBaseState {
     enter() {
@@ -23,8 +24,9 @@ export class RunState extends PlayerBaseState {
     update(dt) {
         const col = this.entityManager.getComponent(this.entityId, CollisionComponent);
         const vel = this.entityManager.getComponent(this.entityId, VelocityComponent);
+        const input = this.entityManager.getComponent(this.entityId, InputComponent);
 
-        if (Math.abs(vel.vx) < 1) {
+        if (!input.moveLeft && !input.moveRight) {
             return new IdleState(this.entityId, this.entityManager);
         }
 
