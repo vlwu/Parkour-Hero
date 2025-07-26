@@ -72,7 +72,7 @@ export class Grid {
                 // One-way platform: draw only a top border
                 cell.style.borderTop = `5px solid ${getPaletteColor(def.type)}`;
                 cell.style.backgroundColor = 'transparent'; // Ensure cell background is clear to see grid lines
-            } else {
+            } else if (def && def.type !== 'empty') {
                 // Regular tile: fill the background
                 cell.style.backgroundColor = getPaletteColor(def.type);
             }
