@@ -30,5 +30,7 @@ export class EnemyComponent {
         if (this.type === 'turtle') {
             this.timer = this.ai.spikesInDuration;
         }
+
+        this.aiBehavior = null;
     }
 }

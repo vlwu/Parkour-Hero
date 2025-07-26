@@ -16,7 +16,17 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     }
 
     const enemyEntityId = entityManager.createEntity();
-    const initialState = (data.ai.type === 'ground_charge' || data.ai.type === 'defensive_cycle' || data.ai.type === 'flying_patrol') ? 'idle' : 'patrol';
+    
+    // --- MODIFICATION START: Set initial state correctly based on AI type ---
+    let initialState;
+    if (data.ai.type === 'flying_patrol') {
+        initialState = 'patrolling';
+    } else if (data.ai.type === 'ground_charge' || data.ai.type === 'defensive_cycle') {
+        initialState = 'idle';
+    } else {
+        initialState = 'patrol'; // Default for patrol, snail, etc.
+    }
+    // --- MODIFICATION END ---
 
     const initialTopLeftX = x - data.width / 2;
     const topLeftY = y - data.height / 2;
@@ -43,16 +53,15 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     }));
 
     let initialAnimationState;
-    if (initialState === 'idle') {
+    if (type === 'bluebird') {
+        initialAnimationState = 'flying';
+    } else if (initialState === 'idle') {
         switch(type) {
             case 'slime':
                 initialAnimationState = 'idle_run';
                 break;
             case 'turtle':
                 initialAnimationState = 'idle2';
-                break;
-            case 'bluebird':
-                initialAnimationState = 'flying';
                 break;
             default:
                 initialAnimationState = 'idle';

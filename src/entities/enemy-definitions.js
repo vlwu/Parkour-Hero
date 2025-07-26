@@ -112,7 +112,7 @@ export const ENEMY_DEFINITIONS = {
         height: 32,
         spriteKey: 'bluebird',
         animations: {
-            flying: { frameCount: 10, speed: 0.1 },
+            flying: { frameCount: 9, speed: 0.1 },
             hit: { frameCount: 5, speed: 0.1 }
         },
         killable: {

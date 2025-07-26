@@ -90,9 +90,14 @@ export class EnemySystem {
                 const wasDestroyed = this._updateDyingState(dt, enemy, vel, entityManager, id);
                 if (wasDestroyed) continue;
             } else {
-                const aiBehavior = createAIBehavior(enemy.ai.type, id, entityManager, level, playerEntityId);
-                if (aiBehavior) {
-                    aiBehavior.update(dt);
+                // Ensure AI behavior is instantiated once and stored.
+                if (!enemy.aiBehavior) {
+                    enemy.aiBehavior = createAIBehavior(enemy.ai.type, id, entityManager, level, playerEntityId);
+                }
+                
+                // Update the persistent AI behavior instance.
+                if (enemy.aiBehavior) {
+                    enemy.aiBehavior.update(dt);
                 }
             }
 
