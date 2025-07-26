@@ -1,10 +1,12 @@
 import { BaseAI } from './BaseAI.js';
+import { PositionComponent } from '../components/PositionComponent.js';
+import { CollisionComponent } from '../components/CollisionComponent.js';
 
 export class GroundChargeAI extends BaseAI {
     update(dt) {
         const ai = this.enemy.ai;
-        const playerPos = this.playerEntityId ? this.entityManager.getComponent(this.playerEntityId, 'PositionComponent') : null;
-        const playerCol = this.playerEntityId ? this.entityManager.getComponent(this.playerEntityId, 'CollisionComponent') : null;
+        const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
+        const playerCol = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, CollisionComponent) : null;
         const playerData = playerPos && playerCol ? { ...playerPos, ...playerCol } : null;
 
         switch (this.state.currentState) {
@@ -28,9 +30,24 @@ export class GroundChargeAI extends BaseAI {
 
                     if (onSameLevel && inRange) {
                         const isPlayerRight = (playerData.x + playerData.width / 2) > (this.pos.x + this.col.width / 2);
-                        this.renderable.direction = isPlayerRight ? 'right' : 'left';
-                        this.state.currentState = 'warning';
-                        this.enemy.timer = ai.idleTime;
+                        const chargeDirection = isPlayerRight ? 'right' : 'left';
+                        
+                        const edges = this._findPlatformEdges();
+                        let hasRoomToCharge = true;
+                        if (edges) {
+                            if (chargeDirection === 'right' && (this.pos.x + this.col.width) >= edges.right - 1) {
+                                hasRoomToCharge = false;
+                            }
+                            if (chargeDirection === 'left' && this.pos.x <= edges.left + 1) {
+                                hasRoomToCharge = false;
+                            }
+                        }
+
+                        if (hasRoomToCharge) {
+                            this.renderable.direction = chargeDirection;
+                            this.state.currentState = 'warning';
+                            this.enemy.timer = ai.idleTime;
+                        }
                     }
                 }
                 break;

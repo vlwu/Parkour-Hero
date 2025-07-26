@@ -32,23 +32,14 @@ export class BaseAI {
         this.killable = this.entityManager.getComponent(this.entityId, KillableComponent);
     }
 
-    /**
-     * This method will be called every frame by the EnemySystem.
-     * Each concrete AI class must implement this.
-     * @param {number} dt Delta time.
-     */
     update(dt) {
         throw new Error("AI Behavior 'update' method must be implemented.");
     }
 
-    /**
-     * A shared helper function to find the edges of the platform an enemy is on.
-     * @returns {{left: number, right: number}|null} The world coordinates of the platform edges or null.
-     */
     _findPlatformEdges() {
-        if (!this.level) return null;
+        if (!this.level || !this.pos || !this.col) return null;
 
-        const TILE_SIZE = 48; // from GRID_CONSTANTS
+        const TILE_SIZE = 48;
         const checkY = Math.floor((this.pos.y + this.col.height + 1) / TILE_SIZE);
 
         if (checkY >= this.level.gridHeight || checkY < 0) return null;
@@ -63,14 +54,17 @@ export class BaseAI {
         let leftGridX = startGridX;
         while (leftGridX > 0) {
             const tile = this.level.getTileAt((leftGridX - 1) * TILE_SIZE, checkY * TILE_SIZE);
-            if (!tile || !tile.solid || !tile.oneWay) break;
+            // --- FIX: Corrected edge detection logic ---
+            // The loop should break if the next tile is not solid OR if it IS a one-way platform.
+            if (!tile || !tile.solid || tile.oneWay) break;
             leftGridX--;
         }
 
         let rightGridX = startGridX;
         while (rightGridX < this.level.gridWidth - 1) {
             const tile = this.level.getTileAt((rightGridX + 1) * TILE_SIZE, checkY * TILE_SIZE);
-            if (!tile || !tile.solid || !tile.oneWay) break;
+            // --- FIX: Corrected edge detection logic ---
+            if (!tile || !tile.solid || tile.oneWay) break;
             rightGridX++;
         }
 

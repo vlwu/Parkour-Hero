@@ -1,4 +1,3 @@
-// src/systems/enemy-system.js
 import { PositionComponent } from '../components/PositionComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
@@ -69,7 +68,7 @@ export class EnemySystem {
         this.stompEvents = [];
     }
 
-    update(dt, { entityManager, playerEntityId, playerCol, level }) {
+    update(dt, { entityManager, playerEntityId, level }) {
         this._processStompEvents(entityManager);
         const enemyEntities = entityManager.query([EnemyComponent, PositionComponent, VelocityComponent, StateComponent, RenderableComponent]);
         
@@ -164,7 +163,6 @@ export class EnemySystem {
                     }
                 } else if (enemy.type === 'snail' && renderable.animationState === 'shell_wall_hit') {
                     // This transition is now handled by the SnailAI, so we do nothing here
-                    // to prevent animation loops. The AI will change the state when ready.
                 } else {
                     renderable.animationFrame = 0;
                 }
