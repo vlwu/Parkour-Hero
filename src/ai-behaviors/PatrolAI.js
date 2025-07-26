@@ -4,10 +4,13 @@ export class PatrolAI extends BaseAI {
     update(dt) {
         const speed = this.enemy.ai.patrolSpeed;
 
-        if (this.state.currentState === 'idle') {
-            this.renderable.animationState = this.enemy.type === 'slime' ? 'idle_run' : 'idle';
+        // Handle animation state based on enemy type and current AI state.
+        if (this.enemy.type === 'slime') {
+            // The slime uses a single animation for both idling and patrolling.
+            this.renderable.animationState = 'idle_run';
         } else {
-            this.renderable.animationState = this.enemy.type === 'slime' ? 'idle_run' : 'run';
+            // Other enemies like the mushroom switch between 'idle' and 'run'.
+            this.renderable.animationState = this.state.currentState === 'patrol' ? 'run' : 'idle';
         }
 
         switch (this.state.currentState) {

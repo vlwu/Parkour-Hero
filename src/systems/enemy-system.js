@@ -129,7 +129,6 @@ export class EnemySystem {
     _updateAnimation(dt, id, entityManager) {
         const renderable = entityManager.getComponent(id, RenderableComponent);
         const enemy = entityManager.getComponent(id, EnemyComponent);
-        const state = entityManager.getComponent(id, StateComponent);
         const animDef = ENEMY_DEFINITIONS[enemy.type]?.animations[renderable.animationState];
         if (!animDef) return;
 
@@ -138,31 +137,9 @@ export class EnemySystem {
             renderable.animationTimer -= animDef.speed;
             renderable.animationFrame++;
             if (renderable.animationFrame >= animDef.frameCount) {
-                if (enemy.type === 'turtle') {
-                    const killable = entityManager.getComponent(id, KillableComponent);
-                    if (renderable.animationState === 'spikes_out') {
-                        state.currentState = 'hiding';
-                        renderable.animationState = 'idle1';
-                        enemy.timer = enemy.ai.spikesOutDuration;
-                        renderable.animationFrame = 0;
-                        if (killable) {
-                            killable.stompable = false;
-                            killable.dealsContactDamage = true;
-                        }
-                    } else if (renderable.animationState === 'spikes_in') {
-                        state.currentState = 'idle';
-                        renderable.animationState = 'idle2';
-                        enemy.timer = enemy.ai.spikesInDuration;
-                        renderable.animationFrame = 0;
-                        if (killable) {
-                            killable.stompable = true;
-                            killable.dealsContactDamage = false;
-                        }
-                    } else {
-                        renderable.animationFrame = 0;
-                    }
-                } else if (enemy.type === 'snail' && renderable.animationState === 'shell_wall_hit') {
-                    // This transition is now handled by the SnailAI, so we do nothing here
+                const nonLoopingStates = ['spikes_out', 'spikes_in', 'shell_wall_hit', 'hit'];
+                if (nonLoopingStates.includes(renderable.animationState)) {
+                    renderable.animationFrame = animDef.frameCount - 1;
                 } else {
                     renderable.animationFrame = 0;
                 }

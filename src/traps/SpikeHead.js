@@ -154,21 +154,6 @@ export class SpikeHead extends Trap {
             eventBus.publish('cameraShakeRequested', { intensity: 15, duration: 0.3 });
             eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'walk_dust', particleSpeed: 200 });
             eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'sand', particleSpeed: 200 });
-            return;
-        }
-
-        // Check for player collision
-        if (playerData) {
-            const playerHitbox = { x: playerData.x, y: playerData.y, width: playerData.width, height: playerData.height };
-            if (this._isRectColliding(this.hitbox, playerHitbox)) {
-                eventBus.publish('collisionEvent', {
-                    type: 'hazard',
-                    entityId: playerData.entityId, // playerData needs to carry entityId
-                    entityManager: playerData.entityManager, // and entityManager
-                    damage: 1000, // Instant kill damage
-                    knockback: { vx: 0, vy: -100 }
-                });
-            }
         }
     }
     
@@ -218,15 +203,18 @@ export class SpikeHead extends Trap {
             ctx.drawImage(sprite, sX, 0, frameWidth, sprite.height, drawX, drawY, this.width, this.height);
         }
     }
-    
-    // Helper for collision check during slam
-    _isRectColliding(rectA, rectB) {
-        return (
-            rectA.x < rectB.x + rectB.width &&
-            rectA.x + rectA.width > rectB.x &&
-            rectA.y < rectB.y + rectB.height &&
-            rectA.y + rectA.height > rectB.y
-        );
+
+    onCollision(player, eventBus) {
+        if (this.state !== 'slamming' && this.state !== 'slammed') {
+            return;
+        }
+
+        eventBus.publish('collisionEvent', {
+            type: 'hazard',
+            entityId: player.entityId,
+            entityManager: player.entityManager,
+            damage: 1000, // Instant kill
+        });
     }
 
     reset() {

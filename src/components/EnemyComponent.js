@@ -25,5 +25,10 @@ export class EnemyComponent {
         if (this.type === 'snail') {
             this.snailState = 'walking'; // 'walking', 'shell', 'dying'
         }
+        
+        // Specific initialization for Turtle enemy
+        if (this.type === 'turtle') {
+            this.timer = this.ai.spikesInDuration;
+        }
     }
 }
