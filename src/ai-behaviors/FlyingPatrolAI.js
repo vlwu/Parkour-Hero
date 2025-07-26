@@ -45,33 +45,44 @@ export class FlyingPatrolAI extends BaseAI {
 
     _patrol(dt) {
         const directionMultiplier = this.renderable.direction === 'right' ? 1 : -1;
-        
-        // Accelerate to max speed
-        this.vel.vx = Math.min(this.horizontalSpeed, Math.abs(this.vel.vx) + this.acceleration * dt) * directionMultiplier;
-        
-        // Determine the patrol boundaries
+
+        // Determine patrol boundaries and current position
         const leftBound = this.anchorX - this.patrolDistance / 2;
         const rightBound = this.anchorX + this.patrolDistance / 2;
-
         const currentXCenter = this.pos.x + this.col.width / 2;
-        const distanceFromRight = rightBound - currentXCenter;
-        const distanceFromLeft = currentXCenter - leftBound;
 
-        const slowDownDistance = 50; // Start slowing down 50px from the edge
+        // --- REFACTORED ACCELERATION & DECELERATION LOGIC ---
+        const slowDownDistance = 60; // Start slowing down 60px from the edge
+        let targetSpeed = this.horizontalSpeed; // Assume full speed initially
 
-        // Decelerate when approaching the end of the path
-        if ((directionMultiplier > 0 && distanceFromRight < slowDownDistance) || (directionMultiplier < 0 && distanceFromLeft < slowDownDistance)) {
-            const distanceToEdge = directionMultiplier > 0 ? distanceFromRight : distanceFromLeft;
-            const speedMultiplier = Math.max(0.1, distanceToEdge / slowDownDistance);
-            this.vel.vx *= speedMultiplier;
+        // If in the slowdown zone, adjust the target speed based on proximity to the edge.
+        if (directionMultiplier > 0 && (rightBound - currentXCenter) < slowDownDistance) {
+            const speedMultiplier = Math.max(0.1, (rightBound - currentXCenter) / slowDownDistance);
+            targetSpeed *= speedMultiplier;
+        } else if (directionMultiplier < 0 && (currentXCenter - leftBound) < slowDownDistance) {
+            const speedMultiplier = Math.max(0.1, (currentXCenter - leftBound) / slowDownDistance);
+            targetSpeed *= speedMultiplier;
         }
 
-        // Check if the bird has reached the end of its path
+        const finalTargetSpeed = targetSpeed * directionMultiplier;
+
+        // Use acceleration to smoothly approach the current target speed (whether it's for speeding up, cruising, or slowing down).
+        if (this.vel.vx < finalTargetSpeed && directionMultiplier > 0) {
+            this.vel.vx = Math.min(finalTargetSpeed, this.vel.vx + this.acceleration * dt);
+        } else if (this.vel.vx > finalTargetSpeed && directionMultiplier < 0) {
+            this.vel.vx = Math.max(finalTargetSpeed, this.vel.vx - this.acceleration * dt);
+        } else {
+             // For cruising or when deceleration is active, directly set the velocity toward the target.
+            this.vel.vx = finalTargetSpeed;
+        }
+        
+        // Check if the bird has reached or passed the end of its path
         if ((directionMultiplier > 0 && currentXCenter >= rightBound) || (directionMultiplier < 0 && currentXCenter <= leftBound)) {
+            // Snap position to the boundary to prevent overshooting
             this.pos.x = directionMultiplier > 0 ? (rightBound - this.col.width / 2) : (leftBound - this.col.width / 2);
             this.vel.vx = 0;
             this.state.currentState = 'turning';
-            this.enemy.turnTimer = this.turnDuration; // Use a separate timer for turning
+            this.enemy.turnTimer = this.turnDuration;
         }
     }
 

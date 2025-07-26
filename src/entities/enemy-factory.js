@@ -34,8 +34,10 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     entityManager.addComponent(enemyEntityId, new StateComponent(initialState));
     entityManager.addComponent(enemyEntityId, new DynamicColliderComponent());
 
-    // Merge default AI config with any overrides from the level data
-    const aiConfig = { ...data.ai, ...config };
+    // Destructure config to separate AI overrides from positional/type data.
+    // This prevents the enemy's own type (e.g., 'slime') from overwriting the AI's behavior type (e.g., 'patrol').
+    const { type: _enemyType, x: _enemyX, y: _enemyY, initialDragPos, ...aiOverrides } = config;
+    const aiConfig = { ...data.ai, ...aiOverrides };
 
     entityManager.addComponent(enemyEntityId, new EnemyComponent({
         type: type,
