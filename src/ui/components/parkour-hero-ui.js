@@ -249,6 +249,7 @@ export class ParkourHeroUI extends LitElement {
       { text: 'Levels', action: () => this._openModalFromMenu('levels') },
       { text: 'Character', action: () => this._openModalFromMenu('character') },
       { text: 'Settings', action: () => this._openModalFromMenu('settings') },
+      { text: 'How to Play', action: () => this._openModalFromMenu('info') },
       { text: 'Stats', action: () => this._openModalFromMenu('stats') }
     ];
 
