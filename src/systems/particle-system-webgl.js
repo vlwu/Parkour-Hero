@@ -143,6 +143,7 @@ export class ParticleSystemWebGL {
             enemy_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
             slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 4.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
             snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
+            wing_flap: { count: 3, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30 },
         };
 
         const config = particleConfigs[type];

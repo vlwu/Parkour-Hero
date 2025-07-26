@@ -106,4 +106,25 @@ export const ENEMY_DEFINITIONS = {
             spikesOutDuration: 3.0,
         }
     },
+
+    bluebird: {
+        width: 32,
+        height: 32,
+        spriteKey: 'bluebird',
+        animations: {
+            flying: { frameCount: 10, speed: 0.1 },
+            hit: { frameCount: 5, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: 300,
+        },
+        ai: {
+            type: 'flying_patrol',
+            patrolDistance: 200,
+            horizontalSpeed: 60,
+            verticalAmplitude: 10,
+            verticalFrequency: 2,
+        }
+    },
 };

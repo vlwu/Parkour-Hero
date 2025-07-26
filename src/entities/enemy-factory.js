@@ -16,9 +16,7 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     }
 
     const enemyEntityId = entityManager.createEntity();
-    const initialState = data.ai.type === 'hop' || data.ai.type === 'defensive_cycle' || data.ai.type === 'ground_charge' ? 'idle' : 'patrol';
-
-
+    const initialState = (data.ai.type === 'ground_charge' || data.ai.type === 'defensive_cycle' || data.ai.type === 'flying_patrol') ? 'idle' : 'patrol';
 
     const initialTopLeftX = x - data.width / 2;
     const topLeftY = y - data.height / 2;
@@ -28,22 +26,9 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     entityManager.addComponent(enemyEntityId, new StateComponent(initialState));
     entityManager.addComponent(enemyEntityId, new DynamicColliderComponent());
 
+    // Merge default AI config with any overrides from the level data
+    const aiConfig = { ...data.ai, ...config };
 
-    let patrolStartX = initialTopLeftX;
-    if (data.ai.type === 'patrol') {
-
-
-        patrolStartX = initialTopLeftX - (config.patrolDistance / 2);
-    }
-
-    const aiConfig = {
-        ...data.ai,
-        patrol: {
-            startX: patrolStartX,
-            distance: config.patrolDistance || 100,
-            speed: data.ai.patrolSpeed || 50
-        }
-    };
     entityManager.addComponent(enemyEntityId, new EnemyComponent({
         type: type,
         ai: aiConfig
@@ -65,6 +50,9 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
                 break;
             case 'turtle':
                 initialAnimationState = 'idle2';
+                break;
+            case 'bluebird':
+                initialAnimationState = 'flying';
                 break;
             default:
                 initialAnimationState = 'idle';

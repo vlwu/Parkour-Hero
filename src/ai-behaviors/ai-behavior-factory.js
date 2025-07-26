@@ -2,12 +2,14 @@ import { PatrolAI } from './PatrolAI.js';
 import { GroundChargeAI } from './GroundChargeAI.js';
 import { DefensiveCycleAI } from './DefensiveCycleAI.js';
 import { SnailAI } from './SnailAI.js';
+import { FlyingPatrolAI } from './FlyingPatrolAI.js';
 
 const aiBehaviorMap = {
     'patrol': PatrolAI,
     'ground_charge': GroundChargeAI,
     'defensive_cycle': DefensiveCycleAI,
     'snail': SnailAI,
+    'flying_patrol': FlyingPatrolAI,
 };
 
 /**

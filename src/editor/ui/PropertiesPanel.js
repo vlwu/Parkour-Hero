@@ -53,6 +53,11 @@ export class PropertiesPanel {
         if (obj.type === 'fire_trap') {
             propertiesHTML += this._createNumberInput('chainLength', 'Chain Length (units)', obj.chainLength || 1, 1);
         }
+        if (obj.type === 'bluebird') {
+            propertiesHTML += this._createNumberInput('patrolDistance', 'Patrol Distance (px)', obj.patrolDistance || 200, 5);
+            propertiesHTML += this._createNumberInput('horizontalSpeed', 'Max Speed (px/sec)', obj.horizontalSpeed || 60, 5);
+            propertiesHTML += this._createNumberInput('verticalAmplitude', 'Bobbing Height (px)', obj.verticalAmplitude || 10, 1);
+        }
         
         DOM.propertiesPanel.innerHTML = propertiesHTML;
         this._attachEventListeners(obj);
@@ -89,6 +94,7 @@ export class PropertiesPanel {
         if (obj.type === 'fan') { attach('pushStrength'); attach('windHeight'); }
         if (obj.type === 'saw') { attach('direction', 'select'); attach('distance'); attach('speed'); }
         if (obj.type === 'fire_trap') { attach('chainLength'); }
+        if (obj.type === 'bluebird') { attach('patrolDistance'); attach('horizontalSpeed'); attach('verticalAmplitude'); }
     }
 
     _handleInput(id, prop, element) {

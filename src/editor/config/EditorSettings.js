@@ -38,7 +38,8 @@ export const OBJECT_DESCRIPTIONS = {
     'chicken': 'Charges at the player. Snaps vertically to the ground but stays at the horizontal position where it is placed.',
     'snail': 'A slow-moving patrol enemy. Can be jumped on to create a shell projectile (not simulated in editor). Snaps to the ground.',
     'slime': 'A hopping enemy. Snaps vertically and to the platform\'s edge (left/right based on drop location).',
-    'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.'
+    'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.',
+    'bluebird': 'A flying enemy that patrols back and forth along a set path, bobbing up and down. Does not snap to ground.'
 };
 
 export const PALETTE_ABBREVIATIONS = {
@@ -54,7 +55,7 @@ export const PALETTE_ABBREVIATIONS = {
     'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
     'saw': 'SAW',
     // Enemies
-    'mushroom': 'MSH', 'chicken': 'CKN', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT',
+    'mushroom': 'MSH', 'chicken': 'CKN', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD',
     // Terrain
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -100,7 +101,8 @@ export function getPaletteColor(type) {
         case 'trophy': return '#F39C12'; case 'checkpoint': return '#17a2b8';
         case 'mushroom': return '#e6341cff'; case 'chicken': return '#f1c40f';
         case 'snail': return '#cc37e7ff'; case 'slime': return '#2ecc71';
-        case 'turtle': return '#6198d7ff';
+        case 'turtle': return '#1a324dff';
+        case 'bluebird': return '#3195d8ff';
         case 'oneway_gold': case 'gold_third_h': case 'gold_third_v': case 'gold_ninth_sq': case 'gold_four_ninths_sq': return '#FFD700';
         case 'oneway_wood': return '#855E42';
         case 'oneway_stone': return '#808080';

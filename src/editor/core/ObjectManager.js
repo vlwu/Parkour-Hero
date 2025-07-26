@@ -82,6 +82,11 @@ export class ObjectManager {
         if (type === 'saw') {
             newObject.direction = 'horizontal'; newObject.distance = 150; newObject.speed = 50;
         }
+        if (type === 'bluebird') {
+            newObject.patrolDistance = 200;
+            newObject.horizontalSpeed = 60;
+            newObject.verticalAmplitude = 10;
+        }
 
         this._applySnapping(newObject);
         this._updateGroundedEnemyBehavior(newObject);
@@ -241,11 +246,46 @@ export class ObjectManager {
                 DOM.gridContainer.appendChild(createLine(-maxAngleRad, 'rgba(255,0,0,0.4)', 1));
                 DOM.gridContainer.appendChild(createLine(maxAngleRad, 'rgba(255,0,0,0.4)', 1));
             }
+
+            if (obj.type === 'bluebird') {
+                const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+                const patrolDistance = obj.patrolDistance || ENEMY_DEFINITIONS.bluebird.ai.patrolDistance;
+                const verticalAmplitude = obj.verticalAmplitude || ENEMY_DEFINITIONS.bluebird.ai.verticalAmplitude;
+
+                // Create a bounding box for the entire flight area
+                const box = document.createElement('div');
+                box.className = 'trap-path-visual';
+                box.style.position = 'absolute';
+                box.style.pointerEvents = 'none';
+                box.style.zIndex = '-1';
+                box.style.left = `${obj.x * TILE_SIZE - patrolDistance / 2}px`;
+                box.style.top = `${obj.y * TILE_SIZE - verticalAmplitude}px`;
+                box.style.width = `${patrolDistance}px`;
+                box.style.height = `${verticalAmplitude * 2}px`;
+                box.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+                box.style.border = '1px dashed rgba(255, 255, 255, 0.4)';
+                box.style.boxSizing = 'border-box';
+                DOM.gridContainer.appendChild(box);
+
+                // Create a central line for the main horizontal path
+                const centerLine = document.createElement('div');
+                centerLine.className = 'trap-path-visual';
+                centerLine.style.position = 'absolute';
+                centerLine.style.pointerEvents = 'none';
+                centerLine.style.zIndex = '-1';
+                centerLine.style.left = `${obj.x * TILE_SIZE - patrolDistance / 2}px`;
+                centerLine.style.top = `${obj.y * TILE_SIZE - 1}px`;
+                centerLine.style.width = `${patrolDistance}px`;
+                centerLine.style.height = `2px`;
+                centerLine.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                DOM.gridContainer.appendChild(centerLine);
+            }
         });
     }
 
     _applySnapping(obj) {
-        const groundSnappable = ['trophy', 'checkpoint', 'trampoline', 'spike', 'fire_trap', ...Object.keys(ENEMY_DEFINITIONS)];
+        const groundEnemies = Object.keys(ENEMY_DEFINITIONS).filter(key => key !== 'bluebird');
+        const groundSnappable = ['trophy', 'checkpoint', 'trampoline', 'spike', 'fire_trap', ...groundEnemies];
         
         if (fractionalPlatformTypes.includes(obj.type)) {
             this._snapFractionalPlatform(obj);
