@@ -54,8 +54,6 @@ export class BaseAI {
         let leftGridX = startGridX;
         while (leftGridX > 0) {
             const tile = this.level.getTileAt((leftGridX - 1) * TILE_SIZE, checkY * TILE_SIZE);
-            // --- FIX: Corrected edge detection logic ---
-            // The loop should break if the next tile is not solid OR if it IS a one-way platform.
             if (!tile || !tile.solid || tile.oneWay) break;
             leftGridX--;
         }
@@ -63,14 +61,17 @@ export class BaseAI {
         let rightGridX = startGridX;
         while (rightGridX < this.level.gridWidth - 1) {
             const tile = this.level.getTileAt((rightGridX + 1) * TILE_SIZE, checkY * TILE_SIZE);
-            // --- FIX: Corrected edge detection logic ---
             if (!tile || !tile.solid || tile.oneWay) break;
             rightGridX++;
         }
+        
+        // Correctly calculate the right edge based on the rightmost tile's collision box
+        const rightTile = this.level.tiles[checkY][rightGridX];
+        const rightEdge = (rightGridX * TILE_SIZE) + (rightTile.collisionBox ? rightTile.collisionBox.width : TILE_SIZE);
 
         return {
             left: leftGridX * TILE_SIZE,
-            right: (rightGridX + 1) * TILE_SIZE
+            right: rightEdge,
         };
     }
 }

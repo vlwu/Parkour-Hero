@@ -146,6 +146,27 @@ export class Level {
     return this.tiles[gridY][gridX] || TILE_DEFINITIONS['0'];
   }
 
+  // Precise collision check method for any point in the world
+  isSolidAt(worldX, worldY, ignoreOneWay = false) {
+    const tile = this.getTileAt(worldX, worldY);
+    if (!tile || !tile.solid) return false;
+    if (ignoreOneWay && tile.oneWay) return false;
+    
+    // If it's a fractional block, we need to check if the point is within its collision box
+    if (tile.collisionBox) {
+        const tileStartX = Math.floor(worldX / GRID_CONSTANTS.TILE_SIZE) * GRID_CONSTANTS.TILE_SIZE;
+        const tileStartY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE) * GRID_CONSTANTS.TILE_SIZE;
+        
+        const pointInTileX = worldX - tileStartX;
+        const pointInTileY = worldY - tileStartY;
+        
+        return pointInTileX >= 0 && pointInTileX < tile.collisionBox.width && 
+               pointInTileY >= 0 && pointInTileY < tile.collisionBox.height;
+    }
+    
+    return true; // It's a full solid block
+  }
+
   update(dt, entityManager, playerEntityId, eventBus, camera) {
       const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
       const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);

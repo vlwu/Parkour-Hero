@@ -69,21 +69,21 @@ export class Grid {
         cell.dataset.tileId = tileId;
         const def = TILE_DEFINITIONS[tileId];
 
-        // --- NEW STRATEGY ---
-        // 1. Reset the grid cell completely
-        cell.innerHTML = ''; // Clear any previous inner span
+        // 1. Reset cell style
+        cell.innerHTML = '';
         cell.style.backgroundColor = 'transparent';
         cell.style.borderTop = '';
+        cell.style.backgroundImage = 'none';
 
         if (!def || def.type === 'empty') {
             return; // Cell is empty
         }
-
-        // 2. Decide how to render based on tile type
+        
+        // 2. Handle rendering
         if (def.collisionBox) {
-            // It's a fractional block. Create an inner element to hold the sprite.
+            // It's a fractional block. Render with sprite.
             const innerBlock = document.createElement('span');
-            innerBlock.style.display = 'block'; // Make it behave like a div
+            innerBlock.style.display = 'block';
             innerBlock.style.width = `${def.collisionBox.width}px`;
             innerBlock.style.height = `${def.collisionBox.height}px`;
             innerBlock.style.backgroundImage = `url('/assets/Terrain/Terrain.png')`;
@@ -92,14 +92,36 @@ export class Grid {
             innerBlock.style.backgroundRepeat = 'no-repeat';
             cell.appendChild(innerBlock);
         } else if (!def.oneWay) {
-            // It's a standard, full-sized block. Fill the cell's background.
+            // It's a standard, full-sized SOLID block. Render with background color.
             cell.style.backgroundColor = getPaletteColor(def.type);
         }
-
-        // 3. If it's a one-way platform, add the top border to the main cell
+        
+        // 3. Add one-way platform indicator (if applicable)
         if (def.oneWay) {
             cell.style.borderTop = `5px solid ${getPaletteColor(def.type)}`;
+            // FIX: Add a subtle background to the cell for better visibility, especially for full-size one-way platforms
+            if (!def.collisionBox) {
+                 const color = getPaletteColor(def.type);
+                 cell.style.backgroundColor = this._hexToRgba(color, 0.3);
+            }
         }
+    }
+    
+    // Helper to convert hex colors to rgba for transparency
+    _hexToRgba(hex, alpha) {
+        if (!hex) return '';
+        if (hex.startsWith('rgba')) return hex; // Already in correct format
+        let r = 0, g = 0, b = 0;
+        if (hex.length === 4) { // #RGB
+            r = "0x" + hex[1] + hex[1];
+            g = "0x" + hex[2] + hex[2];
+            b = "0x" + hex[3] + hex[3];
+        } else if (hex.length === 7) { // #RRGGBB
+            r = "0x" + hex[1] + hex[2];
+            g = "0x" + hex[3] + hex[4];
+            b = "0x" + hex[5] + hex[6];
+        }
+        return `rgba(${+r},${+g},${+b},${alpha})`;
     }
 
     getTileId(index) {

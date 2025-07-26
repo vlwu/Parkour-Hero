@@ -29,15 +29,14 @@ export class PatrolAI extends BaseAI {
                     ? this.pos.x + this.col.width
                     : this.pos.x;
                 const groundProbeY = this.pos.y + this.col.height + 1;
-                const groundAhead = this.level.getTileAt(groundProbeX, groundProbeY);
-                const atEdge = !groundAhead.solid || groundAhead.oneWay;
+                const isGroundSolidAhead = this.level.isSolidAt(groundProbeX, groundProbeY, true); // true to ignore one-way platforms
+                const atEdge = !isGroundSolidAhead;
 
                 const wallProbeX = this.renderable.direction === 'right'
                     ? this.pos.x + this.col.width + 1
                     : this.pos.x - 1;
                 const wallProbeY = this.pos.y + this.col.height / 2;
-                const wallAhead = this.level.getTileAt(wallProbeX, wallProbeY);
-                const hitWall = wallAhead.solid && !wallAhead.oneWay;
+                const hitWall = this.level.isSolidAt(wallProbeX, wallProbeY, true); // true to ignore one-way platforms
 
                 if (atEdge || hitWall) {
                     this.renderable.direction = (this.renderable.direction === 'right' ? 'left' : 'right');
