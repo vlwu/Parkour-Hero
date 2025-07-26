@@ -33,6 +33,9 @@ export class EnemySystem {
                     renderable.animationFrame = 0;
                     collision.solid = true;
                     
+                    killable.stompable = false; // Make the shell temporarily unstompable
+                    enemy.immunityTimer = 0.4;  
+                    
                     const pos = entityManager.getComponent(enemyId, PositionComponent);
                     eventBus.publish('createParticles', {
                         x: pos.x + collision.width / 2,
@@ -80,6 +83,18 @@ export class EnemySystem {
             const state = entityManager.getComponent(id, StateComponent);
             const renderable = entityManager.getComponent(id, RenderableComponent);
             const col = entityManager.getComponent(id, CollisionComponent);
+            
+            // Handle immunity timer
+            if (enemy.immunityTimer > 0) {
+                enemy.immunityTimer -= dt;
+                if (enemy.immunityTimer <= 0) {
+                    const killable = entityManager.getComponent(id, KillableComponent);
+                    if (killable) {
+                        killable.stompable = true; // Re-enable stomping
+                    }
+                }
+            }
+
             if (enemy.isDead) {
                 const wasDestroyed = this._updateDyingState(dt, enemy, vel, entityManager, id);
                 if (wasDestroyed) { continue; }

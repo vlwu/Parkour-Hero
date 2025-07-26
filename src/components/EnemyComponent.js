@@ -16,6 +16,7 @@ export class EnemyComponent {
         this.isDead = false;
         this.deathTimer = 0;
         this.timer = 0; // Generic timer for AI states (e.g., idle, cooldown)
+        this.immunityTimer = 0; // Added for immunity when switching phases (eg. rock, snail)
         if (this.ai.particleDropInterval) {
             this.particleDropTimer = this.ai.particleDropInterval;
         }
