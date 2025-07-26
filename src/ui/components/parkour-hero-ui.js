@@ -7,6 +7,7 @@ import './character-modal.js';
 import './info-modal.js';
 import './level-complete-modal.js';
 import './stats-modal.js';
+import './tutorial-modal.js';
 import './bitmap-text.js';
 
 export class ParkourHeroUI extends LitElement {
@@ -103,7 +104,6 @@ export class ParkourHeroUI extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    // It's good practice to unsubscribe from all events to prevent memory leaks
     eventBus.unsubscribe('requestStartGame', this._handleStartGame);
     eventBus.unsubscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.unsubscribe('keybindsUpdated', this._handleKeybindsUpdate);
@@ -123,6 +123,12 @@ export class ParkourHeroUI extends LitElement {
           this.gameHasStarted = true;
       }
       this.activeModal = null;
+      
+      const isFirstLevel = gameState.currentSection === 0 && gameState.currentLevelIndex === 0;
+      if (isFirstLevel && !gameState.tutorialShown) {
+          this.activeModal = 'tutorial';
+          eventBus.publish('menuOpened');
+      }
   }
 
   _handleStartGame = () => {
@@ -162,8 +168,18 @@ export class ParkourHeroUI extends LitElement {
   
   _closeModal = () => {
     const wasOpen = this.activeModal !== null;
+    const modalThatWasClosed = this.activeModal;
     this.activeModal = this.gameHasStarted ? null : 'main-menu';
-    if (wasOpen && this.gameHasStarted) { eventBus.publish('allMenusClosed'); }
+    if (wasOpen && this.gameHasStarted) {
+        if (modalThatWasClosed === 'tutorial') {
+            const newGameState = this.gameState.markTutorialAsShown();
+            if (newGameState !== this.gameState) {
+                this.gameState = newGameState;
+                eventBus.publish('gameStateUpdated', this.gameState);
+            }
+        }
+        eventBus.publish('allMenusClosed');
+    }
   }
   
   _openModalFromMenu(modalName) {
@@ -271,6 +287,12 @@ export class ParkourHeroUI extends LitElement {
   
   renderActiveModal() {
     switch (this.activeModal) {
+      case 'tutorial':
+        return html`<tutorial-modal
+                      .keybinds=${this.keybinds}
+                      .fontRenderer=${this.fontRenderer}
+                      @close-modal=${this._closeModal}
+                    ></tutorial-modal>`;
       case 'settings':
         return html`<settings-menu 
                       .keybinds=${this.keybinds} .soundSettings=${this.soundSettings} .fontRenderer=${this.fontRenderer}

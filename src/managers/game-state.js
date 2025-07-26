@@ -36,12 +36,14 @@ export class GameState {
           this.levelProgress = initialState.levelProgress;
           this.selectedCharacter = initialState.selectedCharacter;
           this.levelStats = initialState.levelStats;
+          this.tutorialShown = initialState.tutorialShown;
       } else {
           this.showingLevelComplete = false;
           const savedState = this.loadProgress();
           this.levelProgress = savedState.levelProgress;
           this.selectedCharacter = savedState.selectedCharacter;
           this.levelStats = savedState.levelStats;
+          this.tutorialShown = savedState.tutorialShown;
           this.ensureStatsForAllLevels();
 
           // Determine the level to start/continue on.
@@ -62,6 +64,7 @@ export class GameState {
       levelProgress: { unlockedLevels: [1], completedLevels: [] },
       selectedCharacter: 'PinkMan',
       levelStats: {},
+      tutorialShown: false,
     };
   }
 
@@ -79,6 +82,9 @@ export class GameState {
         if (!state.levelStats || typeof state.levelStats !== 'object') {
             state.levelStats = {};
         }
+        if (typeof state.tutorialShown !== 'boolean') {
+            state.tutorialShown = false;
+        }
         return state;
       } catch (e) {
         console.error("Failed to parse game state from localStorage. Resetting to default.", e);
@@ -92,6 +98,7 @@ export class GameState {
           levelProgress: this.levelProgress,
           selectedCharacter: this.selectedCharacter,
           levelStats: this.levelStats,
+          tutorialShown: this.tutorialShown,
         };
         localStorage.setItem('parkourGameState', JSON.stringify(stateToSave));
         console.log("Progress saved:", stateToSave);
@@ -197,6 +204,14 @@ export class GameState {
       console.error("Failed to reset game state in localStorage", e);
       return this; // Return old state on failure
     }
+  }
+  
+  markTutorialAsShown() {
+      if (this.tutorialShown) return this;
+      const newState = this._clone();
+      newState.tutorialShown = true;
+      newState.saveProgress();
+      return newState;
   }
   
   unlockAllLevels() {
