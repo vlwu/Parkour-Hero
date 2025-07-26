@@ -85,28 +85,32 @@ export class Engine {
         this.uiSystem,
     ];
 
+    this.subscriptions = [];
     this.currentLevel = null;
     this._setupEventSubscriptions();
   }
 
   _setupEventSubscriptions() {
-    eventBus.subscribe('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
-    eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
-    eventBus.subscribe('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
-    eventBus.subscribe('keybindsUpdated', (newKeybinds) => this.updateKeybinds(newKeybinds));
+    const subscribeAndTrack = (eventName, callback) => {
+        const boundCallback = callback.bind(this);
+        this.subscriptions.push({ eventName, callback: boundCallback });
+        eventBus.subscribe(eventName, boundCallback);
+    };
 
-    eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
-    eventBus.subscribe('playerTookDamage', (data) => this._onPlayerTookDamage(data));
-    eventBus.subscribe('checkpointActivated', (cp) => this._onCheckpointActivated(cp));
-    eventBus.subscribe('playerDied', () => this._onPlayerDied());
-    eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
-    eventBus.subscribe('cameraShakeRequested', (params) => this._onCameraShakeRequested(params));
-
-    eventBus.subscribe('menuOpened', () => { this.pauseForMenu = true; this.pause(); });
-    eventBus.subscribe('allMenusClosed', () => { this.pauseForMenu = false; this.resume(); });
-    eventBus.subscribe('pauseGame', () => this.pause());
-
-    eventBus.subscribe('gameStateUpdated', (newState) => this.gameState = newState);
+    subscribeAndTrack('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
+    subscribeAndTrack('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
+    subscribeAndTrack('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
+    subscribeAndTrack('keybindsUpdated', this.updateKeybinds);
+    subscribeAndTrack('fruitCollected', this._onFruitCollected);
+    subscribeAndTrack('playerTookDamage', this._onPlayerTookDamage);
+    subscribeAndTrack('checkpointActivated', this._onCheckpointActivated);
+    subscribeAndTrack('playerDied', this._onPlayerDied);
+    subscribeAndTrack('characterUpdated', this.updatePlayerCharacter);
+    subscribeAndTrack('cameraShakeRequested', this._onCameraShakeRequested);
+    subscribeAndTrack('menuOpened', () => { this.pauseForMenu = true; this.pause(); });
+    subscribeAndTrack('allMenusClosed', () => { this.pauseForMenu = false; this.resume(); });
+    subscribeAndTrack('pauseGame', this.pause);
+    subscribeAndTrack('gameStateUpdated', (newState) => this.gameState = newState);
   }
 
   updateKeybinds(newKeybinds) { this.keybinds = { ...newKeybinds }; }
@@ -194,6 +198,35 @@ export class Engine {
     }
 
     eventBus.publish('levelLoaded', { gameState: this.gameState });
+  }
+
+  loadLevelFromData(levelData) {
+      if (!levelData) {
+          console.error("No level data provided to loadLevelFromData");
+          this.stop();
+          return;
+      }
+      this.pauseForMenu = false;
+      this.gameState.showingLevelComplete = false;
+      eventBus.publish('gameStateUpdated', this.gameState);
+      this.lastCheckpoint = null;
+      this.fruitsAtLastCheckpoint.clear();
+      this.soundManager.stopAll();
+      this.entityManager = new EntityManager();
+      this.inputSystem.entityManager = this.entityManager;
+      this.effectsSystem.reset();
+      this.particleSystem.reset();
+      this.gameFlowSystem.reset(this.isRunning);
+      this.currentLevel = new Level(levelData, this.entityManager);
+      this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
+      this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
+      this.camera.snapToPlayer(this.entityManager, this.playerEntityId);
+      this.renderer.preRenderLevel(this.currentLevel);
+      this.timeScale = 1.0;
+      if (!this.gameHasStarted) {
+          this.start();
+      }
+      eventBus.publish('gameResumed');
   }
 
   update(dt) {
@@ -384,5 +417,17 @@ export class Engine {
     this.hud.drawGameHUD(this.ctx, FIXED_DT);
     
     this.uiSystem.render(this.ctx, this.timeScale > 0);
+  }
+
+  destroy() {
+      this.stop();
+      this.subscriptions.forEach(({ eventName, callback }) => {
+          eventBus.unsubscribe(eventName, callback);
+      });
+      this.subscriptions = [];
+      this.inputSystem.destroy();
+      this.uiSystem.destroy();
+      this.soundManager.destroy();
+      console.log("Engine destroyed and listeners cleaned up.");
   }
 }

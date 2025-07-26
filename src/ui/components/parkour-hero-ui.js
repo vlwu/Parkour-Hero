@@ -73,6 +73,7 @@ export class ParkourHeroUI extends LitElement {
     assets: { type: Object, state: true },
     fontRenderer: { type: Object },
     levelCompleteStats: { type: Object, state: true },
+    previewMode: { type: Boolean },
   };
 
   constructor() {
@@ -86,6 +87,7 @@ export class ParkourHeroUI extends LitElement {
     this.assets = null;
     this.fontRenderer = null;
     this.levelCompleteStats = null;
+    this.previewMode = false;
   }
 
   connectedCallback() {
@@ -100,6 +102,10 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
     eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets);
     eventBus.subscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
+    if (this.previewMode) {
+        this.gameHasStarted = true;
+        this.activeModal = null;
+    }
   }
 
   disconnectedCallback() {
@@ -125,7 +131,7 @@ export class ParkourHeroUI extends LitElement {
       this.activeModal = null;
       
       const isFirstLevel = gameState.currentSection === 0 && gameState.currentLevelIndex === 0;
-      if (isFirstLevel && !gameState.tutorialShown) {
+      if (isFirstLevel && !gameState.tutorialShown && !this.previewMode) {
           this.activeModal = 'tutorial';
           eventBus.publish('menuOpened');
       }
@@ -155,7 +161,7 @@ export class ParkourHeroUI extends LitElement {
   };
 
   _handleEscapePress = () => {
-    if (this.levelCompleteStats) return; // Don't let escape close the level complete screen
+    if (this.levelCompleteStats) return;
     if (this.activeModal) { this._closeModal(); }
     else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
   };
@@ -169,7 +175,9 @@ export class ParkourHeroUI extends LitElement {
   _closeModal = () => {
     const wasOpen = this.activeModal !== null;
     const modalThatWasClosed = this.activeModal;
-    this.activeModal = this.gameHasStarted ? null : 'main-menu';
+    this.activeModal = (this.gameHasStarted && !this.previewMode) ? null : 'main-menu';
+    if (this.previewMode) this.activeModal = null;
+
     if (wasOpen && this.gameHasStarted) {
         if (modalThatWasClosed === 'tutorial') {
             const newGameState = this.gameState.markTutorialAsShown();
@@ -214,7 +222,6 @@ export class ParkourHeroUI extends LitElement {
   }
 
   render() {
-    // Level complete modal always takes top priority
     if (this.levelCompleteStats) {
       return html`
         <level-complete-modal
@@ -230,8 +237,7 @@ export class ParkourHeroUI extends LitElement {
     }
 
     const isLoading = !this.assets || !this.fontRenderer;
-    // If the game has NOT started, render the main menu screen.
-    if (!this.gameHasStarted) {
+    if (!this.gameHasStarted && !this.previewMode) {
       return html`
         <div class="main-menu-overlay">
           ${isLoading
@@ -243,7 +249,6 @@ export class ParkourHeroUI extends LitElement {
       `;
     }
     
-    // If the game HAS started, only render the active modal (without the main menu background).
     return this.renderActiveModal();
   }
   

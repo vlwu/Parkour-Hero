@@ -6,11 +6,10 @@ export class SoundManager {
     this.soundPool = {}; // Stores arrays of pooled audio objects for reuse.
     this.poolSize = 5; // Number of audio objects per sound effect.
     
-    // NEW: Manages currently playing sounds, organized by channel.
     this.channels = {
       SFX: new Set(),
       UI: new Set(),
-      Music: new Set(), // Added for future scalability
+      Music: new Set(),
     };
 
     this.audioContext = null;
@@ -19,32 +18,56 @@ export class SoundManager {
       enabled: true,
       volume: 0.5,
     };
+    this.subscriptions = [];
+    this._unlockHandler = null;
+    
     this.loadSettings();
     this._setupEventSubscriptions();
     this._addInteractionListenerForAudioUnlock();
   }
 
   _addInteractionListenerForAudioUnlock() {
-    const unlockHandler = async () => {
+    this._unlockHandler = async () => {
         await this.unlockAudio();
         if (this.audioUnlocked) {
-            window.removeEventListener('click', unlockHandler);
-            window.removeEventListener('keydown', unlockHandler);
-            window.removeEventListener('touchstart', unlockHandler);
+            this.destroyInteractionListeners();
         }
     };
 
-    window.addEventListener('click', unlockHandler);
-    window.addEventListener('keydown', unlockHandler);
-    window.addEventListener('touchstart', unlockHandler);
+    window.addEventListener('click', this._unlockHandler);
+    window.addEventListener('keydown', this._unlockHandler);
+    window.addEventListener('touchstart', this._unlockHandler);
+  }
+  
+  destroyInteractionListeners() {
+      if (this._unlockHandler) {
+          window.removeEventListener('click', this._unlockHandler);
+          window.removeEventListener('keydown', this._unlockHandler);
+          window.removeEventListener('touchstart', this._unlockHandler);
+          this._unlockHandler = null;
+      }
   }
 
   _setupEventSubscriptions() {
-    eventBus.subscribe('playSound', (payload) => this.play(payload));
-    eventBus.subscribe('startSoundLoop', (payload) => this.playLoop(payload));
-    eventBus.subscribe('stopSoundLoop', ({key}) => this.stopLoop(key));
-    eventBus.subscribe('toggleSound', () => this.toggleSound());
-    eventBus.subscribe('setSoundVolume', ({volume}) => this.setVolume(volume));
+    const subscribeAndTrack = (eventName, callback) => {
+        const boundCallback = callback.bind(this);
+        this.subscriptions.push({ eventName, callback: boundCallback });
+        eventBus.subscribe(eventName, boundCallback);
+    };
+    subscribeAndTrack('playSound', this.play);
+    subscribeAndTrack('startSoundLoop', this.playLoop);
+    subscribeAndTrack('stopSoundLoop', ({key}) => this.stopLoop(key));
+    subscribeAndTrack('toggleSound', this.toggleSound);
+    subscribeAndTrack('setSoundVolume', ({volume}) => this.setVolume(volume));
+  }
+
+  destroy() {
+      this.subscriptions.forEach(({ eventName, callback }) => {
+          eventBus.unsubscribe(eventName, callback);
+      });
+      this.subscriptions = [];
+      this.destroyInteractionListeners();
+      this.stopAll();
   }
 
   loadSettings() {
@@ -52,9 +75,7 @@ export class SoundManager {
     this.settings.volume = 0.5;
   }
 
-  saveSettings() {
-    // In a real app, this would save to localStorage.
-  }
+  saveSettings() {}
 
   loadSounds(assets) {
     const soundKeys = ['button_click', 'jump', 'double_jump', 'collect', 'level_complete', 'trophy_activated', 'death_sound', 'dash', 'checkpoint_activated', 
@@ -63,7 +84,6 @@ export class SoundManager {
     soundKeys.forEach(key => {
       if (assets[key]) {
         this.sounds[key] = assets[key];
-        // The sound pool is independent of channels; it's just a resource manager.
         this.soundPool[key] = [];
         for (let i = 0; i < this.poolSize; i++) {
             this.soundPool[key].push(this.sounds[key].cloneNode(true));
@@ -89,7 +109,6 @@ export class SoundManager {
       return;
     }
     
-    // Find an audio object in the pool that is not currently playing.
     const audio = pool.find(a => a.paused || a.ended);
     
     if (audio) {
@@ -99,7 +118,6 @@ export class SoundManager {
       this.channels[channel].add(audio);
       
       audio.onended = () => {
-        // When finished, remove from the active channel set. It remains in the pool.
         this.channels[channel].delete(audio);
         audio.onended = null;
       };
@@ -110,7 +128,7 @@ export class SoundManager {
         if (e.name !== 'AbortError') {
           console.error(`Audio pool play failed for ${key}:`, e);
         }
-        this.channels[channel].delete(audio); // Clean up on failure
+        this.channels[channel].delete(audio);
       }
     } else {
       console.warn(`Sound pool for ${key} was depleted. No sound played.`);
@@ -195,10 +213,8 @@ export class SoundManager {
   setVolume(volume) {
     this.settings.volume = Math.max(0, Math.min(1, volume));
     
-    // Adjust volume of already-playing sounds
     for (const channelName in this.channels) {
         this.channels[channelName].forEach(audio => {
-            // Note: volumeMultiplier is lost here, but this is an acceptable trade-off.
             audio.volume = this.settings.volume;
         });
     }

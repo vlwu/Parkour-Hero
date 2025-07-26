@@ -7,13 +7,24 @@ export class InputSystem {
     this.entityManager = entityManager;
     this.keys = new Set();
     this.queue = []; // Event queue for the current frame
+    
+    this._boundKeyDown = this.handleKeyDown.bind(this);
+    this._boundKeyUp = this.handleKeyUp.bind(this);
+    this._boundContextMenu = (e) => e.preventDefault();
+    
     this.initEventListeners();
   }
 
   initEventListeners() {
-    window.addEventListener('keydown', this.handleKeyDown.bind(this));
-    window.addEventListener('keyup', this.handleKeyUp.bind(this));
-    window.addEventListener('contextmenu', (e) => e.preventDefault());
+    window.addEventListener('keydown', this._boundKeyDown);
+    window.addEventListener('keyup', this._boundKeyUp);
+    window.addEventListener('contextmenu', this._boundContextMenu);
+  }
+  
+  destroy() {
+    window.removeEventListener('keydown', this._boundKeyDown);
+    window.removeEventListener('keyup', this._boundKeyUp);
+    window.removeEventListener('contextmenu', this._boundContextMenu);
   }
 
   handleKeyDown(e) {

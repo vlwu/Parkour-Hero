@@ -20,10 +20,18 @@ export class UISystem {
             { id: 'info', x: buttonX, y: topPadding + (buttonSize + buttonGap) * 4, width: buttonSize, height: buttonSize, assetKey: 'info_icon', visible: false },
         ];
         
-        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-        this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+        this._boundMouseMove = this.handleMouseMove.bind(this);
+        this._boundCanvasClick = this.handleCanvasClick.bind(this);
+        
+        this.canvas.addEventListener('mousemove', this._boundMouseMove);
+        this.canvas.addEventListener('click', this._boundCanvasClick);
         
         eventBus.subscribe('gameStarted', () => this.uiButtons.forEach(b => b.visible = true));
+    }
+
+    destroy() {
+        this.canvas.removeEventListener('mousemove', this._boundMouseMove);
+        this.canvas.removeEventListener('click', this._boundCanvasClick);
     }
     
     _getMousePos(e) {
@@ -54,9 +62,7 @@ export class UISystem {
         }
     }
 
-    update() {
-        // This system is now event-driven and doesn't need a per-frame update.
-    }
+    update() {}
 
     render(ctx, isRunning) {
         ctx.save();

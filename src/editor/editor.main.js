@@ -9,6 +9,11 @@ import { GridInputHandler } from './grid/GridInputHandler.js';
 import { LevelExporter } from './io/LevelExporter.js';
 import { LevelImporter } from './io/LevelImporter.js';
 
+import { Engine } from '../../core/engine.js';
+import { loadAssets } from '../../managers/asset-manager.js';
+import { FontRenderer } from '../../ui/font-renderer.js';
+import '../../ui/ui-main.js';
+
 const round = (val) => Math.round(val * 100) / 100;
 
 class EditorController {
@@ -25,6 +30,10 @@ class EditorController {
             isChanging: false,
             oldValue: 0
         };
+        
+        this.assets = null;
+        this.fontRenderer = null;
+        this.engine = null;
 
         // UI Modules
         this.palette = new Palette(this._onPaletteSelection.bind(this));
@@ -53,6 +62,7 @@ class EditorController {
             onResize: this._onResize.bind(this),
             onFileLoad: this._onFileLoad.bind(this),
             onExport: this._onExport.bind(this),
+            onTestLevel: this._onTestLevel.bind(this),
             onUndo: this._onUndo.bind(this),
             onRedo: this._onRedo.bind(this),
             onZoomIn: () => this.grid.zoom(0.1),
@@ -64,6 +74,112 @@ class EditorController {
             if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); this._onRedo(); }
         });
         this._onPaletteSelection(this.palette.getSelection());
+        this._loadGameAssets();
+    }
+    
+    async _loadGameAssets() {
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'editor-loading-overlay';
+        loadingOverlay.textContent = 'Loading Game Assets...';
+        document.body.appendChild(loadingOverlay);
+
+        try {
+            this.assets = await loadAssets();
+            this.fontRenderer = new FontRenderer(this.assets.font_spritesheet);
+            console.log("Editor: Game assets loaded successfully.");
+            DOM.testLevelBtn.disabled = false;
+        } catch (error) {
+            console.error("Editor: Failed to load game assets.", error);
+            loadingOverlay.textContent = 'Error loading assets. Preview disabled.';
+            setTimeout(() => loadingOverlay.remove(), 3000);
+            return;
+        }
+        
+        loadingOverlay.remove();
+    }
+
+    _onTestLevel() {
+        if (!this.assets || !this.fontRenderer) {
+            alert("Game assets are not loaded yet. Please wait.");
+            return;
+        }
+
+        const { startPos, finalObjects, finalEnemies } = this.objectManager.getObjectsForExport();
+        const levelData = {
+            name: `Preview: ${DOM.levelNameInput.value}`,
+            gridWidth: this.grid.width,
+            gridHeight: this.grid.height,
+            background: DOM.backgroundInput.value,
+            startPosition: startPos,
+            layout: this.grid.getLayout(),
+            objects: finalObjects,
+            enemies: finalEnemies,
+        };
+
+        const previewContainer = document.getElementById('game-preview-container');
+        const uiRoot = document.getElementById('preview-ui-root');
+        const gameCanvas = document.getElementById('preview-game-canvas');
+        const particleCanvas = document.getElementById('preview-particle-canvas');
+        const exitBtn = document.getElementById('exit-preview-btn');
+
+        if (!previewContainer || !gameCanvas || !particleCanvas || !exitBtn || !uiRoot) {
+            console.error("Preview DOM elements not found!");
+            return;
+        }
+
+        gameCanvas.width = 1920; gameCanvas.height = 1080;
+        particleCanvas.width = 1920; particleCanvas.height = 1080;
+
+        const resizePreview = () => {
+            const aspectRatio = 16 / 9;
+            const windowRatio = window.innerWidth / window.innerHeight;
+            let width, height;
+            if (windowRatio > aspectRatio) {
+                height = window.innerHeight;
+                width = height * aspectRatio;
+            } else {
+                width = window.innerWidth;
+                height = width / aspectRatio;
+            }
+            const finalWidth = Math.floor(width);
+            const finalHeight = Math.floor(height);
+            const left = `${(window.innerWidth - finalWidth) / 2}px`;
+            const top = `${(window.innerHeight - finalHeight) / 2}px`;
+            [gameCanvas, particleCanvas, uiRoot].forEach(el => {
+                el.style.width = `${finalWidth}px`;
+                el.style.height = `${finalHeight}px`;
+                el.style.left = left;
+                el.style.top = top;
+            });
+        };
+
+        resizePreview();
+        window.addEventListener('resize', resizePreview);
+
+        const ctx = gameCanvas.getContext('2d');
+        const gl = particleCanvas.getContext('webgl2', { alpha: true });
+        ctx.imageSmoothingEnabled = false;
+
+        const keybinds = { moveLeft: 'a', moveRight: 'd', jump: 'w', dash: ' ' };
+        this.engine = new Engine(ctx, gl, gameCanvas, this.assets, keybinds, this.fontRenderer);
+        
+        const uiComponent = document.createElement('parkour-hero-ui');
+        uiComponent.fontRenderer = this.fontRenderer;
+        uiComponent.previewMode = true;
+        uiRoot.appendChild(uiComponent);
+
+        this.engine.loadLevelFromData(levelData);
+        previewContainer.style.display = 'flex';
+        
+        const exitPreview = () => {
+            this.engine.destroy();
+            this.engine = null;
+            previewContainer.style.display = 'none';
+            uiRoot.innerHTML = '';
+            exitBtn.removeEventListener('click', exitPreview);
+            window.removeEventListener('resize', resizePreview);
+        };
+        exitBtn.addEventListener('click', exitPreview);
     }
     
     resetEditor(width, height) {
@@ -277,5 +393,8 @@ class EditorController {
 }
 
 // --- Start the Editor ---
-const editor = new EditorController();
-editor.init();
+document.addEventListener('DOMContentLoaded', () => {
+    DOM.init(); // Initialize DOM references
+    const editor = new EditorController();
+    editor.init(); // Initialize the rest of the editor
+});

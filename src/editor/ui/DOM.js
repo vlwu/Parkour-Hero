@@ -19,6 +19,7 @@ export const DOM = {
     resizeBtn: document.getElementById('resizeBtn'),
     loadBtn: document.getElementById('loadBtn'),
     exportBtn: document.getElementById('exportBtn'),
+    testLevelBtn: document.getElementById('testLevelBtn'),
     undoBtn: document.getElementById('undoBtn'),
     redoBtn: document.getElementById('redoBtn'),
     zoomInBtn: document.getElementById('zoomInBtn'),

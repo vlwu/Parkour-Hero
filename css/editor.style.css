@@ -235,3 +235,56 @@ body {
     padding-top: 10px;
     border-top: 1px solid var(--border-color);
 }
+
+/* Game Preview Styles */
+#game-preview-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game-preview-container canvas, #game-preview-container #preview-ui-root {
+    position: absolute;
+}
+
+#exit-preview-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10000;
+    padding: 10px 20px;
+    background-color: var(--danger-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: 1em;
+}
+
+#exit-preview-btn:hover {
+    background-color: #c0392b;
+}
+
+#editor-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: var(--font-main);
+    font-size: 2em;
+    z-index: 10001;
+}

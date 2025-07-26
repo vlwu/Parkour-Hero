@@ -49,6 +49,7 @@
                     <input type="file" id="loadFile" accept=".json" style="display: none;">
                     <button id="loadBtn">Load File</button>
                     <button id="exportBtn" class="primary-action">Export to JSON</button>
+                    <button id="testLevelBtn" class="primary-action" title="Test the current level" disabled>Test Level</button>
                 </div>
             </div>
             <div id="grid-parent">
@@ -71,6 +72,17 @@
                 <p><strong>Undo/Redo:</strong> Use buttons or Ctrl+Z / Ctrl+Y.</p>
             </div>
         </div>
+    </div>
+
+    <!-- Container for the game preview -->
+    <div id="game-preview-container" style="display: none;">
+        <!-- Root for Lit components inside the preview -->
+        <div id="preview-ui-root"></div>
+        <!-- Canvases for the game engine -->
+        <canvas id="preview-game-canvas"></canvas>
+        <canvas id="preview-particle-canvas"></canvas>
+        <!-- Button to close the preview -->
+        <button id="exit-preview-btn">Exit Preview</button>
     </div>
 
     <script type="module" src="/src/editor/editor.main.js"></script>
