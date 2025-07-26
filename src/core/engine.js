@@ -380,7 +380,9 @@ export class Engine {
     this.particleSystem.render(this.camera);
     
     // Render the 2D HUD and UI on top of everything.
-    this.hud.drawGameHUD(this.ctx, deltaTime);
+    // Pass FIXED_DT to HUD for correct FPS calculation
+    this.hud.drawGameHUD(this.ctx, FIXED_DT);
+    
     this.uiSystem.render(this.ctx, this.timeScale > 0);
   }
 }
