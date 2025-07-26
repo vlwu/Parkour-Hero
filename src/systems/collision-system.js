@@ -153,10 +153,11 @@ export class CollisionSystem {
                     }
 
                     // Physics response for solid tiles and traps
+                    const PUSH_BUFFER = 0.01; // A small buffer to prevent sticking
                     if (vel.vx > 0) { // Moving right
-                        pos.x = collider.x - col.width;
+                        pos.x = collider.x - col.width - PUSH_BUFFER;
                     } else if (vel.vx < 0) { // Moving left
-                        pos.x = collider.x + collider.width;
+                        pos.x = collider.x + collider.width + PUSH_BUFFER;
                     }
                     vel.vx = 0;
                     entityRect.x = pos.x;
@@ -221,9 +222,20 @@ export class CollisionSystem {
                     }
                 } else { // Moving Up
                     if (!collider.isOneWay) {
-                        pos.y = collider.y + collider.height;
-                        vel.vy = 0;
-                        entityRect.y = pos.y;
+                        const prevPlayerTop = (pos.y - vel.vy * dt);
+                        const prevPlayerXCenter = (pos.x - vel.vx * dt) + col.width / 2;
+                        const colliderXStart = collider.x;
+                        const colliderXEnd = collider.x + collider.width;
+
+                        // A true "head bonk" requires the player to be moving up from directly underneath.
+                        if (prevPlayerTop >= collider.y + collider.height &&
+                            prevPlayerXCenter > colliderXStart &&
+                            prevPlayerXCenter < colliderXEnd) {
+                            const PUSH_BUFFER = 0.01;
+                            pos.y = collider.y + collider.height + PUSH_BUFFER;
+                            vel.vy = 0;
+                            entityRect.y = pos.y;
+                        }
                     }
                 }
             }
@@ -287,7 +299,8 @@ export class CollisionSystem {
                 landingVelocity
             });
         }
-        pos.y = surfaceTopY - col.height;
+        const PUSH_BUFFER = 0.01;
+        pos.y = surfaceTopY - col.height - PUSH_BUFFER;
         vel.vy = 0;
         col.isGrounded = true;
         col.groundType = surfaceType;
