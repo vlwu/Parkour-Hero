@@ -3,6 +3,11 @@ import { GRID_CONSTANTS } from '../../utils/constants.js';
 import { getPaletteColor } from '../config/EditorSettings.js';
 import { DOM } from '../ui/DOM.js';
 
+// IMPORTANT: Replace these values with the actual dimensions of your Terrain.png file
+// I will assume 256x256 based on the last step.
+const TERRAIN_SPRITESHEET_WIDTH = 256;
+const TERRAIN_SPRITESHEET_HEIGHT = 256;
+
 export class Grid {
     constructor(width, height) {
         this.width = width;
@@ -45,7 +50,6 @@ export class Grid {
     }
 
     setZoom(level) {
-        // Clamp zoom level to prevent zooming too far in or out
         this.zoomLevel = Math.max(0.1, Math.min(level, 3));
         this.applyZoom();
     }
@@ -65,29 +69,34 @@ export class Grid {
         cell.dataset.tileId = tileId;
         const def = TILE_DEFINITIONS[tileId];
 
-        // Reset all visual styles first
-        cell.style.backgroundImage = '';
-        cell.style.backgroundPosition = '';
-        cell.style.backgroundRepeat = '';
-        cell.style.backgroundColor = 'transparent'; // Default for empty or sprite-based tiles
-        cell.style.borderTop = ''; // Clear one-way platform style from previous state
+        // --- NEW STRATEGY ---
+        // 1. Reset the grid cell completely
+        cell.innerHTML = ''; // Clear any previous inner span
+        cell.style.backgroundColor = 'transparent';
+        cell.style.borderTop = '';
 
         if (!def || def.type === 'empty') {
-            return; // Cell is empty, we're done
+            return; // Cell is empty
         }
 
-        // Apply styles based on tile definition
+        // 2. Decide how to render based on tile type
         if (def.collisionBox) {
-            // This is a fractional block, so it must be rendered with its sprite
-            cell.style.backgroundImage = `url('/assets/Terrain/Terrain.png')`;
-            cell.style.backgroundPosition = `-${def.spriteConfig.srcX}px -${def.spriteConfig.srcY}px`;
-            cell.style.backgroundRepeat = 'no-repeat';
+            // It's a fractional block. Create an inner element to hold the sprite.
+            const innerBlock = document.createElement('span');
+            innerBlock.style.display = 'block'; // Make it behave like a div
+            innerBlock.style.width = `${def.collisionBox.width}px`;
+            innerBlock.style.height = `${def.collisionBox.height}px`;
+            innerBlock.style.backgroundImage = `url('/assets/Terrain/Terrain.png')`;
+            innerBlock.style.backgroundPosition = `-${def.spriteConfig.srcX}px -${def.spriteConfig.srcY}px`;
+            innerBlock.style.backgroundSize = `${TERRAIN_SPRITESHEET_WIDTH}px ${TERRAIN_SPRITESHEET_HEIGHT}px`;
+            innerBlock.style.backgroundRepeat = 'no-repeat';
+            cell.appendChild(innerBlock);
         } else if (!def.oneWay) {
-            // This is a standard, full-sized, solid block
+            // It's a standard, full-sized block. Fill the cell's background.
             cell.style.backgroundColor = getPaletteColor(def.type);
         }
 
-        // If the tile is a one-way platform (regardless of size), add the top border style
+        // 3. If it's a one-way platform, add the top border to the main cell
         if (def.oneWay) {
             cell.style.borderTop = `5px solid ${getPaletteColor(def.type)}`;
         }
