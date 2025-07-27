@@ -32,10 +32,8 @@ export class Renderer {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -190,30 +188,7 @@ export class Renderer {
           case 'spiked_ball': this._queueSpikedBall(trap); break;
           case 'spikes': this._queueSpikes(trap); break;
           case 'trampoline': this._queueTrampoline(trap); break;
-          // FIX: Add default case to handle all static/fractional platforms
-          default:
-              if (trap.spriteConfig) {
-                  this._queueStaticPlatform(trap);
-              }
-              break;
       }
-  }
-
-  // FIX: New method to render fractional platforms.
-  _queueStaticPlatform(platform) {
-      const spriteAsset = this.assets.block; // All fractional platforms use the main 'block' terrain sprite
-      if (!spriteAsset) return;
-      const webGLTexture = this._getWebGLTexture(spriteAsset);
-      if (!webGLTexture) return;
-
-      const { srcX, srcY, width: srcWidth, height: srcHeight } = platform.spriteConfig;
-
-      this.spriteBatcher.draw(
-          webGLTexture, spriteAsset.width, spriteAsset.height,
-          platform.x - platform.width / 2, platform.y - platform.height / 2,
-          platform.width, platform.height,
-          srcX, srcY, srcWidth, srcHeight
-      );
   }
 
   _queueArrowBubble(trap) {
