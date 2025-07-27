@@ -32,7 +32,7 @@ export class ObjectManager {
             const { width, height } = this._getObjectDimensions(obj.type);
             this.objects.push({ ...obj, id: this.nextObjectId++, width, height });
         });
-        
+
         (enemiesData || []).forEach(enemy => {
              const { width, height } = this._getObjectDimensions(enemy.type);
              this.objects.push({ ...enemy, id: this.nextObjectId++, width, height });
@@ -69,7 +69,7 @@ export class ObjectManager {
             y: pixelY / GRID_CONSTANTS.TILE_SIZE,
             width, height
         };
-        
+
         if (type === 'spiked_ball') {
             newObject.chainLength = 100; newObject.swingArc = 90; newObject.period = 4; newObject.tiltAmount = 0.5;
         }
@@ -111,11 +111,11 @@ export class ObjectManager {
         const obj = this.getObject(id);
         if (obj) { obj[prop] = value; this.render(); }
     }
-    
+
     getObject(id) {
         return this.objects.find(o => o.id === id);
     }
-    
+
     getAllObjects() {
         return this.objects;
     }
@@ -194,7 +194,7 @@ export class ObjectManager {
                     DOM.gridContainer.appendChild(visualEl);
                 }
             }
-            
+
             if (obj.type === 'saw') {
                 const line = document.createElement('div');
                 line.className = 'trap-path-visual';
@@ -202,16 +202,16 @@ export class ObjectManager {
                 line.style.backgroundColor = 'rgba(0,0,0,0.7)';
                 line.style.pointerEvents = 'none';
                 line.style.zIndex = '-1';
-        
+
                 const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
                 const distance = obj.distance || 150;
-        
+
                 if (obj.direction === 'horizontal') {
                     line.style.left = `${obj.x * TILE_SIZE - distance / 2}px`;
                     line.style.top = `${obj.y * TILE_SIZE - 1}px`;
                     line.style.width = `${distance}px`;
                     line.style.height = `2px`;
-                } else { // vertical
+                } else {
                     line.style.left = `${obj.x * TILE_SIZE - 1}px`;
                     line.style.top = `${obj.y * TILE_SIZE - distance / 2}px`;
                     line.style.width = `2px`;
@@ -252,7 +252,7 @@ export class ObjectManager {
                 const patrolDistance = obj.patrolDistance || ENEMY_DEFINITIONS.bluebird.ai.patrolDistance;
                 const verticalAmplitude = obj.verticalAmplitude || ENEMY_DEFINITIONS.bluebird.ai.verticalAmplitude;
 
-                // Create a bounding box for the entire flight area
+
                 const box = document.createElement('div');
                 box.className = 'trap-path-visual';
                 box.style.position = 'absolute';
@@ -267,7 +267,7 @@ export class ObjectManager {
                 box.style.boxSizing = 'border-box';
                 DOM.gridContainer.appendChild(box);
 
-                // Create a central line for the main horizontal path
+
                 const centerLine = document.createElement('div');
                 centerLine.className = 'trap-path-visual';
                 centerLine.style.position = 'absolute';
@@ -284,15 +284,15 @@ export class ObjectManager {
     }
 
     _applySnapping(obj) {
-        const groundEnemies = Object.keys(ENEMY_DEFINITIONS).filter(key => key !== 'bluebird');
+        const groundEnemies = Object.keys(ENEMY_DEFINITIONS).filter(key => key !== 'bluebird' && key !== 'fatbird');
         const groundSnappable = ['trophy', 'checkpoint', 'trampoline', 'spike', 'fire_trap', ...groundEnemies];
-        
+
         if (fractionalPlatformTypes.includes(obj.type)) {
             this._snapFractionalPlatform(obj);
-        } else if (groundSnappable.includes(obj.type)) { 
-            this._snapToGround(obj); 
-        } else if (obj.type === 'fan') { 
-            this._snapFanToEdge(obj); 
+        } else if (groundSnappable.includes(obj.type)) {
+            this._snapToGround(obj);
+        } else if (obj.type === 'fan') {
+            this._snapFanToEdge(obj);
         }
     }
 
@@ -370,7 +370,7 @@ export class ObjectManager {
     }
 
     _updateGroundedEnemyBehavior(enemyObj) {
-        // Only snap specific enemy types to the center of their platform for convenience.
+
         const fullSnapTypes = ['mushroom', 'slime'];
         if (!fullSnapTypes.includes(enemyObj.type)) return;
 
@@ -385,10 +385,10 @@ export class ObjectManager {
 
         let rightBound = startGridX;
         while (rightBound < this.grid.width - 1 && this.grid.isTileSolid(rightBound + 1, platformGridY)) { rightBound++; }
-        
+
         const platformWidthInPixels = (rightBound - leftBound + 1) * TILE_SIZE;
         const platformCenterPixels = (leftBound * TILE_SIZE) + (platformWidthInPixels / 2);
-        
+
         enemyObj.x = platformCenterPixels / TILE_SIZE;
     }
 
@@ -404,12 +404,12 @@ export class ObjectManager {
             case 'fan': return { width: 24, height: 8 }; case 'falling_platform': return { width: 32, height: 10 };
             case 'rock_head': return { width: 42, height: 42 }; case 'spike_head': return { width: 54, height: 52 };
             case 'saw': return { width: 38, height: 38 };
-            // Fractional Platforms
+
             case 'wood_third_h': case 'stone_third_h': case 'gold_third_h': case 'orange_dirt_third_h': return { width: 48, height: 16 };
             case 'wood_third_v': case 'stone_third_v': case 'gold_third_v': case 'orange_dirt_third_v': return { width: 16, height: 48 };
             case 'wood_ninth_sq': case 'stone_ninth_sq': case 'gold_ninth_sq': case 'orange_dirt_ninth_sq': return { width: 16, height: 16 };
             case 'wood_four_ninths_sq': case 'stone_four_ninths_sq': case 'gold_four_ninths_sq': case 'orange_dirt_four_ninths_sq': return { width: 32, height: 32 };
-            default: return { width: 28, height: 28 }; // Default for fruits
+            default: return { width: 28, height: 28 };
         }
     }
 }

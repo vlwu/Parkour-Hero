@@ -147,8 +147,8 @@ export const ENEMY_DEFINITIONS = {
         killable: {
             stompable: true,
             stompBounceVelocity: 300,
-            dealsContactDamage: true,
-            contactDamage: 30,
+            dealsContactDamage: false,
+            contactDamage: 1000,
         },
         ai: {
             type: 'flying_slam',
