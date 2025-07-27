@@ -15,10 +15,10 @@ export class FlyingPatrolAI extends BaseAI {
         this.verticalAmplitude = this.enemy.ai.verticalAmplitude || 10;
         
         this.gravity = 80;
-        this.flapForce = -150;
+        this.flapForce = -100;
         this.tetherStrength = 5;
 
-        this.turnDuration = 1.0;
+        this.turnDuration = 1;
         this.acceleration = 120;
 
 
@@ -90,7 +90,7 @@ export class FlyingPatrolAI extends BaseAI {
         if ((directionMultiplier > 0 && currentXCenter >= rightBound) || (directionMultiplier < 0 && currentXCenter <= leftBound)) {
 
             this.pos.x = directionMultiplier > 0 ? (rightBound - this.col.width / 2) : (leftBound - this.col.width / 2);
-            this.vel.vx = 0;
+            
             this.state.currentState = 'turning';
             this.enemy.turnTimer = this.turnDuration;
         }
@@ -98,6 +98,10 @@ export class FlyingPatrolAI extends BaseAI {
 
     _turn(dt) {
         this.enemy.turnTimer -= dt;
+
+        const turnDirectionMultiplier = this.renderable.direction === 'right' ? 1 : -1;
+        this.vel.vx -= turnDirectionMultiplier * (this.horizontalSpeed * 0.5) * dt;
+
         if (this.enemy.turnTimer <= 0) {
             this.renderable.direction = this.renderable.direction === 'right' ? 'left' : 'right';
             this.state.currentState = 'patrolling';
