@@ -154,6 +154,8 @@ export class FallingPlatform extends Trap {
         if (this.state === 'idle') {
             this.state = 'active';
             this.playerOnTimer = this.PLAYER_ON_DURATION;
+            // Snap the platform's position to its non-bobbing state.
+            this.y = this.initialY;
         }
     }
 
