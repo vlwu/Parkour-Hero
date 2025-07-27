@@ -34,8 +34,8 @@ export class FallingPlatform extends Trap {
             currentFrame: 0,
         };
         this.particleTimer = 0;
-        
-        // ADDED: Track previous position for sticky platform logic
+
+        // Track previous position for sticky platform logic
         this.prevY = y;
     }
 
@@ -47,22 +47,10 @@ export class FallingPlatform extends Trap {
             height: this.height,
         };
     }
-    
-    // ADDED: Method for sticky platform logic
+
+    // Method for sticky platform logic
     getMovementDelta() {
         return { dx: 0, dy: this.y - this.prevY };
-    }
-
-    _isPlayerOnTop(playerData) {
-        if (!playerData) return false;
-        const playerBottom = playerData.y + playerData.height;
-        const platformTop = this.y - this.height / 2;
-
-        return (
-            playerData.x < this.x + this.width / 2 &&
-            playerData.x + playerData.width > this.x - this.width / 2 &&
-            Math.abs(playerBottom - platformTop) < 5
-        );
     }
 
     update(dt, playerData, eventBus) { // DYNAMIC
@@ -84,12 +72,8 @@ export class FallingPlatform extends Trap {
                 break;
 
             case 'active':
+                // The platform no longer bobs once active
                 this.playerOnTimer -= dt;
-
-                if (!this._isPlayerOnTop(playerData)) {
-                    this.reset();
-                    return;
-                }
                 if (this.playerOnTimer <= 0) {
                     this.state = 'shaking';
                     this.shakeTimer = this.SHAKE_DURATION;
@@ -148,14 +132,14 @@ export class FallingPlatform extends Trap {
 
         if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
 
-        const isFanOn = this.state === 'idle' || this.state === 'active';
-        const sprite = isFanOn ? assets.falling_platform_on : assets.falling_platform_off;
+        const isPlatformActive = this.state === 'idle' || this.state === 'active';
+        const sprite = isPlatformActive ? assets.falling_platform_on : assets.falling_platform_off;
 
         if (!sprite) return;
 
         ctx.globalAlpha = this.opacity;
 
-        if (isFanOn) {
+        if (isPlatformActive) {
             const frameWidth = sprite.width / this.animation.frameCount;
             const srcX = this.animation.currentFrame * frameWidth;
             ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY, this.width, this.height);
