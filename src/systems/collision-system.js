@@ -46,7 +46,14 @@ export class CollisionSystem {
         level.traps.forEach(trap => {
             const isStatic = !trap.update.toString().includes('// DYNAMIC');
             if (trap.solid && isStatic) {
-                const gridObject = { ...(trap.hitbox), instance: trap, type: 'trap', isOneWay: trap.oneway || false, surfaceType: trap.surfaceType };
+                const gridObject = { 
+                    ...(trap.hitbox), 
+                    instance: trap, 
+                    type: 'trap', 
+                    isOneWay: trap.oneway || false, 
+                    surfaceType: trap.surfaceType,
+                    onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null
+                };
                 this.spatialGrid.insert(gridObject);
             }
         });
@@ -123,13 +130,13 @@ export class CollisionSystem {
         this._updateDynamicObjectsInGrid(entityManager, level);
 
         const entities = entityManager.query([PositionComponent, VelocityComponent, CollisionComponent]);
-        
-        // --- PERFORMANCE OPTIMIZATION: Reusable objects ---
+
+
         const entityRect = { x: 0, y: 0, width: 0, height: 0 };
         const queryBoxH = { x: 0, y: 0, width: 0, height: 0 };
         const queryBoxV = { x: 0, y: 0, width: 0, height: 0 };
         const groundProbe = { x: 0, y: 0, width: 0, height: 0 };
-        // -------------------------------------------------
+
 
         for (const entityId of entities) {
             const pos = entityManager.getComponent(entityId, PositionComponent);
@@ -150,12 +157,12 @@ export class CollisionSystem {
 
             pos.x += vel.vx * dt;
             col.isAgainstWall = false;
-            
+
             entityRect.x = pos.x;
             entityRect.y = pos.y;
             entityRect.width = col.width;
             entityRect.height = col.height;
-            
+
             queryBoxH.x = vel.vx > 0 ? pos.x : pos.x + vel.vx * dt;
             queryBoxH.y = pos.y;
             queryBoxH.width = col.width + Math.abs(vel.vx * dt);
@@ -165,7 +172,7 @@ export class CollisionSystem {
 
             for (const collider of potentialCollidersH) {
                 if (collider.type === 'entity' && collider.entityId === entityId) continue;
-                if (collider.isOneWay) continue;
+                
 
                 if (this._isRectColliding(entityRect, collider)) {
                     const isPlayer = !!playerCtrl;
@@ -205,7 +212,7 @@ export class CollisionSystem {
 
             pos.y += vel.vy * dt;
             col.isGrounded = false;
-            
+
             entityRect.x = pos.x;
             entityRect.y = pos.y;
 
@@ -213,7 +220,7 @@ export class CollisionSystem {
             queryBoxV.y = vel.vy > 0 ? pos.y : pos.y + vel.vy * dt;
             queryBoxV.width = col.width;
             queryBoxV.height = col.height + Math.abs(vel.vy * dt);
-            
+
             const potentialCollidersV = this.spatialGrid.query(queryBoxV);
 
             for (const collider of potentialCollidersV) {

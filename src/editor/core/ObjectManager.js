@@ -57,7 +57,7 @@ export class ObjectManager {
         if (type === 'player_spawn') {
             const existingIndex = this.objects.findIndex(o => o.type === 'player_spawn');
             if (existingIndex > -1) {
-                replacedSpawn = this.objects.splice(existingIndex, 1)[0];
+                replacedSpawn = this.objects.splice(existingIndex, 1);
             }
         }
 
@@ -102,7 +102,7 @@ export class ObjectManager {
     deleteObject(id) {
         const index = this.objects.findIndex(o => o.id === id);
         if (index === -1) return null;
-        const deletedObject = this.objects.splice(index, 1)[0];
+        const deletedObject = this.objects.splice(index, 1);
         this.render();
         return deletedObject;
     }
@@ -163,8 +163,10 @@ export class ObjectManager {
                 }
             } else if (obj.type === 'arrow_bubble') {
                 switch (obj.direction) {
-                    case 'up': angle = -90; break; case 'left': angle = 180; break;
-                    case 'down': angle = 90; break; case 'right': default: angle = 0; break;
+                    case 'up': angle = 0; break;
+                    case 'left': angle = -90; break;
+                    case 'down': angle = 180; break;
+                    case 'right': default: angle = 90; break;
                 }
             }
             el.style.transform = `rotate(${angle}deg)`;
