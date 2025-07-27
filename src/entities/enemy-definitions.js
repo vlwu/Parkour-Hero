@@ -141,7 +141,7 @@ export const ENEMY_DEFINITIONS = {
         animations: {
             idle: { frameCount: 8, speed: 0.08 },
             fall: { frameCount: 4, speed: 0.1 },
-            ground: { frameCount: 4, speed: 0.1 },
+            ground: { frameCount: 4, speed: 0.25 },
             hit: { frameCount: 5, speed: 0.1 },
         },
         killable: {

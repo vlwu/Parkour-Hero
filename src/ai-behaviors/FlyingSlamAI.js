@@ -14,7 +14,7 @@ export class FlyingSlamAI extends BaseAI {
         this.bobbingAmplitude = 8;
         this.gravity = 120;
         this.flapForce = -140;
-        this.tetherStrength = 7;
+        this.tetherStrength = 5;
 
         this.slamSpeed = 350;
         this.retractSpeed = 100;
