@@ -114,15 +114,15 @@ export class CollisionSystem {
                 continue;
             }
 
-            // --- REVISED COLLISION LOGIC ---
-            // We resolve movement and collisions on each axis separately to prevent bugs.
 
-            // 1. Horizontal Movement and Collision
+
+
+
             pos.x += vel.vx * dt;
             col.isAgainstWall = false;
             let entityRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
 
-            // Use a slightly larger query box to catch colliders at the edge of movement
+
             const queryBoxH = { x: vel.vx > 0 ? pos.x : pos.x + vel.vx * dt, y: pos.y, width: col.width + Math.abs(vel.vx * dt), height: col.height };
             const potentialCollidersH = this.spatialGrid.query(queryBoxH);
 
@@ -134,34 +134,35 @@ export class CollisionSystem {
                     const isPlayer = !!playerCtrl;
                     const isEnemyCollider = collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent);
 
-                    // Handle player-enemy specific logic.
+
                     if (isPlayer && isEnemyCollider) {
                         const playerCtrlCheck = entityManager.getComponent(entityId, PlayerControlledComponent);
                         if (playerCtrlCheck && playerCtrlCheck.isDashing) {
-                            continue; // Player is dashing, ignore enemy contact.
+                            continue;
                         }
-                        
+
                         const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                         const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                         if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                            eventBus.publish('playerTookDamage', { amount: 1000, source: 'enemy_contact' });
-                            return; // Stop processing for this player.
+                            const damageAmount = killable ? killable.contactDamage : 1000;
+                            eventBus.publish('playerTookDamage', { amount: damageAmount, source: 'enemy_contact' });
+                            return;
                         }
-                        // Player passes through non-damaging enemy.
+
                         continue;
                     }
-                    
-                    // If the current entity is an enemy and it hits the player, let it pass through.
-                    // Damage is only initiated by the player's collision check.
+
+
+
                     if (collider.type === 'entity') {
                         continue;
                     }
 
-                    // Physics response for solid tiles and traps
-                    const PUSH_BUFFER = 0.01; // A small buffer to prevent sticking
-                    if (vel.vx > 0) { // Moving right
+
+                    const PUSH_BUFFER = 0.01;
+                    if (vel.vx > 0) {
                         pos.x = collider.x - col.width - PUSH_BUFFER;
-                    } else if (vel.vx < 0) { // Moving left
+                    } else if (vel.vx < 0) {
                         pos.x = collider.x + collider.width + PUSH_BUFFER;
                     }
                     vel.vx = 0;
@@ -170,14 +171,14 @@ export class CollisionSystem {
                 }
             }
 
-            // 2. Vertical Movement and Collision
+
             pos.y += vel.vy * dt;
             col.isGrounded = false;
             entityRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
-            
+
             const queryBoxV = { x: pos.x, y: vel.vy > 0 ? pos.y : pos.y + vel.vy * dt, width: col.width, height: col.height + Math.abs(vel.vy * dt) };
             const potentialCollidersV = this.spatialGrid.query(queryBoxV);
-            
+
             for (const collider of potentialCollidersV) {
                 if (collider.type === 'entity' && collider.entityId === entityId) continue;
                 if (!this._isRectColliding(entityRect, collider)) continue;
@@ -185,41 +186,42 @@ export class CollisionSystem {
                 const isPlayer = !!playerCtrl;
                 const isEnemyCollider = collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent);
 
-                // Handle player-enemy specific logic.
+
                 if (isPlayer && isEnemyCollider) {
                     const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                     const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
 
-                    // Stomp Condition: Player must be moving down.
+
                     if (vel.vy > 0 && prevBodyBottom <= collider.y + 2 && !enemy.isDead && killable?.stompable) {
                         eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });
                         pos.y = collider.y - col.height;
                         vel.vy = 0;
-                        continue; 
+                        continue;
                     }
 
                     const playerCtrlCheck = entityManager.getComponent(entityId, PlayerControlledComponent);
                     if (playerCtrlCheck && playerCtrlCheck.isDashing) {
-                        continue; // Player is dashing, ignore enemy contact.
+                        continue;
                     }
-                    
-                    // Standardize damage handling. Instead of instantly killing the player, publish a damage event.
+
+
                     if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                        eventBus.publish('playerTookDamage', { amount: 1000, source: 'enemy_contact' });
+                        const damageAmount = killable ? killable.contactDamage : 1000;
+                        eventBus.publish('playerTookDamage', { amount: damageAmount, source: 'enemy_contact' });
                         return;
                     }
 
-                    // If neither stomp nor damage, pass through.
+
                     continue;
                 }
 
                 if (collider.type === 'entity') {
                     continue;
                 }
-                
-                // Physics response for solid tiles and traps
-                if (vel.vy >= 0) { // Moving Down
+
+
+                if (vel.vy >= 0) {
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
                     if (prevBodyBottom <= collider.y + 2) {
                         if (!collider.isOneWay || prevBodyBottom <= collider.y) {
@@ -230,14 +232,14 @@ export class CollisionSystem {
                            }
                         }
                     }
-                } else { // Moving Up
+                } else {
                     if (!collider.isOneWay) {
                         const prevPlayerTop = (pos.y - vel.vy * dt);
                         const prevPlayerXCenter = (pos.x - vel.vx * dt) + col.width / 2;
                         const colliderXStart = collider.x;
                         const colliderXEnd = collider.x + collider.width;
 
-                        // A true "head bonk" requires the player to be moving up from directly underneath.
+
                         if (prevPlayerTop >= collider.y + collider.height &&
                             prevPlayerXCenter > colliderXStart &&
                             prevPlayerXCenter < colliderXEnd) {
@@ -250,20 +252,20 @@ export class CollisionSystem {
                 }
             }
 
-            // Ground Stickiness / Probe
+
             if (!col.isGrounded && vel.vy >= 0) {
                 const groundProbe = {
                     x: pos.x,
                     y: pos.y + col.height,
                     width: col.width,
-                    height: 1 
+                    height: 1
                 };
                 const potentialGround = this.spatialGrid.query(groundProbe);
 
                 for (const ground of potentialGround) {
                     if (ground.type === 'entity' && ground.entityId === entityId) continue;
 
-                    // The ground probe should only "stick" to level geometry (tiles, solid traps), not other entities.
+
                     if (ground.type === 'entity') {
                         continue;
                     }
@@ -271,8 +273,8 @@ export class CollisionSystem {
                     if (this._isRectColliding(groundProbe, ground)) {
                          if (!ground.isOneWay) {
                             this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, entityId);
-                            if (vel.vy > 0) vel.vy = 0; 
-                            break; 
+                            if (vel.vy > 0) vel.vy = 0;
+                            break;
                          } else if (ground.isOneWay && pos.y + col.height <= ground.y + 2) {
                             this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, entityId);
                             if (vel.vy > 0) vel.vy = 0;
@@ -282,7 +284,7 @@ export class CollisionSystem {
                 }
             }
 
-            // 3. Final position clamping and object interactions
+
             pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
             if (pos.y < 0) {
                 pos.y = 0;

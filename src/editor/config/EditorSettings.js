@@ -16,7 +16,7 @@ export const OBJECT_DESCRIPTIONS = {
     'rock_head': 'A stone guardian that hovers in the air. When a player passes underneath, it slams to the ground, killing them instantly.',
     'spike_head': 'A spiked guardian that hovers in the air. When a player passes underneath, it slams to the ground, killing them instantly.',
     'saw': 'A circular saw that moves back and forth along a path. Properties: direction (horizontal/vertical), distance (path length in pixels), speed (pixels per second).',
-    // Fractional platforms
+
     'wood_third_h': 'A 1/3 horizontal wood block. Placeable object.',
     'wood_third_v': 'A 1/3 vertical wood block. Placeable object.',
     'wood_ninth_sq': 'A 1/9 square wood block. Placeable object.',
@@ -33,49 +33,50 @@ export const OBJECT_DESCRIPTIONS = {
     'orange_dirt_third_v': 'A 1/3 vertical orange dirt block. Placeable object.',
     'orange_dirt_ninth_sq': 'A 1/9 square orange dirt block. Placeable object.',
     'orange_dirt_four_ninths_sq': 'A 4/9 square orange dirt block. Placeable object.',
-    // Enemies
+
     'mushroom': 'Patrols on a platform. Snaps vertically and to the platform\'s edge (left/right based on drop location). Patrol distance is set automatically.',
     'chicken': 'Charges at the player. Snaps vertically to the ground but stays at the horizontal position where it is placed.',
     'snail': 'A slow-moving patrol enemy. Can be jumped on to create a shell projectile (not simulated in editor). Snaps to the ground.',
     'slime': 'A hopping enemy. Snaps vertically and to the platform\'s edge (left/right based on drop location).',
     'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.',
-    'bluebird': 'A flying enemy that patrols back and forth along a set path, bobbing up and down. Does not snap to ground.'
+    'bluebird': 'A flying enemy that patrols back and forth along a set path, bobbing up and down. Does not snap to ground.',
+    'fatbird': 'A flying enemy that hovers in place. When a player passes underneath, it slams to the ground. Deals non-lethal damage. Does not snap to ground.',
 };
 
 export const PALETTE_ABBREVIATIONS = {
-    // Items
+
     'player_spawn': 'SPN',
     'fruit_apple': 'APL', 'fruit_bananas': 'BAN', 'fruit_cherries': 'CHR',
     'fruit_kiwi': 'KWI', 'fruit_melon': 'MEL', 'fruit_orange': 'ORG',
     'fruit_pineapple': 'PNP', 'fruit_strawberry': 'STR',
     'trophy': 'GOL', 'checkpoint': 'CHK',
-    // Traps
+
     'trampoline': 'TRP', 'spike': 'SPK', 'fire_trap': 'FIR',
     'spiked_ball': 'BAL', 'arrow_bubble': 'ARR', 'fan': 'FAN',
     'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
     'saw': 'SAW',
-    // Enemies
-    'mushroom': 'MSH', 'chicken': 'CKN', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD',
-    // Terrain
+
+    'mushroom': 'MSH', 'chicken': 'CKN', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD',
+
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
     'sand': 'SND', 'mud': 'MUD', 'ice': 'ICE',
     'oneway_gold': 'OW-G', 'oneway_wood': 'OW-W', 'oneway_stone': 'OW-S',
 
-    // New Blocks
+
     'wood_third_h': 'W-H', 'wood_third_v': 'W-V', 'wood_ninth_sq': 'W-1/9', 'wood_four_ninths_sq': 'W-4/9',
     'stone_third_h': 'S-H', 'stone_third_v': 'S-V', 'stone_ninth_sq': 'S-1/9', 'stone_four_ninths_sq': 'S-4/9',
     'gold_third_h': 'G-H', 'gold_third_v': 'G-V', 'gold_ninth_sq': 'G-1/9', 'gold_four_ninths_sq': 'G-4/9',
     'orange_dirt_third_h': 'O-H', 'orange_dirt_third_v': 'O-V', 'orange_dirt_ninth_sq': 'O-1/9', 'orange_dirt_four_ninths_sq': 'O-4/9',
 };
 
-// Helper to get the color for a given item or tile type
+
 export function getPaletteColor(type) {
     switch (type) {
         case 'dirt': return '#8B4513';
-        case 'orange_dirt': case 'orange_dirt_third_h': case 'orange_dirt_third_v': case 'orange_dirt_ninth_sq': case 'orange_dirt_four_ninths_sq': return '#f47114ff'; 
+        case 'orange_dirt': case 'orange_dirt_third_h': case 'orange_dirt_third_v': case 'orange_dirt_ninth_sq': case 'orange_dirt_four_ninths_sq': return '#f47114ff';
         case 'pink_dirt': return '#da2ac8ff';
-        case 'stone': case 'stone_third_h': case 'stone_third_v': case 'stone_ninth_sq': case 'stone_four_ninths_sq': return '#6c757d'; 
+        case 'stone': case 'stone_third_h': case 'stone_third_v': case 'stone_ninth_sq': case 'stone_four_ninths_sq': return '#6c757d';
         case 'wood': case 'wood_third_h': case 'wood_third_v': case 'wood_ninth_sq': case 'wood_four_ninths_sq': return '#A0522D';
         case 'green_block': return '#28a745'; case 'sand': return '#F4A460';
         case 'mud': return '#5D4037'; case 'ice': return '#5DADE2';
@@ -103,6 +104,7 @@ export function getPaletteColor(type) {
         case 'snail': return '#cc37e7ff'; case 'slime': return '#2ecc71';
         case 'turtle': return '#1a324dff';
         case 'bluebird': return '#3195d8ff';
+        case 'fatbird': return '#8c6046ff';
         case 'oneway_gold': case 'gold_third_h': case 'gold_third_v': case 'gold_ninth_sq': case 'gold_four_ninths_sq': return '#FFD700';
         case 'oneway_wood': return '#855E42';
         case 'oneway_stone': return '#808080';

@@ -12,6 +12,7 @@ export const ENEMY_DEFINITIONS = {
         killable: {
             stompable: true,
             stompBounceVelocity: 300,
+            contactDamage: 1000,
         },
         ai: {
             type: 'patrol',
@@ -32,6 +33,7 @@ export const ENEMY_DEFINITIONS = {
         killable: {
             stompable: true,
             stompBounceVelocity: 250,
+            contactDamage: 1000,
         },
         ai: {
             type: 'ground_charge',
@@ -58,6 +60,7 @@ export const ENEMY_DEFINITIONS = {
         killable: {
             stompable: true,
             stompBounceVelocity: 250,
+            contactDamage: 1000,
         },
         ai: {
             type: 'snail',
@@ -77,6 +80,7 @@ export const ENEMY_DEFINITIONS = {
         killable: {
             stompable: true,
             stompBounceVelocity: 350,
+            contactDamage: 1000,
         },
         ai: {
             type: 'patrol',
@@ -99,6 +103,7 @@ export const ENEMY_DEFINITIONS = {
         killable: {
             stompable: true,
             stompBounceVelocity: 250,
+            contactDamage: 1000,
         },
         ai: {
             type: 'defensive_cycle',
@@ -118,6 +123,7 @@ export const ENEMY_DEFINITIONS = {
         killable: {
             stompable: true,
             stompBounceVelocity: 300,
+            contactDamage: 1000,
         },
         ai: {
             type: 'flying_patrol',
@@ -125,6 +131,27 @@ export const ENEMY_DEFINITIONS = {
             horizontalSpeed: 60,
             verticalAmplitude: 10,
             verticalFrequency: 2,
+        }
+    },
+
+    fatbird: {
+        width: 40,
+        height: 48,
+        spriteKey: 'fatbird',
+        animations: {
+            idle: { frameCount: 8, speed: 0.08 },
+            fall: { frameCount: 4, speed: 0.1 },
+            ground: { frameCount: 4, speed: 0.1 },
+            hit: { frameCount: 5, speed: 0.1 },
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: 300,
+            dealsContactDamage: true,
+            contactDamage: 30,
+        },
+        ai: {
+            type: 'flying_slam',
         }
     },
 };
