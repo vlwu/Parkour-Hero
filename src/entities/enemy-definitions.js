@@ -18,6 +18,7 @@ export const ENEMY_DEFINITIONS = {
             type: 'patrol',
             aggroRange: 0,
             patrolSpeed: 40,
+            idleTime: 0.5,
         }
     },
 
@@ -66,6 +67,7 @@ export const ENEMY_DEFINITIONS = {
             type: 'snail',
             patrolSpeed: 20,
             shellSpeed: 150,
+            wallHitStunTime: 0.2,
         }
     },
 
@@ -131,6 +133,11 @@ export const ENEMY_DEFINITIONS = {
             horizontalSpeed: 60,
             verticalAmplitude: 10,
             verticalFrequency: 2,
+            gravity: 80,
+            flapForce: -100,
+            tetherStrength: 5,
+            turnDuration: 1,
+            acceleration: 120,
         }
     },
 
@@ -152,6 +159,13 @@ export const ENEMY_DEFINITIONS = {
         },
         ai: {
             type: 'flying_slam',
+            bobbingAmplitude: 8,
+            gravity: 120,
+            flapForce: -140,
+            tetherStrength: 5,
+            slamSpeed: 350,
+            retractSpeed: 100,
+            groundedDuration: 1.0,
         }
     },
 };

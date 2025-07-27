@@ -11,14 +11,14 @@ export class FlyingSlamAI extends BaseAI {
         this.anchorY = this.pos.y;
         this.lastFrame = -1;
 
-        this.bobbingAmplitude = 8;
-        this.gravity = 120;
-        this.flapForce = -140;
-        this.tetherStrength = 5;
+        this.bobbingAmplitude = this.enemy.ai.bobbingAmplitude || 8;
+        this.gravity = this.enemy.ai.gravity || 120;
+        this.flapForce = this.enemy.ai.flapForce || -140;
+        this.tetherStrength = this.enemy.ai.tetherStrength || 5;
 
-        this.slamSpeed = 350;
-        this.retractSpeed = 100;
-        this.groundedDuration = 1.0;
+        this.slamSpeed = this.enemy.ai.slamSpeed || 350;
+        this.retractSpeed = this.enemy.ai.retractSpeed || 100;
+        this.groundedDuration = this.enemy.ai.groundedDuration || 1.0;
         this.groundedTimer = 0;
 
         this.state.currentState = 'idle';

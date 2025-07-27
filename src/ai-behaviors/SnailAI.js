@@ -47,7 +47,7 @@ export class SnailAI extends BaseAI {
                     this.state.currentState = 'shell_hit_wall';
                     this.renderable.animationState = 'shell_wall_hit';
                     this.renderable.animationFrame = 0;
-                    this.enemy.timer = 0.2; // Stun duration after hitting wall
+                    this.enemy.timer = this.enemy.ai.wallHitStunTime || 0.2;
                     eventBus.publish('playSound', { key: 'snail_wall_hit', volume: 0.5, channel: 'SFX' });
                 }
                 break;

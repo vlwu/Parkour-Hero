@@ -6,7 +6,7 @@ import { CollisionSystem } from '../systems/collision-system.js';
 import { Renderer } from '../systems/renderer.js';
 import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
-import { ParticleSystemWebGL } from '../systems/particle-system-webgl.js'; // The only particle system now
+import { ParticleSystemWebGL } from '../systems/particle-system-webgl.js';
 import { UISystem } from '../ui/ui-system.js';
 import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
@@ -66,7 +66,7 @@ export class Engine {
     this.movementSystem = new MovementSystem();
     this.collisionSystem = new CollisionSystem();
     this.gameplaySystem = new GameplaySystem();
-    this.particleSystem = new ParticleSystemWebGL(gl, assets); // Use the WebGL system
+    this.particleSystem = new ParticleSystemWebGL(gl, assets);
     this.effectsSystem = new EffectsSystem(assets);
     this.gameFlowSystem = new GameFlowSystem();
     this.uiSystem = new UISystem(canvas, assets);
@@ -79,7 +79,7 @@ export class Engine {
         this.collisionSystem,
         this.enemySystem,
         this.gameplaySystem,
-        this.particleSystem, // It is now the WebGL one
+        this.particleSystem,
         this.effectsSystem,
         this.gameFlowSystem,
         this.uiSystem,
@@ -160,11 +160,26 @@ export class Engine {
     requestAnimationFrame((time) => this.gameLoop(time));
   }
 
+  _resetForNewLevel() {
+      this.pauseForMenu = false;
+      this.gameState.showingLevelComplete = false;
+      eventBus.publish('gameStateUpdated', this.gameState);
+
+      this.lastCheckpoint = null;
+      this.fruitsAtLastCheckpoint.clear();
+      this.soundManager.stopAll();
+      this.entityManager = new EntityManager();
+      this.inputSystem.entityManager = this.entityManager;
+      this.effectsSystem.reset();
+      this.particleSystem.reset();
+      this.gameFlowSystem.reset(this.isRunning);
+  }
+
   loadLevel(sectionIndex, levelIndex) {
     const levelData = this.levelManager.getLevelData(sectionIndex, levelIndex);
     if (!levelData) { this.stop(); return; }
 
-    this.pauseForMenu = false;
+    this._resetForNewLevel();
 
     let newState = new GameState(this.gameState);
     newState.showingLevelComplete = false;
@@ -175,15 +190,6 @@ export class Engine {
 
     this.gameState = newState;
     eventBus.publish('gameStateUpdated', this.gameState);
-
-    this.lastCheckpoint = null;
-    this.fruitsAtLastCheckpoint.clear();
-    this.soundManager.stopAll();
-    this.entityManager = new EntityManager();
-    this.inputSystem.entityManager = this.entityManager;
-    this.effectsSystem.reset();
-    this.particleSystem.reset();
-    this.gameFlowSystem.reset(this.isRunning);
 
     this.currentLevel = new Level(levelData, this.entityManager);
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
@@ -206,22 +212,16 @@ export class Engine {
           this.stop();
           return;
       }
-      this.pauseForMenu = false;
-      this.gameState.showingLevelComplete = false;
-      eventBus.publish('gameStateUpdated', this.gameState);
-      this.lastCheckpoint = null;
-      this.fruitsAtLastCheckpoint.clear();
-      this.soundManager.stopAll();
-      this.entityManager = new EntityManager();
-      this.inputSystem.entityManager = this.entityManager;
-      this.effectsSystem.reset();
-      this.particleSystem.reset();
-      this.gameFlowSystem.reset(this.isRunning);
+
+      this._resetForNewLevel();
+
       this.currentLevel = new Level(levelData, this.entityManager);
       this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
+
       this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
       this.camera.snapToPlayer(this.entityManager, this.playerEntityId);
       this.renderer.preRenderLevel(this.currentLevel);
+
       this.timeScale = 1.0;
       if (!this.gameHasStarted) {
           this.start();
@@ -330,7 +330,7 @@ export class Engine {
 
     const pos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
     const vel = this.entityManager.getComponent(this.playerEntityId, VelocityComponent);
-    const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
+    const oldPlayerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     const renderable = this.entityManager.getComponent(this.playerEntityId, RenderableComponent);
     const collision = this.entityManager.getComponent(this.playerEntityId, CollisionComponent);
     const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
@@ -345,12 +345,14 @@ export class Engine {
     vel.vx = 0; vel.vy = 0;
     if (health) health.currentHealth = health.maxHealth;
 
-    const currentDeathCount = playerCtrl.deathCount;
-    const currentSound = playerCtrl.activeSurfaceSound;
-    Object.assign(playerCtrl, new PlayerControlledComponent());
-    playerCtrl.deathCount = currentDeathCount;
-    playerCtrl.activeSurfaceSound = currentSound;
-    playerCtrl.needsRespawn = false;
+    const currentDeathCount = oldPlayerCtrl.deathCount;
+    const currentSound = oldPlayerCtrl.activeSurfaceSound;
+
+    this.entityManager.addComponent(this.playerEntityId, new PlayerControlledComponent());
+    const newPlayerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
+    newPlayerCtrl.deathCount = currentDeathCount;
+    newPlayerCtrl.activeSurfaceSound = currentSound;
+    newPlayerCtrl.needsRespawn = false;
 
     state.currentState = 'spawn';
     renderable.animationState = 'spawn';
@@ -398,25 +400,25 @@ export class Engine {
   render(deltaTime, alpha) {
     if (!this.currentLevel) return;
 
-    // Clear the 2D canvas for its own elements.
+
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Clear the WebGL canvas to be fully transparent.
+
+
     this.gl.clearColor(0, 0, 0, 0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-    // Render all 2D elements first.
+
     this.renderer.drawScrollingBackground(this.currentLevel, deltaTime * this.timeScale);
     this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager, alpha);
     this.effectsSystem.render(this.ctx, this.camera, alpha);
-    
-    // Render the WebGL particles on top of the 2D scene.
+
+
     this.particleSystem.render(this.camera, alpha);
-    
-    // Render the 2D HUD and UI on top of everything.
-    // Pass FIXED_DT to HUD for correct FPS calculation
+
+
+
     this.hud.drawGameHUD(this.ctx, FIXED_DT);
-    
+
     this.uiSystem.render(this.ctx, this.timeScale > 0);
   }
 

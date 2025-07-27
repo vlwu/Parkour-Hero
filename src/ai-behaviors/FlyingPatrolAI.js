@@ -13,13 +13,13 @@ export class FlyingPatrolAI extends BaseAI {
         this.patrolDistance = this.enemy.ai.patrolDistance || 200;
         this.horizontalSpeed = this.enemy.ai.horizontalSpeed || 60;
         this.verticalAmplitude = this.enemy.ai.verticalAmplitude || 10;
-        
-        this.gravity = 80;
-        this.flapForce = -100;
-        this.tetherStrength = 5;
 
-        this.turnDuration = 1;
-        this.acceleration = 120;
+        this.gravity = this.enemy.ai.gravity || 80;
+        this.flapForce = this.enemy.ai.flapForce || -100;
+        this.tetherStrength = this.enemy.ai.tetherStrength || 5;
+
+        this.turnDuration = this.enemy.ai.turnDuration || 1;
+        this.acceleration = this.enemy.ai.acceleration || 120;
 
 
         this.state.currentState = 'patrolling';
@@ -49,7 +49,7 @@ export class FlyingPatrolAI extends BaseAI {
         if (Math.abs(distY) > this.verticalAmplitude) {
             this.vel.vy -= distY * this.tetherStrength * dt;
         }
-        
+
         this.vel.vy = Math.max(-200, Math.min(200, this.vel.vy));
     }
 
@@ -90,7 +90,7 @@ export class FlyingPatrolAI extends BaseAI {
         if ((directionMultiplier > 0 && currentXCenter >= rightBound) || (directionMultiplier < 0 && currentXCenter <= leftBound)) {
 
             this.pos.x = directionMultiplier > 0 ? (rightBound - this.col.width / 2) : (leftBound - this.col.width / 2);
-            
+
             this.state.currentState = 'turning';
             this.enemy.turnTimer = this.turnDuration;
         }
