@@ -118,6 +118,13 @@ export class Renderer {
         this.ctx.drawImage(this.staticLayerCache, 0, 0);
     }
 
+    // --- FIX START ---
+    // Added rendering for static platforms (fractional blocks).
+    for (const platform of level.staticPlatforms) {
+        platform.render(this.ctx, this.assets, camera);
+    }
+    // --- FIX END ---
+
     const visibleObjects = level.spatialGrid.query(camera.getViewportBounds());
 
     for (const obj of visibleObjects) {
