@@ -38,49 +38,6 @@ export class SpikedBall extends Trap {
         this.ballY = this.anchorY + this.chainLength * Math.cos(currentAngle);
     }
 
-    render(ctx, assets, camera) {
-        if (!camera.isVisible(this.anchorX - this.chainLength, this.anchorY, this.chainLength * 2, this.chainLength * 2)) {
-            return;
-        }
-
-        const ballSprite = assets.spiked_ball;
-        const chainSprite = assets.spiked_ball_chain;
-
-        if (chainSprite) {
-            const chainSpriteSize = 8;
-            const dx = this.ballX - this.anchorX;
-            const dy = this.ballY - this.anchorY;
-            const totalLength = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(dy, dx);
-
-            ctx.save();
-            ctx.translate(this.anchorX, this.anchorY);
-            ctx.rotate(angle);
-
-            for (let i = 0; i < totalLength; i += chainSpriteSize) {
-                ctx.drawImage(chainSprite, i, -chainSpriteSize / 2, chainSpriteSize, chainSpriteSize);
-            }
-            ctx.restore();
-        }
-
-        if (ballSprite) {
-            ctx.save();
-            ctx.translate(this.ballX, this.ballY);
-            ctx.rotate(this.rotation);
-            ctx.drawImage(
-                ballSprite,
-                -this.width / 2,
-                -this.height / 2,
-                this.width,
-                this.height
-            );
-            ctx.restore();
-        } else {
-            ctx.fillStyle = 'red';
-            ctx.fillRect(this.hitbox.x, this.hitbox.y, this.width, this.height);
-        }
-    }
-
     onCollision(player, eventBus) {
         const playerCenterX = player.pos.x + player.col.width / 2;
         const playerCenterY = player.pos.y + player.col.height / 2;

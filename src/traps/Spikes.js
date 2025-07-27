@@ -70,23 +70,6 @@ export class Spikes extends Trap {
         }
     }
 
-    render(ctx, assets, camera) {
-
-        if (this.state === 'hidden' || this.state === 'warning') {
-            return;
-        }
-
-        const drawX = this.x - this.width / 2;
-        const drawY = this.y - this.height / 2;
-
-        if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
-
-        const sprite = assets.spike_two;
-        if (sprite) {
-            ctx.drawImage(sprite, drawX, drawY, this.width, this.height);
-        }
-    }
-
     onCollision(player, eventBus) {
         if (this.state !== 'extended') return;
 

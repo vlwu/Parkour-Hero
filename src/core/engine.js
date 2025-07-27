@@ -55,7 +55,7 @@ export class Engine {
     this.hud = new HUD(canvas, fontRenderer);
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
-    this.renderer = new Renderer(ctx, canvas, assets);
+    this.renderer = new Renderer(ctx, gl, canvas, assets); // Pass GL context
     this.gameState = new GameState();
     eventBus.publish('gameStateUpdated', this.gameState);
 
@@ -79,8 +79,8 @@ export class Engine {
         this.collisionSystem,
         this.enemySystem,
         this.gameplaySystem,
+        this.effectsSystem, // Update effects state
         this.particleSystem,
-        this.effectsSystem,
         this.gameFlowSystem,
         this.uiSystem,
     ];
@@ -400,25 +400,23 @@ export class Engine {
   render(deltaTime, alpha) {
     if (!this.currentLevel) return;
 
-
+    // --- 2D Canvas Layer (Background and Static Tiles) ---
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.renderer.drawScrollingBackground(this.currentLevel, deltaTime * this.timeScale);
+    this.renderer.renderStaticLayer(this.camera, alpha);
 
-
+    // --- WebGL Layer (Dynamic Objects) ---
     this.gl.clearColor(0, 0, 0, 0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
+    // FIX: Set the viewport before any WebGL drawing.
+    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
 
-    this.renderer.drawScrollingBackground(this.currentLevel, deltaTime * this.timeScale);
-    this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager, alpha);
-    this.effectsSystem.render(this.ctx, this.camera, alpha);
-
-
+    this.renderer.renderSceneWebGL(this.camera, this.currentLevel, this.entityManager, this.effectsSystem, alpha);
     this.particleSystem.render(this.camera, alpha);
 
-
-
+    // --- 2D Canvas Layer (UI) ---
     this.hud.drawGameHUD(this.ctx, FIXED_DT);
-
     this.uiSystem.render(this.ctx, this.timeScale > 0);
   }
 
