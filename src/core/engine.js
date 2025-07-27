@@ -6,7 +6,7 @@ import { CollisionSystem } from '../systems/collision-system.js';
 import { Renderer } from '../systems/renderer.js';
 import { LevelManager } from '../managers/level-manager.js';
 import { eventBus } from '../utils/event-bus.js';
-import { ParticleSystemWebGL } from '../systems/particle-system-webgl.js'; // The only particle system now
+import { ParticleSystemWebGL } from '../systems/particle-system-webgl.js';
 import { UISystem } from '../ui/ui-system.js';
 import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
@@ -66,7 +66,7 @@ export class Engine {
     this.movementSystem = new MovementSystem();
     this.collisionSystem = new CollisionSystem();
     this.gameplaySystem = new GameplaySystem();
-    this.particleSystem = new ParticleSystemWebGL(gl, assets); // Use the WebGL system
+    this.particleSystem = new ParticleSystemWebGL(gl, assets);
     this.effectsSystem = new EffectsSystem(assets);
     this.gameFlowSystem = new GameFlowSystem();
     this.uiSystem = new UISystem(canvas, assets);
@@ -79,7 +79,7 @@ export class Engine {
         this.collisionSystem,
         this.enemySystem,
         this.gameplaySystem,
-        this.particleSystem, // It is now the WebGL one
+        this.particleSystem,
         this.effectsSystem,
         this.gameFlowSystem,
         this.uiSystem,
@@ -269,7 +269,11 @@ export class Engine {
     }
 
     this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus, this.camera);
+  }
 
+  _publishStats() {
+    if (!this.currentLevel || this.playerEntityId === null) return;
+    const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     const playerHealth = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     eventBus.publish('statsUpdated', {
       levelName: this.currentLevel.name,
@@ -289,6 +293,7 @@ export class Engine {
           health.currentHealth = Math.max(0, health.currentHealth - amount);
           this.camera.shake(8, 0.3);
           if (health.currentHealth <= 0) this._onPlayerDied();
+          this._publishStats();
       }
   }
 
@@ -307,6 +312,7 @@ export class Engine {
         renderable.animationFrame = 0;
         renderable.animationTimer = 0;
         eventBus.publish('playSound', { key: 'death_sound', volume: 0.3, channel: 'SFX' });
+        this._publishStats();
     }
   }
 
@@ -365,6 +371,7 @@ export class Engine {
 
     this.camera.shake(15, 0.5);
     eventBus.publish('playerRespawned');
+    this._publishStats();
   }
 
   _onFruitCollected(fruit) {
@@ -374,6 +381,7 @@ export class Engine {
     if (health && health.currentHealth < health.maxHealth) {
         health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 10);
     }
+    this._publishStats();
   }
 
   updatePlayerCharacter(newCharId) {
@@ -398,25 +406,19 @@ export class Engine {
   render(deltaTime, alpha) {
     if (!this.currentLevel) return;
 
-    // Clear the 2D canvas for its own elements.
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Clear the WebGL canvas to be fully transparent.
+
     this.gl.clearColor(0, 0, 0, 0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-    // Render all 2D elements first.
     this.renderer.drawScrollingBackground(this.currentLevel, deltaTime * this.timeScale);
     this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager, alpha);
     this.effectsSystem.render(this.ctx, this.camera, alpha);
-    
-    // Render the WebGL particles on top of the 2D scene.
+
     this.particleSystem.render(this.camera, alpha);
-    
-    // Render the 2D HUD and UI on top of everything.
-    // Pass FIXED_DT to HUD for correct FPS calculation
+
     this.hud.drawGameHUD(this.ctx, FIXED_DT);
-    
+
     this.uiSystem.render(this.ctx, this.timeScale > 0);
   }
 
