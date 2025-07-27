@@ -3,6 +3,7 @@ export class EntityManager {
         this.nextEntityId = 0;
         this.entities = new Set();
         this.componentsByClass = new Map();
+        this.queryCache = new Map();
     }
 
     createEntity() {
@@ -17,6 +18,7 @@ export class EntityManager {
             this.componentsByClass.set(componentClass, new Map());
         }
         this.componentsByClass.get(componentClass).set(entityId, component);
+        this.queryCache.clear(); // Invalidate cache
         return this;
     }
 
@@ -35,6 +37,7 @@ export class EntityManager {
         if (componentMap) {
             componentMap.delete(entityId);
         }
+        this.queryCache.clear(); // Invalidate cache
     }
 
     destroyEntity(entityId) {
@@ -42,15 +45,25 @@ export class EntityManager {
             componentMap.delete(entityId);
         }
         this.entities.delete(entityId);
+        this.queryCache.clear(); // Invalidate cache
     }
 
     query(componentClasses) {
+        // Create a stable cache key from the component classes
+        const cacheKey = componentClasses.map(c => c.name).sort().join(',');
+
+        if (this.queryCache.has(cacheKey)) {
+            return this.queryCache.get(cacheKey);
+        }
+
         const entitiesWithComponents = [];
         for (const entityId of this.entities) {
             if (componentClasses.every(cls => this.hasComponent(entityId, cls))) {
                 entitiesWithComponents.push(entityId);
             }
         }
+
+        this.queryCache.set(cacheKey, entitiesWithComponents);
         return entitiesWithComponents;
     }
 }

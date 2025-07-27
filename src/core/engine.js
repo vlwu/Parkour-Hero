@@ -70,7 +70,7 @@ export class Engine {
     this.effectsSystem = new EffectsSystem(assets);
     this.gameFlowSystem = new GameFlowSystem();
     this.uiSystem = new UISystem(canvas, assets);
-    this.enemySystem = new EnemySystem();
+    this.enemySystem = new EnemySystem(this.collisionSystem);
 
     this.systems = [
         this.inputSystem,

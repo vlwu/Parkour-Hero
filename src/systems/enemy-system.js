@@ -10,7 +10,8 @@ import { KillableComponent } from '../components/KillableComponent.js';
 import { createAIBehavior } from '../ai-behaviors/index.js';
 
 export class EnemySystem {
-    constructor() {
+    constructor(collisionSystem) {
+        this.collisionSystem = collisionSystem;
         this.stompEvents = [];
         eventBus.subscribe('enemyStomped', (e) => this.stompEvents.push(e));
     }
@@ -127,6 +128,7 @@ export class EnemySystem {
             if (pos && col) {
                 eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: 'enemy_death' });
             }
+            this.collisionSystem.removeDynamicEntity(entityId, entityManager);
             entityManager.destroyEntity(entityId);
             return true;
         }
