@@ -9,6 +9,7 @@ layout(location = 2) in vec2 a_size;
 layout(location = 3) in vec2 a_tex_coord_origin;
 layout(location = 4) in vec2 a_tex_coord_size;
 layout(location = 5) in float a_is_flipped;
+layout(location = 6) in float a_alpha; // New: Alpha attribute
 
 // Uniforms (global for all vertices in a draw call)
 uniform mat4 u_projection;
@@ -16,6 +17,7 @@ uniform vec2 u_texture_size;
 
 // Outputs to the fragment shader
 out vec2 v_texCoord;
+out float v_alpha; // New: Pass alpha to fragment shader
 
 void main() {
     // Calculate the world position of this specific vertex of the quad
@@ -32,4 +34,7 @@ void main() {
 
     // Calculate the final texture coordinate by scaling and offsetting
     v_texCoord = (a_tex_coord_origin + (quad_tex_coord * a_tex_coord_size)) / u_texture_size;
+    
+    // Pass alpha to the fragment shader
+    v_alpha = a_alpha;
 }

@@ -3,7 +3,7 @@ import { CollisionComponent } from "../components/CollisionComponent.js";
 
 export class Camera {
   constructor(canvasWidth, canvasHeight) {
-    this.zoom = 1.8;
+    this.zoom = 2.0;
     this.viewportWidth = canvasWidth;
     this.viewportHeight = canvasHeight;
 

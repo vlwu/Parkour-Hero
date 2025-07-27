@@ -12,8 +12,8 @@ import { CharacterComponent } from '../components/CharacterComponent.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 
 const MAX_SPRITES_PER_BATCH = 5000;
-const ATTRIBUTES_PER_INSTANCE = 9; // pos(2), size(2), tex_origin(2), tex_size(2), is_flipped(1)
-const INSTANCE_STRIDE = ATTRIBUTES_PER_INSTANCE * 4; // in bytes
+const ATTRIBUTES_PER_INSTANCE = 10; // Changed from 9 to 10 to include alpha
+const INSTANCE_STRIDE = ATTRIBUTES_PER_INSTANCE * 4;
 
 const fractionalPlatformTypes = [
     'wood_third_h', 'wood_third_v', 'wood_ninth_sq', 'wood_four_ninths_sq',
@@ -120,6 +120,8 @@ export class Renderer {
     gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 2, gl.FLOAT, false, INSTANCE_STRIDE, 16); gl.vertexAttribDivisor(3, 1);
     gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 2, gl.FLOAT, false, INSTANCE_STRIDE, 24); gl.vertexAttribDivisor(4, 1);
     gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 1, gl.FLOAT, false, INSTANCE_STRIDE, 32); gl.vertexAttribDivisor(5, 1);
+    // Add the new alpha attribute
+    gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 1, gl.FLOAT, false, INSTANCE_STRIDE, 36); gl.vertexAttribDivisor(6, 1);
 
     gl.bindVertexArray(null);
   }
@@ -165,7 +167,7 @@ export class Renderer {
                     dWidth, finalDHeight,
                     tile.spriteConfig.srcX, tile.spriteConfig.srcY,
                     tile.spriteConfig.width || GRID_CONSTANTS.TILE_SIZE, tile.spriteConfig.height || GRID_CONSTANTS.TILE_SIZE,
-                    0.0
+                    0.0, 1.0 // isFlipped, alpha
                 );
             } else if (item.trap) {
                 const { trap } = item;
@@ -174,7 +176,7 @@ export class Renderer {
                     trap.width, trap.height,
                     trap.spriteConfig.srcX, trap.spriteConfig.srcY,
                     trap.spriteConfig.width, trap.spriteConfig.height,
-                    0.0
+                    0.0, 1.0 // isFlipped, alpha
                 );
             }
         });
@@ -238,7 +240,7 @@ export class Renderer {
             if (!batches.has(key)) batches.set(key, { texture: textureRef, instances: [] });
             batches.get(key).instances.push(...instanceData);
         };
-        
+
         const entities = entityManager.query([PositionComponent, RenderableComponent]);
         for (const entityId of entities) {
             const renderable = entityManager.getComponent(entityId, RenderableComponent);
@@ -246,19 +248,33 @@ export class Renderer {
 
             const pos = entityManager.getComponent(entityId, PositionComponent);
             const prevPos = entityManager.getComponent(entityId, PreviousPositionComponent);
-            const renderX = prevPos ? prevPos.x + (pos.x - prevPos.x) * alpha : pos.x;
-            const renderY = prevPos ? prevPos.y + (pos.y - prevPos.y) * alpha : pos.y;
             
-            const spriteData = entityManager.hasComponent(entityId, CharacterComponent)
+            let renderX = prevPos ? prevPos.x + (pos.x - prevPos.x) * alpha : pos.x;
+            let renderY = prevPos ? prevPos.y + (pos.y - prevPos.y) * alpha : pos.y;
+            
+            const isPlayer = entityManager.hasComponent(entityId, CharacterComponent);
+            if (isPlayer) {
+                const stateName = renderable.animationState;
+                const isSpecialAnim = stateName === 'spawn' || stateName === 'despawn';
+                if (isSpecialAnim) {
+                    renderX -= (renderable.width - PLAYER_CONSTANTS.WIDTH) / 2;
+                    renderY -= (renderable.height - PLAYER_CONSTANTS.HEIGHT) / 2;
+                } else if (stateName === 'cling') {
+                    const offset = renderable.direction === 'left' ? -PLAYER_CONSTANTS.CLING_OFFSET : PLAYER_CONSTANTS.CLING_OFFSET;
+                    renderX += offset;
+                }
+            }
+
+            const spriteData = isPlayer
                 ? this._getPlayerSpriteData(renderable, entityManager.getComponent(entityId, CharacterComponent))
                 : this._getEnemySpriteData(renderable);
 
             if (spriteData) {
-                const instanceData = [renderX, renderY, renderable.width, renderable.height, spriteData.sx, spriteData.sy, spriteData.sw, spriteData.sh, spriteData.isFlipped];
+                const instanceData = [renderX, renderY, renderable.width, renderable.height, spriteData.sx, spriteData.sy, spriteData.sw, spriteData.sh, spriteData.isFlipped, 1.0];
                 addToBatch(spriteData.texture, instanceData);
             }
         }
-        
+
         level.traps.forEach(trap => {
             if (fractionalPlatformTypes.includes(trap.type)) return;
             if (typeof trap.getRenderableData === 'function') {
@@ -267,7 +283,8 @@ export class Renderer {
                     const dataArray = Array.isArray(trapRenderData) ? trapRenderData : [trapRenderData];
                     dataArray.forEach(d => {
                         if (d && d.texture && d.instanceData) {
-                            addToBatch(d.texture, d.instanceData);
+                            const finalInstanceData = [...d.instanceData, 1.0];
+                            addToBatch(d.texture, finalInstanceData);
                         }
                     });
                 }
@@ -279,23 +296,24 @@ export class Renderer {
                 const sprite = this.assets[f.spriteKey];
                 const tex = this.textures[f.spriteKey];
                 const frameWidth = sprite.width / f.frameCount;
-                const instanceData = [f.x - f.size / 2, f.y - f.size / 2, f.size, f.size, f.frame * frameWidth, 0, frameWidth, sprite.height, 0.0];
+                const instanceData = [f.x - f.size / 2, f.y - f.size / 2, f.size, f.size, f.frame * frameWidth, 0, frameWidth, sprite.height, 0.0, 1.0];
                 addToBatch(tex, instanceData);
             }
         });
 
         level.checkpoints.forEach(cp => {
             const {sprite, tex, srcX, frameWidth} = this._getCheckpointSpriteData(cp);
-            const instanceData = [cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size, srcX, 0, frameWidth, sprite.height, 0.0];
+            const instanceData = [cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size, srcX, 0, frameWidth, sprite.height, 0.0, 1.0];
             addToBatch(tex, instanceData);
         });
 
-        if (level.trophy && !level.trophy.inactive) {
+        if (level.trophy) {
+            const alpha = level.trophy.inactive ? 0.5 : 1.0;
             const {sprite, tex, srcX, frameWidth} = this._getTrophySpriteData(level.trophy);
-            const instanceData = [level.trophy.x - level.trophy.size / 2, level.trophy.y - level.trophy.size / 2, level.trophy.size, level.trophy.size, srcX, 0, frameWidth, sprite.height, 0.0];
+            const instanceData = [level.trophy.x - level.trophy.size / 2, level.trophy.y - level.trophy.size / 2, level.trophy.size, level.trophy.size, srcX, 0, frameWidth, sprite.height, 0.0, alpha];
             addToBatch(tex, instanceData);
         }
-        
+
         gl.bindBuffer(gl.ARRAY_BUFFER, this.dynamicVBO);
         gl.bindVertexArray(this.dynamicVAO);
 
@@ -305,12 +323,12 @@ export class Renderer {
 
             this.dynamicInstanceData.set(batch.instances);
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.dynamicInstanceData.subarray(0, batch.instances.length));
-            
+
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, batch.texture.glTexture);
             gl.uniform1i(this.sceneUniforms.texture, 0);
             gl.uniform2f(this.sceneUniforms.texture_size, batch.texture.width, batch.texture.height);
-            
+
             gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, instanceCount);
         }
   }
@@ -328,7 +346,7 @@ export class Renderer {
 
     const sprite = isSpecialAnim ? this.assets[spriteAssetKey] : this.assets.characters[charComp.characterId]?.[spriteAssetKey];
     if (!sprite) return null;
-    
+
     const texture = isSpecialAnim ? this.textures[spriteAssetKey] : this.textures.characters[charComp.characterId]?.[spriteAssetKey];
 
     const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
@@ -342,7 +360,7 @@ export class Renderer {
   _getEnemySpriteData(renderable) {
     const enemyDef = ENEMY_DEFINITIONS[renderable.spriteKey];
     if (!enemyDef) return null;
-    
+
     const assetKey = `${renderable.spriteKey}_${renderable.animationState}`;
     const sprite = this.assets[assetKey];
     const texture = this.textures[assetKey];
@@ -352,7 +370,7 @@ export class Renderer {
     const frameWidth = sprite.width / frameCount;
     const srcX = (renderable.animationFrame % frameCount) * frameWidth;
     const isFlipped = renderable.direction === 'right' ? 1.0 : 0.0;
-    
+
     return { texture, sx: srcX, sy: 0, sw: frameWidth, sh: sprite.height, isFlipped };
   }
 
@@ -407,12 +425,12 @@ export class Renderer {
 
     const renderX = camera.prevX + (camera.x - camera.prevX) * alpha;
     const renderY = camera.prevY + (camera.y - camera.prevY) * alpha;
-    
+
     gl.uniform2f(this.backgroundUniforms.resolution, this.canvas.width, this.canvas.height);
     gl.uniform2f(this.backgroundUniforms.camera_offset, renderX + this.backgroundOffset.x, renderY + this.backgroundOffset.y);
     gl.uniform1f(this.backgroundUniforms.camera_zoom, camera.zoom);
     gl.uniform2f(this.backgroundUniforms.texture_size, textureInfo.width, textureInfo.height);
-    
+
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindVertexArray(null);
   }
