@@ -32,10 +32,10 @@ export class EnemySystem {
                     renderable.animationState = 'shell_idle';
                     renderable.animationFrame = 0;
                     collision.solid = true;
-                    
+
                     killable.stompable = false;
-                    enemy.immunityTimer = 0.4;  
-                    
+                    enemy.immunityTimer = 0.4;
+
                     const pos = entityManager.getComponent(enemyId, PositionComponent);
                     eventBus.publish('createParticles', { x: pos.x + collision.width / 2, y: pos.y + collision.height / 2, type: 'snail_flee' });
                     eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
@@ -71,13 +71,13 @@ export class EnemySystem {
     update(dt, { entityManager, playerEntityId, level }) {
         this._processStompEvents(entityManager);
         const enemyEntities = entityManager.query([EnemyComponent, PositionComponent, VelocityComponent, StateComponent, RenderableComponent]);
-        
+
         for (const id of enemyEntities) {
             const enemy = entityManager.getComponent(id, EnemyComponent);
             const pos = entityManager.getComponent(id, PositionComponent);
             const vel = entityManager.getComponent(id, VelocityComponent);
             const col = entityManager.getComponent(id, CollisionComponent);
-            
+
             if (enemy.immunityTimer > 0) {
                 enemy.immunityTimer -= dt;
                 if (enemy.immunityTimer <= 0) {
@@ -90,12 +90,12 @@ export class EnemySystem {
                 const wasDestroyed = this._updateDyingState(dt, enemy, vel, entityManager, id);
                 if (wasDestroyed) continue;
             } else {
-                // Ensure AI behavior is instantiated once and stored.
+
                 if (!enemy.aiBehavior) {
                     enemy.aiBehavior = createAIBehavior(enemy.ai.type, id, entityManager, level, playerEntityId);
                 }
-                
-                // Update the persistent AI behavior instance.
+
+
                 if (enemy.aiBehavior) {
                     enemy.aiBehavior.update(dt);
                 }
@@ -104,13 +104,15 @@ export class EnemySystem {
             if (enemy.type === 'slime' && enemy.ai.particleDropInterval && Math.abs(vel.vx) > 0) {
                 enemy.particleDropTimer -= dt;
                 if (enemy.particleDropTimer <= 0) {
-                    enemy.particleDropTimer = enemy.ai.particleDropInterval;
-                    const particlePos = { x: pos.x + col.width / 2, y: pos.y + col.height - 2 };
+                    enemy.particleDropTimer = enemy.ai.particleDropInterval + (Math.random() * 0.1);
+                    const renderable = entityManager.getComponent(id, RenderableComponent);
+                    const spawnOffset = renderable.direction === 'right' ? 0 : col.width;
+                    const particlePos = { x: pos.x + spawnOffset, y: pos.y + col.height - 2 };
                     eventBus.publish('createParticles', { ...particlePos, type: 'slime_puddle' });
                     eventBus.publish('createSlimePuddle', particlePos);
                 }
             }
-            
+
             this._updateAnimation(dt, id, entityManager);
         }
     }

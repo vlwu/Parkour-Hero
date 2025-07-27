@@ -60,7 +60,7 @@ export const ENEMY_DEFINITIONS = {
             stompBounceVelocity: 250,
         },
         ai: {
-            type: 'snail', // Was 'patrol'
+            type: 'snail',
             patrolSpeed: 20,
             shellSpeed: 150,
         }
@@ -81,7 +81,7 @@ export const ENEMY_DEFINITIONS = {
         ai: {
             type: 'patrol',
             patrolSpeed: 25,
-            particleDropInterval: 0.8,
+            particleDropInterval: 0.3,
         }
     },
 
