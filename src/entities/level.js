@@ -364,10 +364,13 @@ export class Level {
     return !this.trophy || this.trophy.acquired;
   }
 
-  resetEnemies(entityManager) {
+  resetEnemies(entityManager, collisionSystem) {
     const currentEnemies = entityManager.query([EnemyComponent]);
     for (const id of currentEnemies) {
-        entityManager.destroyEntity(id);
+      if (collisionSystem) {
+        collisionSystem.removeDynamicEntity(id, entityManager);
+      }
+      entityManager.destroyEntity(id);
     }
 
     this.initialEnemyConfigs.forEach(enemyConfig => {

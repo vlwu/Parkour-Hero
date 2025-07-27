@@ -79,7 +79,7 @@ export class Engine {
         this.collisionSystem,
         this.enemySystem,
         this.gameplaySystem,
-        this.renderer, // Add renderer to systems to call its update method
+        this.renderer,
         this.particleSystem,
         this.effectsSystem,
         this.gameFlowSystem,
@@ -326,7 +326,7 @@ export class Engine {
         this.currentLevel.trophy.inactive = !this.currentLevel.allFruitsCollected();
     }
 
-    this.currentLevel.resetEnemies(this.entityManager);
+    this.currentLevel.resetEnemies(this.entityManager, this.collisionSystem);
 
     const pos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
     const vel = this.entityManager.getComponent(this.playerEntityId, VelocityComponent);
