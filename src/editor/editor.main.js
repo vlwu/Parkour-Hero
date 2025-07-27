@@ -17,28 +17,28 @@ const round = (val) => Math.round(val * 100) / 100;
 
 class EditorController {
     constructor() {
-        // Core Modules
+
         this.grid = new Grid(28, 15);
         this.objectManager = new ObjectManager(this.grid);
         this.history = new HistoryManager(DOM.undoBtn, DOM.redoBtn);
 
-        // State Management
+
         this.selectedObject = null;
         this.currentPaintAction = null;
         this.objectPropChange = {
             isChanging: false,
             oldValue: 0
         };
-        
+
         this.assets = null;
         this.fontRenderer = null;
         this.engine = null;
 
-        // UI Modules
+
         this.palette = new Palette(this._onPaletteSelection.bind(this));
         this.propertiesPanel = new PropertiesPanel(this._onPropertyUpdate.bind(this));
-        
-        // Input Handler
+
+
         this.inputHandler = new GridInputHandler(DOM.gridContainer, this.grid, {
             isTileSelected: () => this.palette.getSelection().type === 'tile',
             onPaintStart: this._onPaintStart.bind(this),
@@ -75,7 +75,7 @@ class EditorController {
         this._onPaletteSelection(this.palette.getSelection());
         this._loadGameAssets();
     }
-    
+
     async _loadGameAssets() {
         const loadingOverlay = document.createElement('div');
         loadingOverlay.id = 'editor-loading-overlay';
@@ -93,8 +93,50 @@ class EditorController {
             setTimeout(() => loadingOverlay.remove(), 3000);
             return;
         }
-        
+
         loadingOverlay.remove();
+    }
+
+    _drawPreviewMinimap(ctx, camera, level) {
+        const MAP_MAX_SIZE = 200;
+        const MAP_MARGIN = 20;
+
+        const levelAspectRatio = level.width / level.height;
+        let mapWidth, mapHeight;
+
+        if (levelAspectRatio > 1) {
+            mapWidth = MAP_MAX_SIZE;
+            mapHeight = MAP_MAX_SIZE / levelAspectRatio;
+        } else {
+            mapHeight = MAP_MAX_SIZE;
+            mapWidth = MAP_MAX_SIZE * levelAspectRatio;
+        }
+
+        const mapX = ctx.canvas.width - mapWidth - MAP_MARGIN;
+        const mapY = ctx.canvas.height - mapHeight - MAP_MARGIN;
+
+        const scaleX = mapWidth / level.width;
+        const scaleY = mapHeight / level.height;
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        // Draw minimap background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(mapX, mapY, mapWidth, mapHeight);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.strokeRect(mapX, mapY, mapWidth, mapHeight);
+
+        // Draw camera viewport
+        const viewRectX = mapX + camera.x * scaleX;
+        const viewRectY = mapY + camera.y * scaleY;
+        const viewRectWidth = camera.width * scaleX;
+        const viewRectHeight = camera.height * scaleY;
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fillRect(viewRectX, viewRectY, viewRectWidth, viewRectHeight);
+
+        ctx.restore();
     }
 
     _onTestLevel() {
@@ -159,51 +201,100 @@ class EditorController {
         const gl = particleCanvas.getContext('webgl2', { alpha: true });
         ctx.imageSmoothingEnabled = false;
 
-        const keybinds = { moveLeft: 'a', moveRight: 'd', jump: 'w', dash: ' ' };
-        this.engine = new Engine(ctx, gl, gameCanvas, this.assets, keybinds, this.fontRenderer);
-        
-        // Disable the sound manager for the preview to prevent sound pool errors and simplify the experience.
+        this.engine = new Engine(ctx, gl, gameCanvas, this.assets, {}, this.fontRenderer);
+        this.engine.renderer.previewMode = true;
         this.engine.soundManager.setEnabled(false);
-
-        const uiComponent = document.createElement('parkour-hero-ui');
-        uiComponent.fontRenderer = this.fontRenderer;
-        uiComponent.previewMode = true;
-        uiComponent.assets = this.assets;
-        uiComponent.gameState = this.engine.gameState;
-        uiRoot.appendChild(uiComponent);
-
         this.engine.loadLevelFromData(levelData);
-        previewContainer.style.display = 'flex';
-        
-        const exitPreview = () => {
-            if (!this.engine) return;
+        this.engine.playerEntityId = null;
 
-            this.engine.destroy();
-            this.engine = null;
+        previewContainer.style.display = 'flex';
+
+        let animationFrameId = null;
+        let lastTime = 0;
+        const cameraSpeed = 500;
+        const cameraKeys = { up: false, down: false, left: false, right: false };
+
+        const handleKeyDown = (e) => {
+            switch (e.key.toLowerCase()) {
+                case 'w': case 'arrowup': cameraKeys.up = true; break;
+                case 's': case 'arrowdown': cameraKeys.down = true; break;
+                case 'a': case 'arrowleft': cameraKeys.left = true; break;
+                case 'd': case 'arrowright': cameraKeys.right = true; break;
+            }
+        };
+
+        const handleKeyUp = (e) => {
+            switch (e.key.toLowerCase()) {
+                case 'w': case 'arrowup': cameraKeys.up = false; break;
+                case 's': case 'arrowdown': cameraKeys.down = false; break;
+                case 'a': case 'arrowleft': cameraKeys.left = false; break;
+                case 'd': case 'arrowright': cameraKeys.right = false; break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+
+        const previewLoop = (timestamp) => {
+            if (!this.engine) return;
+            if (lastTime === 0) lastTime = timestamp;
+            const deltaTime = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            if (cameraKeys.up) this.engine.camera.y -= cameraSpeed * deltaTime;
+            if (cameraKeys.down) this.engine.camera.y += cameraSpeed * deltaTime;
+            if (cameraKeys.left) this.engine.camera.x -= cameraSpeed * deltaTime;
+            if (cameraKeys.right) this.engine.camera.x += cameraSpeed * deltaTime;
+
+            this.engine.camera.x = Math.max(this.engine.camera.minX, Math.min(this.engine.camera.maxX, this.engine.camera.x));
+            this.engine.camera.y = Math.max(this.engine.camera.minY, Math.min(this.engine.camera.maxY, this.engine.camera.y));
+
+            this.engine.camera.update(this.engine.entityManager, null, deltaTime);
+
+            this.engine.render(deltaTime, 1.0);
+            this._drawPreviewMinimap(ctx, this.engine.camera, this.engine.currentLevel);
+
+
+            animationFrameId = requestAnimationFrame(previewLoop);
+        };
+
+        animationFrameId = requestAnimationFrame(previewLoop);
+
+        const exitPreview = () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            if (this.engine) {
+                this.engine.destroy();
+                this.engine = null;
+            }
             previewContainer.style.display = 'none';
             uiRoot.innerHTML = '';
             exitBtn.removeEventListener('click', exitPreview);
             window.removeEventListener('resize', resizePreview);
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
         };
         exitBtn.addEventListener('click', exitPreview);
     }
-    
+
     resetEditor(width, height) {
         this.grid.resize(width, height);
         this.objectManager.clear();
         this.history.clear();
         this.deselectObject();
     }
-    
+
     _onPaletteSelection(selection) {
         this.deselectObject();
         this.propertiesPanel.showItemDescription(selection.type, selection.id);
     }
-    
+
     _onPropertyUpdate(id, prop, value, type) {
         const obj = this.objectManager.getObject(id);
         if (!obj) return;
-    
+
         if (type === 'live') {
             if (!this.objectPropChange.isChanging) {
                 this.objectPropChange.isChanging = true;
@@ -227,11 +318,11 @@ class EditorController {
             }
         }
     }
-    
+
     _onPaintStart() {
         this.currentPaintAction = { type: 'paint', changes: [] };
     }
-    
+
     _onPaint(index, tileId = null) {
         if (!this.currentPaintAction) return;
         tileId = tileId ?? this.palette.getSelection().id;
@@ -282,12 +373,12 @@ class EditorController {
         this.objectManager.updateObjectProp(id, 'y', newY);
         this.propertiesPanel.displayObject(this.objectManager.getObject(id));
     }
-    
+
     _onObjectDragEnd(id) {
         const obj = this.objectManager.getObject(id);
         this.objectManager._applySnapping(obj);
-        this.objectManager._updateGroundedEnemyBehavior(obj); // Corrected function name
-        
+        this.objectManager._updateGroundedEnemyBehavior(obj);
+
         const finalX = round(obj.x);
         const finalY = round(obj.y);
         const initial = this.selectedObject.initialDragPos;
@@ -299,12 +390,12 @@ class EditorController {
                 to: { x: finalX, y: finalY }
             });
         }
-        
+
         obj.x = finalX; obj.y = finalY;
         this.objectManager.render();
         this.propertiesPanel.displayObject(obj);
     }
-    
+
     _onResize() {
         const w = parseInt(prompt("Enter new grid width:", this.grid.width));
         const h = parseInt(prompt("Enter new grid height:", this.grid.height));
@@ -365,7 +456,7 @@ class EditorController {
                 if (movedObj) {
                     const pos = isUndo ? action.from : action.to;
                     movedObj.x = pos.x; movedObj.y = pos.y;
-                    this.objectManager._updateGroundedEnemyBehavior(movedObj); // Also update on undo/redo
+                    this.objectManager._updateGroundedEnemyBehavior(movedObj);
                     this.objectManager.render();
                     if (this.selectedObject?.id === action.id) this.propertiesPanel.displayObject(movedObj);
                 }
@@ -398,9 +489,9 @@ class EditorController {
     }
 }
 
-// --- Start the Editor ---
+
 document.addEventListener('DOMContentLoaded', () => {
-    DOM.init(); // Initialize DOM references
+    DOM.init();
     const editor = new EditorController();
-    editor.init(); // Initialize the rest of the editor
+    editor.init();
 });

@@ -15,6 +15,7 @@ export class Renderer {
     this.backgroundCache = new Map();
     this.backgroundOffset = { x: 0, y: 0 };
     this.staticLayerCache = null;
+    this.previewMode = false;
   }
 
   preRenderLevel(level) {
@@ -39,26 +40,26 @@ export class Renderer {
             }
             const screenX = x * tileSize;
             const screenY = y * tileSize;
-            
+
             if (tile.spriteConfig) {
-                // Use the width/height from spriteConfig for the source rect from the spritesheet.
-                // Fallback to tileSize if not specified (for full blocks).
+
+
                 const sWidth = tile.spriteConfig.width || tileSize;
                 const sHeight = tile.spriteConfig.height || tileSize;
 
-                // Use the collisionBox dimensions for the destination rect on the canvas if available.
-                // This correctly sizes fractional blocks. Fallback to tileSize for full blocks.
+
+
                 const dWidth = tile.collisionBox ? tile.collisionBox.width : tileSize;
                 const dHeight = tile.collisionBox ? tile.collisionBox.height : tileSize;
-                
-                // For one-way platforms which don't have a collision box, ensure destination height matches source height.
+
+
                 const finalDHeight = tile.oneWay && !tile.collisionBox ? sHeight : dHeight;
 
                 cacheCtx.drawImage(
-                    sprite, 
-                    tile.spriteConfig.srcX, tile.spriteConfig.srcY, 
-                    sWidth, sHeight, 
-                    screenX, screenY, 
+                    sprite,
+                    tile.spriteConfig.srcX, tile.spriteConfig.srcY,
+                    sWidth, sHeight,
+                    screenX, screenY,
                     dWidth, finalDHeight
                 );
             }
@@ -116,14 +117,14 @@ export class Renderer {
     if (this.staticLayerCache) {
         this.ctx.drawImage(this.staticLayerCache, 0, 0);
     }
-    
+
     const visibleObjects = level.spatialGrid.query(camera.getViewportBounds());
 
     for (const obj of visibleObjects) {
         if (!obj.instance) continue;
         const instance = obj.instance;
-        
-        switch(obj.type) { 
+
+        switch(obj.type) {
             case 'trap':
                 instance.render(this.ctx, this.assets, camera);
                 break;
@@ -144,7 +145,7 @@ export class Renderer {
         const pos = entityManager.getComponent(entityId, PositionComponent);
         const prevPos = entityManager.getComponent(entityId, PreviousPositionComponent);
         const renderable = entityManager.getComponent(entityId, RenderableComponent);
-        
+
         let renderX = pos.x;
         let renderY = pos.y;
         if (prevPos) {
@@ -152,9 +153,13 @@ export class Renderer {
             renderY = prevPos.y + (pos.y - prevPos.y) * alpha;
         }
         const interpolatedPos = { x: renderX, y: renderY };
-        
+
         const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
-        
+
+        if (isPlayer && this.previewMode) {
+            continue;
+        }
+
         if (isPlayer) {
             const charComp = entityManager.getComponent(entityId, CharacterComponent);
             const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
@@ -222,25 +227,25 @@ export class Renderer {
 
   _drawEnemy(pos, renderable) {
     if (!renderable.isVisible) return;
-    
+
     const assetKey = `${renderable.spriteKey}_${renderable.animationState}`;
     const sprite = this.assets[assetKey];
-    
+
     const enemyDef = ENEMY_DEFINITIONS[renderable.spriteKey];
     if (!enemyDef) return;
-    
+
     if (!sprite) {
         console.warn(`Missing enemy sprite for asset key: "${assetKey}"`);
         this.ctx.fillStyle = '#FF00FF';
         this.ctx.fillRect(pos.x, pos.y, renderable.width, renderable.height);
         return;
     }
-    
+
     const frameCount = enemyDef.animations[renderable.animationState]?.frameCount || 1;
     const frameWidth = sprite.width / frameCount;
     const srcX = (renderable.animationFrame % frameCount) * frameWidth;
 
-    // Because enemy sprites face left by default, flip them when their desired direction is 'right'.
+
     const shouldFlip = (renderable.direction === 'right');
 
     this.ctx.save();

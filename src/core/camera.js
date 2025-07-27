@@ -3,50 +3,50 @@ import { CollisionComponent } from "../components/CollisionComponent.js";
 
 export class Camera {
   constructor(canvasWidth, canvasHeight) {
-    this.zoom = 1.8; // Zoom factor. > 1 zooms in, < 1 zooms out.
+    this.zoom = 1.8;
     this.viewportWidth = canvasWidth;
     this.viewportHeight = canvasHeight;
-    
-    // Camera's view dimensions in WORLD units, adjusted for zoom
+
+
     this.width = this.viewportWidth / this.zoom;
     this.height = this.viewportHeight / this.zoom;
-    
-    // Level boundaries - will be set by updateLevelBounds
+
+
     this.levelWidth = this.width;
     this.levelHeight = this.height;
-    
-    // Camera follow settings
-    this.followSpeed = 5; // How fast camera catches up to player (higher = faster)
-    
-    // Dead zone in WORLD units, so it scales with the zoom
+
+
+    this.followSpeed = 5;
+
+
     this.deadZone = {
-      x: this.width * 0.2,  // 20% of world view width
-      y: this.height * 0.2  // 20% of world view height
+      x: this.width * 0.2,
+      y: this.height * 0.2
     };
-    
-    // Camera limits - prevent showing areas outside the level
+
+
     this.minX = 0;
-    this.maxX = 0; // Will be calculated in updateLevelBounds
+    this.maxX = 0;
     this.minY = 0;
-    this.maxY = 0; // Will be calculated in updateLevelBounds
-    
-    // Shake effect properties
+    this.maxY = 0;
+
+
     this.shakeTimer = 0;
     this.shakeIntensity = 0;
     this.shakeInitialIntensity = 0;
     this.shakeDuration = 0;
     this.shakeX = 0;
     this.shakeY = 0;
-    
-    // Smooth movement
+
+
     this.targetX = 0;
     this.targetY = 0;
 
-    // --- NEW: For position interpolation ---
+
     this.prevX = 0;
     this.prevY = 0;
-    
-    // Pre-allocate the projection matrix
+
+
     this.projectionMatrix = new Float32Array(16);
 
     console.log('Camera initialized:', {
@@ -57,44 +57,45 @@ export class Camera {
   }
 
   update(entityManager, playerEntityId, deltaTime) {
-    // --- NEW: Store previous position before updating ---
+
     this.prevX = this.x;
     this.prevY = this.y;
 
-    if (playerEntityId === null) return;
-    const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
-    const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
-    if (!playerPos || !playerCol) return;
+    if (playerEntityId !== null) {
+      const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
+      const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
+      if (playerPos && playerCol) {
+        const cameraCenterX = this.x + this.width / 2;
+        const cameraCenterY = this.y + this.height / 2;
 
-    const cameraCenterX = this.x + this.width / 2;
-    const cameraCenterY = this.y + this.height / 2;
-    
-    const playerCenterX = playerPos.x + playerCol.width / 2;
-    const playerCenterY = playerPos.y + playerCol.height / 2;
-    
-    const distanceX = playerCenterX - cameraCenterX;
-    const distanceY = playerCenterY - cameraCenterY;
-    
-    let moveX = 0;
-    let moveY = 0;
-    
-    if (Math.abs(distanceX) > this.deadZone.x) {
-      moveX = distanceX > 0 ? distanceX - this.deadZone.x : distanceX + this.deadZone.x;
+        const playerCenterX = playerPos.x + playerCol.width / 2;
+        const playerCenterY = playerPos.y + playerCol.height / 2;
+
+        const distanceX = playerCenterX - cameraCenterX;
+        const distanceY = playerCenterY - cameraCenterY;
+
+        let moveX = 0;
+        let moveY = 0;
+
+        if (Math.abs(distanceX) > this.deadZone.x) {
+          moveX = distanceX > 0 ? distanceX - this.deadZone.x : distanceX + this.deadZone.x;
+        }
+
+        if (Math.abs(distanceY) > this.deadZone.y) {
+          moveY = distanceY > 0 ? distanceY - this.deadZone.y : distanceY + this.deadZone.y;
+        }
+
+        this.targetX = this.x + moveX;
+        this.targetY = this.y + moveY;
+
+        this.x += (this.targetX - this.x) * this.followSpeed * deltaTime;
+        this.y += (this.targetY - this.y) * this.followSpeed * deltaTime;
+
+        this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
+        this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
+      }
     }
-    
-    if (Math.abs(distanceY) > this.deadZone.y) {
-      moveY = distanceY > 0 ? distanceY - this.deadZone.y : distanceY + this.deadZone.y;
-    }
-    
-    this.targetX = this.x + moveX;
-    this.targetY = this.y + moveY;
-    
-    this.x += (this.targetX - this.x) * this.followSpeed * deltaTime;
-    this.y += (this.targetY - this.y) * this.followSpeed * deltaTime;
-    
-    this.x = Math.max(this.minX, Math.min(this.maxX, this.x));
-    this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
-    
+
     if (deltaTime > 0) {
         this.updateShake(deltaTime);
     } else {
@@ -108,10 +109,10 @@ export class Camera {
       this.shakeTimer -= deltaTime;
       this.shakeX = (Math.random() - 0.5) * this.shakeIntensity;
       this.shakeY = (Math.random() - 0.5) * this.shakeIntensity;
-      
+
       const decayRate = this.shakeInitialIntensity / this.shakeDuration;
       this.shakeIntensity = Math.max(0, this.shakeIntensity - decayRate * deltaTime);
-      
+
       if (this.shakeTimer <= 0) {
         this.shakeX = 0;
         this.shakeY = 0;
@@ -133,7 +134,7 @@ export class Camera {
     const renderY = this.prevY + (this.y - this.prevY) * alpha;
     ctx.scale(this.zoom, this.zoom);
     ctx.translate(
-      -Math.round(renderX + this.shakeX), 
+      -Math.round(renderX + this.shakeX),
       -Math.round(renderY + this.shakeY)
     );
   }
@@ -141,13 +142,13 @@ export class Camera {
   restore(ctx) {
     ctx.restore();
   }
-  
+
   snapToPlayer(entityManager, playerEntityId) {
     if (playerEntityId === null) return;
     const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
     const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
     if (!playerPos || !playerCol) return;
-    
+
     this.centerOn(playerPos.x + playerCol.width / 2, playerPos.y + playerCol.height / 2);
   }
 
@@ -158,13 +159,13 @@ export class Camera {
     this.y = Math.max(this.minY, Math.min(this.maxY, this.y));
     this.targetX = this.x;
     this.targetY = this.y;
-    // --- NEW: Update previous position on snap ---
+
     this.prevX = this.x;
     this.prevY = this.y;
   }
 
   getViewportBounds() {
-    const buffer = 32; // A small buffer to update objects just off-screen
+    const buffer = 32;
     return {
       x: this.x - buffer,
       y: this.y - buffer,
@@ -183,40 +184,40 @@ export class Camera {
   }
 
   getProjectionMatrix(alpha = 1.0) {
-    // --- NEW: Interpolate camera position for the matrix ---
+
     const renderX = this.prevX + (this.x - this.prevX) * alpha;
     const renderY = this.prevY + (this.y - this.prevY) * alpha;
 
-    // Calculate the camera's view boundaries including shake and zoom
+
     const left = (renderX + this.shakeX);
     const right = (renderX + this.shakeX) + this.width;
     const top = (renderY + this.shakeY);
     const bottom = (renderY + this.shakeY) + this.height;
 
-    // Orthographic projection matrix components
+
     const lr = 1 / (left - right);
     const bt = 1 / (bottom - top);
-    const nf = 1 / (-1 - 1); // near = -1, far = 1
+    const nf = 1 / (-1 - 1);
 
-    // First column
+
     this.projectionMatrix[0] = -2 * lr;
     this.projectionMatrix[1] = 0;
     this.projectionMatrix[2] = 0;
     this.projectionMatrix[3] = 0;
 
-    // Second column
+
     this.projectionMatrix[4] = 0;
     this.projectionMatrix[5] = -2 * bt;
     this.projectionMatrix[6] = 0;
     this.projectionMatrix[7] = 0;
 
-    // Third column
+
     this.projectionMatrix[8] = 0;
     this.projectionMatrix[9] = 0;
     this.projectionMatrix[10] = 2 * nf;
     this.projectionMatrix[11] = 0;
 
-    // Fourth column
+
     this.projectionMatrix[12] = (left + right) * lr;
     this.projectionMatrix[13] = (top + bottom) * bt;
     this.projectionMatrix[14] = (1 + -1) * nf;
