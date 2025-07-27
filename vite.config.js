@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     port: 3000
   },
-
+  assetsInclude: ['**/*.vert', '**/*.frag'],
   build: {
     target: 'esnext',
     outDir: 'dist',

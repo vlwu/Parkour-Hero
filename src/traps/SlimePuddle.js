@@ -36,8 +36,9 @@ export class SlimePuddle extends Trap {
         }
     }
 
-    render(ctx, assets, camera) {
-
+    getRenderableData(assets, textures) {
+        // This trap has no visuals
+        return null;
     }
 
     onCollision(player, eventBus) {

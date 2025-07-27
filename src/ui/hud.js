@@ -1,8 +1,9 @@
 import { eventBus } from '../utils/event-bus.js';
 
 export class HUD {
-  constructor(canvas, fontRenderer) {
-    this.canvas = canvas;
+  constructor(ctx, fontRenderer) {
+    this.ctx = ctx;
+    this.canvas = ctx.canvas;
     this.fontRenderer = fontRenderer;
     this.isVisible = true;
     this.stats = {
@@ -15,8 +16,8 @@ export class HUD {
       health: 100,
       maxHealth: 100
     };
-    
-    // Properties for FPS calculation
+
+
     this.fps = 0;
     this.frameCount = 0;
     this.elapsedTime = 0;
@@ -35,10 +36,10 @@ export class HUD {
   drawGameHUD(ctx, dt) {
     if (!this.isVisible || !this.fontRenderer) return;
 
-    // --- FPS Calculation ---
+
     this.frameCount++;
     this.elapsedTime += dt;
-    if (this.elapsedTime >= 1) { // Update the FPS display once per second
+    if (this.elapsedTime >= 1) {
       this.fps = this.frameCount;
       this.frameCount = 0;
       this.elapsedTime -= 1;
@@ -49,23 +50,23 @@ export class HUD {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
       const { levelName, collectedFruits, totalFruits, deathCount, soundEnabled, soundVolume, health, maxHealth } = this.stats;
-      
+
       const lines = [
         `${levelName}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
         `Deaths: ${deathCount || 0}`,
         `Sound: ${soundEnabled ? 'On' : 'Off'} (${Math.round(soundVolume * 100)}%)`
       ];
-      
+
       const fontOptions = {
-          scale: 2.5, 
+          scale: 2.5,
           align: 'center',
           color: 'white',
           outlineColor: 'black',
           outlineWidth: 1
       };
 
-      // --- DYNAMIC WIDTH CALCULATION ---
+
       let maxWidth = 0;
       lines.forEach(line => {
         const width = this.fontRenderer.getTextWidth(line, fontOptions.scale);
@@ -73,29 +74,29 @@ export class HUD {
           maxWidth = width;
         }
       });
-      
+
       const horizontalPadding = 40;
       const hudX = 10;
       const hudY = 10;
       const hudWidth = maxWidth + horizontalPadding;
       const hudHeight = 180;
 
-      // --- DRAWING ---
+
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
       ctx.roundRect(hudX, hudY, hudWidth, hudHeight, 10);
       ctx.fill();
 
-      const lineHeight = 35; 
-      const startY = hudY + 25; 
+      const lineHeight = 35;
+      const startY = hudY + 25;
       const textX = hudX + hudWidth / 2;
-      
+
       lines.forEach((text, index) => {
         const y = startY + index * lineHeight;
         this.fontRenderer.drawText(ctx, text, textX, y, fontOptions);
       });
 
-      // --- HEALTH BAR ---
+
       const healthBarWidth = 150;
       const healthBarHeight = 20;
       const healthBarX = hudX + hudWidth + 15;
@@ -108,7 +109,7 @@ export class HUD {
 
       const healthPercentage = (health || 0) / (maxHealth || 100);
       const currentHealthWidth = healthBarWidth * healthPercentage;
-      
+
       if (healthPercentage > 0.6) {
           ctx.fillStyle = '#4CAF50';
       } else if (healthPercentage > 0.3) {
@@ -116,12 +117,12 @@ export class HUD {
       } else {
           ctx.fillStyle = '#F44336';
       }
-      
+
       ctx.fillRect(healthBarX, healthBarY, currentHealthWidth, healthBarHeight);
 
       this.fontRenderer.drawText(ctx, `HP`, healthBarX + healthBarWidth + 10, healthBarY + healthBarHeight / 2 - 12, { scale: 2, align: 'left' });
-      
-      // --- FPS DISPLAY ---
+
+
       const fpsText = `FPS: ${this.fps}`;
       const fpsFontOptions = {
           scale: 2,
@@ -131,7 +132,7 @@ export class HUD {
           outlineWidth: 1
       };
       const fpsX = healthBarX;
-      const fpsY = healthBarY + healthBarHeight + 10; // Position below the health bar
+      const fpsY = healthBarY + healthBarHeight + 10;
       this.fontRenderer.drawText(ctx, fpsText, fpsX, fpsY, fpsFontOptions);
 
       ctx.restore();

@@ -115,38 +115,53 @@ export class FireTrap extends Trap {
         }
     }
 
-    render(ctx, assets, camera) {
+    getRenderableData(assets, textures) {
+        const results = [];
         const baseWidth = 16;
         const startX = this.x - this.width / 2;
 
-        if (!camera.isVisible(startX, this.y - this.height, this.width, this.height * 2)) return;
-
         const baseSprite = assets.fire_off;
+        const baseTexture = textures.fire_off;
 
-        if (baseSprite) {
+        if (baseSprite && baseTexture) {
             for (let i = 0; i < this.chainLength; i++) {
-                ctx.drawImage(baseSprite, 0, 16, 16, 16, startX + i * baseWidth, this.y - this.height / 2, baseWidth, this.height);
+                const instanceData = [
+                    startX + i * baseWidth, this.y - this.height / 2,
+                    baseWidth, this.height,
+                    0, 16, 16, 16, 0.0
+                ];
+                results.push({ texture: baseTexture, instanceData });
             }
         }
 
-        if (this.state === 'off') return;
+        if (this.state === 'off') return results;
 
-        let sprite, srcX = 0, frameWidth;
+        let sprite, texture, srcX = 0, frameWidth;
         if (this.state === 'activating') {
             sprite = assets.fire_hit;
+            texture = textures.fire_hit;
             frameWidth = sprite.width / this.anim.activating.frames;
             srcX = this.frame * frameWidth;
         } else {
             sprite = assets.fire_on;
+            texture = textures.fire_on;
             frameWidth = sprite.width / this.anim.on.frames;
             srcX = this.frame * frameWidth;
         }
 
-        if (sprite) {
+        if (sprite && texture) {
             for (let i = 0; i < this.chainLength; i++) {
-                ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, startX + i * baseWidth, this.y - this.height * 1.5, baseWidth, this.height * 2);
+                const instanceData = [
+                    startX + i * baseWidth, this.y - this.height * 1.5,
+                    baseWidth, this.height * 2,
+                    srcX, 0,
+                    frameWidth, sprite.height,
+                    0.0
+                ];
+                results.push({ texture, instanceData });
             }
         }
+        return results;
     }
 
     onLanded(eventBus) {

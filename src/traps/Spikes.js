@@ -70,21 +70,21 @@ export class Spikes extends Trap {
         }
     }
 
-    render(ctx, assets, camera) {
-
-        if (this.state === 'hidden' || this.state === 'warning') {
-            return;
-        }
-
-        const drawX = this.x - this.width / 2;
-        const drawY = this.y - this.height / 2;
-
-        if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
+    getRenderableData(assets, textures) {
+        if (this.state === 'hidden' || this.state === 'warning') return null;
 
         const sprite = assets.spike_two;
-        if (sprite) {
-            ctx.drawImage(sprite, drawX, drawY, this.width, this.height);
-        }
+        const texture = textures.spike_two;
+        if (!sprite || !texture) return null;
+
+        const instanceData = [
+            this.x - this.width / 2, this.y - this.height / 2,
+            this.width, this.height,
+            0, 0,
+            sprite.width, sprite.height,
+            0.0
+        ];
+        return { texture, instanceData };
     }
 
     onCollision(player, eventBus) {

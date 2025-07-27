@@ -34,24 +34,11 @@ export class FallingPlatform extends Trap {
             currentFrame: 0,
         };
         this.particleTimer = 0;
-
-        // Track previous position for sticky platform logic
         this.prevY = y;
     }
 
-    get hitbox() {
-        return {
-            x: this.x - this.width / 2,
-            y: this.y - this.height / 2,
-            width: this.width,
-            height: this.height,
-        };
-    }
-
-    // Method for sticky platform logic
-    getMovementDelta() {
-        return { dx: 0, dy: this.y - this.prevY };
-    }
+    get hitbox() { return { x: this.x - this.width / 2, y: this.y - this.height / 2, width: this.width, height: this.height }; }
+    getMovementDelta() { return { dx: 0, dy: this.y - this.prevY }; }
 
     update(dt, playerData, eventBus) { // DYNAMIC
         // Store current Y before any changes
@@ -124,37 +111,34 @@ export class FallingPlatform extends Trap {
         }
     }
 
-    render(ctx, assets, camera) {
-        if (this.state === 'respawning' || this.opacity <= 0) return;
-
-        const drawX = (this.x - this.width / 2) + this.shakeOffsetX;
-        const drawY = (this.y - this.height / 2) + this.shakeOffsetY;
-
-        if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
+    getRenderableData(assets, textures) {
+        if (this.state === 'respawning' || this.opacity <= 0) return null;
 
         const isPlatformActive = this.state === 'idle' || this.state === 'active';
-        const sprite = isPlatformActive ? assets.falling_platform_on : assets.falling_platform_off;
+        const spriteKey = isPlatformActive ? 'falling_platform_on' : 'falling_platform_off';
+        const sprite = assets[spriteKey];
+        const texture = textures[spriteKey];
+        if (!sprite || !texture) return null;
 
-        if (!sprite) return;
+        const frameCount = isPlatformActive ? this.animation.frameCount : 1;
+        const frame = isPlatformActive ? this.animation.currentFrame : 0;
+        const frameWidth = sprite.width / frameCount;
 
-        ctx.globalAlpha = this.opacity;
-
-        if (isPlatformActive) {
-            const frameWidth = sprite.width / this.animation.frameCount;
-            const srcX = this.animation.currentFrame * frameWidth;
-            ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY, this.width, this.height);
-        } else {
-            ctx.drawImage(sprite, drawX, drawY, this.width, this.height);
-        }
-
-        ctx.globalAlpha = 1.0;
+        const instanceData = [
+            (this.x - this.width / 2) + this.shakeOffsetX,
+            (this.y - this.height / 2) + this.shakeOffsetY,
+            this.width, this.height,
+            frame * frameWidth, 0,
+            frameWidth, sprite.height,
+            0.0
+        ];
+        return { texture, instanceData };
     }
 
     onLanded() {
         if (this.state === 'idle') {
             this.state = 'active';
             this.playerOnTimer = this.PLAYER_ON_DURATION;
-            // Snap the platform's position to its non-bobbing state.
             this.y = this.initialY;
         }
     }

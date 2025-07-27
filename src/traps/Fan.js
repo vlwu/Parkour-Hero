@@ -1,39 +1,22 @@
 import { Trap } from './templates/Trap.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 
-/**
- * A Fan trap that periodically turns on, pushing the player.
- */
 export class Fan extends Trap {
-    /**
-     * @param {number} x The initial x-position in the game world.
-     * @param {number} y The initial y-position in the game world.
-     * @param {object} config The configuration object from the level data.
-     */
     constructor(x, y, config) {
         super(x, y, config);
         this.width = 24;
         this.height = 8;
         this.type = 'fan';
-        
         this.direction = config.direction || 'right';
-        this.pushStrength = config.pushStrength || 250; 
+        this.pushStrength = config.pushStrength || 250;
         this.windHeight = config.windHeight || 120;
         this.soundRadius = config.soundRadius || 250;
-        
         this.state = 'off';
         this.onDuration = 5;
         this.offDuration = 5;
         this.timer = this.offDuration;
         this.isSoundPlaying = false;
-
-        this.onAnimation = {
-            frameCount: 4,
-            frameSpeed: 0.05,
-            frameTimer: 0,
-            currentFrame: 0,
-        };
-        
+        this.onAnimation = { frameCount: 4, frameSpeed: 0.05, frameTimer: 0, currentFrame: 0 };
         this.particleTimer = 0;
     }
 
@@ -143,48 +126,24 @@ export class Fan extends Trap {
         }
     }
 
-    /**
-     * Renders the fan based on its state and direction.
-     * @param {CanvasRenderingContext2D} ctx The rendering context.
-     * @param {object} assets The game's asset manager.
-     * @param {Camera} camera The game camera.
-     */
-    render(ctx, assets, camera) {
-        const sprite = this.state === 'on' ? assets.fan_on : assets.fan_off;
-        if (!sprite || !camera.isVisible(this.x - 32, this.y - 32, 64, 64)) {
-            return;
-        }
-        
+    getRenderableData(assets, textures) {
+        const spriteKey = this.state === 'on' ? 'fan_on' : 'fan_off';
+        const sprite = assets[spriteKey];
+        const texture = textures[spriteKey];
+        if (!sprite || !texture) return null;
+
         const frame = this.state === 'on' ? this.onAnimation.currentFrame : 0;
         const frameCount = this.state === 'on' ? this.onAnimation.frameCount : 1;
-        
-        const renderWidth = 24;
-        const renderHeight = 8;
-
         const frameWidth = sprite.width / frameCount;
-        const frameHeight = sprite.height;
 
-        ctx.save();
-        ctx.translate(this.x, this.y);
-
-        let angle = 0;
-        switch (this.direction) {
-            case 'up': angle = 0; break;
-            case 'left': angle = -Math.PI / 2; break;
-            case 'down': angle = Math.PI; break;
-            case 'right': default: angle = Math.PI / 2; break;
-        }
-        ctx.rotate(angle);
-
-        ctx.drawImage(
-            sprite,
+        const instanceData = [
+            this.x - this.width / 2, this.y - this.height / 2,
+            this.width, this.height,
             frame * frameWidth, 0,
-            frameWidth, frameHeight,
-            -renderWidth / 2, -renderHeight / 2,
-            renderWidth, renderHeight
-        );
-
-        ctx.restore();
+            frameWidth, sprite.height,
+            0.0 // Note: Rotation is not supported by the current shader
+        ];
+        return { texture, instanceData };
     }
 
     /**

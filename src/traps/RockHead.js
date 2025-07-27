@@ -181,28 +181,38 @@ export class RockHead extends Trap {
         }
     }
 
-    render(ctx, assets, camera) {
+    getRenderableData(assets, textures) {
         const drawX = this.x - this.width / 2 + this.shakeOffset.x;
         const drawY = this.y - this.height / 2 + this.shakeOffset.y;
-        if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
 
-        let sprite = assets.rh_idle;
-        let sX = 0;
-        let frameWidth = this.width;
+        let sprite, texture, sX = 0, frameWidth;
 
         if (this.state === 'blinking') {
             sprite = assets.rh_blink;
+            texture = textures.rh_blink;
             frameWidth = sprite.width / this.animations.blink.frameCount;
             sX = this.animations.blink.frame * frameWidth;
         } else if (this.state === 'slammed') {
             sprite = assets.rh_bottom_hit;
+            texture = textures.rh_bottom_hit;
             frameWidth = sprite.width / this.animations.hit.frameCount;
             sX = this.animations.hit.frame * frameWidth;
+        } else {
+            sprite = assets.rh_idle;
+            texture = textures.rh_idle;
+            frameWidth = sprite.width;
         }
         
-        if (sprite) {
-            ctx.drawImage(sprite, sX, 0, frameWidth, sprite.height, drawX, drawY, this.width, this.height);
-        }
+        if (!sprite || !texture) return null;
+
+        const instanceData = [
+            drawX, drawY,
+            this.width, this.height,
+            sX, 0,
+            frameWidth, sprite.height,
+            0.0
+        ];
+        return { texture, instanceData };
     }
 
     onCollision(player, eventBus) {

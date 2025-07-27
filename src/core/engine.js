@@ -10,10 +10,9 @@ import { ParticleSystemWebGL } from '../systems/particle-system-webgl.js';
 import { UISystem } from '../ui/ui-system.js';
 import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
-import { createEnemy } from '../entities/enemy-factory.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
-import { PLAYER_CONSTANTS, GRID_CONSTANTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS } from '../utils/constants.js';
 import { InputSystem } from '../systems/input-system.js';
 import { GameplaySystem } from '../systems/gameplay-system.js';
 import { PlayerStateSystem } from '../systems/player-state-system.js';
@@ -33,10 +32,11 @@ import { Level } from '../entities/level.js';
 const FIXED_DT = 1 / 60;
 
 export class Engine {
-  constructor(ctx, gl, canvas, assets, initialKeybinds, fontRenderer) {
-    this.ctx = ctx;
+  constructor(gl, uiCanvas, ctx, assets, initialKeybinds, fontRenderer) {
     this.gl = gl;
-    this.canvas = canvas;
+    this.canvas = gl.canvas;
+    this.uiCanvas = uiCanvas;
+    this.ctx = ctx;
     this.assets = assets;
     this.lastFrameTime = 0;
     this.accumulator = 0;
@@ -51,11 +51,11 @@ export class Engine {
     this.fruitsAtLastCheckpoint = new Set();
     this.playerEntityId = null;
 
-    this.camera = new Camera(canvas.width, canvas.height);
-    this.hud = new HUD(canvas, fontRenderer);
+    this.camera = new Camera(this.canvas.width, this.canvas.height);
+    this.hud = new HUD(this.ctx, fontRenderer);
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
-    this.renderer = new Renderer(ctx, canvas, assets);
+    this.renderer = new Renderer(this.gl, this.canvas, this.assets);
     this.gameState = new GameState();
     eventBus.publish('gameStateUpdated', this.gameState);
 
@@ -66,10 +66,10 @@ export class Engine {
     this.movementSystem = new MovementSystem();
     this.collisionSystem = new CollisionSystem();
     this.gameplaySystem = new GameplaySystem();
-    this.particleSystem = new ParticleSystemWebGL(gl, assets);
-    this.effectsSystem = new EffectsSystem(assets);
+    this.particleSystem = new ParticleSystemWebGL(this.gl, this.assets);
+    this.effectsSystem = new EffectsSystem(this.assets);
     this.gameFlowSystem = new GameFlowSystem();
-    this.uiSystem = new UISystem(canvas, assets);
+    this.uiSystem = new UISystem(this.uiCanvas, this.assets);
     this.enemySystem = new EnemySystem(this.collisionSystem);
 
     this.systems = [
@@ -79,10 +79,10 @@ export class Engine {
         this.collisionSystem,
         this.enemySystem,
         this.gameplaySystem,
+        this.renderer, // Add renderer to systems to call its update method
         this.particleSystem,
         this.effectsSystem,
         this.gameFlowSystem,
-        this.uiSystem,
     ];
 
     this.subscriptions = [];
@@ -155,7 +155,7 @@ export class Engine {
     }
 
     const alpha = this.accumulator / FIXED_DT;
-    this.render(deltaTime, alpha);
+    this.render(alpha);
 
     requestAnimationFrame((time) => this.gameLoop(time));
   }
@@ -397,28 +397,15 @@ export class Engine {
       if (this.camera) this.camera.shake(intensity, duration);
   }
 
-  render(deltaTime, alpha) {
+  render(alpha) {
     if (!this.currentLevel) return;
 
-
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-
-    this.gl.clearColor(0, 0, 0, 0);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-
-
-    this.renderer.drawScrollingBackground(this.currentLevel, deltaTime * this.timeScale);
     this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager, alpha);
-    this.effectsSystem.render(this.ctx, this.camera, alpha);
-
-
     this.particleSystem.render(this.camera, alpha);
 
-
-
+    this.ctx.clearRect(0, 0, this.uiCanvas.width, this.uiCanvas.height);
+    this.effectsSystem.render(this.ctx, this.camera, alpha);
     this.hud.drawGameHUD(this.ctx, FIXED_DT);
-
     this.uiSystem.render(this.ctx, this.timeScale > 0);
   }
 

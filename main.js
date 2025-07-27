@@ -5,13 +5,13 @@ import { FontRenderer } from './src/ui/font-renderer.js';
 import './src/ui/ui-main.js';
 
 const gameCanvas = document.getElementById('gameCanvas');
-const particleCanvas = document.getElementById('particleCanvas');
-const ctx = gameCanvas.getContext('2d');
-const gl = particleCanvas.getContext('webgl2', { alpha: true });
-
+const uiCanvas = document.getElementById('uiCanvas');
 const uiRoot = document.getElementById('ui-root');
 
-if (!gameCanvas || !particleCanvas || !ctx || !gl) {
+const gl = gameCanvas.getContext('webgl2', { alpha: true });
+const ctx = uiCanvas.getContext('2d');
+
+if (!gameCanvas || !uiCanvas || !ctx || !gl) {
   console.error('A required canvas or context is not available');
   document.body.innerHTML = '<h1>Error: Canvas or WebGL2 not supported</h1>';
   throw new Error('Canvas or WebGL2 not available');
@@ -24,8 +24,8 @@ const BASE_HEIGHT = 1080;
 
 gameCanvas.width = BASE_WIDTH;
 gameCanvas.height = BASE_HEIGHT;
-particleCanvas.width = BASE_WIDTH;
-particleCanvas.height = BASE_HEIGHT;
+uiCanvas.width = BASE_WIDTH;
+uiCanvas.height = BASE_HEIGHT;
 
 console.log(`Canvases initialized: ${BASE_WIDTH}x${BASE_HEIGHT}`);
 
@@ -49,7 +49,7 @@ function resizeCanvas() {
     const left = `${(window.innerWidth - finalWidth) / 2}px`;
     const top = `${(window.innerHeight - finalHeight) / 2}px`;
 
-    const elementsToResize = [gameCanvas, particleCanvas, uiRoot];
+    const elementsToResize = [gameCanvas, uiCanvas, uiRoot];
     elementsToResize.forEach(el => {
         if (el) {
             el.style.width = `${finalWidth}px`;
@@ -73,30 +73,6 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-function showLoadingIndicator() {
-  ctx.fillStyle = '#222';
-  ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-
-  ctx.fillStyle = 'white';
-  ctx.font = '24px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Loading Assets...', gameCanvas.width / 2, gameCanvas.height / 2);
-
-  const barWidth = 300;
-  const barHeight = 20;
-  const barX = (gameCanvas.width - barWidth) / 2;
-  const barY = gameCanvas.height / 2 + 30;
-
-  ctx.strokeStyle = 'white';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(barX, barY, barWidth, barHeight);
-
-  ctx.fillStyle = '#4CAF50';
-  ctx.fillRect(barX, barY, barWidth * 0.1, barHeight);
-}
-
-showLoadingIndicator();
-
 let keybinds = {
   moveLeft: 'a',
   moveRight: 'd',
@@ -111,7 +87,7 @@ loadAssets().then((assets) => {
 
   try {
     const fontRenderer = new FontRenderer(assets.font_spritesheet);
-    engine = new Engine(ctx, gl, gameCanvas, assets, keybinds, fontRenderer);
+    engine = new Engine(gl, uiCanvas, ctx, assets, keybinds, fontRenderer);
 
     eventBus.publish('assetsLoaded', assets);
 
@@ -136,7 +112,7 @@ loadAssets().then((assets) => {
     window.resetProgress = () => {
         if (engine && engine.gameState) {
             engine.gameState = engine.gameState.resetProgress();
-            engine.loadLevel(0, 0); // This will use the newly reset state
+            engine.loadLevel(0, 0);
             console.log("Game progress has been reset.");
         }
     };
@@ -145,30 +121,10 @@ loadAssets().then((assets) => {
     console.log('Game is ready. Waiting for user to start from the main menu.');
   } catch (error) {
     console.error('Failed to start game engine:', error);
-
-    ctx.fillStyle = '#222';
-    ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-    ctx.fillStyle = 'red';
-    ctx.font = '24px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Game Failed to Start', gameCanvas.width / 2, gameCanvas.height / 2 - 20);
-    ctx.fillStyle = 'white';
-    ctx.font = '16px sans-serif';
-    ctx.fillText('Check console for details', gameCanvas.width / 2, gameCanvas.height / 2 + 20);
   }
 
 }).catch((error) => {
   console.error("Asset loading failed:", error);
-
-  ctx.fillStyle = '#222';
-  ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-  ctx.fillStyle = 'red';
-  ctx.font = '24px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Failed to Load Assets', gameCanvas.width / 2, gameCanvas.height / 2 - 20);
-  ctx.fillStyle = 'white';
-  ctx.font = '16px sans-serif';
-  ctx.fillText('Check console for details', gameCanvas.width / 2, gameCanvas.height / 2 + 20);
 });
 
 window.addEventListener('error', (event) => {
