@@ -43,15 +43,21 @@ export class CollisionSystem {
             }
         }
         
-        // ADDED: Statically insert solid traps that do not move (like fractional platforms)
         level.traps.forEach(trap => {
-            // Static platforms are identified by not having an update method, or a specific flag
             const isStatic = !trap.update.toString().includes('// DYNAMIC');
             if (trap.solid && isStatic) {
                 const gridObject = { ...(trap.hitbox), instance: trap, type: 'trap', isOneWay: trap.oneway || false, surfaceType: trap.surfaceType };
                 this.spatialGrid.insert(gridObject);
             }
         });
+    }
+
+    _areSetsEqual(setA, setB) {
+        if (setA.size !== setB.size) return false;
+        for (const item of setA) {
+            if (!setB.has(item)) return false;
+        }
+        return true;
     }
 
     _updateDynamicObjectsInGrid(entityManager, level) {
@@ -65,7 +71,6 @@ export class CollisionSystem {
             const newCells = this.spatialGrid.getGridIndices(entityRect);
             const oldCells = dynCol._spatialGridCells;
 
-            // CORRECTED: Always update if there are old cells to remove from, ensuring position is fresh.
             if (oldCells.size > 0) {
                 this.spatialGrid.removeObjectFromCells(entityId, oldCells);
             }
@@ -80,18 +85,32 @@ export class CollisionSystem {
         // Update dynamic traps (like falling platforms)
         level.traps.forEach(trap => {
             const isStatic = !trap.update.toString().includes('// DYNAMIC');
-            if (trap.solid && !isStatic) {
-                const hitbox = trap.hitbox;
-                const newCells = this.spatialGrid.getGridIndices(hitbox);
+            if (!isStatic) { // Only process dynamic traps
                 const oldCells = this.trapGridCells.get(trap.id);
 
-                const gridObject = { ...(hitbox), instance: trap, isOneWay: trap.oneway || false, surfaceType: trap.surfaceType || trap.type, onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null, type: 'trap' };
+                if (trap.solid) {
+                    // Trap is solid, so update its position in the grid
+                    const hitbox = trap.hitbox;
+                    const newCells = this.spatialGrid.getGridIndices(hitbox);
 
-                if (oldCells) {
-                    this.spatialGrid.removeObjectFromCells(trap.id, oldCells);
+                    if (oldCells && this._areSetsEqual(oldCells, newCells)) {
+                        return; // No change in cells, do nothing
+                    }
+
+                    const gridObject = { ...(hitbox), instance: trap, id: trap.id, isOneWay: trap.oneway || false, surfaceType: trap.surfaceType || trap.type, onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null, type: 'trap' };
+
+                    if (oldCells) {
+                        this.spatialGrid.removeObjectFromCells(trap.id, oldCells);
+                    }
+                    this.spatialGrid.insertObjectIntoCells(gridObject, newCells);
+                    this.trapGridCells.set(trap.id, newCells);
+                } else {
+                    // Trap is NOT solid. If it was previously tracked, remove it.
+                    if (oldCells) {
+                        this.spatialGrid.removeObjectFromCells(trap.id, oldCells);
+                        this.trapGridCells.delete(trap.id); // Stop tracking it
+                    }
                 }
-                this.spatialGrid.insertObjectIntoCells(gridObject, newCells);
-                this.trapGridCells.set(trap.id, newCells);
             }
         });
     }
@@ -111,7 +130,6 @@ export class CollisionSystem {
             const col = entityManager.getComponent(entityId, CollisionComponent);
             const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
             
-            // ADDED: Reset ground entity tracking at the start of the frame
             col.groundEntity = null;
 
             if (playerCtrl && (playerCtrl.isSpawning || playerCtrl.isDespawning || playerCtrl.needsRespawn)) {
@@ -293,7 +311,6 @@ export class CollisionSystem {
         vel.vy = 0;
         col.isGrounded = true;
         col.groundType = surfaceType;
-        // ADDED: Store the instance of the ground object for sticky platforms
         col.groundEntity = groundInstance;
     }
 
