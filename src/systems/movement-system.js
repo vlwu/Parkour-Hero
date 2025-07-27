@@ -6,6 +6,7 @@ import { PlayerControlledComponent } from '../components/PlayerControlledCompone
 import { InputComponent } from '../components/InputComponent.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
+import { RenderableComponent } from '../components/RenderableComponent.js';
 
 export class MovementSystem {
     constructor() {}
@@ -29,7 +30,7 @@ export class MovementSystem {
 
             this._applyHorizontalMovement(dt, input, vel, col, ctrl);
             this._applyVerticalMovement(dt, vel, col, ctrl, state);
-            this._updateSurfaceEffects(dt, pos, vel, col, ctrl);
+            this._updateSurfaceEffects(dt, pos, vel, col, ctrl, entityId, entityManager);
         }
     }
 
@@ -91,7 +92,7 @@ export class MovementSystem {
         vel.vy = Math.min(vel.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
     }
 
-    _updateSurfaceEffects(dt, pos, vel, col, ctrl) {
+    _updateSurfaceEffects(dt, pos, vel, col, ctrl, entityId, entityManager) {
         const onGroundAndMoving = col.isGrounded && Math.abs(vel.vx) > 1 && !ctrl.isDashing && !ctrl.isHit;
         if (onGroundAndMoving) {
             ctrl.surfaceParticleTimer += dt;
@@ -113,7 +114,13 @@ export class MovementSystem {
                 }
 
                 if (particleType) {
-                    eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: particleType });
+                    const renderable = entityManager.getComponent(entityId, RenderableComponent);
+                    eventBus.publish('createParticles', { 
+                        x: pos.x + col.width / 2, 
+                        y: pos.y + col.height, 
+                        type: particleType,
+                        direction: renderable ? renderable.direction : 'right'
+                    });
                 }
             }
         }

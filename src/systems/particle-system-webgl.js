@@ -80,29 +80,29 @@ export class ParticleSystemWebGL {
         gl.bindVertexArray(this.vao);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
-        gl.enableVertexAttribArray(0); // a_quad_vertex
+        gl.enableVertexAttribArray(0);
         gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordBuffer);
-        gl.enableVertexAttribArray(1); // a_tex_coord
+        gl.enableVertexAttribArray(1);
         gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
         const instanceStride = 8 * 4;
 
-        gl.enableVertexAttribArray(2); // a_particle_position
+        gl.enableVertexAttribArray(2);
         gl.vertexAttribPointer(2, 2, gl.FLOAT, false, instanceStride, 0);
         gl.vertexAttribDivisor(2, 1);
 
-        gl.enableVertexAttribArray(3); // a_particle_size
+        gl.enableVertexAttribArray(3);
         gl.vertexAttribPointer(3, 1, gl.FLOAT, false, instanceStride, 8);
         gl.vertexAttribDivisor(3, 1);
 
-        gl.enableVertexAttribArray(4); // a_particle_alpha
+        gl.enableVertexAttribArray(4);
         gl.vertexAttribPointer(4, 1, gl.FLOAT, false, instanceStride, 12);
         gl.vertexAttribDivisor(4, 1);
 
-        gl.enableVertexAttribArray(5); // a_tex_info
+        gl.enableVertexAttribArray(5);
         gl.vertexAttribPointer(5, 4, gl.FLOAT, false, instanceStride, 16);
         gl.vertexAttribDivisor(5, 1);
 
@@ -136,7 +136,7 @@ export class ParticleSystemWebGL {
             double_jump: { count: 7, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
             sand: { count: 2, baseSpeed: 20, spriteKey: 'sand_particle', life: 0.5, gravity: 120 },
             mud: { count: 2, baseSpeed: 15, spriteKey: 'mud_particle', life: 0.6, gravity: 100 },
-            ice: { count: 2, baseSpeed: 25, spriteKey: 'ice_particle', life: 0.4, gravity: 20 },
+            ice: { count: 3, baseSpeed: 80, spriteKey: 'ice_particle', life: 0.6, gravity: 250 },
             walk_dust: { count: 1, baseSpeed: 15, spriteKey: 'dust_particle', life: 0.4, gravity: 80 },
             jump_trail: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.3, gravity: 20 },
             fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
@@ -158,7 +158,11 @@ export class ParticleSystemWebGL {
             const currentBaseSpeed = particleSpeed || config.baseSpeed;
             let speed = currentBaseSpeed * (0.8 + Math.random() * 0.4);
 
-            if (type === 'enemy_death') angle = Math.random() * Math.PI * 2;
+            if (type === 'ice') {
+                const baseAngle = direction === 'right' ? -(3 * Math.PI / 4) : -(Math.PI / 4);
+                angle = baseAngle + (Math.random() - 0.5) * (Math.PI / 5);
+            }
+            else if (type === 'enemy_death') angle = Math.random() * Math.PI * 2;
             else if (type === 'dash') angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
             else if (type === 'double_jump') angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             else if (type === 'jump_trail') { angle = (Math.random() * Math.PI * 2); speed *= (Math.random() * 0.5); }
@@ -242,7 +246,7 @@ export class ParticleSystemWebGL {
             particlesByTexture[p.spriteKey].push(p);
         }
 
-        const stride = 8; // 8 floats per instance
+        const stride = 8;
 
         for (const spriteKey in particlesByTexture) {
             const particles = particlesByTexture[spriteKey];
@@ -259,10 +263,10 @@ export class ParticleSystemWebGL {
                 instanceData[offset + 3] = p.alpha;
 
                 if (p.animation) {
-                    instanceData[offset + 4] = p.animation.currentFrame / p.animation.frameCount; // texOffX
-                    instanceData[offset + 5] = 0; // texOffY
-                    instanceData[offset + 6] = 1 / p.animation.frameCount; // texScaleX
-                    instanceData[offset + 7] = 1; // texScaleY
+                    instanceData[offset + 4] = p.animation.currentFrame / p.animation.frameCount;
+                    instanceData[offset + 5] = 0;
+                    instanceData[offset + 6] = 1 / p.animation.frameCount;
+                    instanceData[offset + 7] = 1;
                 } else {
                     instanceData[offset + 4] = 0;
                     instanceData[offset + 5] = 0;
@@ -274,7 +278,7 @@ export class ParticleSystemWebGL {
             gl.bindTexture(gl.TEXTURE_2D, this.textures[spriteKey]);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceData);
-            
+
             gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
         }
 
