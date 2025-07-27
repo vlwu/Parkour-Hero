@@ -4,23 +4,34 @@ export class EffectsSystem {
     constructor(assets) {
         this.assets = assets;
         this.activeEffects = [];
+        this.effectsPool = [];
         eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
     }
 
     _onFruitCollected(fruit) {
-        this.activeEffects.push({
-            type: 'fruit_collected',
-            x: fruit.x,
-            y: fruit.y,
-            size: fruit.size,
-            frame: 0,
-            frameCount: 6,
-            frameSpeed: 0.1,
-            frameTimer: 0
-        });
+        let effect;
+        if (this.effectsPool.length > 0) {
+            effect = this.effectsPool.pop();
+        } else {
+            effect = {};
+        }
+
+        effect.type = 'fruit_collected';
+        effect.x = fruit.x;
+        effect.y = fruit.y;
+        effect.size = fruit.size;
+        effect.frame = 0;
+        effect.frameCount = 6;
+        effect.frameSpeed = 0.1;
+        effect.frameTimer = 0;
+
+        this.activeEffects.push(effect);
     }
 
     reset() {
+        for (const effect of this.activeEffects) {
+            this.effectsPool.push(effect);
+        }
         this.activeEffects = [];
     }
 
@@ -33,6 +44,7 @@ export class EffectsSystem {
                 effect.frame++;
                 if (effect.frame >= effect.frameCount) {
                     this.activeEffects.splice(i, 1);
+                    this.effectsPool.push(effect);
                 }
             }
         }

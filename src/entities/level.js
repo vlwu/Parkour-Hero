@@ -104,6 +104,7 @@ export class Level {
     this.traps = [];
     this.trophy = null;
     this.initialEnemyConfigs = levelConfig.enemies || [];
+    this.slimePuddlePool = [];
     eventBus.subscribe('createSlimePuddle', (pos) => this.addSlimePuddle(pos));
 
     (levelConfig.objects || []).forEach(obj => {
@@ -154,7 +155,13 @@ export class Level {
   }
 
   addSlimePuddle(position) {
-    const puddleTrap = new Traps.SlimePuddle(position.x, position.y, {});
+    let puddleTrap;
+    if (this.slimePuddlePool.length > 0) {
+        puddleTrap = this.slimePuddlePool.pop();
+        puddleTrap.reset(position.x, position.y);
+    } else {
+        puddleTrap = new Traps.SlimePuddle(position.x, position.y, {});
+    }
     this.traps.push(puddleTrap);
 
     const gridObject = { ...(puddleTrap.hitbox), instance: puddleTrap, type: 'trap' };
@@ -241,16 +248,20 @@ export class Level {
           trap.update(dt, playerData, eventBus, this);
       }
 
-      const expiredTraps = this.traps.filter(trap => trap.isExpired);
-      if (expiredTraps.length > 0) {
-          for (const trap of expiredTraps) {
+      const remainingTraps = [];
+      for (const trap of this.traps) {
+          if (trap.isExpired) {
               if (trap.gridObject) {
-                  const cellIndices = this.spatialGrid.getGridIndices(trap.gridObject);
-                  this.spatialGrid.removeObjectFromCells(trap.id, cellIndices);
+                  this.spatialGrid.removeObjectFromCells(trap.id, this.spatialGrid.getGridIndices(trap.gridObject));
               }
+              if (trap.type === 'slime_puddle') {
+                  this.slimePuddlePool.push(trap);
+              }
+          } else {
+              remainingTraps.push(trap);
           }
-          this.traps = this.traps.filter(trap => !trap.isExpired);
       }
+      this.traps = remainingTraps;
 
       const visibleObjects = this.spatialGrid.query(camera.getViewportBounds());
       for (const obj of visibleObjects) {
@@ -381,13 +392,21 @@ export class Level {
     });
 
     this.traps.forEach(trap => {
-        trap.reset(eventBus);
+        if (trap.type === 'slime_puddle') {
+            if (trap.gridObject) {
+                this.spatialGrid.removeObjectFromCells(trap.id, this.spatialGrid.getGridIndices(trap.gridObject));
+            }
+            this.slimePuddlePool.push(trap);
+        } else {
+            trap.reset(eventBus);
+        }
     });
+    this.traps = this.traps.filter(trap => trap.type !== 'slime_puddle');
 
     if (this.trophy) {
       this.trophy.acquired = false;
       this.trophy.inactive = true;
-      this.trophy.isAnimating = false;
+      this.isAnimating = false;
       this.trophy.animationFrame = 0;
       this.trophy.animationTimer = 0;
     }
