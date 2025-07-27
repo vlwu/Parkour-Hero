@@ -97,9 +97,9 @@ export class Engine {
         eventBus.subscribe(eventName, boundCallback);
     };
 
-    subscribeAndTrack('requestStartGame', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
-    subscribeAndTrack('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.loadLevel(sectionIndex, levelIndex));
-    subscribeAndTrack('requestLevelRestart', () => this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
+    subscribeAndTrack('requestStartGame', async () => await this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
+    subscribeAndTrack('requestLevelLoad', async ({ sectionIndex, levelIndex }) => await this.loadLevel(sectionIndex, levelIndex));
+    subscribeAndTrack('requestLevelRestart', async () => await this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
     subscribeAndTrack('keybindsUpdated', this.updateKeybinds);
     subscribeAndTrack('fruitCollected', this._onFruitCollected);
     subscribeAndTrack('playerTookDamage', this._onPlayerTookDamage);
@@ -175,8 +175,8 @@ export class Engine {
       this.gameFlowSystem.reset(this.isRunning);
   }
 
-  loadLevel(sectionIndex, levelIndex) {
-    const levelData = this.levelManager.getLevelData(sectionIndex, levelIndex);
+  async loadLevel(sectionIndex, levelIndex) {
+    const levelData = await this.levelManager.getLevelData(sectionIndex, levelIndex);
     if (!levelData) { this.stop(); return; }
 
     this._resetForNewLevel();

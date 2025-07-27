@@ -12,16 +12,37 @@ export class LevelManager {
     eventBus.subscribe('gameStateUpdated', (newGameState) => this.gameState = newGameState);
   }
 
-  getLevelData(sectionIndex, levelIndex) {
+  async getLevelData(sectionIndex, levelIndex) {
     if (sectionIndex >= this.levelSections.length || levelIndex >= this.levelSections[sectionIndex].levels.length) {
       console.error(`Invalid level index: Section ${sectionIndex}, Level ${levelIndex}`);
       return null;
     }
-    return this.levelSections[sectionIndex].levels[levelIndex];
+
+    let levelEntry = this.levelSections[sectionIndex].levels[levelIndex];
+
+    // Check if the level data is just a path (not yet loaded)
+    if (levelEntry && typeof levelEntry.jsonPath === 'string') {
+        try {
+            const response = await fetch(levelEntry.jsonPath);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch level: ${levelEntry.jsonPath}, status: ${response.status}`);
+            }
+            const levelData = await response.json();
+            // Cache the loaded data by replacing the path object
+            this.levelSections[sectionIndex].levels[levelIndex] = levelData;
+            return levelData;
+        } catch (error) {
+            console.error(`Error loading level JSON from ${levelEntry.jsonPath}:`, error);
+            return null; // Or handle the error appropriately
+        }
+    }
+
+    // If it's not a path, the data is already loaded and cached
+    return levelEntry;
   }
 
-  loadLevel(sectionIndex, levelIndex) {
-    const levelData = this.getLevelData(sectionIndex, levelIndex);
+  async loadLevel(sectionIndex, levelIndex) {
+    const levelData = await this.getLevelData(sectionIndex, levelIndex);
     if (!levelData) {
       console.error(`Failed to load level data for Section ${sectionIndex}, Level ${levelIndex}.`);
       return null;
