@@ -114,6 +114,8 @@ export class FlyingSlamAI extends BaseAI {
         if (!playerPos || !playerCol) return false;
 
         const MAX_DETECTION_DISTANCE = 500;
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+
         const zone = {
             x: this.pos.x,
             y: this.pos.y + this.col.height,
@@ -128,11 +130,16 @@ export class FlyingSlamAI extends BaseAI {
         }
 
         let detectionBottomY = zone.y + zone.height;
-        const potentialColliders = this.level.spatialGrid.query(zone);
-        const groundColliders = potentialColliders.filter(c => c.type === 'tile' && !c.isOneWay);
+        const startGridY = Math.floor(zone.y / TILE_SIZE);
+        const endGridY = Math.floor(detectionBottomY / TILE_SIZE);
+        const checkGridX = Math.floor((zone.x + zone.width / 2) / TILE_SIZE);
 
-        if (groundColliders.length > 0) {
-            detectionBottomY = Math.min(...groundColliders.map(c => c.y));
+        for (let y = startGridY; y <= endGridY; y++) {
+            const tile = this.level.getTileAt(checkGridX * TILE_SIZE, y * TILE_SIZE);
+            if (tile && tile.solid && !tile.oneWay) {
+                detectionBottomY = y * TILE_SIZE;
+                break;
+            }
         }
 
         const actualZone = {

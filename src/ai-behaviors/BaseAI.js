@@ -6,7 +6,17 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { KillableComponent } from '../components/KillableComponent.js';
 
+/**
+ * Base class for all enemy AI behaviors.
+ * Defines the common interface for the EnemySystem to use.
+ */
 export class BaseAI {
+    /**
+     * @param {number} entityId The ID of the enemy entity.
+     * @param {import('../core/entity-manager.js').EntityManager} entityManager The entity manager to access components.
+     * @param {object} level The current level data for collision checks.
+     * @param {number|null} playerEntityId The player's entity ID for targeting.
+     */
     constructor(entityId, entityManager, level, playerEntityId) {
         this.entityId = entityId;
         this.entityManager = entityManager;
@@ -20,10 +30,6 @@ export class BaseAI {
         this.renderable = this.entityManager.getComponent(this.entityId, RenderableComponent);
         this.col = this.entityManager.getComponent(this.entityId, CollisionComponent);
         this.killable = this.entityManager.getComponent(this.entityId, KillableComponent);
-
-        this.patrolEdges = null;
-        this.lastPlatformCheckTime = 0;
-        this.platformCheckInterval = 0.5;
     }
 
     update(dt) {
@@ -58,7 +64,8 @@ export class BaseAI {
             if (!tile || !tile.solid || tile.oneWay) break;
             rightGridX++;
         }
-
+        
+        // Correctly calculate the right edge based on the rightmost tile's collision box
         const rightTile = this.level.tiles[checkY][rightGridX];
         const rightEdge = (rightGridX * TILE_SIZE) + (rightTile.collisionBox ? rightTile.collisionBox.width : TILE_SIZE);
 
