@@ -55,7 +55,7 @@ export class Engine {
     this.hud = new HUD(canvas, fontRenderer);
     this.soundManager = new SoundManager();
     this.soundManager.loadSounds(assets);
-    this.renderer = new Renderer(ctx, gl, canvas, assets); // Pass GL context
+    this.renderer = new Renderer(ctx, gl, canvas, assets);
     this.gameState = new GameState();
     eventBus.publish('gameStateUpdated', this.gameState);
 
@@ -72,6 +72,7 @@ export class Engine {
     this.uiSystem = new UISystem(canvas, assets);
     this.enemySystem = new EnemySystem();
 
+    // FIX: System order is preserved here for initialization
     this.systems = [
         this.inputSystem,
         this.playerStateSystem,
@@ -79,7 +80,7 @@ export class Engine {
         this.collisionSystem,
         this.enemySystem,
         this.gameplaySystem,
-        this.effectsSystem, // Update effects state
+        this.effectsSystem,
         this.particleSystem,
         this.gameFlowSystem,
         this.uiSystem,
@@ -258,17 +259,36 @@ export class Engine {
         dt,
         levelManager: this.levelManager,
     };
+    
+    // Reordered the main update loop for correct dependencies.
+    // 1. Handle user input
+    this.inputSystem.update(dt, context);
+    
+    // 2. Update world state (enemies, dynamic traps) BEFORE player movement
+    this.enemySystem.update(dt, context);
+    this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus, this.camera);
+    
+    // 3. Update player state and movement based on input and world state
+    this.playerStateSystem.update(dt, context);
+    this.movementSystem.update(dt, context);
 
-    for (const system of this.systems) {
-      system.update(dt, context);
-    }
+    // 4. Resolve collisions
+    this.collisionSystem.update(dt, context);
+
+    // 5. Handle gameplay consequences of collisions and state changes
+    this.gameplaySystem.update(dt, context);
+    
+    // 6. Update visual effects and game flow
+    this.effectsSystem.update(dt, context);
+    this.particleSystem.update(dt, context);
+    this.gameFlowSystem.update(dt, context);
+    this.uiSystem.update(dt, context);
+
 
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.timeScale > 0) {
       this._respawnPlayer();
     }
-
-    this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus, this.camera);
 
     const playerHealth = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     eventBus.publish('statsUpdated', {
@@ -400,22 +420,18 @@ export class Engine {
   render(deltaTime, alpha) {
     if (!this.currentLevel) return;
 
-    // --- 2D Canvas Layer (Background and Static Tiles) ---
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.renderer.drawScrollingBackground(this.currentLevel, deltaTime * this.timeScale);
     this.renderer.renderStaticLayer(this.camera, alpha);
 
-    // --- WebGL Layer (Dynamic Objects) ---
     this.gl.clearColor(0, 0, 0, 0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-    // FIX: Set the viewport before any WebGL drawing.
     this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
 
     this.renderer.renderSceneWebGL(this.camera, this.currentLevel, this.entityManager, this.effectsSystem, alpha);
     this.particleSystem.render(this.camera, alpha);
 
-    // --- 2D Canvas Layer (UI) ---
     this.hud.drawGameHUD(this.ctx, FIXED_DT);
     this.uiSystem.render(this.ctx, this.timeScale > 0);
   }

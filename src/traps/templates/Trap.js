@@ -1,9 +1,5 @@
 export class Trap {
 
-
-
-
-
     constructor(x, y, config) {
         this.x = x;
         this.y = y;
@@ -14,19 +10,12 @@ export class Trap {
         this.id = `${this.type}-${Math.random().toString(36).substr(2, 9)}`;
     }
 
-
-
-
-
-
-
-    update(dt, playerPos, eventBus) {
-
+    update(dt, playerPos, eventBus, level) { // Added level for consistency with other traps
     }
 
     onCollision(player, eventBus) {
-
     }
 
-    reset() {}
+    reset(eventBus) { // Added eventBus for consistency
+    }
 }
