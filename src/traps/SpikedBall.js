@@ -40,18 +40,40 @@ export class SpikedBall extends Trap {
     }
 
     getRenderableData(assets, textures) {
+        const results = [];
+        const chainTexture = textures.spiked_ball_chain;
         const ballTexture = textures.spiked_ball;
-        if (!ballTexture) return null;
 
-        const instanceData = [
-            this.ballX - this.width / 2, this.ballY - this.height / 2,
-            this.width, this.height,
-            0, 0,
-            assets.spiked_ball.width, assets.spiked_ball.height,
-            0.0
-        ];
+        if (chainTexture) {
+            const chainSpriteSize = 8;
+            const dx = this.ballX - this.anchorX;
+            const dy = this.ballY - this.anchorY;
+            const totalLength = Math.sqrt(dx * dx + dy * dy);
+            const unitX = dx / totalLength;
+            const unitY = dy / totalLength;
 
-        return { texture: ballTexture, instanceData };
+            for (let i = chainSpriteSize / 2; i < totalLength; i += chainSpriteSize) {
+                const chainX = this.anchorX + i * unitX;
+                const chainY = this.anchorY + i * unitY;
+                const instanceData = [
+                    chainX - chainSpriteSize / 2, chainY - chainSpriteSize / 2,
+                    chainSpriteSize, chainSpriteSize, 0, 0, 8, 8, 0.0
+                ];
+                results.push({ texture: chainTexture, instanceData });
+            }
+        }
+
+        if (ballTexture) {
+            const instanceData = [
+                this.ballX - this.width / 2, this.ballY - this.height / 2,
+                this.width, this.height,
+                0, 0,
+                assets.spiked_ball.width, assets.spiked_ball.height,
+                0.0
+            ];
+            results.push({ texture: ballTexture, instanceData, rotation: this.rotation });
+        }
+        return results;
     }
 
     onCollision(player, eventBus) {
@@ -63,11 +85,9 @@ export class SpikedBall extends Trap {
 
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance === 0) {
-            dx = 1;
-            dy = 0;
+            dx = 1; dy = 0;
         } else {
-            dx /= distance;
-            dy /= distance;
+            dx /= distance; dy /= distance;
         }
 
         const knockbackStrength = TRAP_CONSTANTS.SPIKED_BALL_KNOCKBACK_BASE;

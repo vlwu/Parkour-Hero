@@ -49,6 +49,7 @@ export class EnemySystem {
                     renderable.animationTimer = 0;
                     collision.solid = false;
                     enemy.deathTimer = 0.5;
+                    this.collisionSystem.removeDynamicEntity(enemyId, entityManager); // Remove from grid
                     eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
                 }
             } else if (enemy && !enemy.isDead) {
@@ -63,6 +64,7 @@ export class EnemySystem {
                 renderable.animationTimer = 0;
                 collision.solid = false;
                 enemy.deathTimer = 0.5;
+                this.collisionSystem.removeDynamicEntity(enemyId, entityManager); // Remove from grid
                 eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
             }
         }

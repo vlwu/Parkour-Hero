@@ -20,60 +20,22 @@ export class Fan extends Trap {
         this.particleTimer = 0;
     }
 
-    /**
-     * The hitbox represents the "column of wind". Its size and orientation
-     * are calculated based on the fan's direction and properties.
-     */
     get hitbox() {
-        // The fan's physical body dimensions.
-        const bodyWidth = this.width;  // 24
-        const bodyHeight = this.height; // 8
-
-        // Correctly calculate hitbox for all directions
+        const bodyWidth = this.width;
+        const bodyHeight = this.height;
         switch (this.direction) {
             case 'up':
-                // The wind column starts from the top edge of the fan's body and extends upwards.
-                return {
-                    x: this.x - bodyWidth / 2,
-                    y: this.y - (bodyHeight / 2) - this.windHeight, 
-                    width: bodyWidth,
-                    height: this.windHeight
-                };
+                return { x: this.x - bodyWidth / 2, y: this.y - (bodyHeight / 2) - this.windHeight, width: bodyWidth, height: this.windHeight };
             case 'down':
-                // The wind column starts from the bottom edge of the fan's body and extends downwards.
-                return {
-                    x: this.x - bodyWidth / 2,
-                    y: this.y + bodyHeight / 2,
-                    width: bodyWidth,
-                    height: this.windHeight
-                };
+                return { x: this.x - bodyWidth / 2, y: this.y + bodyHeight / 2, width: bodyWidth, height: this.windHeight };
             case 'left':
-                // The fan is rotated. Its visual width is its bodyHeight, and its visual height is its bodyWidth.
-                // The wind column starts from the left edge of the rotated body and extends leftwards.
-                return {
-                    x: this.x - (bodyHeight / 2) - this.windHeight,
-                    y: this.y - bodyWidth / 2,
-                    width: this.windHeight,
-                    height: bodyWidth 
-                };
+                return { x: this.x - (bodyHeight / 2) - this.windHeight, y: this.y - bodyWidth / 2, width: this.windHeight, height: bodyWidth };
             case 'right':
             default:
-                // The wind column starts from the right edge of the rotated body and extends rightwards.
-                return {
-                    x: this.x + bodyHeight / 2,
-                    y: this.y - bodyWidth / 2,
-                    width: this.windHeight,
-                    height: bodyWidth
-                };
+                return { x: this.x + bodyHeight / 2, y: this.y - bodyWidth / 2, width: this.windHeight, height: bodyWidth };
         }
     }
 
-    /**
-     * Updates the fan's state, animation, particles, and proximity-based sound.
-     * @param {number} dt Delta time.
-     * @param {object} playerData The player's position data.
-     * @param {object} eventBus The global event bus.
-     */
     update(dt, playerData, eventBus) {
         this.timer -= dt;
 
@@ -136,29 +98,33 @@ export class Fan extends Trap {
         const frameCount = this.state === 'on' ? this.onAnimation.frameCount : 1;
         const frameWidth = sprite.width / frameCount;
 
+        let angle = 0;
+        switch (this.direction) {
+            case 'up': angle = 0; break;
+            case 'left': angle = -Math.PI / 2; break;
+            case 'down': angle = Math.PI; break;
+            case 'right': default: angle = Math.PI / 2; break;
+        }
+        
         const instanceData = [
             this.x - this.width / 2, this.y - this.height / 2,
             this.width, this.height,
             frame * frameWidth, 0,
             frameWidth, sprite.height,
-            0.0 // Note: Rotation is not supported by the current shader
+            0.0
         ];
-        return { texture, instanceData };
+        return { texture, instanceData, rotation: angle };
     }
 
-    /**
-     * Handles collision with the player, applying a continuous force or setting velocity.
-     * @param {object} player A simplified object containing player data.
-     */
     onCollision(player) {
         if (this.state !== 'on') return;
 
         const ctrl = player.entityManager.getComponent(player.entityId, PlayerControlledComponent);
         if (!ctrl) return;
-        
+
         const { vel } = player;
         const isVertical = this.direction === 'up' || this.direction === 'down';
-        
+
         if (isVertical) {
             ctrl.vLock = true;
         } else {
@@ -166,24 +132,13 @@ export class Fan extends Trap {
         }
 
         switch (this.direction) {
-            case 'up':
-                vel.vy = -this.pushStrength;
-                break;
-            case 'down':
-                vel.vy = this.pushStrength;
-                break;
-            case 'left':
-                vel.vx = -this.pushStrength;
-                break;
-            case 'right':
-                vel.vx = this.pushStrength;
-                break;
+            case 'up': vel.vy = -this.pushStrength; break;
+            case 'down': vel.vy = this.pushStrength; break;
+            case 'left': vel.vx = -this.pushStrength; break;
+            case 'right': vel.vx = this.pushStrength; break;
         }
     }
 
-    /**
-     * Resets the fan to its initial state for a level restart.
-     */
     reset(eventBus) {
         if (this.isSoundPlaying) {
             eventBus.publish('stopSoundLoop', { key: 'fan_blowing' });

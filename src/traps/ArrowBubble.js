@@ -47,20 +47,29 @@ export class ArrowBubble extends Trap {
 
         const spriteKey = this.state === 'idle' ? 'arrow_idle' : 'arrow_hit';
         const anim = this.state === 'idle' ? this.idleAnimation : this.hitAnimation;
-        
+
         const sprite = assets[spriteKey];
         const texture = textures[spriteKey];
         if (!sprite || !texture) return null;
 
         const frameWidth = sprite.width / anim.frameCount;
+        
+        let angle = 0;
+        switch (this.direction) {
+            case 'up': angle = -Math.PI / 2; break;
+            case 'left': angle = Math.PI; break;
+            case 'down': angle = Math.PI / 2; break;
+            case 'right': default: angle = 0; break;
+        }
+
         const instanceData = [
             this.x - this.width / 2, this.y - this.height / 2,
             this.width, this.height,
             anim.currentFrame * frameWidth, 0,
             frameWidth, sprite.height,
-            0.0 // Note: Rotation is not supported by the current shader
+            0.0
         ];
-        return { texture, instanceData };
+        return { texture, instanceData, rotation: angle };
     }
 
     onCollision(player, eventBus) {

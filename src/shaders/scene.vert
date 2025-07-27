@@ -9,7 +9,8 @@ layout(location = 2) in vec2 a_size;
 layout(location = 3) in vec2 a_tex_coord_origin;
 layout(location = 4) in vec2 a_tex_coord_size;
 layout(location = 5) in float a_is_flipped;
-layout(location = 6) in float a_alpha; // New: Alpha attribute
+layout(location = 6) in float a_alpha;
+layout(location = 7) in float a_rotation; // New: Rotation attribute
 
 // Uniforms (global for all vertices in a draw call)
 uniform mat4 u_projection;
@@ -17,11 +18,22 @@ uniform vec2 u_texture_size;
 
 // Outputs to the fragment shader
 out vec2 v_texCoord;
-out float v_alpha; // New: Pass alpha to fragment shader
+out float v_alpha;
 
 void main() {
+    // Center the quad vertex around the origin for rotation
+    vec2 centered_pos = a_quad_vertex - vec2(0.5);
+
+    // Create a 2D rotation matrix
+    float s = sin(a_rotation);
+    float c = cos(a_rotation);
+    mat2 rot_matrix = mat2(c, -s, s, c);
+
+    // Apply rotation and then shift back
+    vec2 rotated_pos = (rot_matrix * centered_pos) + vec2(0.5);
+
     // Calculate the world position of this specific vertex of the quad
-    vec2 pos = a_world_position + (a_quad_vertex * a_size);
+    vec2 pos = a_world_position + (rotated_pos * a_size);
 
     // Apply the camera's projection matrix to get the final screen position
     gl_Position = u_projection * vec4(pos, 0.0, 1.0);

@@ -12,7 +12,7 @@ import { CharacterComponent } from '../components/CharacterComponent.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 
 const MAX_SPRITES_PER_BATCH = 5000;
-const ATTRIBUTES_PER_INSTANCE = 10; // Changed from 9 to 10 to include alpha
+const ATTRIBUTES_PER_INSTANCE = 11; // Updated to include rotation
 const INSTANCE_STRIDE = ATTRIBUTES_PER_INSTANCE * 4;
 
 const fractionalPlatformTypes = [
@@ -120,8 +120,8 @@ export class Renderer {
     gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 2, gl.FLOAT, false, INSTANCE_STRIDE, 16); gl.vertexAttribDivisor(3, 1);
     gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 2, gl.FLOAT, false, INSTANCE_STRIDE, 24); gl.vertexAttribDivisor(4, 1);
     gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 1, gl.FLOAT, false, INSTANCE_STRIDE, 32); gl.vertexAttribDivisor(5, 1);
-    // Add the new alpha attribute
     gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 1, gl.FLOAT, false, INSTANCE_STRIDE, 36); gl.vertexAttribDivisor(6, 1);
+    gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 1, gl.FLOAT, false, INSTANCE_STRIDE, 40); gl.vertexAttribDivisor(7, 1); // New rotation attribute
 
     gl.bindVertexArray(null);
   }
@@ -167,16 +167,16 @@ export class Renderer {
                     dWidth, finalDHeight,
                     tile.spriteConfig.srcX, tile.spriteConfig.srcY,
                     tile.spriteConfig.width || GRID_CONSTANTS.TILE_SIZE, tile.spriteConfig.height || GRID_CONSTANTS.TILE_SIZE,
-                    0.0, 1.0 // isFlipped, alpha
+                    0.0, 1.0, 0.0
                 );
             } else if (item.trap) {
-                const { trap } = item;
-                staticData.push(
+                 const { trap } = item;
+                 staticData.push(
                     trap.x - trap.width / 2, trap.y - trap.height / 2,
                     trap.width, trap.height,
                     trap.spriteConfig.srcX, trap.spriteConfig.srcY,
                     trap.spriteConfig.width, trap.spriteConfig.height,
-                    0.0, 1.0 // isFlipped, alpha
+                    0.0, 1.0, 0.0
                 );
             }
         });
@@ -189,7 +189,7 @@ export class Renderer {
 
         this.staticBatches.set(spriteKey, {
             vao,
-            instanceCount: items.length,
+            instanceCount: staticData.length / ATTRIBUTES_PER_INSTANCE,
             texture: this.textures[spriteKey]
         });
     }
@@ -248,7 +248,6 @@ export class Renderer {
 
             const pos = entityManager.getComponent(entityId, PositionComponent);
             const prevPos = entityManager.getComponent(entityId, PreviousPositionComponent);
-            
             let renderX = prevPos ? prevPos.x + (pos.x - prevPos.x) * alpha : pos.x;
             let renderY = prevPos ? prevPos.y + (pos.y - prevPos.y) * alpha : pos.y;
             
@@ -270,7 +269,7 @@ export class Renderer {
                 : this._getEnemySpriteData(renderable);
 
             if (spriteData) {
-                const instanceData = [renderX, renderY, renderable.width, renderable.height, spriteData.sx, spriteData.sy, spriteData.sw, spriteData.sh, spriteData.isFlipped, 1.0];
+                const instanceData = [renderX, renderY, renderable.width, renderable.height, spriteData.sx, spriteData.sy, spriteData.sw, spriteData.sh, spriteData.isFlipped, 1.0, 0.0];
                 addToBatch(spriteData.texture, instanceData);
             }
         }
@@ -283,7 +282,7 @@ export class Renderer {
                     const dataArray = Array.isArray(trapRenderData) ? trapRenderData : [trapRenderData];
                     dataArray.forEach(d => {
                         if (d && d.texture && d.instanceData) {
-                            const finalInstanceData = [...d.instanceData, 1.0];
+                             const finalInstanceData = [...d.instanceData, d.alpha !== undefined ? d.alpha : 1.0, d.rotation !== undefined ? d.rotation : 0.0];
                             addToBatch(d.texture, finalInstanceData);
                         }
                     });
@@ -296,21 +295,21 @@ export class Renderer {
                 const sprite = this.assets[f.spriteKey];
                 const tex = this.textures[f.spriteKey];
                 const frameWidth = sprite.width / f.frameCount;
-                const instanceData = [f.x - f.size / 2, f.y - f.size / 2, f.size, f.size, f.frame * frameWidth, 0, frameWidth, sprite.height, 0.0, 1.0];
+                const instanceData = [f.x - f.size / 2, f.y - f.size / 2, f.size, f.size, f.frame * frameWidth, 0, frameWidth, sprite.height, 0.0, 1.0, 0.0];
                 addToBatch(tex, instanceData);
             }
         });
 
         level.checkpoints.forEach(cp => {
             const {sprite, tex, srcX, frameWidth} = this._getCheckpointSpriteData(cp);
-            const instanceData = [cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size, srcX, 0, frameWidth, sprite.height, 0.0, 1.0];
+            const instanceData = [cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size, srcX, 0, frameWidth, sprite.height, 0.0, 1.0, 0.0];
             addToBatch(tex, instanceData);
         });
 
         if (level.trophy) {
             const alpha = level.trophy.inactive ? 0.5 : 1.0;
             const {sprite, tex, srcX, frameWidth} = this._getTrophySpriteData(level.trophy);
-            const instanceData = [level.trophy.x - level.trophy.size / 2, level.trophy.y - level.trophy.size / 2, level.trophy.size, level.trophy.size, srcX, 0, frameWidth, sprite.height, 0.0, alpha];
+            const instanceData = [level.trophy.x - level.trophy.size / 2, level.trophy.y - level.trophy.size / 2, level.trophy.size, level.trophy.size, srcX, 0, frameWidth, sprite.height, 0.0, alpha, 0.0];
             addToBatch(tex, instanceData);
         }
 
