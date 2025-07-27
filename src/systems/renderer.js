@@ -140,11 +140,22 @@ export class Renderer {
         }
     }
 
+    const normalDraws = [];
+    const flippedDraws = [];
     const entities = entityManager.query([PositionComponent, RenderableComponent]);
-    for(const entityId of entities) {
+
+    for (const entityId of entities) {
+        const renderable = entityManager.getComponent(entityId, RenderableComponent);
+        if (!renderable.isVisible) continue;
+
+        const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
+        if (isPlayer && this.previewMode) continue;
+        
+        const playerCtrl = isPlayer ? entityManager.getComponent(entityId, PlayerControlledComponent) : null;
+        if (playerCtrl && playerCtrl.despawnAnimationFinished) continue;
+
         const pos = entityManager.getComponent(entityId, PositionComponent);
         const prevPos = entityManager.getComponent(entityId, PreviousPositionComponent);
-        const renderable = entityManager.getComponent(entityId, RenderableComponent);
 
         let renderX = pos.x;
         let renderY = pos.y;
@@ -154,28 +165,41 @@ export class Renderer {
         }
         const interpolatedPos = { x: renderX, y: renderY };
 
-        const isPlayer = entityManager.hasComponent(entityId, PlayerControlledComponent);
+        const drawCall = isPlayer
+            ? this._getPlayerDrawCall(interpolatedPos, renderable, entityManager.getComponent(entityId, CharacterComponent), playerCtrl)
+            : this._getEnemyDrawCall(interpolatedPos, renderable);
 
-        if (isPlayer && this.previewMode) {
-            continue;
-        }
-
-        if (isPlayer) {
-            const charComp = entityManager.getComponent(entityId, CharacterComponent);
-            const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-            this._drawPlayer(interpolatedPos, renderable, charComp, playerCtrl);
-        } else if (entityManager.hasComponent(entityId, EnemyComponent)) {
-            this._drawEnemy(interpolatedPos, renderable);
+        if (drawCall) {
+            if (drawCall.isFlipped) {
+                flippedDraws.push(drawCall);
+            } else {
+                normalDraws.push(drawCall);
+            }
         }
     }
+
+    // Render non-flipped entities
+    for (const call of normalDraws) {
+        this.ctx.drawImage(call.sprite, call.sx, call.sy, call.sw, call.sh, call.dx, call.dy, call.dw, call.dh);
+    }
+
+    // Render all flipped entities in a single transformed block
+    if (flippedDraws.length > 0) {
+        this.ctx.save();
+        this.ctx.scale(-1, 1);
+        for (const call of flippedDraws) {
+            this.ctx.drawImage(call.sprite, call.sx, call.sy, call.sw, call.sh, -call.dx - call.dw, call.dy, call.dw, call.dh);
+        }
+        this.ctx.restore();
+    }
+
 
     this.ctx.restore();
   }
 
-  _drawPlayer(pos, renderable, charComp, playerCtrl) {
+  _getPlayerDrawCall(pos, renderable, charComp, playerCtrl) {
     const stateName = renderable.animationState;
-    if (!renderable.isVisible || (playerCtrl && playerCtrl.despawnAnimationFinished)) return;
-
+    
     const stateToSpriteMap = {
       idle: 'playerIdle', run: 'playerRun', jump: 'playerJump',
       double_jump: 'playerDoubleJump', fall: 'playerFall',
@@ -183,81 +207,48 @@ export class Renderer {
       despawn: 'playerDisappear', hit: 'playerHit',
     };
 
-    let sprite;
     const spriteAssetKey = stateToSpriteMap[stateName];
+    let sprite = (stateName === 'spawn' || stateName === 'despawn')
+      ? this.assets[spriteAssetKey]
+      : this.assets.characters[charComp.characterId]?.[spriteAssetKey];
 
-    if (stateName === 'spawn' || stateName === 'despawn') {
-        sprite = this.assets[spriteAssetKey];
-    }
-    else if (charComp) {
-        sprite = this.assets.characters[charComp.characterId]?.[spriteAssetKey] || this.assets.playerIdle;
-    }
-    else {
-        sprite = this.assets[renderable.spriteKey];
-    }
-
-    if (!sprite) { this.ctx.fillStyle = '#FF00FF'; this.ctx.fillRect(pos.x, pos.y, renderable.width, renderable.height); return; }
+    if (!sprite) return null;
 
     const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
     const frameWidth = sprite.width / frameCount;
     const srcX = frameWidth * renderable.animationFrame;
-
-    this.ctx.save();
-
+    
     const isSpecialAnim = stateName === 'spawn' || stateName === 'despawn';
     const renderX = isSpecialAnim ? pos.x - (renderable.width - PLAYER_CONSTANTS.WIDTH) / 2 : pos.x;
     const renderY = isSpecialAnim ? pos.y - (renderable.height - PLAYER_CONSTANTS.HEIGHT) / 2 : pos.y;
-
-    if (renderable.direction === 'left') {
-      this.ctx.scale(-1, 1);
-      this.ctx.translate(-renderX - renderable.width, renderY);
-    } else {
-      this.ctx.translate(renderX, renderY);
-    }
-
+    
     const drawOffsetX = (stateName === 'cling') ? PLAYER_CONSTANTS.CLING_OFFSET : 0;
 
-    this.ctx.drawImage(
-      sprite, srcX, 0, frameWidth, sprite.height,
-      drawOffsetX, 0,
-      renderable.width, renderable.height
-    );
-    this.ctx.restore();
+    return {
+        sprite: sprite,
+        sx: srcX, sy: 0, sw: frameWidth, sh: sprite.height,
+        dx: renderX + drawOffsetX, dy: renderY, dw: renderable.width, dh: renderable.height,
+        isFlipped: renderable.direction === 'left'
+    };
   }
-
-  _drawEnemy(pos, renderable) {
-    if (!renderable.isVisible) return;
-
+  
+  _getEnemyDrawCall(pos, renderable) {
     const assetKey = `${renderable.spriteKey}_${renderable.animationState}`;
     const sprite = this.assets[assetKey];
-
     const enemyDef = ENEMY_DEFINITIONS[renderable.spriteKey];
-    if (!enemyDef) return;
 
-    if (!sprite) {
-        console.warn(`Missing enemy sprite for asset key: "${assetKey}"`);
-        this.ctx.fillStyle = '#FF00FF';
-        this.ctx.fillRect(pos.x, pos.y, renderable.width, renderable.height);
-        return;
-    }
+    if (!sprite || !enemyDef) return null;
 
     const frameCount = enemyDef.animations[renderable.animationState]?.frameCount || 1;
     const frameWidth = sprite.width / frameCount;
     const srcX = (renderable.animationFrame % frameCount) * frameWidth;
 
-
-    const shouldFlip = (renderable.direction === 'right');
-
-    this.ctx.save();
-    if (shouldFlip) {
-        this.ctx.scale(-1, 1);
-        this.ctx.translate(-pos.x - renderable.width, pos.y);
-    } else {
-        this.ctx.translate(pos.x, pos.y);
-    }
-
-    this.ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, 0, 0, renderable.width, renderable.height);
-    this.ctx.restore();
+    return {
+        sprite: sprite,
+        sx: srcX, sy: 0, sw: frameWidth, sh: sprite.height,
+        dx: pos.x, dy: pos.y, dw: renderable.width, dh: renderable.height,
+        isFlipped: renderable.direction === 'right'
+    };
   }
 
   drawTrophy(trophy, camera) {
