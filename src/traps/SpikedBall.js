@@ -4,7 +4,7 @@ import { TRAP_CONSTANTS } from '../utils/constants.js';
 export class SpikedBall extends Trap {
     constructor(x, y, config) {
         super(x, y, { ...config, width: 28, height: 28 });
-
+        // DYNAMIC: This trap moves and must be updated and drawn dynamically.
         this.chainLength = config.chainLength || 100;
         this.swingArc = config.swingArc || 90;
         this.period = config.period || 4;
@@ -29,6 +29,7 @@ export class SpikedBall extends Trap {
     }
 
     update(dt) {
+        // DYNAMIC
         this.swingTimer += dt;
         const currentAngle = this.maxAngle * Math.sin((this.swingTimer / this.period) * 2 * Math.PI);
         const angularVelocity = this.maxAngle * Math.cos((this.swingTimer / this.period) * 2 * Math.PI);
@@ -41,18 +42,15 @@ export class SpikedBall extends Trap {
     getRenderableData(assets, textures) {
         const ballTexture = textures.spiked_ball;
         if (!ballTexture) return null;
-        
-        // Note: WebGL batch rendering makes rotation tricky. For simplicity, we'll omit rotation.
-        // A more advanced shader could handle this.
+
         const instanceData = [
             this.ballX - this.width / 2, this.ballY - this.height / 2,
             this.width, this.height,
-            0, 0, // sx, sy
-            assets.spiked_ball.width, assets.spiked_ball.height, // sw, sh
+            0, 0,
+            assets.spiked_ball.width, assets.spiked_ball.height,
             0.0
         ];
-        
-        // Chain rendering would be complex and is omitted for this step.
+
         return { texture: ballTexture, instanceData };
     }
 

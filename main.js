@@ -87,6 +87,7 @@ loadAssets().then((assets) => {
 
   try {
     const fontRenderer = new FontRenderer(assets.font_spritesheet);
+    // Corrected the order of arguments to match the Engine constructor
     engine = new Engine(gl, uiCanvas, ctx, assets, keybinds, fontRenderer);
 
     eventBus.publish('assetsLoaded', assets);

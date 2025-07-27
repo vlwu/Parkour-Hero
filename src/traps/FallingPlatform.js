@@ -3,7 +3,7 @@ import { Trap } from './templates/Trap.js';
 export class FallingPlatform extends Trap {
     constructor(x, y, config) {
         super(x, y, { ...config, width: 32, height: 10 });
-
+        // DYNAMIC: This trap moves and must be updated and drawn dynamically.
         this.solid = true;
         this.initialX = x;
         this.initialY = y;
@@ -40,8 +40,8 @@ export class FallingPlatform extends Trap {
     get hitbox() { return { x: this.x - this.width / 2, y: this.y - this.height / 2, width: this.width, height: this.height }; }
     getMovementDelta() { return { dx: 0, dy: this.y - this.prevY }; }
 
-    update(dt, playerData, eventBus) { // DYNAMIC
-        // Store current Y before any changes
+    update(dt, playerData, eventBus) {
+        // DYNAMIC
         this.prevY = this.y;
 
         if (this.state === 'idle' || this.state === 'active') {
@@ -59,7 +59,7 @@ export class FallingPlatform extends Trap {
                 break;
 
             case 'active':
-                // The platform no longer bobs once active
+
                 this.playerOnTimer -= dt;
                 if (this.playerOnTimer <= 0) {
                     this.state = 'shaking';
@@ -112,7 +112,7 @@ export class FallingPlatform extends Trap {
     }
 
     getRenderableData(assets, textures) {
-        if (this.state === 'respawning' || this.opacity <= 0) return null;
+        if (this.state === 'respawning') return null;
 
         const isPlatformActive = this.state === 'idle' || this.state === 'active';
         const spriteKey = isPlatformActive ? 'falling_platform_on' : 'falling_platform_off';
@@ -132,7 +132,7 @@ export class FallingPlatform extends Trap {
             frameWidth, sprite.height,
             0.0
         ];
-        return { texture, instanceData };
+        return { texture, instanceData, alpha: this.opacity };
     }
 
     onLanded() {
