@@ -1,26 +1,26 @@
 import { Trap } from './templates/Trap.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 
-
-
-
+/**
+ * A Fan trap that periodically turns on, pushing the player.
+ */
 export class Fan extends Trap {
-
-
-
-
-
+    /**
+     * @param {number} x The initial x-position in the game world.
+     * @param {number} y The initial y-position in the game world.
+     * @param {object} config The configuration object from the level data.
+     */
     constructor(x, y, config) {
         super(x, y, config);
         this.width = 24;
         this.height = 8;
         this.type = 'fan';
-
+        
         this.direction = config.direction || 'right';
-        this.pushStrength = config.pushStrength || 250;
+        this.pushStrength = config.pushStrength || 250; 
         this.windHeight = config.windHeight || 120;
         this.soundRadius = config.soundRadius || 250;
-
+        
         this.state = 'off';
         this.onDuration = 5;
         this.offDuration = 5;
@@ -33,31 +33,31 @@ export class Fan extends Trap {
             frameTimer: 0,
             currentFrame: 0,
         };
-
+        
         this.particleTimer = 0;
     }
 
-
-
-
-
+    /**
+     * The hitbox represents the "column of wind". Its size and orientation
+     * are calculated based on the fan's direction and properties.
+     */
     get hitbox() {
+        // The fan's physical body dimensions.
+        const bodyWidth = this.width;  // 24
+        const bodyHeight = this.height; // 8
 
-        const bodyWidth = this.width;
-        const bodyHeight = this.height;
-
-
+        // Correctly calculate hitbox for all directions
         switch (this.direction) {
             case 'up':
-
+                // The wind column starts from the top edge of the fan's body and extends upwards.
                 return {
                     x: this.x - bodyWidth / 2,
-                    y: this.y - (bodyHeight / 2) - this.windHeight,
+                    y: this.y - (bodyHeight / 2) - this.windHeight, 
                     width: bodyWidth,
                     height: this.windHeight
                 };
             case 'down':
-
+                // The wind column starts from the bottom edge of the fan's body and extends downwards.
                 return {
                     x: this.x - bodyWidth / 2,
                     y: this.y + bodyHeight / 2,
@@ -65,17 +65,17 @@ export class Fan extends Trap {
                     height: this.windHeight
                 };
             case 'left':
-
-
+                // The fan is rotated. Its visual width is its bodyHeight, and its visual height is its bodyWidth.
+                // The wind column starts from the left edge of the rotated body and extends leftwards.
                 return {
                     x: this.x - (bodyHeight / 2) - this.windHeight,
                     y: this.y - bodyWidth / 2,
                     width: this.windHeight,
-                    height: bodyWidth
+                    height: bodyWidth 
                 };
             case 'right':
             default:
-
+                // The wind column starts from the right edge of the rotated body and extends rightwards.
                 return {
                     x: this.x + bodyHeight / 2,
                     y: this.y - bodyWidth / 2,
@@ -85,12 +85,12 @@ export class Fan extends Trap {
         }
     }
 
-
-
-
-
-
-
+    /**
+     * Updates the fan's state, animation, particles, and proximity-based sound.
+     * @param {number} dt Delta time.
+     * @param {object} playerData The player's position data.
+     * @param {object} eventBus The global event bus.
+     */
     update(dt, playerData, eventBus) {
         this.timer -= dt;
 
@@ -143,16 +143,63 @@ export class Fan extends Trap {
         }
     }
 
+    /**
+     * Renders the fan based on its state and direction.
+     * @param {CanvasRenderingContext2D} ctx The rendering context.
+     * @param {object} assets The game's asset manager.
+     * @param {Camera} camera The game camera.
+     */
+    render(ctx, assets, camera) {
+        const sprite = this.state === 'on' ? assets.fan_on : assets.fan_off;
+        if (!sprite || !camera.isVisible(this.x - 32, this.y - 32, 64, 64)) {
+            return;
+        }
+        
+        const frame = this.state === 'on' ? this.onAnimation.currentFrame : 0;
+        const frameCount = this.state === 'on' ? this.onAnimation.frameCount : 1;
+        
+        const renderWidth = 24;
+        const renderHeight = 8;
 
+        const frameWidth = sprite.width / frameCount;
+        const frameHeight = sprite.height;
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        let angle = 0;
+        switch (this.direction) {
+            case 'up': angle = 0; break;
+            case 'left': angle = -Math.PI / 2; break;
+            case 'down': angle = Math.PI; break;
+            case 'right': default: angle = Math.PI / 2; break;
+        }
+        ctx.rotate(angle);
+
+        ctx.drawImage(
+            sprite,
+            frame * frameWidth, 0,
+            frameWidth, frameHeight,
+            -renderWidth / 2, -renderHeight / 2,
+            renderWidth, renderHeight
+        );
+
+        ctx.restore();
+    }
+
+    /**
+     * Handles collision with the player, applying a continuous force or setting velocity.
+     * @param {object} player A simplified object containing player data.
+     */
     onCollision(player) {
         if (this.state !== 'on') return;
 
         const ctrl = player.entityManager.getComponent(player.entityId, PlayerControlledComponent);
         if (!ctrl) return;
-
+        
         const { vel } = player;
         const isVertical = this.direction === 'up' || this.direction === 'down';
-
+        
         if (isVertical) {
             ctrl.vLock = true;
         } else {
@@ -175,9 +222,9 @@ export class Fan extends Trap {
         }
     }
 
-
-
-
+    /**
+     * Resets the fan to its initial state for a level restart.
+     */
     reset(eventBus) {
         if (this.isSoundPlaying) {
             eventBus.publish('stopSoundLoop', { key: 'fan_blowing' });

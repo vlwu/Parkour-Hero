@@ -228,8 +228,7 @@ export class ParticleSystemWebGL {
         const gl = this.gl;
         if (this.activeParticles.length === 0) return;
 
-        // FIX: Removed redundant viewport call.
-        // gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
         gl.useProgram(this.program);
         gl.bindVertexArray(this.vao);

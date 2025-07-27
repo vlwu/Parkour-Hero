@@ -115,6 +115,40 @@ export class FireTrap extends Trap {
         }
     }
 
+    render(ctx, assets, camera) {
+        const baseWidth = 16;
+        const startX = this.x - this.width / 2;
+
+        if (!camera.isVisible(startX, this.y - this.height, this.width, this.height * 2)) return;
+
+        const baseSprite = assets.fire_off;
+
+        if (baseSprite) {
+            for (let i = 0; i < this.chainLength; i++) {
+                ctx.drawImage(baseSprite, 0, 16, 16, 16, startX + i * baseWidth, this.y - this.height / 2, baseWidth, this.height);
+            }
+        }
+
+        if (this.state === 'off') return;
+
+        let sprite, srcX = 0, frameWidth;
+        if (this.state === 'activating') {
+            sprite = assets.fire_hit;
+            frameWidth = sprite.width / this.anim.activating.frames;
+            srcX = this.frame * frameWidth;
+        } else {
+            sprite = assets.fire_on;
+            frameWidth = sprite.width / this.anim.on.frames;
+            srcX = this.frame * frameWidth;
+        }
+
+        if (sprite) {
+            for (let i = 0; i < this.chainLength; i++) {
+                ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, startX + i * baseWidth, this.y - this.height * 1.5, baseWidth, this.height * 2);
+            }
+        }
+    }
+
     onLanded(eventBus) {
         if (this.state === 'off' || this.state === 'turning_off') {
             this.state = 'activating';

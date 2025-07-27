@@ -38,8 +38,21 @@ export class EffectsSystem {
         }
     }
 
-    // New method for the renderer to get active effects
-    getActiveEffects() {
-        return this.activeEffects;
+    render(ctx, camera, alpha) {
+        if (this.activeEffects.length === 0) return;
+
+        camera.apply(ctx, alpha);
+
+        const sprite = this.assets['fruit_collected'];
+        if (sprite) {
+            const frameWidth = sprite.width / 6;
+            for (const effect of this.activeEffects) {
+                if (!camera.isRectVisible({ x: effect.x, y: effect.y, width: effect.size, height: effect.size })) continue;
+                const srcX = effect.frame * frameWidth;
+                ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, effect.x - effect.size / 2, effect.y - effect.size / 2, effect.size, effect.size);
+            }
+        }
+
+        camera.restore(ctx);
     }
 }

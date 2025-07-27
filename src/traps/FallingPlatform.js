@@ -34,8 +34,8 @@ export class FallingPlatform extends Trap {
             currentFrame: 0,
         };
         this.particleTimer = 0;
-
-
+        
+        // ADDED: Track previous position for sticky platform logic
         this.prevY = y;
     }
 
@@ -47,8 +47,8 @@ export class FallingPlatform extends Trap {
             height: this.height,
         };
     }
-
-
+    
+    // ADDED: Method for sticky platform logic
     getMovementDelta() {
         return { dx: 0, dy: this.y - this.prevY };
     }
@@ -65,8 +65,8 @@ export class FallingPlatform extends Trap {
         );
     }
 
-    update(dt, playerData, eventBus) {
-
+    update(dt, playerData, eventBus) { // DYNAMIC
+        // Store current Y before any changes
         this.prevY = this.y;
 
         if (this.state === 'idle' || this.state === 'active') {
@@ -138,6 +138,32 @@ export class FallingPlatform extends Trap {
                 }
                 break;
         }
+    }
+
+    render(ctx, assets, camera) {
+        if (this.state === 'respawning' || this.opacity <= 0) return;
+
+        const drawX = (this.x - this.width / 2) + this.shakeOffsetX;
+        const drawY = (this.y - this.height / 2) + this.shakeOffsetY;
+
+        if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
+
+        const isFanOn = this.state === 'idle' || this.state === 'active';
+        const sprite = isFanOn ? assets.falling_platform_on : assets.falling_platform_off;
+
+        if (!sprite) return;
+
+        ctx.globalAlpha = this.opacity;
+
+        if (isFanOn) {
+            const frameWidth = sprite.width / this.animation.frameCount;
+            const srcX = this.animation.currentFrame * frameWidth;
+            ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, drawX, drawY, this.width, this.height);
+        } else {
+            ctx.drawImage(sprite, drawX, drawY, this.width, this.height);
+        }
+
+        ctx.globalAlpha = 1.0;
     }
 
     onLanded() {
