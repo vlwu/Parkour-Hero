@@ -13,13 +13,14 @@ export class CollisionSystem {
     constructor() {
         this.spatialGrid = null;
         this.currentLevel = null;
-        this.dynamicGridObjects = [];
+        this.trapGridCells = new Map();
     }
 
     _initializeGridForLevel(level) {
         const cellSize = GRID_CONSTANTS.TILE_SIZE * 2;
         this.spatialGrid = new SpatialGrid(level.width, level.height, cellSize);
         this.currentLevel = level;
+        this.trapGridCells.clear();
 
 
         for (let y = 0; y < level.gridHeight; y++) {
@@ -41,61 +42,66 @@ export class CollisionSystem {
                 }
             }
         }
-    }
-
-    _updateGridWithDynamicObjects(entityManager, level) {
-
-        this.spatialGrid.removeObjects(this.dynamicGridObjects);
-        this.dynamicGridObjects = [];
-
-
+        
+        // ADDED: Statically insert solid traps that do not move (like fractional platforms)
         level.traps.forEach(trap => {
-            if (trap.solid) {
-                const hitbox = trap.hitbox || {
-                    x: trap.x - trap.width / 2,
-                    y: trap.y - trap.height / 2,
-                    width: trap.width,
-                    height: trap.height,
-                };
-                const gridObject = {
-                    ...hitbox,
-                    isOneWay: trap.oneway || false,
-                    surfaceType: trap.surfaceType || (trap.type === 'falling_platform' ? 'platform' : trap.type),
-                    onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null,
-                    type: 'trap'
-                };
+            // Static platforms are identified by not having an update method, or a specific flag
+            const isStatic = !trap.update.toString().includes('// DYNAMIC');
+            if (trap.solid && isStatic) {
+                const gridObject = { ...(trap.hitbox), instance: trap, type: 'trap', isOneWay: trap.oneway || false, surfaceType: trap.surfaceType };
                 this.spatialGrid.insert(gridObject);
-                this.dynamicGridObjects.push(gridObject);
             }
         });
+    }
 
-
+    _updateDynamicObjectsInGrid(entityManager, level) {
+        // Update ECS entities (enemies, etc.)
         const dynamicEntities = entityManager.query([PositionComponent, CollisionComponent, DynamicColliderComponent]);
         for (const entityId of dynamicEntities) {
             const pos = entityManager.getComponent(entityId, PositionComponent);
             const col = entityManager.getComponent(entityId, CollisionComponent);
-            const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
+            const dynCol = entityManager.getComponent(entityId, DynamicColliderComponent);
+            const entityRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
+            const newCells = this.spatialGrid.getGridIndices(entityRect);
+            const oldCells = dynCol._spatialGridCells;
 
-            const gridObject = {
-                x: pos.x,
-                y: pos.y,
-                width: col.width,
-                height: col.height,
-                isOneWay: false,
-                surfaceType: isEnemy ? 'enemy' : 'entity',
-                type: 'entity',
-                entityId: entityId
-            };
-            this.spatialGrid.insert(gridObject);
-            this.dynamicGridObjects.push(gridObject);
+            // CORRECTED: Always update if there are old cells to remove from, ensuring position is fresh.
+            if (oldCells.size > 0) {
+                this.spatialGrid.removeObjectFromCells(entityId, oldCells);
+            }
+
+            const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
+            const gridObject = { ...entityRect, isOneWay: false, surfaceType: isEnemy ? 'enemy' : 'entity', type: 'entity', entityId: entityId };
+            
+            this.spatialGrid.insertObjectIntoCells(gridObject, newCells);
+            dynCol._spatialGridCells = newCells;
         }
+
+        // Update dynamic traps (like falling platforms)
+        level.traps.forEach(trap => {
+            const isStatic = !trap.update.toString().includes('// DYNAMIC');
+            if (trap.solid && !isStatic) {
+                const hitbox = trap.hitbox;
+                const newCells = this.spatialGrid.getGridIndices(hitbox);
+                const oldCells = this.trapGridCells.get(trap.id);
+
+                const gridObject = { ...(hitbox), instance: trap, isOneWay: trap.oneway || false, surfaceType: trap.surfaceType || trap.type, onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null, type: 'trap' };
+
+                if (oldCells) {
+                    this.spatialGrid.removeObjectFromCells(trap.id, oldCells);
+                }
+                this.spatialGrid.insertObjectIntoCells(gridObject, newCells);
+                this.trapGridCells.set(trap.id, newCells);
+            }
+        });
     }
+
 
     update(dt, { entityManager, level }) {
         if (level !== this.currentLevel) {
             this._initializeGridForLevel(level);
         }
-        this._updateGridWithDynamicObjects(entityManager, level);
+        this._updateDynamicObjectsInGrid(entityManager, level);
 
         const entities = entityManager.query([PositionComponent, VelocityComponent, CollisionComponent]);
 
@@ -104,6 +110,9 @@ export class CollisionSystem {
             const vel = entityManager.getComponent(entityId, VelocityComponent);
             const col = entityManager.getComponent(entityId, CollisionComponent);
             const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+            
+            // ADDED: Reset ground entity tracking at the start of the frame
+            col.groundEntity = null;
 
             if (playerCtrl && (playerCtrl.isSpawning || playerCtrl.isDespawning || playerCtrl.needsRespawn)) {
                 continue;
@@ -114,14 +123,9 @@ export class CollisionSystem {
                 continue;
             }
 
-
-
-
-
             pos.x += vel.vx * dt;
             col.isAgainstWall = false;
             let entityRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
-
 
             const queryBoxH = { x: vel.vx > 0 ? pos.x : pos.x + vel.vx * dt, y: pos.y, width: col.width + Math.abs(vel.vx * dt), height: col.height };
             const potentialCollidersH = this.spatialGrid.query(queryBoxH);
@@ -133,7 +137,6 @@ export class CollisionSystem {
                 if (this._isRectColliding(entityRect, collider)) {
                     const isPlayer = !!playerCtrl;
                     const isEnemyCollider = collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent);
-
 
                     if (isPlayer && isEnemyCollider) {
                         const playerCtrlCheck = entityManager.getComponent(entityId, PlayerControlledComponent);
@@ -148,16 +151,12 @@ export class CollisionSystem {
                             eventBus.publish('playerTookDamage', { amount: damageAmount, source: 'enemy_contact' });
                             return;
                         }
-
                         continue;
                     }
 
-
-
-                    if (collider.type === 'entity') {
+                    if (collider.type === 'entity' && !isPlayer) { // Allow player to push enemies, but enemies don't push each other
                         continue;
                     }
-
 
                     const PUSH_BUFFER = 0.01;
                     if (vel.vx > 0) {
@@ -170,7 +169,6 @@ export class CollisionSystem {
                     col.isAgainstWall = !['sand', 'mud', 'ice', 'platform'].includes(collider.surfaceType);
                 }
             }
-
 
             pos.y += vel.vy * dt;
             col.isGrounded = false;
@@ -186,12 +184,10 @@ export class CollisionSystem {
                 const isPlayer = !!playerCtrl;
                 const isEnemyCollider = collider.type === 'entity' && entityManager.hasComponent(collider.entityId, EnemyComponent);
 
-
                 if (isPlayer && isEnemyCollider) {
                     const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                     const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
-
 
                     if (vel.vy > 0 && prevBodyBottom <= collider.y + 2 && !enemy.isDead && killable?.stompable) {
                         eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });
@@ -205,14 +201,11 @@ export class CollisionSystem {
                         continue;
                     }
 
-
                     if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
                         const damageAmount = killable ? killable.contactDamage : 1000;
                         eventBus.publish('playerTookDamage', { amount: damageAmount, source: 'enemy_contact' });
                         return;
                     }
-
-
                     continue;
                 }
 
@@ -220,12 +213,11 @@ export class CollisionSystem {
                     continue;
                 }
 
-
                 if (vel.vy >= 0) {
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
                     if (prevBodyBottom <= collider.y + 2) {
                         if (!collider.isOneWay || prevBodyBottom <= collider.y) {
-                           this._landOnSurface(pos, vel, col, collider.y, collider.surfaceType, entityId);
+                           this._landOnSurface(pos, vel, col, collider.y, collider.surfaceType, collider.instance, entityId);
                            entityRect.y = pos.y;
                            if (collider.onLanded) {
                                collider.onLanded(eventBus);
@@ -239,7 +231,6 @@ export class CollisionSystem {
                         const colliderXStart = collider.x;
                         const colliderXEnd = collider.x + collider.width;
 
-
                         if (prevPlayerTop >= collider.y + collider.height &&
                             prevPlayerXCenter > colliderXStart &&
                             prevPlayerXCenter < colliderXEnd) {
@@ -252,38 +243,27 @@ export class CollisionSystem {
                 }
             }
 
-
             if (!col.isGrounded && vel.vy >= 0) {
-                const groundProbe = {
-                    x: pos.x,
-                    y: pos.y + col.height,
-                    width: col.width,
-                    height: 1
-                };
+                const groundProbe = { x: pos.x, y: pos.y + col.height, width: col.width, height: 1 };
                 const potentialGround = this.spatialGrid.query(groundProbe);
 
                 for (const ground of potentialGround) {
                     if (ground.type === 'entity' && ground.entityId === entityId) continue;
-
-
-                    if (ground.type === 'entity') {
-                        continue;
-                    }
+                    if (ground.type === 'entity') continue;
 
                     if (this._isRectColliding(groundProbe, ground)) {
                          if (!ground.isOneWay) {
-                            this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, entityId);
+                            this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, ground.instance, entityId);
                             if (vel.vy > 0) vel.vy = 0;
                             break;
                          } else if (ground.isOneWay && pos.y + col.height <= ground.y + 2) {
-                            this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, entityId);
+                            this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, ground.instance, entityId);
                             if (vel.vy > 0) vel.vy = 0;
                             break;
                          }
                     }
                 }
             }
-
 
             pos.x = Math.max(0, Math.min(pos.x, level.width - col.width));
             if (pos.y < 0) {
@@ -303,19 +283,18 @@ export class CollisionSystem {
         );
     }
 
-    _landOnSurface(pos, vel, col, surfaceTopY, surfaceType, entityId) {
+    _landOnSurface(pos, vel, col, surfaceTopY, surfaceType, groundInstance, entityId) {
         const landingVelocity = vel.vy;
         if (landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY) {
-            eventBus.publish('playerLandedHard', {
-                entityId,
-                landingVelocity
-            });
+            eventBus.publish('playerLandedHard', { entityId, landingVelocity });
         }
         const PUSH_BUFFER = 0.01;
         pos.y = surfaceTopY - col.height - PUSH_BUFFER;
         vel.vy = 0;
         col.isGrounded = true;
         col.groundType = surfaceType;
+        // ADDED: Store the instance of the ground object for sticky platforms
+        col.groundEntity = groundInstance;
     }
 
     _isCollidingWith(pos, col, other) {
@@ -341,14 +320,7 @@ export class CollisionSystem {
     }
 
     _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
-        const player = {
-            pos,
-            vel,
-            col,
-            entityId,
-            entityManager,
-            dt
-        };
+        const player = { pos, vel, col, entityId, entityManager, dt };
         for (const trap of level.traps) {
             if (!trap.solid && this._isCollidingWith(pos, col, trap)) {
                 trap.onCollision(player, eventBus);
@@ -359,12 +331,7 @@ export class CollisionSystem {
     _checkFruitCollisions(pos, col, level, entityId, entityManager) {
         for (const fruit of level.getActiveFruits()) {
             if (this._isCollidingWith(pos, col, fruit)) {
-                eventBus.publish('collisionEvent', {
-                    type: 'fruit',
-                    entityId,
-                    target: fruit,
-                    entityManager
-                });
+                eventBus.publish('collisionEvent', { type: 'fruit', entityId, target: fruit, entityManager });
             }
         }
     }
@@ -372,19 +339,9 @@ export class CollisionSystem {
     _checkTrophyCollision(pos, col, trophy, entityId, entityManager, vel, dt) {
         if (!trophy || trophy.inactive || trophy.acquired) return;
         const collisionOffset = 15;
-        const trophyHitbox = {
-            x: trophy.x - trophy.size / 2,
-            y: (trophy.y - trophy.size / 2) + collisionOffset,
-            width: trophy.size,
-            height: trophy.size - collisionOffset
-        };
+        const trophyHitbox = { x: trophy.x - trophy.size / 2, y: (trophy.y - trophy.size / 2) + collisionOffset, width: trophy.size, height: trophy.size - collisionOffset };
 
-        if (!this._isRectColliding({
-                x: pos.x,
-                y: pos.y,
-                width: col.width,
-                height: col.height
-            }, trophyHitbox)) {
+        if (!this._isRectColliding({ x: pos.x, y: pos.y, width: col.width, height: col.height }, trophyHitbox)) {
             return;
         }
 
@@ -392,21 +349,9 @@ export class CollisionSystem {
         if (vel.vy >= 0 && prevPlayerBottom <= trophyHitbox.y) {
             if (!trophy.isAnimating) {
                 trophy.isAnimating = true;
-                eventBus.publish('playerKnockback', {
-                    entityId,
-                    entityManager,
-                    vx: 0,
-                    vy: -300
-                });
-                eventBus.publish('playSound', {
-                    key: 'trophy_activated',
-                    volume: 0.9,
-                    channel: 'UI'
-                });
-                eventBus.publish('cameraShakeRequested', {
-                    intensity: 6,
-                    duration: 0.25
-                });
+                eventBus.publish('playerKnockback', { entityId, entityManager, vx: 0, vy: -300 });
+                eventBus.publish('playSound', { key: 'trophy_activated', volume: 0.9, channel: 'UI' });
+                eventBus.publish('cameraShakeRequested', { intensity: 6, duration: 0.25 });
             }
             return;
         }
@@ -423,12 +368,7 @@ export class CollisionSystem {
     checkCheckpointCollisions(pos, col, level, entityId, entityManager) {
         for (const cp of level.getInactiveCheckpoints()) {
             if (this._isCollidingWith(pos, col, cp)) {
-                eventBus.publish('collisionEvent', {
-                    type: 'checkpoint',
-                    entityId,
-                    target: cp,
-                    entityManager
-                });
+                eventBus.publish('collisionEvent', { type: 'checkpoint', entityId, target: cp, entityManager });
             }
         }
     }

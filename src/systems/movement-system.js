@@ -30,6 +30,7 @@ export class MovementSystem {
 
             this._applyHorizontalMovement(dt, input, vel, col, ctrl);
             this._applyVerticalMovement(dt, vel, col, ctrl, state);
+            this._applyStickyPlatformMovement(pos, col); // ADDED
             this._updateSurfaceEffects(dt, pos, vel, col, ctrl, entityId, entityManager);
         }
     }
@@ -91,6 +92,15 @@ export class MovementSystem {
 
         vel.vy = Math.min(vel.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
     }
+    
+    // ADDED: New method for sticky platform logic
+    _applyStickyPlatformMovement(pos, col) {
+        if (col.isGrounded && col.groundEntity && typeof col.groundEntity.getMovementDelta === 'function') {
+            const delta = col.groundEntity.getMovementDelta();
+            pos.x += delta.dx;
+            pos.y += delta.dy;
+        }
+    }
 
     _updateSurfaceEffects(dt, pos, vel, col, ctrl, entityId, entityManager) {
         const onGroundAndMoving = col.isGrounded && Math.abs(vel.vx) > 1 && !ctrl.isDashing && !ctrl.isHit;
@@ -115,9 +125,9 @@ export class MovementSystem {
 
                 if (particleType) {
                     const renderable = entityManager.getComponent(entityId, RenderableComponent);
-                    eventBus.publish('createParticles', { 
-                        x: pos.x + col.width / 2, 
-                        y: pos.y + col.height, 
+                    eventBus.publish('createParticles', {
+                        x: pos.x + col.width / 2,
+                        y: pos.y + col.height,
                         type: particleType,
                         direction: renderable ? renderable.direction : 'right'
                     });

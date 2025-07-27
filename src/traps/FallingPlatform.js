@@ -34,6 +34,23 @@ export class FallingPlatform extends Trap {
             currentFrame: 0,
         };
         this.particleTimer = 0;
+        
+        // ADDED: Track previous position for sticky platform logic
+        this.prevY = y;
+    }
+
+    get hitbox() {
+        return {
+            x: this.x - this.width / 2,
+            y: this.y - this.height / 2,
+            width: this.width,
+            height: this.height,
+        };
+    }
+    
+    // ADDED: Method for sticky platform logic
+    getMovementDelta() {
+        return { dx: 0, dy: this.y - this.prevY };
     }
 
     _isPlayerOnTop(playerData) {
@@ -48,7 +65,10 @@ export class FallingPlatform extends Trap {
         );
     }
 
-    update(dt, playerData, eventBus) {
+    update(dt, playerData, eventBus) { // DYNAMIC
+        // Store current Y before any changes
+        this.prevY = this.y;
+
         if (this.state === 'idle' || this.state === 'active') {
             this.animation.frameTimer += dt;
             if (this.animation.frameTimer >= this.animation.frameSpeed) {
@@ -157,6 +177,7 @@ export class FallingPlatform extends Trap {
         this.state = 'idle';
         this.x = this.initialX;
         this.y = this.initialY;
+        this.prevY = this.initialY;
         this.opacity = 1;
         this.fallSpeed = 0;
         this.playerOnTimer = 0;

@@ -12,58 +12,66 @@ export class SpatialGrid {
         }
     }
 
-    _getGridIndices(obj) {
+    getGridIndices(obj) {
+        const indices = new Set();
+        // Add a check to prevent crash if obj is undefined
+        if (!obj || typeof obj.x === 'undefined') {
+            console.warn("SpatialGrid.getGridIndices called with invalid object", obj);
+            return indices;
+        }
         const startX = Math.floor(obj.x / this.cellSize);
         const startY = Math.floor(obj.y / this.cellSize);
         const endX = Math.floor((obj.x + obj.width) / this.cellSize);
         const endY = Math.floor((obj.y + obj.height) / this.cellSize);
-        return { startX, startY, endX, endY };
-    }
-
-    insert(obj) {
-        const { startX, startY, endX, endY } = this._getGridIndices(obj);
 
         for (let y = startY; y <= endY; y++) {
             for (let x = startX; x <= endX; x++) {
                 if (x >= 0 && x < this.widthInCells && y >= 0 && y < this.heightInCells) {
-                    const index = y * this.widthInCells + x;
-                    this.grid[index].push(obj);
+                    indices.add(y * this.widthInCells + x);
                 }
+            }
+        }
+        return indices;
+    }
+
+    insert(obj) {
+        const cellIndices = this.getGridIndices(obj);
+        this.insertObjectIntoCells(obj, cellIndices);
+    }
+
+    insertObjectIntoCells(obj, cellIndices) {
+        for (const index of cellIndices) {
+            if (this.grid[index]) {
+                this.grid[index].push(obj);
             }
         }
     }
 
-    removeObjects(objectsToRemove) {
-        for (const obj of objectsToRemove) {
-            const { startX, startY, endX, endY } = this._getGridIndices(obj);
-            for (let y = startY; y <= endY; y++) {
-                for (let x = startX; x <= endX; x++) {
-                    if (x >= 0 && x < this.widthInCells && y >= 0 && y < this.heightInCells) {
-                        const index = y * this.widthInCells + x;
-                        const cell = this.grid[index];
-                        const objectIndex = cell.indexOf(obj);
-                        if (objectIndex !== -1) {
-                            cell.splice(objectIndex, 1);
-                        }
-                    }
+    removeObjectFromCells(identifier, cellIndices) {
+        const isTrap = typeof identifier === 'string';
+        for (const index of cellIndices) {
+            const cell = this.grid[index];
+            if (cell) {
+                // Find the specific object to remove based on its unique ID
+                const objectIndex = cell.findIndex(item => {
+                    if (isTrap) return item.instance?.id === identifier;
+                    return item.entityId === identifier;
+                });
+
+                if (objectIndex !== -1) {
+                    cell.splice(objectIndex, 1);
                 }
             }
         }
     }
 
     query(bounds) {
-        const startX = Math.floor(bounds.x / this.cellSize);
-        const startY = Math.floor(bounds.y / this.cellSize);
-        const endX = Math.floor((bounds.x + bounds.width) / this.cellSize);
-        const endY = Math.floor((bounds.y + bounds.height) / this.cellSize);
-
         const results = new Set();
-        for (let y = startY; y <= endY; y++) {
-            for (let x = startX; x <= endX; x++) {
-                if (x >= 0 && x < this.widthInCells && y >= 0 && y < this.heightInCells) {
-                    const index = y * this.widthInCells + x;
-                    this.grid[index].forEach(item => results.add(item));
-                }
+        const cellIndices = this.getGridIndices(bounds);
+
+        for (const index of cellIndices) {
+            if (this.grid[index]) {
+                this.grid[index].forEach(item => results.add(item));
             }
         }
         return Array.from(results);

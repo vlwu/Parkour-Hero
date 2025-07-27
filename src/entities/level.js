@@ -8,7 +8,7 @@ import { EnemyComponent } from '../components/EnemyComponent.js';
 import { createEnemy } from './enemy-factory.js';
 import { eventBus } from '../utils/event-bus.js';
 
-// Definitions for our new static platform objects
+
 const staticPlatformDefinitions = {
     'wood_third_h': { spriteConfig: { srcX: 192, srcY: 0, width: 48, height: 16 }, collisionBox: { width: 48, height: 16 }, oneway: false, surfaceType: 'wood' },
     'wood_third_v': { spriteConfig: { srcX: 240, srcY: 0, width: 16, height: 48 }, collisionBox: { width: 16, height: 48 }, oneway: false, surfaceType: 'wood' },
@@ -72,7 +72,7 @@ const trapFactory = {
 Object.keys(staticPlatformDefinitions).forEach(type => {
     trapFactory[type] = StaticPlatform;
 });
-// --- END NEW ---
+
 
 export class Level {
   constructor(levelConfig, entityManager) {
@@ -95,7 +95,7 @@ export class Level {
     this.tiles = levelConfig.layout.map(rowString =>
       [...rowString].map(tileId => TILE_DEFINITIONS[tileId] || TILE_DEFINITIONS['0'])
     );
-    
+
     this.spatialGrid = new SpatialGrid(this.width, this.height, GRID_CONSTANTS.TILE_SIZE * 4);
 
 
@@ -103,7 +103,7 @@ export class Level {
     this.checkpoints = [];
     this.traps = [];
     this.trophy = null;
-    this.initialEnemyConfigs = levelConfig.enemies || []; // Store for respawning
+    this.initialEnemyConfigs = levelConfig.enemies || [];
     eventBus.subscribe('createSlimePuddle', (pos) => this.addSlimePuddle(pos));
 
     (levelConfig.objects || []).forEach(obj => {
@@ -156,7 +156,7 @@ export class Level {
   addSlimePuddle(position) {
     const puddleTrap = new Traps.SlimePuddle(position.x, position.y, {});
     this.traps.push(puddleTrap);
-    
+
     const gridObject = { ...(puddleTrap.hitbox), instance: puddleTrap, type: 'trap' };
     puddleTrap.gridObject = gridObject;
     this.spatialGrid.insert(gridObject);
@@ -197,26 +197,26 @@ export class Level {
     return this.tiles[gridY][gridX] || TILE_DEFINITIONS['0'];
   }
 
-  // Precise collision check method for any point in the world
+
   isSolidAt(worldX, worldY, ignoreOneWay = false) {
-    // 1. Check the tile grid first.
+
     const tile = this.getTileAt(worldX, worldY);
     if (tile && tile.solid) {
-      // If it's a solid tile and we are NOT ignoring it (if it's a one-way), it's solid.
+
       if (!(ignoreOneWay && tile.oneWay)) {
-        // The original check for tile.collisionBox seems to be dead code, as TILE_DEFINITIONS don't contain it.
-        // Assuming all solid tiles from the layout grid are full blocks.
+
+
         return true;
       }
     }
 
-    // 2. Check for solid objects (like static platforms) in the spatial grid.
+
     const potentialColliders = this.spatialGrid.query({ x: worldX, y: worldY, width: 1, height: 1 });
     for (const obj of potentialColliders) {
-      // Check if it's a solid object from our level geometry (traps/platforms).
+
       if (obj.instance && obj.instance.solid && obj.type === 'trap') {
         if (ignoreOneWay && obj.instance.oneway) {
-          continue; // Skip one-way platforms if requested.
+          continue;
         }
 
         const hitbox = obj.instance.hitbox;
@@ -224,12 +224,12 @@ export class Level {
           worldX >= hitbox.x && worldX < hitbox.x + hitbox.width &&
           worldY >= hitbox.y && worldY < hitbox.y + hitbox.height
         ) {
-          return true; // The point is inside a solid object.
+          return true;
         }
       }
     }
 
-    return false; // No solid tile or object found at this point.
+    return false;
   }
 
   update(dt, entityManager, playerEntityId, eventBus, camera) {
@@ -241,23 +241,22 @@ export class Level {
           trap.update(dt, playerData, eventBus, this);
       }
 
-      const expiredTraps = [];
-      this.traps = this.traps.filter(trap => {
-          if (trap.isExpired && trap.gridObject) {
-              expiredTraps.push(trap.gridObject);
-              return false;
-          }
-          return true;
-      });
+      const expiredTraps = this.traps.filter(trap => trap.isExpired);
       if (expiredTraps.length > 0) {
-          this.spatialGrid.removeObjects(expiredTraps);
+          for (const trap of expiredTraps) {
+              if (trap.gridObject) {
+                  const cellIndices = this.spatialGrid.getGridIndices(trap.gridObject);
+                  this.spatialGrid.removeObjectFromCells(trap.id, cellIndices);
+              }
+          }
+          this.traps = this.traps.filter(trap => !trap.isExpired);
       }
 
       const visibleObjects = this.spatialGrid.query(camera.getViewportBounds());
       for (const obj of visibleObjects) {
           if (obj.instance) {
               const instance = obj.instance;
-              switch(obj.type) { 
+              switch(obj.type) {
                   case 'fruit':
                       this._updateSingleFruit(instance, dt);
                       break;
@@ -392,8 +391,8 @@ export class Level {
       this.trophy.animationFrame = 0;
       this.trophy.animationTimer = 0;
     }
-    
-    this._populateSpatialGrid(); 
+
+    this._populateSpatialGrid();
     this.completed = false;
   }
 }

@@ -22,6 +22,15 @@ export class FireTrap extends Trap {
         };
     }
 
+    get hitbox() {
+        return {
+            x: this.x - this.width / 2,
+            y: this.y - this.height / 2,
+            width: this.width,
+            height: this.height,
+        };
+    }
+
     _isPlayerOnTop(playerData) {
         if (!playerData) return false;
 
@@ -127,7 +136,7 @@ export class FireTrap extends Trap {
             sprite = assets.fire_hit;
             frameWidth = sprite.width / this.anim.activating.frames;
             srcX = this.frame * frameWidth;
-        } else { // Covers 'on' and 'turning_off' states
+        } else {
             sprite = assets.fire_on;
             frameWidth = sprite.width / this.anim.on.frames;
             srcX = this.frame * frameWidth;
