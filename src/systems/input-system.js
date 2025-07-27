@@ -6,30 +6,38 @@ export class InputSystem {
   constructor(entityManager) {
     this.entityManager = entityManager;
     this.keys = new Set();
-    this.queue = []; // Event queue for the current frame
-    
+    this.queue = [];
+
     this._boundKeyDown = this.handleKeyDown.bind(this);
     this._boundKeyUp = this.handleKeyUp.bind(this);
+    this._boundBlur = this.handleBlur.bind(this); // Bind the blur handler
     this._boundContextMenu = (e) => e.preventDefault();
-    
+
     this.initEventListeners();
   }
 
   initEventListeners() {
     window.addEventListener('keydown', this._boundKeyDown);
     window.addEventListener('keyup', this._boundKeyUp);
+    window.addEventListener('blur', this._boundBlur); // Listen for the blur event
     window.addEventListener('contextmenu', this._boundContextMenu);
   }
-  
+
   destroy() {
     window.removeEventListener('keydown', this._boundKeyDown);
     window.removeEventListener('keyup', this._boundKeyUp);
+    window.removeEventListener('blur', this._boundBlur); // Clean up the blur listener
     window.removeEventListener('contextmenu', this._boundContextMenu);
+  }
+  
+  // New handler for when the window loses focus
+  handleBlur() {
+    this.keys.clear();
   }
 
   handleKeyDown(e) {
     const key = e.key.toLowerCase();
-    
+
     if (!this.keys.has(key)) {
         this.queue.push({ key, type: 'down' });
     }
@@ -66,18 +74,15 @@ export class InputSystem {
     for (const entityId of entities) {
         const inputComp = this.entityManager.getComponent(entityId, InputComponent);
 
-        // Update held states
         inputComp.moveLeft = canProcessGameplayInput && this.keys.has(keybinds.moveLeft);
         inputComp.moveRight = canProcessGameplayInput && this.keys.has(keybinds.moveRight);
         inputComp.jump = canProcessGameplayInput && this.keys.has(keybinds.jump);
         inputComp.dash = canProcessGameplayInput && this.keys.has(keybinds.dash);
 
-        // Reset "just pressed" states for the new frame
         inputComp.jumpPressedThisFrame = false;
         inputComp.dashPressedThisFrame = false;
     }
 
-    // Process the event queue to set "just pressed" states
     if (canProcessGameplayInput) {
         for (const event of this.queue) {
             if (event.type === 'down') {
@@ -94,7 +99,7 @@ export class InputSystem {
         }
     }
 
-    // Clear the queue for the next frame
+
     this.queue = [];
   }
 }
