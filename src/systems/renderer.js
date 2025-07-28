@@ -11,6 +11,7 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
+import { EnemyComponent } from '../components/EnemyComponent.js';
 
 const MAX_SPRITES_PER_BATCH = 5000;
 const ATTRIBUTES_PER_INSTANCE = 11;
@@ -253,6 +254,9 @@ export class Renderer {
             let renderY = prevPos ? prevPos.y + (pos.y - prevPos.y) * alpha : pos.y;
 
             const isPlayer = entityManager.hasComponent(entityId, CharacterComponent);
+            const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
+
+            let spriteData;
             if (isPlayer) {
                 const stateName = renderable.animationState;
                 const isSpecialAnim = stateName === 'spawn' || stateName === 'despawn';
@@ -263,11 +267,16 @@ export class Renderer {
                     const offset = renderable.direction === 'left' ? -PLAYER_CONSTANTS.CLING_OFFSET : PLAYER_CONSTANTS.CLING_OFFSET;
                     renderX += offset;
                 }
+                spriteData = this._getPlayerSpriteData(renderable, entityManager.getComponent(entityId, CharacterComponent));
+            } else if (isEnemy) {
+                spriteData = this._getEnemySpriteData(renderable);
+            } else {
+                 const sprite = this.assets[renderable.spriteKey];
+                 const texture = this.textures[renderable.spriteKey];
+                 if(sprite && texture) {
+                     spriteData = { texture, sx: 0, sy: 0, sw: sprite.width, sh: sprite.height, isFlipped: 0.0};
+                 }
             }
-
-            const spriteData = isPlayer
-                ? this._getPlayerSpriteData(renderable, entityManager.getComponent(entityId, CharacterComponent))
-                : this._getEnemySpriteData(renderable);
 
             if (spriteData) {
                 const instanceData = [renderX, renderY, renderable.width, renderable.height, spriteData.sx, spriteData.sy, spriteData.sw, spriteData.sh, spriteData.isFlipped, 1.0, 0.0];
