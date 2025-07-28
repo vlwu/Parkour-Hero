@@ -6,8 +6,8 @@ export class RadishAI extends BaseAI {
 
         // From enemy definition
         this.patrolBoxSize = this.enemy.ai.patrolBoxSize || 150;
-        this.airSpeed = this.enemy.ai.airSpeed || 40;
-        this.groundSpeed = this.enemy.ai.groundSpeed || 30;
+        this.airSpeed = this.enemy.ai.airSpeed || 50;
+        this.groundSpeed = this.enemy.ai.groundSpeed || 80;
         this.idleTime = this.enemy.ai.idleTime || 1.0;
 
         // Internal state
@@ -26,7 +26,7 @@ export class RadishAI extends BaseAI {
         if (this.enemy.radishState === 'flying') {
             this._updateFlying(dt);
         } else if (this.enemy.radishState === 'falling') {
-            this._updateFalling();
+            this._updateFalling(dt);
         } else if (this.enemy.radishState === 'grounded') {
             this._updateGrounded(dt);
         }
@@ -61,10 +61,11 @@ export class RadishAI extends BaseAI {
         }
     }
 
-    _updateFalling() {
+    _updateFalling(dt) {
         this.renderable.animationState = 'idle1';
         this.state.currentState = 'falling';
         this.vel.vx = 0;
+        this.vel.vy += 600 * dt; 
 
         if (this.col.isGrounded) {
             this.enemy.radishState = 'grounded';

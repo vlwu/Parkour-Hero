@@ -172,6 +172,10 @@ export const ENEMY_DEFINITIONS = {
     radish: {
         width: 30,
         height: 38,
+        hitbox: {
+            width: 20,
+            height: 38,
+        },
         spriteKey: 'radish',
         animations: {
             idle1: { frameCount: 6, speed: 0.1 },

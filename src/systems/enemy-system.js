@@ -25,6 +25,7 @@ export class EnemySystem {
             const renderable = entityManager.getComponent(enemyId, RenderableComponent);
             const collision = entityManager.getComponent(enemyId, CollisionComponent);
             const killable = entityManager.getComponent(enemyId, KillableComponent);
+            const vel = entityManager.getComponent(enemyId, VelocityComponent);
 
             if (enemy.type === 'snail' && !enemy.isDead) {
                 if (enemy.snailState === 'walking') {
@@ -55,10 +56,15 @@ export class EnemySystem {
             } else if (enemy.type === 'radish' && !enemy.isDead) {
                 if (enemy.radishState === 'flying') {
                     enemy.radishState = 'falling';
-                    killable.stompable = false;
+                    vel.vy = 150; // Set initial downward velocity
+                    killable.stompable = false; // Cant be stomped again until grounded
                     enemy.immunityTimer = 0.5;
                     const pos = entityManager.getComponent(enemyId, PositionComponent);
-                    eventBus.publish('createParticles', { x: pos.x + collision.width / 2, y: pos.y + collision.height / 2, type: 'radish_leaves' });
+
+                    // Create two leaf particles
+                    eventBus.publish('createParticles', { x: pos.x + collision.width / 2, y: pos.y, type: 'radish_leaf', leafIndex: 0 });
+                    eventBus.publish('createParticles', { x: pos.x + collision.width / 2, y: pos.y, type: 'radish_leaf', leafIndex: 1 });
+
                     eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
                 } else if (enemy.radishState === 'grounded') {
                     enemy.isDead = true;

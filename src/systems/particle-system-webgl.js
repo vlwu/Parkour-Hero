@@ -95,15 +95,15 @@ export class ParticleSystemWebGL {
         gl.vertexAttribDivisor(2, 1);
 
         gl.enableVertexAttribArray(3);
-        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, instanceStride, 12);
+        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, instanceStride, 8);
         gl.vertexAttribDivisor(3, 1);
 
         gl.enableVertexAttribArray(4);
-        gl.vertexAttribPointer(4, 1, gl.FLOAT, false, instanceStride, 16);
+        gl.vertexAttribPointer(4, 1, gl.FLOAT, false, instanceStride, 12);
         gl.vertexAttribDivisor(4, 1);
 
         gl.enableVertexAttribArray(5);
-        gl.vertexAttribPointer(5, 4, gl.FLOAT, false, instanceStride, 20);
+        gl.vertexAttribPointer(5, 4, gl.FLOAT, false, instanceStride, 16);
         gl.vertexAttribDivisor(5, 1);
 
         gl.bindVertexArray(null);
@@ -130,7 +130,7 @@ export class ParticleSystemWebGL {
         return texture;
     }
 
-    create({ x, y, type, direction = 'right', particleSpeed = null }) {
+    create({ x, y, type, direction = 'right', particleSpeed = null, leafIndex = 0 }) {
         const particleConfigs = {
             dash: { count: 10, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
             double_jump: { count: 7, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
@@ -144,7 +144,7 @@ export class ParticleSystemWebGL {
             slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 4.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
             snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
             wing_flap: { count: 1, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30 },
-            radish_leaves: { count: 8, baseSpeed: 80, spriteKey: 'radish_leaves', life: 0.8, gravity: 150, size: 16 },
+            radish_leaf: { count: 1, baseSpeed: 120, spriteKey: 'radish_leaves', life: 0.8, gravity: 200, size: 16 },
         };
 
         const config = particleConfigs[type];
@@ -166,7 +166,7 @@ export class ParticleSystemWebGL {
             else if (type === 'wing_flap') {
                 angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             }
-            else if (type === 'enemy_death' || type === 'radish_leaves') angle = Math.random() * Math.PI * 2;
+            else if (type === 'enemy_death' || type === 'radish_leaf') angle = Math.random() * Math.PI * 2;
             else if (type === 'dash') angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
             else if (type === 'double_jump') angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             else if (type === 'jump_trail') { angle = (Math.random() * Math.PI * 2); speed *= (Math.random() * 0.5); }
@@ -192,6 +192,10 @@ export class ParticleSystemWebGL {
             p.spriteKey = config.spriteKey;
             p.gravity = config.gravity;
             p.animation = config.animation ? { ...config.animation, frameTimer: 0, currentFrame: 0 } : null;
+            
+            if (type === 'radish_leaf') {
+                p.leafIndex = leafIndex;
+            }
 
             this.activeParticles.push(p);
         }
@@ -271,6 +275,11 @@ export class ParticleSystemWebGL {
                     instanceData[offset + 5] = 0;
                     instanceData[offset + 6] = 1 / p.animation.frameCount;
                     instanceData[offset + 7] = 1;
+                } else if (p.spriteKey === 'radish_leaves') {
+                    instanceData[offset + 4] = p.leafIndex === 0 ? 0.0 : 0.5; // x_off
+                    instanceData[offset + 5] = 0; // y_off
+                    instanceData[offset + 6] = 0.5; // x_scale
+                    instanceData[offset + 7] = 1.0; // y_scale
                 } else {
                     instanceData[offset + 4] = 0;
                     instanceData[offset + 5] = 0;

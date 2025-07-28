@@ -16,14 +16,14 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     }
 
     const enemyEntityId = entityManager.createEntity();
-    
+
     let initialState;
-    if (data.ai.type === 'flying_patrol') {
-        initialState = 'patrolling';
+    if (data.ai.type === 'flying_patrol' || data.ai.type === 'radish') {
+        initialState = 'flying';
     } else if (data.ai.type === 'ground_charge' || data.ai.type === 'defensive_cycle') {
         initialState = 'idle';
     } else {
-        initialState = 'patrol'; // Default for patrol, snail, etc.
+        initialState = 'patrol';
     }
 
     const initialTopLeftX = x - data.width / 2;
@@ -34,8 +34,8 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     entityManager.addComponent(enemyEntityId, new StateComponent(initialState));
     entityManager.addComponent(enemyEntityId, new DynamicColliderComponent());
 
-    // Destructure config to separate AI overrides from positional/type data.
-    // This prevents the enemy's own type (e.g., 'slime') from overwriting the AI's behavior type (e.g., 'patrol').
+
+
     const { type: _enemyType, x: _enemyX, y: _enemyY, initialDragPos, ...aiOverrides } = config;
     const aiConfig = { ...data.ai, ...aiOverrides };
 
@@ -46,10 +46,13 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
 
     entityManager.addComponent(enemyEntityId, new KillableComponent({ ...data.killable }));
 
+    const hitboxWidth = data.hitbox ? data.hitbox.width : data.width;
+    const hitboxHeight = data.hitbox ? data.hitbox.height : data.height;
+
     entityManager.addComponent(enemyEntityId, new CollisionComponent({
         type: 'solid',
-        width: data.width,
-        height: data.height,
+        width: hitboxWidth,
+        height: hitboxHeight,
     }));
 
     let initialAnimationState;
@@ -67,7 +70,9 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
                 initialAnimationState = 'idle';
                 break;
         }
-    } else { // patrol
+    } else if (type === 'radish') {
+        initialAnimationState = 'idle1';
+    } else {
         if (type === 'slime') {
             initialAnimationState = 'idle_run';
         } else {

@@ -46,11 +46,11 @@ export class CollisionSystem {
         level.traps.forEach(trap => {
             const isStatic = !trap.update.toString().includes('// DYNAMIC');
             if (trap.solid && isStatic) {
-                const gridObject = { 
-                    ...(trap.hitbox), 
-                    instance: trap, 
-                    type: 'trap', 
-                    isOneWay: trap.oneway || false, 
+                const gridObject = {
+                    ...(trap.hitbox),
+                    instance: trap,
+                    type: 'trap',
+                    isOneWay: trap.oneway || false,
                     surfaceType: trap.surfaceType,
                     onLanded: typeof trap.onLanded === 'function' ? trap.onLanded.bind(trap) : null
                 };
@@ -233,8 +233,9 @@ export class CollisionSystem {
                     const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                     const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
-
-                    if (vel.vy > 0 && prevBodyBottom <= collider.y + 2 && !enemy.isDead && killable?.stompable) {
+                    
+                    // Increased tolerance to make stomping more lenient
+                    if (vel.vy > 0 && prevBodyBottom <= collider.y + 5 && !enemy.isDead && killable?.stompable) {
                         eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });
                         pos.y = collider.y - col.height;
                         vel.vy = 0;
