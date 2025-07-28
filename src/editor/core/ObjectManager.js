@@ -87,7 +87,7 @@ export class ObjectManager {
             newObject.horizontalSpeed = 60;
             newObject.verticalAmplitude = 10;
         }
-        if (type === 'radish') {
+        if (type === 'radish' || type === 'bee') {
             newObject.patrolBoxSize = 150;
         }
 
@@ -286,9 +286,9 @@ export class ObjectManager {
                 DOM.gridContainer.appendChild(centerLine);
             }
             
-            if (obj.type === 'radish') {
+            if (obj.type === 'radish' || obj.type === 'bee') {
                 const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
-                const patrolBoxSize = obj.patrolBoxSize || ENEMY_DEFINITIONS.radish.ai.patrolBoxSize;
+                const patrolBoxSize = obj.patrolBoxSize || ENEMY_DEFINITIONS[obj.type].ai.patrolBoxSize;
 
                 const box = document.createElement('div');
                 box.className = 'trap-path-visual';
@@ -308,7 +308,7 @@ export class ObjectManager {
     }
 
     _applySnapping(obj) {
-        const groundEnemies = Object.keys(ENEMY_DEFINITIONS).filter(key => key !== 'bluebird' && key !== 'fatbird' && key !== 'radish');
+        const groundEnemies = Object.keys(ENEMY_DEFINITIONS).filter(key => key !== 'bluebird' && key !== 'fatbird' && key !== 'radish' && key !== 'bee');
         const groundSnappable = ['trophy', 'checkpoint', 'trampoline', 'spike', 'fire_trap', ...groundEnemies];
 
         if (fractionalPlatformTypes.includes(obj.type)) {

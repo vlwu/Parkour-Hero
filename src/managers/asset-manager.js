@@ -217,6 +217,7 @@ export async function loadAssets() {
     bee_attack : '/assets/Enemies/Bee/Attack.png',
     bee_idle : '/assets/Enemies/Bee/Idle.png',
     bee_bullet: '/assets/Enemies/Bee/Bullet.png',
+    bee_bullet_pieces: '/assets/Enemies/Bee/Bullet Pieces.png',
 
     bluebird_flying: '/assets/Enemies/BlueBird/Flying.png',
     bluebird_hit: '/assets/Enemies/BlueBird/Hit.png',

@@ -1,0 +1,96 @@
+import { BaseAI } from './BaseAI.js';
+import { eventBus } from '../utils/event-bus.js';
+import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
+
+export class BeeAI extends BaseAI {
+    constructor(entityId, entityManager, level, playerEntityId) {
+        super(entityId, entityManager, level, playerEntityId);
+
+        // From enemy definition
+        this.patrolBoxSize = this.enemy.ai.patrolBoxSize || 150;
+        this.airSpeed = this.enemy.ai.airSpeed || 50;
+        this.attackInterval = this.enemy.ai.attackInterval || 2.0;
+
+        // Internal state
+        this.anchorX = this.pos.x + this.col.width / 2;
+        this.anchorY = this.pos.y + this.col.height / 2;
+        this.targetX = this.anchorX;
+        this.targetY = this.anchorY;
+        this.moveTimer = 0;
+        this.attackTimer = this.attackInterval;
+        this.hasFired = false;
+    }
+
+    update(dt) {
+        switch (this.state.currentState) {
+            case 'flying':
+                this._updateFlying(dt);
+                break;
+            case 'attacking':
+                this._updateAttacking(dt);
+                break;
+        }
+    }
+
+    _updateFlying(dt) {
+        this.renderable.animationState = 'idle';
+
+        // Countdown to the next attack
+        this.attackTimer -= dt;
+        if (this.attackTimer <= 0) {
+            this.state.currentState = 'attacking';
+            this.renderable.animationState = 'attack';
+            this.renderable.animationFrame = 0;
+            this.renderable.animationTimer = 0;
+            this.hasFired = false;
+            return;
+        }
+
+        // Random movement logic (similar to Radish)
+        this.moveTimer -= dt;
+        if (this.moveTimer <= 0) {
+            this.targetX = this.anchorX + (Math.random() - 0.5) * this.patrolBoxSize;
+            this.targetY = this.anchorY + (Math.random() - 0.5) * this.patrolBoxSize;
+            this.moveTimer = Math.random() * 2 + 1;
+        }
+
+        const dx = this.targetX - (this.pos.x + this.col.width / 2);
+        const dy = this.targetY - (this.pos.y + this.col.height / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist > 5) {
+            this.vel.vx = (dx / dist) * this.airSpeed;
+            this.vel.vy = (dy / dist) * this.airSpeed;
+        } else {
+            this.vel.vx = 0;
+            this.vel.vy = 0;
+        }
+
+        if (Math.abs(this.vel.vx) > 0.1) {
+            this.renderable.direction = this.vel.vx > 0 ? 'right' : 'left';
+        }
+    }
+
+    _updateAttacking(dt) {
+        this.vel.vx = 0;
+        this.vel.vy = 0;
+
+        const attackAnim = ENEMY_DEFINITIONS.bee.animations.attack;
+        const fireFrame = 4; // Fire bullet on the 5th frame (index 4)
+
+        if (this.renderable.animationFrame === fireFrame && !this.hasFired) {
+            this.hasFired = true;
+            eventBus.publish('spawnBullet', {
+                x: this.pos.x + this.col.width / 2,
+                y: this.pos.y + this.col.height,
+                config: this.enemy.ai.bullet
+            });
+        }
+        
+        // Check if the animation has finished
+        if (this.renderable.animationFrame >= attackAnim.frameCount - 1 && this.renderable.animationTimer >= attackAnim.speed - dt) {
+             this.state.currentState = 'flying';
+             this.attackTimer = this.attackInterval;
+        }
+    }
+}

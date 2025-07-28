@@ -197,4 +197,33 @@ export const ENEMY_DEFINITIONS = {
             idleTime: 1.0,
         }
     },
+
+    bee: {
+        width: 36,
+        height: 34,
+        spriteKey: 'bee',
+        animations: {
+            idle: { frameCount: 6, speed: 0.1 },
+            attack: { frameCount: 8, speed: 0.08 },
+            hit: { frameCount: 5, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: 250,
+            dealsContactDamage: true,
+            contactDamage: 1000,
+        },
+        ai: {
+            type: 'bee',
+            patrolBoxSize: 150,
+            airSpeed: 50,
+            attackInterval: 2.0,
+            bullet: {
+                speed: 200,
+                damage: 50,
+                width: 16,
+                height: 16,
+            }
+        }
+    },
 };

@@ -42,6 +42,7 @@ export const OBJECT_DESCRIPTIONS = {
     'bluebird': 'A flying enemy that patrols back and forth along a set path, bobbing up and down. Does not snap to ground.',
     'fatbird': 'A flying enemy that hovers in place. When a player passes underneath, it slams to the ground. Deals non-lethal damage. Does not snap to ground.',
     'radish': 'A flying enemy that patrols in a square area. When stomped, it falls to the ground and patrols on the platform. Properties: patrolBoxSize (size of the flight area in pixels).',
+    'bee': 'A flying enemy that patrols in a square area and shoots bullets downwards. Properties: patrolBoxSize (size of the flight area in pixels).',
 };
 
 export const PALETTE_ABBREVIATIONS = {
@@ -57,7 +58,7 @@ export const PALETTE_ABBREVIATIONS = {
     'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
     'saw': 'SAW',
 
-    'mushroom': 'MSH', 'chicken': 'CKN', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD',
+    'mushroom': 'MSH', 'chicken': 'CKN', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE',
 
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -107,6 +108,7 @@ export function getPaletteColor(type) {
         case 'bluebird': return '#3195d8ff';
         case 'fatbird': return '#8c6046ff';
         case 'radish': return '#dbf1a7ff';
+        case 'bee': return '#f7d147ff';
         case 'oneway_gold': case 'gold_third_h': case 'gold_third_v': case 'gold_ninth_sq': case 'gold_four_ninths_sq': return '#FFD700';
         case 'oneway_wood': return '#855E42';
         case 'oneway_stone': return '#808080';
