@@ -21,20 +21,24 @@ out vec2 v_texCoord;
 out float v_alpha;
 
 void main() {
-    // Center the quad vertex around the origin for rotation
-    vec2 centered_pos = a_quad_vertex - vec2(0.5);
+    // 1. Scale the unit quad vertex to get local-space coordinates relative to the object's origin (0,0)
+    vec2 local_pos = a_quad_vertex * a_size;
 
-    // Create a 2D rotation matrix
+    // 2. Find the pivot point (center of the object)
+    vec2 pivot = a_size * 0.5;
+
+    // 3. Center the local-space coordinates around the pivot
+    vec2 centered_pos = local_pos - pivot;
+
+    // 4. Create the rotation matrix and apply rotation to the centered coordinates
     float s = sin(a_rotation);
     float c = cos(a_rotation);
     mat2 rot_matrix = mat2(c, -s, s, c);
+    vec2 rotated_pos = rot_matrix * centered_pos;
 
-    // Apply rotation and then shift back
-    vec2 rotated_pos = (rot_matrix * centered_pos) + vec2(0.5);
-
-    // Calculate the world position of this specific vertex of the quad
-    vec2 pos = a_world_position + (rotated_pos * a_size);
-
+    // 5. Add the pivot back to the rotated coordinates and then add the object's world position
+    vec2 pos = a_world_position + pivot + rotated_pos;
+    
     // Apply the camera's projection matrix to get the final screen position
     gl_Position = u_projection * vec4(pos, 0.0, 1.0);
 
