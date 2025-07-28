@@ -203,7 +203,7 @@ export const ENEMY_DEFINITIONS = {
         height: 34,
         spriteKey: 'bee',
         animations: {
-            idle: { frameCount: 6, speed: 0.1 },
+            idle: { frameCount: 6, speed: 0.05 },
             attack: { frameCount: 8, speed: 0.08 },
             hit: { frameCount: 5, speed: 0.1 }
         },
@@ -216,7 +216,7 @@ export const ENEMY_DEFINITIONS = {
         ai: {
             type: 'bee',
             patrolBoxSize: 150,
-            airSpeed: 50,
+            airSpeed: 60,
             attackInterval: 2.0,
             bullet: {
                 speed: 200,

@@ -101,9 +101,9 @@ export class Fan extends Trap {
         let angle = 0;
         switch (this.direction) {
             case 'up': angle = 0; break;
-            case 'left': angle = -Math.PI / 2; break;
+            case 'left': angle = Math.PI / 2; break;
             case 'down': angle = Math.PI; break;
-            case 'right': default: angle = Math.PI / 2; break;
+            case 'right': default: angle = -Math.PI / 2; break;
         }
         
         const instanceData = [
