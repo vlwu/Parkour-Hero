@@ -121,13 +121,13 @@ class EditorController {
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-        // Draw minimap background
+
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillRect(mapX, mapY, mapWidth, mapHeight);
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.strokeRect(mapX, mapY, mapWidth, mapHeight);
 
-        // Draw camera viewport
+
         const viewRectX = mapX + camera.x * scaleX;
         const viewRectY = mapY + camera.y * scaleY;
         const viewRectWidth = camera.width * scaleX;
@@ -201,7 +201,7 @@ class EditorController {
         const gl = particleCanvas.getContext('webgl2', { alpha: true });
         ctx.imageSmoothingEnabled = false;
 
-        this.engine = new Engine(ctx, gl, gameCanvas, this.assets, {}, this.fontRenderer);
+        this.engine = new Engine(gl, gameCanvas, ctx, this.assets, {}, this.fontRenderer);
         this.engine.renderer.previewMode = true;
         this.engine.soundManager.setEnabled(false);
         this.engine.loadLevelFromData(levelData);

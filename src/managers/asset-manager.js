@@ -289,8 +289,6 @@ export async function loadAssets() {
     }
   }
 
-
-  // REMOVED: Level data promises have been removed from this initial load.
   const allPromises = [...regularImagePromises, ...soundPromises, ...characterPromises];
 
   try {

@@ -168,4 +168,29 @@ export const ENEMY_DEFINITIONS = {
             groundedDuration: 1.0,
         }
     },
+
+    radish: {
+        width: 30,
+        height: 38,
+        spriteKey: 'radish',
+        animations: {
+            idle1: { frameCount: 6, speed: 0.1 },
+            idle2: { frameCount: 9, speed: 0.1 },
+            run: { frameCount: 12, speed: 0.08 },
+            hit: { frameCount: 5, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: 250,
+            dealsContactDamage: true,
+            contactDamage: 1000,
+        },
+        ai: {
+            type: 'radish',
+            patrolBoxSize: 150,
+            airSpeed: 40,
+            groundSpeed: 30,
+            idleTime: 1.0,
+        }
+    },
 };

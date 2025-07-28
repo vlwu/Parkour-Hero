@@ -10,9 +10,10 @@ import { PreviousPositionComponent } from '../components/PreviousPositionCompone
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
+import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 
 const MAX_SPRITES_PER_BATCH = 5000;
-const ATTRIBUTES_PER_INSTANCE = 11; // Updated to include rotation
+const ATTRIBUTES_PER_INSTANCE = 11;
 const INSTANCE_STRIDE = ATTRIBUTES_PER_INSTANCE * 4;
 
 const fractionalPlatformTypes = [
@@ -121,7 +122,7 @@ export class Renderer {
     gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 2, gl.FLOAT, false, INSTANCE_STRIDE, 24); gl.vertexAttribDivisor(4, 1);
     gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 1, gl.FLOAT, false, INSTANCE_STRIDE, 32); gl.vertexAttribDivisor(5, 1);
     gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 1, gl.FLOAT, false, INSTANCE_STRIDE, 36); gl.vertexAttribDivisor(6, 1);
-    gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 1, gl.FLOAT, false, INSTANCE_STRIDE, 40); gl.vertexAttribDivisor(7, 1); // New rotation attribute
+    gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 1, gl.FLOAT, false, INSTANCE_STRIDE, 40); gl.vertexAttribDivisor(7, 1);
 
     gl.bindVertexArray(null);
   }
@@ -250,7 +251,7 @@ export class Renderer {
             const prevPos = entityManager.getComponent(entityId, PreviousPositionComponent);
             let renderX = prevPos ? prevPos.x + (pos.x - prevPos.x) * alpha : pos.x;
             let renderY = prevPos ? prevPos.y + (pos.y - prevPos.y) * alpha : pos.y;
-            
+
             const isPlayer = entityManager.hasComponent(entityId, CharacterComponent);
             if (isPlayer) {
                 const stateName = renderable.animationState;

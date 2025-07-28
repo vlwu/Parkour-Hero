@@ -95,22 +95,22 @@ export class ParticleSystemWebGL {
         gl.vertexAttribDivisor(2, 1);
 
         gl.enableVertexAttribArray(3);
-        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, instanceStride, 8);
+        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, instanceStride, 12);
         gl.vertexAttribDivisor(3, 1);
 
         gl.enableVertexAttribArray(4);
-        gl.vertexAttribPointer(4, 1, gl.FLOAT, false, instanceStride, 12);
+        gl.vertexAttribPointer(4, 1, gl.FLOAT, false, instanceStride, 16);
         gl.vertexAttribDivisor(4, 1);
 
         gl.enableVertexAttribArray(5);
-        gl.vertexAttribPointer(5, 4, gl.FLOAT, false, instanceStride, 16);
+        gl.vertexAttribPointer(5, 4, gl.FLOAT, false, instanceStride, 20);
         gl.vertexAttribDivisor(5, 1);
 
         gl.bindVertexArray(null);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
         this.textures = {};
-        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles', 'snail_die'];
+        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles', 'snail_die', 'radish_leaves'];
         for (const key of textureKeys) {
             if (this.assets[key]) {
                 this.textures[key] = this._createTexture(this.assets[key]);
@@ -144,6 +144,7 @@ export class ParticleSystemWebGL {
             slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 4.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
             snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
             wing_flap: { count: 1, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30 },
+            radish_leaves: { count: 8, baseSpeed: 80, spriteKey: 'radish_leaves', life: 0.8, gravity: 150, size: 16 },
         };
 
         const config = particleConfigs[type];
@@ -165,7 +166,7 @@ export class ParticleSystemWebGL {
             else if (type === 'wing_flap') {
                 angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             }
-            else if (type === 'enemy_death') angle = Math.random() * Math.PI * 2;
+            else if (type === 'enemy_death' || type === 'radish_leaves') angle = Math.random() * Math.PI * 2;
             else if (type === 'dash') angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
             else if (type === 'double_jump') angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             else if (type === 'jump_trail') { angle = (Math.random() * Math.PI * 2); speed *= (Math.random() * 0.5); }

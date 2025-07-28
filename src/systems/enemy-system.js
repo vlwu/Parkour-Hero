@@ -49,7 +49,26 @@ export class EnemySystem {
                     renderable.animationTimer = 0;
                     collision.solid = false;
                     enemy.deathTimer = 0.5;
-                    this.collisionSystem.removeDynamicEntity(enemyId, entityManager); // Remove from grid
+                    this.collisionSystem.removeDynamicEntity(enemyId, entityManager);
+                    eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
+                }
+            } else if (enemy.type === 'radish' && !enemy.isDead) {
+                if (enemy.radishState === 'flying') {
+                    enemy.radishState = 'falling';
+                    killable.stompable = false;
+                    enemy.immunityTimer = 0.5;
+                    const pos = entityManager.getComponent(enemyId, PositionComponent);
+                    eventBus.publish('createParticles', { x: pos.x + collision.width / 2, y: pos.y + collision.height / 2, type: 'radish_leaves' });
+                    eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
+                } else if (enemy.radishState === 'grounded') {
+                    enemy.isDead = true;
+                    state.currentState = 'dying';
+                    renderable.animationState = 'hit';
+                    renderable.animationFrame = 0;
+                    renderable.animationTimer = 0;
+                    collision.solid = false;
+                    enemy.deathTimer = 0.5;
+                    this.collisionSystem.removeDynamicEntity(enemyId, entityManager);
                     eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
                 }
             } else if (enemy && !enemy.isDead) {
@@ -64,7 +83,7 @@ export class EnemySystem {
                 renderable.animationTimer = 0;
                 collision.solid = false;
                 enemy.deathTimer = 0.5;
-                this.collisionSystem.removeDynamicEntity(enemyId, entityManager); // Remove from grid
+                this.collisionSystem.removeDynamicEntity(enemyId, entityManager);
                 eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
             }
         }

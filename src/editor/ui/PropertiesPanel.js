@@ -13,7 +13,7 @@ export class PropertiesPanel {
             const def = TILE_DEFINITIONS[itemId];
             title = def.type.replace(/_/g, ' ');
             description = def.description;
-        } else { // Covers object, trap, and enemy
+        } else {
             title = itemId.replace(/_/g, ' ');
             description = OBJECT_DESCRIPTIONS[itemId];
         }
@@ -22,11 +22,11 @@ export class PropertiesPanel {
 
     displayObject(obj) {
         let propertiesHTML = `<h3 class="properties-title">${obj.type.replace(/_/g, ' ')} (ID: ${obj.id})</h3>`;
-        
+
         propertiesHTML += this._createNumberInput('x', 'Grid X (Anchor)', obj.x.toFixed(2), 0.01);
         propertiesHTML += this._createNumberInput('y', 'Grid Y (Anchor)', obj.y.toFixed(2), 0.01);
 
-        // Trap Properties
+
         if (obj.type === 'spiked_ball') {
             propertiesHTML += this._createNumberInput('chainLength', 'Chain Length (pixels)', obj.chainLength || 100, 1);
             propertiesHTML += this._createNumberInput('swingArc', 'Swing Arc (degrees)', obj.swingArc || 90, 1);
@@ -58,7 +58,10 @@ export class PropertiesPanel {
             propertiesHTML += this._createNumberInput('horizontalSpeed', 'Max Speed (px/sec)', obj.horizontalSpeed || 60, 5);
             propertiesHTML += this._createNumberInput('verticalAmplitude', 'Bobbing Height (px)', obj.verticalAmplitude || 10, 1);
         }
-        
+        if (obj.type === 'radish') {
+            propertiesHTML += this._createNumberInput('patrolBoxSize', 'Patrol Box Size (px)', obj.patrolBoxSize || 150, 5);
+        }
+
         DOM.propertiesPanel.innerHTML = propertiesHTML;
         this._attachEventListeners(obj);
     }
@@ -95,6 +98,7 @@ export class PropertiesPanel {
         if (obj.type === 'saw') { attach('direction', 'select'); attach('distance'); attach('speed'); }
         if (obj.type === 'fire_trap') { attach('chainLength'); }
         if (obj.type === 'bluebird') { attach('patrolDistance'); attach('horizontalSpeed'); attach('verticalAmplitude'); }
+        if (obj.type === 'radish') { attach('patrolBoxSize'); }
     }
 
     _handleInput(id, prop, element) {
@@ -107,7 +111,7 @@ export class PropertiesPanel {
         if (element.type === 'number') {
             value = parseFloat(element.value);
             if(isNaN(value) || value < 1) {
-                value = 1; // Ensure chain length is at least 1
+                value = 1;
                 element.value = 1;
             }
         } else { value = element.value; }

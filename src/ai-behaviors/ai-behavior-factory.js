@@ -4,6 +4,7 @@ import { DefensiveCycleAI } from './DefensiveCycleAI.js';
 import { SnailAI } from './SnailAI.js';
 import { FlyingPatrolAI } from './FlyingPatrolAI.js';
 import { FlyingSlamAI } from './FlyingSlamAI.js';
+import { RadishAI } from './RadishAI.js';
 
 const aiBehaviorMap = {
     'patrol': PatrolAI,
@@ -12,6 +13,7 @@ const aiBehaviorMap = {
     'snail': SnailAI,
     'flying_patrol': FlyingPatrolAI,
     'flying_slam': FlyingSlamAI,
+    'radish': RadishAI,
 };
 
 /**
