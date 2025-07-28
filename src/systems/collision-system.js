@@ -172,7 +172,6 @@ export class CollisionSystem {
 
             for (const collider of potentialCollidersH) {
                 if (collider.type === 'entity' && collider.entityId === entityId) continue;
-                
 
                 if (this._isRectColliding(entityRect, collider)) {
                     const isPlayer = !!playerCtrl;
