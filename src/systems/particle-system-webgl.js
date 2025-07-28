@@ -110,7 +110,7 @@ export class ParticleSystemWebGL {
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
         this.textures = {};
-        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles', 'snail_die', 'radish_leaves'];
+        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles', 'snail_die', 'radish_leaves', 'bee_bullet_pieces'];
         for (const key of textureKeys) {
             if (this.assets[key]) {
                 this.textures[key] = this._createTexture(this.assets[key]);
@@ -145,6 +145,7 @@ export class ParticleSystemWebGL {
             snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
             wing_flap: { count: 1, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30 },
             radish_leaf: { count: 1, baseSpeed: 120, spriteKey: 'radish_leaves', life: 0.8, gravity: 200, size: 16 },
+            bee_bullet_pieces: { count: 2, baseSpeed: 120, spriteKey: 'bee_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
         };
 
         const config = particleConfigs[type];
@@ -166,7 +167,7 @@ export class ParticleSystemWebGL {
             else if (type === 'wing_flap') {
                 angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             }
-            else if (type === 'enemy_death' || type === 'radish_leaf') angle = Math.random() * Math.PI * 2;
+            else if (type === 'enemy_death' || type === 'radish_leaf' || type === 'bee_bullet_pieces') angle = Math.random() * Math.PI * 2;
             else if (type === 'dash') angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
             else if (type === 'double_jump') angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             else if (type === 'jump_trail') { angle = (Math.random() * Math.PI * 2); speed *= (Math.random() * 0.5); }
@@ -195,6 +196,9 @@ export class ParticleSystemWebGL {
             
             if (type === 'radish_leaf') {
                 p.leafIndex = leafIndex;
+            }
+            if (type === 'bee_bullet_pieces') {
+                p.leafIndex = i;
             }
 
             this.activeParticles.push(p);
@@ -275,11 +279,11 @@ export class ParticleSystemWebGL {
                     instanceData[offset + 5] = 0;
                     instanceData[offset + 6] = 1 / p.animation.frameCount;
                     instanceData[offset + 7] = 1;
-                } else if (p.spriteKey === 'radish_leaves') {
-                    instanceData[offset + 4] = p.leafIndex === 0 ? 0.0 : 0.5; // x_off
-                    instanceData[offset + 5] = 0; // y_off
-                    instanceData[offset + 6] = 0.5; // x_scale
-                    instanceData[offset + 7] = 1.0; // y_scale
+                } else if (p.spriteKey === 'radish_leaves' || p.spriteKey === 'bee_bullet_pieces') {
+                    instanceData[offset + 4] = p.leafIndex === 0 ? 0.0 : 0.5;
+                    instanceData[offset + 5] = 0;
+                    instanceData[offset + 6] = 0.5;
+                    instanceData[offset + 7] = 1.0;
                 } else {
                     instanceData[offset + 4] = 0;
                     instanceData[offset + 5] = 0;

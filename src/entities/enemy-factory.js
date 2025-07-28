@@ -18,7 +18,7 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     const enemyEntityId = entityManager.createEntity();
 
     let initialState;
-    if (data.ai.type === 'flying_patrol' || data.ai.type === 'radish') {
+    if (data.ai.type === 'flying_patrol' || data.ai.type === 'radish' || data.ai.type === 'bee') {
         initialState = 'flying';
     } else if (data.ai.type === 'ground_charge' || data.ai.type === 'defensive_cycle') {
         initialState = 'idle';
@@ -72,6 +72,8 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
         }
     } else if (type === 'radish') {
         initialAnimationState = 'idle1';
+    } else if (type === 'bee') {
+        initialAnimationState = 'idle';
     } else {
         if (type === 'slime') {
             initialAnimationState = 'idle_run';

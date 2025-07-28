@@ -28,6 +28,7 @@ import { CollisionComponent } from '../components/CollisionComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { EnemySystem } from '../systems/enemy-system.js';
 import { Level } from '../entities/level.js';
+import { BulletSystem } from '../systems/bullet-system.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -71,6 +72,7 @@ export class Engine {
     this.gameFlowSystem = new GameFlowSystem();
     this.uiSystem = new UISystem(this.uiCanvas, this.assets);
     this.enemySystem = new EnemySystem(this.collisionSystem);
+    this.bulletSystem = new BulletSystem();
 
     this.systems = [
         this.inputSystem,
@@ -78,6 +80,7 @@ export class Engine {
         this.movementSystem,
         this.collisionSystem,
         this.enemySystem,
+        this.bulletSystem,
         this.gameplaySystem,
         this.renderer,
         this.particleSystem,

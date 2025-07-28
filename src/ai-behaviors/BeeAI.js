@@ -6,12 +6,10 @@ export class BeeAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
         super(entityId, entityManager, level, playerEntityId);
 
-        // From enemy definition
         this.patrolBoxSize = this.enemy.ai.patrolBoxSize || 150;
         this.airSpeed = this.enemy.ai.airSpeed || 50;
         this.attackInterval = this.enemy.ai.attackInterval || 2.0;
 
-        // Internal state
         this.anchorX = this.pos.x + this.col.width / 2;
         this.anchorY = this.pos.y + this.col.height / 2;
         this.targetX = this.anchorX;
@@ -19,6 +17,9 @@ export class BeeAI extends BaseAI {
         this.moveTimer = 0;
         this.attackTimer = this.attackInterval;
         this.hasFired = false;
+        
+        // Ensure the initial state is set correctly
+        this.state.currentState = 'flying';
     }
 
     update(dt) {
@@ -35,7 +36,6 @@ export class BeeAI extends BaseAI {
     _updateFlying(dt) {
         this.renderable.animationState = 'idle';
 
-        // Countdown to the next attack
         this.attackTimer -= dt;
         if (this.attackTimer <= 0) {
             this.state.currentState = 'attacking';
@@ -46,7 +46,6 @@ export class BeeAI extends BaseAI {
             return;
         }
 
-        // Random movement logic (similar to Radish)
         this.moveTimer -= dt;
         if (this.moveTimer <= 0) {
             this.targetX = this.anchorX + (Math.random() - 0.5) * this.patrolBoxSize;
@@ -76,9 +75,9 @@ export class BeeAI extends BaseAI {
         this.vel.vy = 0;
 
         const attackAnim = ENEMY_DEFINITIONS.bee.animations.attack;
-        const fireFrame = 4; // Fire bullet on the 5th frame (index 4)
+        const fireFrame = 4;
 
-        if (this.renderable.animationFrame === fireFrame && !this.hasFired) {
+        if (this.renderable.animationFrame >= fireFrame && !this.hasFired) {
             this.hasFired = true;
             eventBus.publish('spawnBullet', {
                 x: this.pos.x + this.col.width / 2,
@@ -87,8 +86,8 @@ export class BeeAI extends BaseAI {
             });
         }
         
-        // Check if the animation has finished
-        if (this.renderable.animationFrame >= attackAnim.frameCount - 1 && this.renderable.animationTimer >= attackAnim.speed - dt) {
+        const animTimer = this.renderable.animationTimer + dt;
+        if (this.renderable.animationFrame >= attackAnim.frameCount - 1 && animTimer >= attackAnim.speed) {
              this.state.currentState = 'flying';
              this.attackTimer = this.attackInterval;
         }

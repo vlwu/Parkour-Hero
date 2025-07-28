@@ -1,0 +1,7 @@
+export class BulletComponent {
+    constructor({ damage = 50, speed = 200, sourceEntityId = null } = {}) {
+        this.damage = damage;
+        this.speed = speed;
+        this.sourceEntityId = sourceEntityId;
+    }
+}
