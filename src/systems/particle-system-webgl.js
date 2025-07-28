@@ -145,7 +145,7 @@ export class ParticleSystemWebGL {
             snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
             wing_flap: { count: 1, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30 },
             radish_leaf: { count: 1, baseSpeed: 120, spriteKey: 'radish_leaves', life: 0.8, gravity: 200, size: 16 },
-            bee_bullet_pieces: { count: 2, baseSpeed: 120, spriteKey: 'bee_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
+            bee_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'bee_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
         };
 
         const config = particleConfigs[type];
@@ -193,12 +193,9 @@ export class ParticleSystemWebGL {
             p.spriteKey = config.spriteKey;
             p.gravity = config.gravity;
             p.animation = config.animation ? { ...config.animation, frameTimer: 0, currentFrame: 0 } : null;
-            
-            if (type === 'radish_leaf') {
+
+            if (type === 'radish_leaf' || type === 'bee_bullet_pieces') {
                 p.leafIndex = leafIndex;
-            }
-            if (type === 'bee_bullet_pieces') {
-                p.leafIndex = i;
             }
 
             this.activeParticles.push(p);
