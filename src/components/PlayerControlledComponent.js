@@ -30,8 +30,8 @@ export class PlayerControlledComponent {
         this.jumpForce = jumpForce;
         this.dashSpeed = dashSpeed;
         this.dashDuration = dashDuration;
-        
-        // Timers
+
+
         this.jumpBufferTimer = jumpBufferTimer;
         this.coyoteTimer = coyoteTimer;
         this.dashTimer = dashTimer;
@@ -40,7 +40,7 @@ export class PlayerControlledComponent {
         this.surfaceParticleTimer = surfaceParticleTimer;
         this.jumpParticleTimer = jumpParticleTimer;
 
-        // States
+
         this.jumpCount = jumpCount;
         this.isDashing = isDashing;
         this.isHit = isHit;
@@ -51,12 +51,13 @@ export class PlayerControlledComponent {
         this.needsRespawn = needsRespawn;
         this.hLock = hLock;
         this.vLock = vLock;
-        
-        // Stats & Sounds
+
+
         this.deathCount = deathCount;
         this.activeSurfaceSound = activeSurfaceSound;
+        this.previousGroundEntity = null;
 
-        // State Machine
+
         this.currentState = null;
     }
 }

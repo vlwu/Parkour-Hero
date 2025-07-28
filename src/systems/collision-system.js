@@ -144,6 +144,9 @@ export class CollisionSystem {
             const col = entityManager.getComponent(entityId, CollisionComponent);
             const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
 
+            if (playerCtrl) {
+                playerCtrl.previousGroundEntity = col.groundEntity;
+            }
             col.groundEntity = null;
 
             if (playerCtrl && (playerCtrl.isSpawning || playerCtrl.isDespawning || playerCtrl.needsRespawn)) {
@@ -290,12 +293,6 @@ export class CollisionSystem {
                 const highestGround = validGroundColliders.reduce((prev, current) => (prev.y < current.y ? prev : current));
                 this._landOnSurface(pos, vel, col, highestGround.y, highestGround.surfaceType, highestGround.instance, entityId);
                 entityRect.y = pos.y;
-
-                for (const ground of validGroundColliders) {
-                    if (pos.y + col.height >= ground.y - 2 && ground.onLanded) {
-                        ground.onLanded(eventBus);
-                    }
-                }
             }
 
             if (!col.isGrounded && vel.vy >= 0) {
@@ -318,6 +315,12 @@ export class CollisionSystem {
                             break;
                          }
                     }
+                }
+            }
+            
+            if (playerCtrl && col.isGrounded && col.groundEntity && col.groundEntity !== playerCtrl.previousGroundEntity) {
+                if (typeof col.groundEntity.onLanded === 'function') {
+                    col.groundEntity.onLanded(eventBus);
                 }
             }
 
