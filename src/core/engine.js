@@ -72,7 +72,7 @@ export class Engine {
     this.gameFlowSystem = new GameFlowSystem();
     this.uiSystem = new UISystem(this.uiCanvas, this.assets);
     this.enemySystem = new EnemySystem(this.collisionSystem);
-    this.bulletSystem = new BulletSystem();
+    this.bulletSystem = new BulletSystem(this.collisionSystem);
 
     this.systems = [
         this.inputSystem,

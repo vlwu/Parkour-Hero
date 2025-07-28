@@ -8,7 +8,8 @@ import { DynamicColliderComponent } from '../components/DynamicColliderComponent
 import { PLAYER_CONSTANTS } from '../utils/constants.js';
 
 export class BulletSystem {
-    constructor() {
+    constructor(collisionSystem) {
+        this.collisionSystem = collisionSystem;
         this.bulletQueue = [];
         eventBus.subscribe('spawnBullet', (data) => this.bulletQueue.push(data));
     }
@@ -31,29 +32,30 @@ export class BulletSystem {
 
             if (playerPos && playerCol) {
                 if (
-                    pos.x < playerPos.x + col.width &&
+                    pos.x < playerPos.x + playerCol.width &&
                     pos.x + col.width > playerPos.x &&
-                    pos.y < playerPos.y + col.height &&
+                    pos.y < playerPos.y + playerCol.height &&
                     pos.y + col.height > playerPos.y
                 ) {
                     eventBus.publish('playerTookDamage', { amount: bullet.damage, source: 'bullet' });
+                    this.collisionSystem.removeDynamicEntity(id, entityManager);
                     entityManager.destroyEntity(id);
                     continue;
                 }
             }
 
-            // Check if the collision system (which runs before this system) has flagged the bullet as grounded.
             if (col.isGrounded) {
                 eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'bee_bullet_pieces', leafIndex: 0 });
                 eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'bee_bullet_pieces', leafIndex: 1 });
+                this.collisionSystem.removeDynamicEntity(id, entityManager);
                 entityManager.destroyEntity(id);
                 continue;
             }
 
-            // If not destroyed, apply gravity to affect velocity for the *next* frame
-            vel.vy += PLAYER_CONSTANTS.GRAVITY * dt * 0.5; // Use half gravity for a less aggressive arc
+            vel.vy += PLAYER_CONSTANTS.GRAVITY * dt * 0.5;
 
             if (pos.y > level.height) {
+                this.collisionSystem.removeDynamicEntity(id, entityManager);
                 entityManager.destroyEntity(id);
             }
         }
