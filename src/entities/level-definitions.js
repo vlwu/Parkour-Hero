@@ -108,7 +108,6 @@ export const levelSections = [
       }
     ]
   },
-  /*
   {
     name: "Jungle Journey",
     levels: [
@@ -154,6 +153,7 @@ export const levelSections = [
       },
     ]
   },
+  /*
   {
     name: "Virtual Reality",
     levels: [
