@@ -221,6 +221,7 @@ export class CollisionSystem {
             queryBoxV.height = col.height + Math.abs(vel.vy * dt);
 
             const potentialCollidersV = this.spatialGrid.query(queryBoxV);
+            const validGroundColliders = [];
 
             for (const collider of potentialCollidersV) {
                 if (collider.type === 'entity' && collider.entityId === entityId) continue;
@@ -233,8 +234,8 @@ export class CollisionSystem {
                     const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                     const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
-                    
-                    // Increased tolerance to make stomping more lenient
+
+
                     if (vel.vy > 0 && prevBodyBottom <= collider.y + 5 && !enemy.isDead && killable?.stompable) {
                         eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });
                         pos.y = collider.y - col.height;
@@ -263,11 +264,7 @@ export class CollisionSystem {
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
                     if (prevBodyBottom <= collider.y + 2) {
                         if (!collider.isOneWay || prevBodyBottom <= collider.y) {
-                           this._landOnSurface(pos, vel, col, collider.y, collider.surfaceType, collider.instance, entityId);
-                           entityRect.y = pos.y;
-                           if (collider.onLanded) {
-                               collider.onLanded(eventBus);
-                           }
+                           validGroundColliders.push(collider);
                         }
                     }
                 } else {
@@ -289,6 +286,18 @@ export class CollisionSystem {
                 }
             }
 
+            if (validGroundColliders.length > 0) {
+                const highestGround = validGroundColliders.reduce((prev, current) => (prev.y < current.y ? prev : current));
+                this._landOnSurface(pos, vel, col, highestGround.y, highestGround.surfaceType, highestGround.instance, entityId);
+                entityRect.y = pos.y;
+
+                for (const ground of validGroundColliders) {
+                    if (pos.y + col.height >= ground.y - 2 && ground.onLanded) {
+                        ground.onLanded(eventBus);
+                    }
+                }
+            }
+
             if (!col.isGrounded && vel.vy >= 0) {
                 groundProbe.x = pos.x;
                 groundProbe.y = pos.y + col.height;
@@ -303,12 +312,9 @@ export class CollisionSystem {
 
                     if (this._isRectColliding(groundProbe, ground)) {
                          if (!ground.isOneWay) {
-                            this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, ground.instance, entityId);
-                            if (vel.vy > 0) vel.vy = 0;
-                            break;
-                         } else if (ground.isOneWay && pos.y + col.height <= ground.y + 2) {
-                            this._landOnSurface(pos, vel, col, ground.y, ground.surfaceType, ground.instance, entityId);
-                            if (vel.vy > 0) vel.vy = 0;
+                            col.isGrounded = true;
+                            col.groundType = ground.surfaceType;
+                            col.groundEntity = ground.instance;
                             break;
                          }
                     }

@@ -3,12 +3,7 @@ import { TRAP_CONSTANTS } from '../utils/constants.js';
 
 export class FireTrap extends Trap {
     constructor(x, y, config) {
-        const baseWidth = 16;
-        super(x, y, { ...config, width: baseWidth, height: 16 });
-
-        this.chainLength = config.chainLength || 1;
-        this.width = baseWidth * this.chainLength;
-        this.x = x + (this.width - baseWidth) / 2;
+        super(x, y, { ...config, width: 16, height: 16 });
 
         this.solid = true;
         this.state = 'off';
@@ -31,19 +26,6 @@ export class FireTrap extends Trap {
         };
     }
 
-    _isPlayerOnTop(playerData) {
-        if (!playerData) return false;
-
-        const playerBottom = playerData.y + playerData.height;
-        const platformTop = this.y - this.height / 2;
-
-        return (
-            playerData.x < this.x + this.width / 2 &&
-            playerData.x + playerData.width > this.x - this.width / 2 &&
-            Math.abs(playerBottom - platformTop) < 5
-        );
-    }
-
     get damageHitbox() {
         if (this.state === 'on' || this.state === 'activating') {
             return {
@@ -57,7 +39,16 @@ export class FireTrap extends Trap {
     }
 
     update(dt, playerData, eventBus) {
-        const playerIsCurrentlyOnTop = this._isPlayerOnTop(playerData);
+        let playerIsCurrentlyOnTop = false;
+        if (playerData) {
+            const playerBottom = playerData.y + playerData.height;
+            const platformTop = this.y - this.height / 2;
+            playerIsCurrentlyOnTop = (
+                playerData.x < this.x + this.width / 2 &&
+                playerData.x + playerData.width > this.x - this.width / 2 &&
+                Math.abs(playerBottom - platformTop) < 5
+            );
+        }
 
         if (!playerIsCurrentlyOnTop && this.state === 'on') {
             this.state = 'turning_off';
@@ -117,21 +108,19 @@ export class FireTrap extends Trap {
 
     getRenderableData(assets, textures) {
         const results = [];
-        const baseWidth = 16;
         const startX = this.x - this.width / 2;
+        const startY = this.y - this.height / 2;
 
         const baseSprite = assets.fire_off;
         const baseTexture = textures.fire_off;
 
         if (baseSprite && baseTexture) {
-            for (let i = 0; i < this.chainLength; i++) {
-                const instanceData = [
-                    startX + i * baseWidth, this.y - this.height / 2,
-                    baseWidth, this.height,
-                    0, 16, 16, 16, 0.0
-                ];
-                results.push({ texture: baseTexture, instanceData });
-            }
+            const instanceData = [
+                startX, startY,
+                this.width, this.height,
+                0, 16, 16, 16, 0.0
+            ];
+            results.push({ texture: baseTexture, instanceData });
         }
 
         if (this.state === 'off') return results;
@@ -150,16 +139,14 @@ export class FireTrap extends Trap {
         }
 
         if (sprite && texture) {
-            for (let i = 0; i < this.chainLength; i++) {
-                const instanceData = [
-                    startX + i * baseWidth, this.y - this.height * 1.5,
-                    baseWidth, this.height * 2,
-                    srcX, 0,
-                    frameWidth, sprite.height,
-                    0.0
-                ];
-                results.push({ texture, instanceData });
-            }
+            const instanceData = [
+                startX, this.y - this.height * 1.5,
+                this.width, this.height * 2,
+                srcX, 0,
+                frameWidth, sprite.height,
+                0.0
+            ];
+            results.push({ texture, instanceData });
         }
         return results;
     }

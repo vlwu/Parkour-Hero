@@ -108,40 +108,51 @@ export class Level {
     eventBus.subscribe('createSlimePuddle', (pos) => this.addSlimePuddle(pos));
 
     (levelConfig.objects || []).forEach(obj => {
-      const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
-      const worldY = obj.y * GRID_CONSTANTS.TILE_SIZE;
+        const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
+        const worldY = obj.y * GRID_CONSTANTS.TILE_SIZE;
 
-      const ItemClass = trapFactory[obj.type];
+        if (obj.type === 'fire_trap') {
+            const chainLength = obj.chainLength || 1;
+            const segmentWidth = 16;
+            for (let i = 0; i < chainLength; i++) {
+                const segmentX = worldX + (i * segmentWidth);
+                const segmentConfig = { ...obj, chainLength: 1 };
+                const instance = new Traps.FireTrap(segmentX, worldY, segmentConfig);
+                this.traps.push(instance);
+            }
+        } else {
+            const ItemClass = trapFactory[obj.type];
 
-      if (ItemClass) {
-        const instance = new ItemClass(worldX, worldY, obj);
-        this.traps.push(instance);
-      } else if (obj.type.startsWith('fruit_')) {
-        const instance = {
-          x: worldX, y: worldY, size: 28,
-          spriteKey: obj.type, frame: 0,
-          frameCount: 17, frameSpeed: 0.07,
-          frameTimer: 0, collected: false,
-          type: 'fruit'
-        };
-        this.fruits.push(instance);
-      } else if (obj.type === 'checkpoint') {
-        const instance = {
-          x: worldX, y: worldY, size: 64,
-          state: 'inactive', frame: 0,
-          frameCount: 26, frameSpeed: 0.07,
-          frameTimer: 0, type: 'checkpoint'
-        };
-        this.checkpoints.push(instance);
-      } else if (obj.type === 'trophy') {
-        this.trophy = {
-          x: worldX, y: worldY, size: 64,
-          frameCount: 8, animationFrame: 0,
-          animationTimer: 0, animationSpeed: 0.07,
-          acquired: false, inactive: true, contactMade: false,
-          isAnimating: false, type: 'trophy'
-        };
-      }
+            if (ItemClass) {
+                const instance = new ItemClass(worldX, worldY, obj);
+                this.traps.push(instance);
+            } else if (obj.type.startsWith('fruit_')) {
+                const instance = {
+                    x: worldX, y: worldY, size: 28,
+                    spriteKey: obj.type, frame: 0,
+                    frameCount: 17, frameSpeed: 0.07,
+                    frameTimer: 0, collected: false,
+                    type: 'fruit'
+                };
+                this.fruits.push(instance);
+            } else if (obj.type === 'checkpoint') {
+                const instance = {
+                    x: worldX, y: worldY, size: 64,
+                    state: 'inactive', frame: 0,
+                    frameCount: 26, frameSpeed: 0.07,
+                    frameTimer: 0, type: 'checkpoint'
+                };
+                this.checkpoints.push(instance);
+            } else if (obj.type === 'trophy') {
+                this.trophy = {
+                    x: worldX, y: worldY, size: 64,
+                    frameCount: 8, animationFrame: 0,
+                    animationTimer: 0, animationSpeed: 0.07,
+                    acquired: false, inactive: true, contactMade: false,
+                    isAnimating: false, type: 'trophy'
+                };
+            }
+        }
     });
 
     if (entityManager) {
