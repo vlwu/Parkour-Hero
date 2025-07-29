@@ -40,18 +40,15 @@ export class ParkourHeroUI extends LitElement {
       gap: 20px;
     }
     .icon-button {
-      background: rgba(0, 0, 0, 0.4);
-      border: 2px solid rgba(255, 255, 255, 0.7);
-      padding: 4px;
-      border-radius: 12px;
+      background: transparent;
+      border: none;
+      padding: 0;
       cursor: pointer;
-      width: 64px;
-      height: 64px;
+      width: 54px;
+      height: 54px;
       transition: all 0.2s ease-in-out;
     }
     .icon-button:hover {
-      background: rgba(0, 0, 0, 0.6);
-      border-color: #fff;
       transform: scale(1.1);
     }
     .icon-button img {
