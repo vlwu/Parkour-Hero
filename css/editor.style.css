@@ -97,17 +97,17 @@ body {
     background-color: #4aa3e0;
 }
 
-.danger-action {
+#toolbar button.danger-action {
     background-color: var(--danger-color);
 }
-.danger-action:hover:not(:disabled) {
+#toolbar button.danger-action:hover:not(:disabled) {
     background-color: #c0392b;
 }
 
-.success-action {
+#toolbar button.success-action {
     background-color: var(--success-color);
 }
-.success-action:hover:not(:disabled) {
+#toolbar button.success-action:hover:not(:disabled) {
     background-color: #27ae60;
 }
 
