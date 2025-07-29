@@ -3,10 +3,10 @@
   "gridWidth": 27,
   "gridHeight": 59,
   "background": "background_pink",
-  "startPosition": {
-    "x": 22.92,
-    "y": 54.17
-  },
+  "startPosition": [
+    22.92,
+    54.17
+  ],
   "layout": [
     "000000000000000000000000000",
     "000000000000000000000000000",
@@ -68,95 +68,93 @@
     "000000000000000000000000000",
     "000000000000000000000000000"
   ],
-  "objects": [
-    {
-      "type": "fruit_apple",
-      "x": 16.07,
-      "y": 52.48
-    },
-    {
-      "type": "fruit_bananas",
-      "x": 4.54,
-      "y": 47.07
-    },
-    {
-      "type": "fruit_cherries",
-      "x": 17.25,
-      "y": 33.91
-    },
-    {
-      "type": "fruit_kiwi",
-      "x": 21.53,
-      "y": 37.62
-    },
-    {
-      "type": "fruit_melon",
-      "x": 10.42,
-      "y": 33.33
-    },
-    {
-      "type": "fruit_orange",
-      "x": 7.26,
-      "y": 31.12
-    },
-    {
-      "type": "fruit_pineapple",
-      "x": 13.11,
-      "y": 42.52
-    },
-    {
-      "type": "fruit_strawberry",
-      "x": 10.72,
-      "y": 50.25
-    },
-    {
-      "type": "checkpoint",
-      "x": 17.4,
-      "y": 41.33
-    },
-    {
-      "type": "trophy",
-      "x": 4.17,
-      "y": 31.33
-    },
-    {
-      "type": "wood_third_v",
-      "x": 11.17,
-      "y": 51.5
-    },
-    {
-      "type": "stone_third_h",
-      "x": 4.5,
-      "y": 50.17
-    },
-    {
-      "type": "stone_four_ninths_sq",
-      "x": 19.33,
-      "y": 36.67
-    }
-  ],
-  "enemies": [
-    {
-      "type": "bee",
-      "x": 11.56,
-      "y": 48.29,
-      "patrolBoxSize": 150
-    },
-    {
-      "type": "slime",
-      "x": 17.5,
-      "y": 35.69
-    },
-    {
-      "type": "fatbird",
-      "x": 11.4,
-      "y": 43.06
-    },
-    {
-      "type": "bee",
-      "x": 10.59,
-      "y": 31.22,
-      "patrolBoxSize": 150
-    }
+  "entities": [
+    [
+      "fruit_apple",
+      16.07,
+      52.48
+    ],
+    [
+      "fruit_bananas",
+      4.54,
+      47.07
+    ],
+    [
+      "fruit_cherries",
+      17.25,
+      33.91
+    ],
+    [
+      "fruit_kiwi",
+      21.53,
+      37.62
+    ],
+    [
+      "fruit_melon",
+      10.42,
+      33.33
+    ],
+    [
+      "fruit_orange",
+      7.26,
+      31.12
+    ],
+    [
+      "fruit_pineapple",
+      13.11,
+      42.52
+    ],
+    [
+      "fruit_strawberry",
+      10.72,
+      50.25
+    ],
+    [
+      "checkpoint",
+      17.4,
+      41.33
+    ],
+    [
+      "trophy",
+      4.17,
+      31.33
+    ],
+    [
+      "wood_third_v",
+      11.17,
+      51.5
+    ],
+    [
+      "stone_third_h",
+      4.5,
+      50.17
+    ],
+    [
+      "stone_four_ninths_sq",
+      19.33,
+      36.67
+    ],
+    [
+      "bee",
+      11.56,
+      48.29,
+      150
+    ],
+    [
+      "slime",
+      17.5,
+      35.69
+    ],
+    [
+      "fatbird",
+      11.4,
+      43.06
+    ],
+    [
+      "bee",
+      10.59,
+      31.22,
+      150
+    ]
   ]
 }

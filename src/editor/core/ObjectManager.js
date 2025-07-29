@@ -24,27 +24,63 @@ export class ObjectManager {
         this.render();
     }
 
-    load(objectsData, enemiesData, startPosition) {
+    load(levelData) {
         this.nextObjectId = 0;
         this.objects = [];
 
-        (objectsData || []).forEach(obj => {
-            const { width, height } = this._getObjectDimensions(obj.type);
-            this.objects.push({ ...obj, id: this.nextObjectId++, width, height });
+        (levelData.entities || []).forEach(entityData => {
+            const type = entityData[0];
+            const x = entityData[1];
+            const y = entityData[2];
+            const { width, height } = this._getObjectDimensions(type);
+
+            const obj = { type, x, y, id: this.nextObjectId++, width, height };
+
+            let propIndex = 3;
+            switch (type) {
+                case 'fire_trap':
+                    obj.chainLength = entityData[propIndex++];
+                    break;
+                case 'spiked_ball':
+                    obj.chainLength = entityData[propIndex++];
+                    obj.swingArc = entityData[propIndex++];
+                    obj.period = entityData[propIndex++];
+                    obj.tiltAmount = entityData[propIndex++];
+                    break;
+                case 'arrow_bubble':
+                    obj.direction = entityData[propIndex++];
+                    obj.knockbackSpeed = entityData[propIndex++];
+                    break;
+                case 'fan':
+                    obj.direction = entityData[propIndex++];
+                    obj.pushStrength = entityData[propIndex++];
+                    obj.windHeight = entityData[propIndex++];
+                    break;
+                case 'saw':
+                    obj.direction = entityData[propIndex++];
+                    obj.distance = entityData[propIndex++];
+                    obj.speed = entityData[propIndex++];
+                    break;
+                case 'bluebird':
+                    obj.patrolDistance = entityData[propIndex++];
+                    obj.horizontalSpeed = entityData[propIndex++];
+                    obj.verticalAmplitude = entityData[propIndex++];
+                    break;
+                case 'radish':
+                case 'bee':
+                    obj.patrolBoxSize = entityData[propIndex++];
+                    break;
+            }
+            this.objects.push(obj);
         });
 
-        (enemiesData || []).forEach(enemy => {
-             const { width, height } = this._getObjectDimensions(enemy.type);
-             this.objects.push({ ...enemy, id: this.nextObjectId++, width, height });
-        });
-
-        if (startPosition) {
+        if (levelData.startPosition) {
             const { width, height } = this._getObjectDimensions('player_spawn');
             this.objects.push({
                 id: this.nextObjectId++,
                 type: 'player_spawn',
-                x: startPosition.x,
-                y: startPosition.y,
+                x: levelData.startPosition[0],
+                y: levelData.startPosition[1],
                 width,
                 height
             });
@@ -125,23 +161,42 @@ export class ObjectManager {
 
     getObjectsForExport() {
         const playerSpawn = this.objects.find(obj => obj.type === 'player_spawn');
-        const startPos = playerSpawn ? { x: round(playerSpawn.x), y: round(playerSpawn.y) } : { x: 1.5, y: this.grid.height - 2.5 };
-        const finalObjects = [];
-        const finalEnemies = [];
+        const startPos = playerSpawn ? [round(playerSpawn.x), round(playerSpawn.y)] : [1.5, this.grid.height - 2.5];
+
+        const finalEntities = [];
         this.objects.forEach(obj => {
             if (obj.type === 'player_spawn') return;
 
-            const { id, width, height, ...rest } = obj;
-            const finalObj = {};
-            for (const key in rest) { finalObj[key] = typeof rest[key] === 'number' ? round(rest[key]) : rest[key]; }
+            const entityArray = [obj.type, round(obj.x), round(obj.y)];
 
-            if (ENEMY_DEFINITIONS[obj.type]) {
-                finalEnemies.push(finalObj);
-            } else {
-                finalObjects.push(finalObj);
+            switch (obj.type) {
+                case 'fire_trap':
+                    entityArray.push(obj.chainLength);
+                    break;
+                case 'spiked_ball':
+                    entityArray.push(obj.chainLength, obj.swingArc, obj.period, obj.tiltAmount);
+                    break;
+                case 'arrow_bubble':
+                    entityArray.push(obj.direction, obj.knockbackSpeed);
+                    break;
+                case 'fan':
+                    entityArray.push(obj.direction, obj.pushStrength, obj.windHeight);
+                    break;
+                case 'saw':
+                    entityArray.push(obj.direction, obj.distance, obj.speed);
+                    break;
+                case 'bluebird':
+                    entityArray.push(obj.patrolDistance, obj.horizontalSpeed, obj.verticalAmplitude);
+                    break;
+                case 'radish':
+                case 'bee':
+                    entityArray.push(obj.patrolBoxSize);
+                    break;
             }
+            finalEntities.push(entityArray);
         });
-        return { startPos, finalObjects, finalEnemies };
+
+        return { startPos, finalEntities };
     }
 
     render() {
@@ -285,7 +340,7 @@ export class ObjectManager {
                 centerLine.style.backgroundColor = 'rgba(0,0,0,0.5)';
                 DOM.gridContainer.appendChild(centerLine);
             }
-            
+
             if (obj.type === 'radish' || obj.type === 'bee') {
                 const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
                 const patrolBoxSize = obj.patrolBoxSize || ENEMY_DEFINITIONS[obj.type].ai.patrolBoxSize;

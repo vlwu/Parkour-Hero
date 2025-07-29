@@ -3,10 +3,10 @@
   "gridWidth": 27,
   "gridHeight": 46,
   "background": "background_blue",
-  "startPosition": {
-    "x": 2.08,
-    "y": 40.63
-  },
+  "startPosition": [
+    2.08,
+    40.63
+  ],
   "layout": [
     "000000000000000000000000000",
     "000000000000000000000000000",
@@ -55,104 +55,102 @@
     "000000000000000000000000000",
     "000000000000000000000000000"
   ],
-  "objects": [
-    {
-      "type": "fruit_apple",
-      "x": 8.32,
-      "y": 38.03
-    },
-    {
-      "type": "fruit_bananas",
-      "x": 3.75,
-      "y": 35.42
-    },
-    {
-      "type": "fruit_cherries",
-      "x": 8.55,
-      "y": 31.31
-    },
-    {
-      "type": "fruit_kiwi",
-      "x": 18.47,
-      "y": 26.75
-    },
-    {
-      "type": "fruit_melon",
-      "x": 9.51,
-      "y": 20
-    },
-    {
-      "type": "fruit_orange",
-      "x": 4.02,
-      "y": 16.17
-    },
-    {
-      "type": "fruit_pineapple",
-      "x": 11.02,
-      "y": 10.59
-    },
-    {
-      "type": "fruit_strawberry",
-      "x": 15.87,
-      "y": 9.16
-    },
-    {
-      "type": "checkpoint",
-      "x": 10.42,
-      "y": 32.33
-    },
-    {
-      "type": "trophy",
-      "x": 22.83,
-      "y": 6.33
-    },
-    {
-      "type": "trampoline",
-      "x": 12.71,
-      "y": 24.71
-    },
-    {
-      "type": "spiked_ball",
-      "x": 9.18,
-      "y": 34,
-      "chainLength": 170,
-      "swingArc": 90,
-      "period": 3,
-      "tiltAmount": 1.2
-    },
-    {
-      "type": "fire_trap",
-      "x": 13.36,
-      "y": 29.83,
-      "chainLength": 2
-    },
-    {
-      "type": "spike",
-      "x": 17.52,
-      "y": 27.83
-    },
-    {
-      "type": "rock_head",
-      "x": 7.76,
-      "y": 36.53
-    }
-  ],
-  "enemies": [
-    {
-      "type": "bluebird",
-      "x": 17.38,
-      "y": 8.73,
-      "patrolDistance": 200,
-      "horizontalSpeed": 60,
-      "verticalAmplitude": 10
-    },
-    {
-      "type": "bluebird",
-      "x": 10.86,
-      "y": 19.42,
-      "patrolDistance": 200,
-      "horizontalSpeed": 60,
-      "verticalAmplitude": 10
-    }
+  "entities": [
+    [
+      "fruit_apple",
+      8.32,
+      38.03
+    ],
+    [
+      "fruit_bananas",
+      3.75,
+      35.42
+    ],
+    [
+      "fruit_cherries",
+      8.55,
+      31.31
+    ],
+    [
+      "fruit_kiwi",
+      18.47,
+      26.75
+    ],
+    [
+      "fruit_melon",
+      9.51,
+      20
+    ],
+    [
+      "fruit_orange",
+      4.02,
+      16.17
+    ],
+    [
+      "fruit_pineapple",
+      11.02,
+      10.59
+    ],
+    [
+      "fruit_strawberry",
+      15.87,
+      9.16
+    ],
+    [
+      "checkpoint",
+      10.42,
+      32.33
+    ],
+    [
+      "trophy",
+      22.83,
+      6.33
+    ],
+    [
+      "trampoline",
+      12.71,
+      24.71
+    ],
+    [
+      "spiked_ball",
+      9.18,
+      34,
+      170,
+      90,
+      3,
+      1.2
+    ],
+    [
+      "fire_trap",
+      13.36,
+      29.83,
+      2
+    ],
+    [
+      "spike",
+      17.52,
+      27.83
+    ],
+    [
+      "rock_head",
+      7.76,
+      36.53
+    ],
+    [
+      "bluebird",
+      17.38,
+      8.73,
+      200,
+      60,
+      10
+    ],
+    [
+      "bluebird",
+      10.86,
+      19.42,
+      200,
+      60,
+      10
+    ]
   ]
 }

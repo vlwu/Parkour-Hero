@@ -3,10 +3,10 @@
   "gridWidth": 27,
   "gridHeight": 42,
   "background": "background_blue",
-  "startPosition": {
-    "x": 12.5,
-    "y": 37.5
-  },
+  "startPosition": [
+    12.5,
+    37.5
+  ],
   "layout": [
     "000000000000000000000000000",
     "000000000000000000000000000",
@@ -51,122 +51,122 @@
     "000000000000000000000000000",
     "000000000000000000000000000"
   ],
-  "objects": [
-    {
-      "type": "fruit_apple",
-      "x": 8.62,
-      "y": 33.94
-    },
-    {
-      "type": "fruit_bananas",
-      "x": 17.94,
-      "y": 30.26
-    },
-    {
-      "type": "fruit_cherries",
-      "x": 24.44,
-      "y": 15.85
-    },
-    {
-      "type": "fruit_kiwi",
-      "x": 1.83,
-      "y": 22.48
-    },
-    {
-      "type": "fruit_melon",
-      "x": 13.69,
-      "y": 15.88
-    },
-    {
-      "type": "fruit_orange",
-      "x": 18.98,
-      "y": 12.3
-    },
-    {
-      "type": "fruit_pineapple",
-      "x": 10.05,
-      "y": 26.9
-    },
-    {
-      "type": "fruit_strawberry",
-      "x": 8.88,
-      "y": 19.12
-    },
-    {
-      "type": "trophy",
-      "x": 23.33,
-      "y": 11.33
-    },
-    {
-      "type": "trampoline",
-      "x": 8.23,
-      "y": 36.71
-    },
-    {
-      "type": "arrow_bubble",
-      "x": 15.17,
-      "y": 14.56,
-      "direction": "down",
-      "knockbackSpeed": 300
-    },
-    {
-      "type": "spike",
-      "x": 6.35,
-      "y": 26.83
-    },
-    {
-      "type": "spike",
-      "x": 4.5,
-      "y": 23.83
-    },
-    {
-      "type": "spike",
-      "x": 1.47,
-      "y": 23.83
-    },
-    {
-      "type": "trampoline",
-      "x": 19.44,
-      "y": 31.71
-    },
-    {
-      "type": "fan",
-      "x": 22.5,
-      "y": 21.92,
-      "direction": "up",
-      "pushStrength": 300,
-      "windHeight": 150
-    },
-    {
-      "type": "spike",
-      "x": 25.27,
-      "y": 16.83
-    },
-    {
-      "type": "spike",
-      "x": 25.74,
-      "y": 16.83
-    },
-    {
-      "type": "arrow_bubble",
-      "x": 22.55,
-      "y": 17.56,
-      "direction": "left",
-      "knockbackSpeed": 500
-    },
-    {
-      "type": "checkpoint",
-      "x": 12.4,
-      "y": 28.33
-    },
-    {
-      "type": "spiked_ball",
-      "x": 21.88,
-      "y": 13.04,
-      "chainLength": 160,
-      "swingArc": 130,
-      "period": 4,
-      "tiltAmount": 1.2
-    }
+  "entities": [
+    [
+      "fruit_apple",
+      8.62,
+      33.94
+    ],
+    [
+      "fruit_bananas",
+      17.94,
+      30.26
+    ],
+    [
+      "fruit_cherries",
+      24.44,
+      15.85
+    ],
+    [
+      "fruit_kiwi",
+      1.83,
+      22.48
+    ],
+    [
+      "fruit_melon",
+      13.69,
+      15.88
+    ],
+    [
+      "fruit_orange",
+      18.98,
+      12.3
+    ],
+    [
+      "fruit_pineapple",
+      10.05,
+      26.9
+    ],
+    [
+      "fruit_strawberry",
+      8.88,
+      19.12
+    ],
+    [
+      "trophy",
+      23.33,
+      11.33
+    ],
+    [
+      "trampoline",
+      8.23,
+      36.71
+    ],
+    [
+      "arrow_bubble",
+      15.17,
+      14.56,
+      "down",
+      300
+    ],
+    [
+      "spike",
+      6.35,
+      26.83
+    ],
+    [
+      "spike",
+      4.5,
+      23.83
+    ],
+    [
+      "spike",
+      1.47,
+      23.83
+    ],
+    [
+      "trampoline",
+      19.44,
+      31.71
+    ],
+    [
+      "fan",
+      22.5,
+      21.92,
+      "up",
+      300,
+      150
+    ],
+    [
+      "spike",
+      25.27,
+      16.83
+    ],
+    [
+      "spike",
+      25.74,
+      16.83
+    ],
+    [
+      "arrow_bubble",
+      22.55,
+      17.56,
+      "left",
+      500
+    ],
+    [
+      "checkpoint",
+      12.4,
+      28.33
+    ],
+    [
+      "spiked_ball",
+      21.88,
+      13.04,
+      160,
+      130,
+      4,
+      1.2
+    ]
   ]
 }

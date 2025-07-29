@@ -3,10 +3,10 @@
   "gridWidth": 28,
   "gridHeight": 15,
   "background": "background_blue",
-  "startPosition": {
-    "x": 1.5,
-    "y": 6.5
-  },
+  "startPosition": [
+    1.5,
+    6.5
+  ],
   "layout": [
     "0000000000000000000000000000",
     "0000000000000000000000000000",
@@ -24,63 +24,61 @@
     "0000000000000000000000000000",
     "0000000000000000000000000000"
   ],
-  "objects": [
-    {
-      "type": "fruit_apple",
-      "x": 2.09,
-      "y": 5.73
-    },
-    {
-      "type": "fruit_bananas",
-      "x": 7.46,
-      "y": 4.91
-    },
-    {
-      "type": "fruit_cherries",
-      "x": 12.5,
-      "y": 5.21
-    },
-    {
-      "type": "fruit_kiwi",
-      "x": 17.09,
-      "y": 3.79
-    },
-    {
-      "type": "fruit_melon",
-      "x": 20.83,
-      "y": 3.13
-    },
-    {
-      "type": "fruit_orange",
-      "x": 4.69,
-      "y": 6.67
-    },
-    {
-      "type": "fruit_pineapple",
-      "x": 9.9,
-      "y": 5.63
-    },
-    {
-      "type": "fruit_strawberry",
-      "x": 13.88,
-      "y": 3.57
-    },
-    {
-      "type": "trophy",
-      "x": 23.27,
-      "y": 6.33
-    }
-  ],
-  "enemies": [
-    {
-      "type": "mushroom",
-      "x": 7.5,
-      "y": 6.67
-    },
-    {
-      "type": "chicken",
-      "x": 18.25,
-      "y": 4.65
-    }
+  "entities": [
+    [
+      "fruit_apple",
+      2.09,
+      5.73
+    ],
+    [
+      "fruit_bananas",
+      7.46,
+      4.91
+    ],
+    [
+      "fruit_cherries",
+      12.5,
+      5.21
+    ],
+    [
+      "fruit_kiwi",
+      17.09,
+      3.79
+    ],
+    [
+      "fruit_melon",
+      20.83,
+      3.13
+    ],
+    [
+      "fruit_orange",
+      4.69,
+      6.67
+    ],
+    [
+      "fruit_pineapple",
+      9.9,
+      5.63
+    ],
+    [
+      "fruit_strawberry",
+      13.88,
+      3.57
+    ],
+    [
+      "trophy",
+      23.27,
+      6.33
+    ],
+    [
+      "mushroom",
+      7.5,
+      6.67
+    ],
+    [
+      "chicken",
+      18.25,
+      4.65
+    ]
   ]
 }

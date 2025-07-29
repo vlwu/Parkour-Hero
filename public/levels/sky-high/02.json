@@ -3,10 +3,10 @@
   "gridWidth": 27,
   "gridHeight": 53,
   "background": "background_brown",
-  "startPosition": {
-    "x": 11.72,
-    "y": 48.04
-  },
+  "startPosition": [
+    11.72,
+    48.04
+  ],
   "layout": [
     "000000000000000000000000000",
     "000000000000000000000000000",
@@ -63,141 +63,139 @@
     "000000000000000000000000000",
     "000000000000000000000000000"
   ],
-  "objects": [
-    {
-      "type": "fruit_apple",
-      "x": 17.44,
-      "y": 45.71
-    },
-    {
-      "type": "fruit_bananas",
-      "x": 8.46,
-      "y": 39.8
-    },
-    {
-      "type": "fruit_cherries",
-      "x": 3.92,
-      "y": 36.73
-    },
-    {
-      "type": "fruit_kiwi",
-      "x": 14.58,
-      "y": 31.25
-    },
-    {
-      "type": "fruit_melon",
-      "x": 15.63,
-      "y": 25
-    },
-    {
-      "type": "fruit_orange",
-      "x": 4.77,
-      "y": 18.13
-    },
-    {
-      "type": "fruit_pineapple",
-      "x": 14.45,
-      "y": 11.49
-    },
-    {
-      "type": "fruit_strawberry",
-      "x": 9.98,
-      "y": 12.89
-    },
-    {
-      "type": "checkpoint",
-      "x": 19.25,
-      "y": 28.33
-    },
-    {
-      "type": "trophy",
-      "x": 21.79,
-      "y": 9.33
-    },
-    {
-      "type": "trampoline",
-      "x": 13.61,
-      "y": 49.71
-    },
-    {
-      "type": "trampoline",
-      "x": 14.39,
-      "y": 25.71
-    },
-    {
-      "type": "trampoline",
-      "x": 9.51,
-      "y": 15.71
-    },
-    {
-      "type": "stone_four_ninths_sq",
-      "x": 18.67,
-      "y": 10.67
-    },
-    {
-      "type": "orange_dirt_third_v",
-      "x": 8.83,
-      "y": 16.5
-    },
-    {
-      "type": "spike",
-      "x": 19.51,
-      "y": 9.83
-    },
-    {
-      "type": "spike",
-      "x": 20.05,
-      "y": 9.83
-    },
-    {
-      "type": "gold_third_h",
-      "x": 11.5,
-      "y": 22.83
-    },
-    {
-      "type": "wood_third_h",
-      "x": 13.5,
-      "y": 13.17
-    },
-    {
-      "type": "wood_third_v",
-      "x": 14.17,
-      "y": 44.5
-    },
-    {
-      "type": "wood_four_ninths_sq",
-      "x": 10.33,
-      "y": 41.67
-    }
-  ],
-  "enemies": [
-    {
-      "type": "fatbird",
-      "x": 5.25,
-      "y": 16.78
-    },
-    {
-      "type": "fatbird",
-      "x": 15.1,
-      "y": 29.81
-    },
-    {
-      "type": "bluebird",
-      "x": 7.3,
-      "y": 37.17,
-      "patrolDistance": 200,
-      "horizontalSpeed": 60,
-      "verticalAmplitude": 10
-    },
-    {
-      "type": "mushroom",
-      "x": 10,
-      "y": 21.67
-    },
-    {
-      "type": "turtle",
-      "x": 12.7,
-      "y": 43.73
-    }
+  "entities": [
+    [
+      "fruit_apple",
+      17.44,
+      45.71
+    ],
+    [
+      "fruit_bananas",
+      8.46,
+      39.8
+    ],
+    [
+      "fruit_cherries",
+      3.92,
+      36.73
+    ],
+    [
+      "fruit_kiwi",
+      14.58,
+      31.25
+    ],
+    [
+      "fruit_melon",
+      15.63,
+      25
+    ],
+    [
+      "fruit_orange",
+      4.77,
+      18.13
+    ],
+    [
+      "fruit_pineapple",
+      14.45,
+      11.49
+    ],
+    [
+      "fruit_strawberry",
+      9.98,
+      12.89
+    ],
+    [
+      "checkpoint",
+      19.25,
+      28.33
+    ],
+    [
+      "trophy",
+      21.79,
+      9.33
+    ],
+    [
+      "trampoline",
+      13.61,
+      49.71
+    ],
+    [
+      "trampoline",
+      14.39,
+      25.71
+    ],
+    [
+      "trampoline",
+      9.51,
+      15.71
+    ],
+    [
+      "stone_four_ninths_sq",
+      18.67,
+      10.67
+    ],
+    [
+      "orange_dirt_third_v",
+      8.83,
+      16.5
+    ],
+    [
+      "spike",
+      19.51,
+      9.83
+    ],
+    [
+      "spike",
+      20.05,
+      9.83
+    ],
+    [
+      "gold_third_h",
+      11.5,
+      22.83
+    ],
+    [
+      "wood_third_h",
+      13.5,
+      13.17
+    ],
+    [
+      "wood_third_v",
+      14.17,
+      44.5
+    ],
+    [
+      "wood_four_ninths_sq",
+      10.33,
+      41.67
+    ],
+    [
+      "fatbird",
+      5.25,
+      16.78
+    ],
+    [
+      "fatbird",
+      15.1,
+      29.81
+    ],
+    [
+      "bluebird",
+      7.3,
+      37.17,
+      200,
+      60,
+      10
+    ],
+    [
+      "mushroom",
+      10,
+      21.67
+    ],
+    [
+      "turtle",
+      12.7,
+      43.73
+    ]
   ]
 }

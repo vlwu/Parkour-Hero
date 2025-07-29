@@ -3,10 +3,10 @@
   "gridWidth": 27,
   "gridHeight": 15,
   "background": "background_purple",
-  "startPosition": {
-    "x": 1.04,
-    "y": 6.25
-  },
+  "startPosition": [
+    1.04,
+    6.25
+  ],
   "layout": [
     "000000000000000000000000000",
     "000000000000000000000000000",
@@ -24,116 +24,116 @@
     "000000000000022200000000000",
     "000000000000000000000000000"
   ],
-  "objects": [
-    {
-      "type": "fruit_apple",
-      "x": 3.58,
-      "y": 5.85
-    },
-    {
-      "type": "fruit_bananas",
-      "x": 24.51,
-      "y": 4.58
-    },
-    {
-      "type": "fruit_cherries",
-      "x": 7.59,
-      "y": 9.09
-    },
-    {
-      "type": "fruit_kiwi",
-      "x": 10,
-      "y": 4.17
-    },
-    {
-      "type": "fruit_melon",
-      "x": 11.57,
-      "y": 7.05
-    },
-    {
-      "type": "fruit_orange",
-      "x": 16.07,
-      "y": 5.06
-    },
-    {
-      "type": "fruit_pineapple",
-      "x": 5.51,
-      "y": 5.06
-    },
-    {
-      "type": "fruit_strawberry",
-      "x": 20.06,
-      "y": 9.79
-    },
-    {
-      "type": "trophy",
-      "x": 20.68,
-      "y": 3.33
-    },
-    {
-      "type": "saw",
-      "x": 7.52,
-      "y": 4.32,
-      "direction": "vertical",
-      "distance": 250,
-      "speed": 75
-    },
-    {
-      "type": "spiked_ball",
-      "x": 15.68,
-      "y": 7.07,
-      "chainLength": 200,
-      "swingArc": 100,
-      "period": 5,
-      "tiltAmount": 1.5
-    },
-    {
-      "type": "falling_platform",
-      "x": 18.69,
-      "y": 11.78
-    },
-    {
-      "type": "spike",
-      "x": 13.29,
-      "y": 12.83
-    },
-    {
-      "type": "spike",
-      "x": 13.73,
-      "y": 12.83
-    },
-    {
-      "type": "falling_platform",
-      "x": 21.91,
-      "y": 10.98
-    },
-    {
-      "type": "trampoline",
-      "x": 25.47,
-      "y": 6.71
-    },
-    {
-      "type": "rock_head",
-      "x": 15.74,
-      "y": 3.89
-    },
-    {
-      "type": "spike",
-      "x": 19.23,
-      "y": 3.83
-    },
-    {
-      "type": "spike",
-      "x": 19.64,
-      "y": 3.83
-    },
-    {
-      "type": "saw",
-      "x": 17.08,
-      "y": 12.54,
-      "direction": "horizontal",
-      "distance": 150,
-      "speed": 50
-    }
+  "entities": [
+    [
+      "fruit_apple",
+      3.58,
+      5.85
+    ],
+    [
+      "fruit_bananas",
+      24.51,
+      4.58
+    ],
+    [
+      "fruit_cherries",
+      7.59,
+      9.09
+    ],
+    [
+      "fruit_kiwi",
+      10,
+      4.17
+    ],
+    [
+      "fruit_melon",
+      11.57,
+      7.05
+    ],
+    [
+      "fruit_orange",
+      16.07,
+      5.06
+    ],
+    [
+      "fruit_pineapple",
+      5.51,
+      5.06
+    ],
+    [
+      "fruit_strawberry",
+      20.06,
+      9.79
+    ],
+    [
+      "trophy",
+      20.68,
+      3.33
+    ],
+    [
+      "saw",
+      7.52,
+      4.32,
+      "vertical",
+      250,
+      75
+    ],
+    [
+      "spiked_ball",
+      15.68,
+      7.07,
+      200,
+      100,
+      5,
+      1.5
+    ],
+    [
+      "falling_platform",
+      18.69,
+      11.78
+    ],
+    [
+      "spike",
+      13.29,
+      12.83
+    ],
+    [
+      "spike",
+      13.73,
+      12.83
+    ],
+    [
+      "falling_platform",
+      21.91,
+      10.98
+    ],
+    [
+      "trampoline",
+      25.47,
+      6.71
+    ],
+    [
+      "rock_head",
+      15.74,
+      3.89
+    ],
+    [
+      "spike",
+      19.23,
+      3.83
+    ],
+    [
+      "spike",
+      19.64,
+      3.83
+    ],
+    [
+      "saw",
+      17.08,
+      12.54,
+      "horizontal",
+      150,
+      50
+    ]
   ]
 }

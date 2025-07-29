@@ -3,10 +3,10 @@
   "gridWidth": 27,
   "gridHeight": 42,
   "background": "background_red",
-  "startPosition": {
-    "x": 2.08,
-    "y": 6.25
-  },
+  "startPosition": [
+    2.08,
+    6.25
+  ],
   "layout": [
     "000000000000000000000000000",
     "000000000000000000000000000",
@@ -51,51 +51,51 @@
     "000000000000000000000000000",
     "000000000000000000000000000"
   ],
-  "objects": [
-    {
-      "type": "fruit_apple",
-      "x": 11.58,
-      "y": 12.73
-    },
-    {
-      "type": "fruit_bananas",
-      "x": 6.96,
-      "y": 16.09
-    },
-    {
-      "type": "fruit_cherries",
-      "x": 11.5,
-      "y": 18.85
-    },
-    {
-      "type": "fruit_kiwi",
-      "x": 20.83,
-      "y": 26.04
-    },
-    {
-      "type": "fruit_melon",
-      "x": 11.46,
-      "y": 32.29
-    },
-    {
-      "type": "fruit_orange",
-      "x": 19,
-      "y": 32.86
-    },
-    {
-      "type": "fruit_pineapple",
-      "x": 9.01,
-      "y": 23.91
-    },
-    {
-      "type": "fruit_strawberry",
-      "x": 16.05,
-      "y": 28.82
-    },
-    {
-      "type": "trophy",
-      "x": 17.71,
-      "y": 35.33
-    }
+  "entities": [
+    [
+      "fruit_apple",
+      11.58,
+      12.73
+    ],
+    [
+      "fruit_bananas",
+      6.96,
+      16.09
+    ],
+    [
+      "fruit_cherries",
+      11.5,
+      18.85
+    ],
+    [
+      "fruit_kiwi",
+      20.83,
+      26.04
+    ],
+    [
+      "fruit_melon",
+      11.46,
+      32.29
+    ],
+    [
+      "fruit_orange",
+      19,
+      32.86
+    ],
+    [
+      "fruit_pineapple",
+      9.01,
+      23.91
+    ],
+    [
+      "fruit_strawberry",
+      16.05,
+      28.82
+    ],
+    [
+      "trophy",
+      17.71,
+      35.33
+    ]
   ]
 }

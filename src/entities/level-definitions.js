@@ -141,7 +141,7 @@ export const levelSections = [
       },
       {
         name: "Level 8",
-        jsonPath: "/levels/jungle-journey/01.json"
+        jsonPath: "/levels/jungle-journey/08.json"
       },
       {
         name: "Level 9",

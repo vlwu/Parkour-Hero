@@ -3,10 +3,10 @@
   "gridWidth": 30,
   "gridHeight": 42,
   "background": "background_green",
-  "startPosition": {
-    "x": 2.3,
-    "y": 37.5
-  },
+  "startPosition": [
+    2.3,
+    37.5
+  ],
   "layout": [
     "000000000000000000000000000000",
     "000000000000000000000000000000",
@@ -52,209 +52,207 @@
     "000000000000000000000000000000",
     "000000000000000000000000000000"
   ],
-  "objects": [
-    {
-      "type": "fruit_apple",
-      "x": 1.57,
-      "y": 16.17
-    },
-    {
-      "type": "fruit_bananas",
-      "x": 15.19,
-      "y": 35.37
-    },
-    {
-      "type": "fruit_cherries",
-      "x": 23.43,
-      "y": 33.66
-    },
-    {
-      "type": "fruit_kiwi",
-      "x": 12.8,
-      "y": 16.98
-    },
-    {
-      "type": "fruit_melon",
-      "x": 5.21,
-      "y": 27.08
-    },
-    {
-      "type": "fruit_orange",
-      "x": 11.46,
-      "y": 23.96
-    },
-    {
-      "type": "fruit_pineapple",
-      "x": 17.53,
-      "y": 9.77
-    },
-    {
-      "type": "fruit_strawberry",
-      "x": 23.57,
-      "y": 21.37
-    },
-    {
-      "type": "checkpoint",
-      "x": 10.83,
-      "y": 29.33
-    },
-    {
-      "type": "trophy",
-      "x": 23.07,
-      "y": 7.33
-    },
-    {
-      "type": "falling_platform",
-      "x": 8.14,
-      "y": 38.43
-    },
-    {
-      "type": "falling_platform",
-      "x": 11.76,
-      "y": 38.35
-    },
-    {
-      "type": "falling_platform",
-      "x": 16.71,
-      "y": 23.61
-    },
-    {
-      "type": "falling_platform",
-      "x": 14.76,
-      "y": 31.12
-    },
-    {
-      "type": "spike",
-      "x": 22.49,
-      "y": 34.83
-    },
-    {
-      "type": "spiked_ball",
-      "x": 11.87,
-      "y": 25.99,
-      "chainLength": 110,
-      "swingArc": 120,
-      "period": 3.5,
-      "tiltAmount": 0.8
-    },
-    {
-      "type": "stone_third_v",
-      "x": 21.83,
-      "y": 22.5
-    },
-    {
-      "type": "orange_dirt_third_v",
-      "x": 19.17,
-      "y": 32.5
-    },
-    {
-      "type": "rock_head",
-      "x": 18.54,
-      "y": 29.73
-    },
-    {
-      "type": "arrow_bubble",
-      "x": 20.69,
-      "y": 23.61,
-      "direction": "up",
-      "knockbackSpeed": 700
-    },
-    {
-      "type": "spike_head",
-      "x": 23.2,
-      "y": 19.48
-    },
-    {
-      "type": "gold_third_v",
-      "x": 20.17,
-      "y": 19.5
-    },
-    {
-      "type": "gold_third_v",
-      "x": 12.83,
-      "y": 18.5
-    },
-    {
-      "type": "gold_third_v",
-      "x": 7.83,
-      "y": 18.5
-    },
-    {
-      "type": "gold_four_ninths_sq",
-      "x": 4.33,
-      "y": 17.33
-    },
-    {
-      "type": "trampoline",
-      "x": 3.65,
-      "y": 16.71
-    },
-    {
-      "type": "wood_third_v",
-      "x": 4.83,
-      "y": 11.5
-    },
-    {
-      "type": "wood_third_v",
-      "x": 6.17,
-      "y": 11.5
-    },
-    {
-      "type": "stone_third_v",
-      "x": 11.83,
-      "y": 11.5
-    },
-    {
-      "type": "stone_third_v",
-      "x": 17.5,
-      "y": 11.5
-    },
-    {
-      "type": "stone_ninth_sq",
-      "x": 22.17,
-      "y": 8.83
-    },
-    {
-      "type": "stone_four_ninths_sq",
-      "x": 21.67,
-      "y": 8.67
-    },
-    {
-      "type": "stone_four_ninths_sq",
-      "x": 10.67,
-      "y": 25.67
-    }
-  ],
-  "enemies": [
-    {
-      "type": "radish",
-      "x": 5.17,
-      "y": 24.97,
-      "patrolBoxSize": 150
-    },
-    {
-      "type": "radish",
-      "x": 7.26,
-      "y": 25.81,
-      "patrolBoxSize": 100
-    },
-    {
-      "type": "turtle",
-      "x": 19,
-      "y": 18.73
-    },
-    {
-      "type": "bluebird",
-      "x": 14.75,
-      "y": 9.78,
-      "patrolDistance": 200,
-      "horizontalSpeed": 60,
-      "verticalAmplitude": 10
-    },
-    {
-      "type": "fatbird",
-      "x": 2.23,
-      "y": 15.01
-    }
+  "entities": [
+    [
+      "fruit_apple",
+      1.57,
+      16.17
+    ],
+    [
+      "fruit_bananas",
+      15.19,
+      35.37
+    ],
+    [
+      "fruit_cherries",
+      23.43,
+      33.66
+    ],
+    [
+      "fruit_kiwi",
+      12.8,
+      16.98
+    ],
+    [
+      "fruit_melon",
+      5.21,
+      27.08
+    ],
+    [
+      "fruit_orange",
+      11.46,
+      23.96
+    ],
+    [
+      "fruit_pineapple",
+      17.53,
+      9.77
+    ],
+    [
+      "fruit_strawberry",
+      23.57,
+      21.37
+    ],
+    [
+      "checkpoint",
+      10.83,
+      29.33
+    ],
+    [
+      "trophy",
+      23.07,
+      7.33
+    ],
+    [
+      "falling_platform",
+      8.14,
+      38.43
+    ],
+    [
+      "falling_platform",
+      11.76,
+      38.35
+    ],
+    [
+      "falling_platform",
+      16.71,
+      23.61
+    ],
+    [
+      "falling_platform",
+      14.76,
+      31.12
+    ],
+    [
+      "spike",
+      22.49,
+      34.83
+    ],
+    [
+      "spiked_ball",
+      11.87,
+      25.99,
+      110,
+      120,
+      3.5,
+      0.8
+    ],
+    [
+      "stone_third_v",
+      21.83,
+      22.5
+    ],
+    [
+      "orange_dirt_third_v",
+      19.17,
+      32.5
+    ],
+    [
+      "rock_head",
+      18.54,
+      29.73
+    ],
+    [
+      "arrow_bubble",
+      20.69,
+      23.61,
+      "up",
+      700
+    ],
+    [
+      "spike_head",
+      23.2,
+      19.48
+    ],
+    [
+      "gold_third_v",
+      20.17,
+      19.5
+    ],
+    [
+      "gold_third_v",
+      12.83,
+      18.5
+    ],
+    [
+      "gold_third_v",
+      7.83,
+      18.5
+    ],
+    [
+      "gold_four_ninths_sq",
+      4.33,
+      17.33
+    ],
+    [
+      "trampoline",
+      3.65,
+      16.71
+    ],
+    [
+      "wood_third_v",
+      4.83,
+      11.5
+    ],
+    [
+      "wood_third_v",
+      6.17,
+      11.5
+    ],
+    [
+      "stone_third_v",
+      11.83,
+      11.5
+    ],
+    [
+      "stone_third_v",
+      17.5,
+      11.5
+    ],
+    [
+      "stone_ninth_sq",
+      22.17,
+      8.83
+    ],
+    [
+      "stone_four_ninths_sq",
+      21.67,
+      8.67
+    ],
+    [
+      "stone_four_ninths_sq",
+      10.67,
+      25.67
+    ],
+    [
+      "radish",
+      5.17,
+      24.97,
+      150
+    ],
+    [
+      "radish",
+      7.26,
+      25.81,
+      100
+    ],
+    [
+      "turtle",
+      19,
+      18.73
+    ],
+    [
+      "bluebird",
+      14.75,
+      9.78,
+      200,
+      60,
+      10
+    ],
+    [
+      "fatbird",
+      2.23,
+      15.01
+    ]
   ]
 }

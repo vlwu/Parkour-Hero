@@ -3,10 +3,10 @@
   "gridWidth": 27,
   "gridHeight": 15,
   "background": "background_green",
-  "startPosition": {
-    "x": 1.04,
-    "y": 11.46
-  },
+  "startPosition": [
+    1.04,
+    11.46
+  ],
   "layout": [
     "000000000000000000000000000",
     "000000000000000000003000001",
@@ -25,126 +25,125 @@
     "000000000000000000000000000",
     "000000000000000000000000000"
   ],
-  "objects": [
-    {
-      "type": "fruit_apple",
-      "x": 2.08,
-      "y": 9.38
-    },
-    {
-      "type": "fruit_bananas",
-      "x": 5.46,
-      "y": 10.39
-    },
-    {
-      "type": "fruit_cherries",
-      "x": 8.05,
-      "y": 8.31
-    },
-    {
-      "type": "fruit_kiwi",
-      "x": 11.84,
-      "y": 6.38
-    },
-    {
-      "type": "fruit_melon",
-      "x": 17.49,
-      "y": 3.98
-    },
-    {
-      "type": "fruit_orange",
-      "x": 25.49,
-      "y": 3.88
-    },
-    {
-      "type": "fruit_pineapple",
-      "x": 9.9,
-      "y": 6.06
-    },
-    {
-      "type": "fruit_strawberry",
-      "x": 19.62,
-      "y": 10.81
-    },
-    {
-      "type": "trophy",
-      "x": 22.57,
-      "y": 2.36
-    },
-    {
-      "type": "rock_head",
-      "x": 11.87,
-      "y": 4.85
-    },
-    {
-      "type": "rock_head",
-      "x": 8.04,
-      "y": 6.83
-    },
-    {
-      "type": "trampoline",
-      "x": 13.47,
-      "y": 6.71
-    },
-    {
-      "type": "spiked_ball",
-      "x": 17.53,
-      "y": 7.03,
-      "chainLength": 196,
-      "swingArc": 130,
-      "period": 4,
-      "tiltAmount": 0.7
-    },
-    {
-      "type": "spike",
-      "x": 20.28,
-      "y": 0.83
-    },
-    {
-      "type": "spike",
-      "x": 20.75,
-      "y": 0.83
-    },
-    {
-      "type": "fire_trap",
-      "x": 18.82,
-      "y": 11.83,
-      "chainLength": 6
-    },
-    {
-      "type": "arrow_bubble",
-      "x": 25.48,
-      "y": 6.94,
-      "direction": "up",
-      "knockbackSpeed": 700
-    },
-    {
-      "type": "arrow_bubble",
-      "x": 25.48,
-      "y": 4.91,
-      "direction": "up",
-      "knockbackSpeed": 700
-    },
-    {
-      "type": "arrow_bubble",
-      "x": 25.46,
-      "y": 2.84,
-      "direction": "up",
-      "knockbackSpeed": 500
-    },
-    {
-      "type": "fan",
-      "x": 25.92,
-      "y": 1.5,
-      "direction": "left",
-      "pushStrength": 350,
-      "windHeight": 175
-    },
-    {
-      "type": "falling_platform",
-      "x": 23.06,
-      "y": 11.48
-    }
-  ],
-  "enemies": []
+  "entities": [
+    [
+      "fruit_apple",
+      2.08,
+      9.38
+    ],
+    [
+      "fruit_bananas",
+      5.46,
+      10.39
+    ],
+    [
+      "fruit_cherries",
+      8.05,
+      8.31
+    ],
+    [
+      "fruit_kiwi",
+      11.84,
+      6.38
+    ],
+    [
+      "fruit_melon",
+      17.49,
+      3.98
+    ],
+    [
+      "fruit_orange",
+      25.49,
+      3.88
+    ],
+    [
+      "fruit_pineapple",
+      9.9,
+      6.06
+    ],
+    [
+      "fruit_strawberry",
+      19.62,
+      10.81
+    ],
+    [
+      "trophy",
+      22.57,
+      2.36
+    ],
+    [
+      "rock_head",
+      11.87,
+      4.85
+    ],
+    [
+      "rock_head",
+      8.04,
+      6.83
+    ],
+    [
+      "trampoline",
+      13.47,
+      6.71
+    ],
+    [
+      "spiked_ball",
+      17.53,
+      7.03,
+      196,
+      130,
+      4,
+      0.7
+    ],
+    [
+      "spike",
+      20.28,
+      0.83
+    ],
+    [
+      "spike",
+      20.75,
+      0.83
+    ],
+    [
+      "fire_trap",
+      18.82,
+      11.83,
+      6
+    ],
+    [
+      "arrow_bubble",
+      25.48,
+      6.94,
+      "up",
+      700
+    ],
+    [
+      "arrow_bubble",
+      25.48,
+      4.91,
+      "up",
+      700
+    ],
+    [
+      "arrow_bubble",
+      25.46,
+      2.84,
+      "up",
+      500
+    ],
+    [
+      "fan",
+      25.92,
+      1.5,
+      "left",
+      350,
+      175
+    ],
+    [
+      "falling_platform",
+      23.06,
+      11.48
+    ]
+  ]
 }

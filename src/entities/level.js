@@ -7,6 +7,7 @@ import { SpatialGrid } from '../utils/spatial-grid.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { createEnemy } from './enemy-factory.js';
 import { eventBus } from '../utils/event-bus.js';
+import { ENEMY_DEFINITIONS } from './enemy-definitions.js';
 
 
 const staticPlatformDefinitions = {
@@ -88,8 +89,8 @@ export class Level {
 
 
     this.startPosition = {
-      x: levelConfig.startPosition.x * GRID_CONSTANTS.TILE_SIZE,
-      y: levelConfig.startPosition.y * GRID_CONSTANTS.TILE_SIZE,
+      x: levelConfig.startPosition[0] * GRID_CONSTANTS.TILE_SIZE,
+      y: levelConfig.startPosition[1] * GRID_CONSTANTS.TILE_SIZE,
     };
 
     this.tiles = levelConfig.layout.map(rowString =>
@@ -103,39 +104,81 @@ export class Level {
     this.checkpoints = [];
     this.traps = [];
     this.trophy = null;
-    this.initialEnemyConfigs = levelConfig.enemies || [];
+    this.initialEnemyConfigs = [];
     this.slimePuddlePool = [];
     eventBus.subscribe('createSlimePuddle', (pos) => this.addSlimePuddle(pos));
 
-    (levelConfig.objects || []).forEach(obj => {
-        const worldX = obj.x * GRID_CONSTANTS.TILE_SIZE;
-        const worldY = obj.y * GRID_CONSTANTS.TILE_SIZE;
+    (levelConfig.entities || []).forEach(entityData => {
+        const type = entityData[0];
+        const worldX = entityData[1] * GRID_CONSTANTS.TILE_SIZE;
+        const worldY = entityData[2] * GRID_CONSTANTS.TILE_SIZE;
 
-        if (obj.type === 'fire_trap') {
-            const chainLength = obj.chainLength || 1;
+        const config = { type };
+
+        if (ENEMY_DEFINITIONS[type]) {
+            let propIndex = 3;
+            if (type === 'bluebird') {
+                config.patrolDistance = entityData[propIndex++];
+                config.horizontalSpeed = entityData[propIndex++];
+                config.verticalAmplitude = entityData[propIndex++];
+            } else if (type === 'radish' || type === 'bee') {
+                config.patrolBoxSize = entityData[propIndex++];
+            }
+            this.initialEnemyConfigs.push({ ...config, x: entityData[1], y: entityData[2] });
+            return;
+        }
+
+        let propIndex = 3;
+        switch (type) {
+            case 'fire_trap':
+                config.chainLength = entityData[propIndex++];
+                break;
+            case 'spiked_ball':
+                config.chainLength = entityData[propIndex++];
+                config.swingArc = entityData[propIndex++];
+                config.period = entityData[propIndex++];
+                config.tiltAmount = entityData[propIndex++];
+                break;
+            case 'arrow_bubble':
+                config.direction = entityData[propIndex++];
+                config.knockbackSpeed = entityData[propIndex++];
+                break;
+            case 'fan':
+                config.direction = entityData[propIndex++];
+                config.pushStrength = entityData[propIndex++];
+                config.windHeight = entityData[propIndex++];
+                break;
+            case 'saw':
+                config.direction = entityData[propIndex++];
+                config.distance = entityData[propIndex++];
+                config.speed = entityData[propIndex++];
+                break;
+        }
+
+        if (type === 'fire_trap') {
+            const chainLength = config.chainLength || 1;
             const segmentWidth = 16;
             for (let i = 0; i < chainLength; i++) {
                 const segmentX = worldX + (i * segmentWidth);
-                const segmentConfig = { ...obj, chainLength: 1 };
+                const segmentConfig = { ...config, chainLength: 1 };
                 const instance = new Traps.FireTrap(segmentX, worldY, segmentConfig);
                 this.traps.push(instance);
             }
         } else {
-            const ItemClass = trapFactory[obj.type];
-
+            const ItemClass = trapFactory[type];
             if (ItemClass) {
-                const instance = new ItemClass(worldX, worldY, obj);
+                const instance = new ItemClass(worldX, worldY, config);
                 this.traps.push(instance);
-            } else if (obj.type.startsWith('fruit_')) {
+            } else if (type.startsWith('fruit_')) {
                 const instance = {
                     x: worldX, y: worldY, size: 28,
-                    spriteKey: obj.type, frame: 0,
+                    spriteKey: type, frame: 0,
                     frameCount: 17, frameSpeed: 0.07,
                     frameTimer: 0, collected: false,
                     type: 'fruit'
                 };
                 this.fruits.push(instance);
-            } else if (obj.type === 'checkpoint') {
+            } else if (type === 'checkpoint') {
                 const instance = {
                     x: worldX, y: worldY, size: 64,
                     state: 'inactive', frame: 0,
@@ -143,7 +186,7 @@ export class Level {
                     frameTimer: 0, type: 'checkpoint'
                 };
                 this.checkpoints.push(instance);
-            } else if (obj.type === 'trophy') {
+            } else if (type === 'trophy') {
                 this.trophy = {
                     x: worldX, y: worldY, size: 64,
                     frameCount: 8, animationFrame: 0,
