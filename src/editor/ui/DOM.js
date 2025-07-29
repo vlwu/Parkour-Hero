@@ -1,5 +1,5 @@
 export const DOM = {
-    // Initialize properties as null
+
     gridContainer: null,
     gridParent: null,
     propertiesPanel: null,
@@ -13,6 +13,8 @@ export const DOM = {
     resizeBtn: null,
     loadBtn: null,
     exportBtn: null,
+    createLevelBtn: null,
+    backBtn: null,
     testLevelBtn: null,
     undoBtn: null,
     redoBtn: null,
@@ -20,7 +22,7 @@ export const DOM = {
     zoomOutBtn: null,
     loadFileInput: null,
 
-    // init method to populate the properties
+
     init() {
         this.gridContainer = document.getElementById('grid-container');
         this.gridParent = document.getElementById('grid-parent');
@@ -35,6 +37,8 @@ export const DOM = {
         this.resizeBtn = document.getElementById('resizeBtn');
         this.loadBtn = document.getElementById('loadBtn');
         this.exportBtn = document.getElementById('exportBtn');
+        this.createLevelBtn = document.getElementById('createLevelBtn');
+        this.backBtn = document.getElementById('backBtn');
         this.testLevelBtn = document.getElementById('testLevelBtn');
         this.undoBtn = document.getElementById('undoBtn');
         this.redoBtn = document.getElementById('redoBtn');

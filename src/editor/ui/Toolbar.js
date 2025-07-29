@@ -6,17 +6,19 @@ export class Toolbar {
         DOM.resizeBtn.addEventListener('click', callbacks.onResize);
         DOM.loadBtn.addEventListener('click', () => DOM.loadFileInput.click());
         DOM.exportBtn.addEventListener('click', callbacks.onExport);
-        DOM.testLevelBtn.addEventListener('click', callbacks.onTestLevel); // This line was added
+        DOM.createLevelBtn.addEventListener('click', callbacks.onCreateLevel);
+        DOM.backBtn.addEventListener('click', callbacks.onBack);
+        DOM.testLevelBtn.addEventListener('click', callbacks.onTestLevel);
 
         DOM.undoBtn.addEventListener('click', callbacks.onUndo);
         DOM.redoBtn.addEventListener('click', callbacks.onRedo);
-        
+
         DOM.zoomInBtn.addEventListener('click', callbacks.onZoomIn);
         DOM.zoomOutBtn.addEventListener('click', callbacks.onZoomOut);
 
         DOM.loadFileInput.addEventListener('change', (e) => {
             callbacks.onFileLoad(e);
-            e.target.value = null; // Reset file input
+            e.target.value = null;
         });
     }
 }

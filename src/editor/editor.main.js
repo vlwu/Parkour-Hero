@@ -67,6 +67,8 @@ class EditorController {
             onRedo: this._onRedo.bind(this),
             onZoomIn: () => this.grid.zoom(0.1),
             onZoomOut: () => this.grid.zoom(-0.1),
+            onCreateLevel: this._onCreateLevel.bind(this),
+            onBack: this._onBack.bind(this),
         });
         window.addEventListener('resize', () => this.grid.autoFitScale());
         window.addEventListener('keydown', (e) => {
@@ -411,12 +413,12 @@ class EditorController {
             DOM.levelNameInput.value = data.name;
             DOM.backgroundInput.value = data.background || 'background_blue';
 
-            if (data.tileData) { // New sparse format
+            if (data.tileData) {
                 data.tileData.forEach(tile => {
                     const index = tile.y * this.grid.width + tile.x;
                     this.grid.paintCell(index, tile.id);
                 });
-            } else if (data.layout) { // Legacy full grid format
+            } else if (data.layout) {
                 data.layout.forEach((rowString, y) => {
                     [...rowString].forEach((tileId, x) => {
                         if (tileId !== '0') {
@@ -433,6 +435,35 @@ class EditorController {
 
     _onExport() {
         LevelExporter.export(this.grid, this.objectManager, DOM.levelNameInput.value, DOM.backgroundInput.value);
+    }
+
+    _onBack() {
+        window.location.href = 'index.html';
+    }
+
+    _onCreateLevel() {
+        const { startPos, finalEntities } = this.objectManager.getObjectsForExport();
+        const levelData = {
+            name: DOM.levelNameInput.value || 'My DIY Level',
+            gridWidth: this.grid.width,
+            gridHeight: this.grid.height,
+            background: DOM.backgroundInput.value,
+            startPosition: startPos,
+            tileData: this.grid.getTileDataForExport(),
+            entities: finalEntities,
+        };
+
+        try {
+            const diyLevelsJSON = localStorage.getItem('parkourHeroDIYLevels');
+            const diyLevels = diyLevelsJSON ? JSON.parse(diyLevelsJSON) : [];
+            diyLevels.push(levelData);
+            localStorage.setItem('parkourHeroDIYLevels', JSON.stringify(diyLevels));
+            alert('Level saved successfully! Returning to the main menu.');
+            window.location.href = 'index.html#levels';
+        } catch (e) {
+            console.error('Failed to save level to localStorage:', e);
+            alert('Error: Could not save the level. Your browser might be blocking localStorage or the data is too large.');
+        }
     }
 
     _onUndo() {

@@ -134,6 +134,7 @@ export async function loadAssets() {
     levels_icon: '/assets/Menu/Buttons/Levels.png',
     character_icon: '/assets/Menu/Buttons/Character.png',
     info_icon: '/assets/Menu/Buttons/Info.png',
+    editor_icon: '/assets/Menu/Buttons/Editor.png',
 
     background_blue: '/assets/Background/Blue.png',
     background_brown: '/assets/Background/Brown.png',

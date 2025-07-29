@@ -21,7 +21,7 @@ export class ParkourHeroUI extends LitElement {
       flex-direction: column;
     }
     .main-menu-container { display: flex; flex-direction: column; align-items: center; gap: 40px; }
-    
+
     .main-menu-buttons { display: flex; flex-direction: column; gap: 20px; width: 250px; }
     .main-menu-buttons button {
       background-color: #007bff; border: 3px solid #0056b3;
@@ -69,7 +69,7 @@ export class ParkourHeroUI extends LitElement {
     }
     .loading-text {
         font-size: 4em;
-        font-family: 'Arial', sans-serif; /* Fallback font */
+        font-family: 'Arial', sans-serif;
         font-weight: bold;
         margin-bottom: 20px;
     }
@@ -112,6 +112,12 @@ export class ParkourHeroUI extends LitElement {
     this.fontRenderer = null;
     this.levelCompleteStats = null;
     this.previewMode = false;
+
+    if (window.location.hash === '#levels') {
+      this.activeModal = 'levels';
+      this.gameHasStarted = true;
+      history.pushState("", document.title, window.location.pathname + window.location.search);
+    }
   }
 
   connectedCallback() {
@@ -153,7 +159,7 @@ export class ParkourHeroUI extends LitElement {
           this.gameHasStarted = true;
       }
       this.activeModal = null;
-      
+
       const isFirstLevel = gameState.currentSection === 0 && gameState.currentLevelIndex === 0;
       if (isFirstLevel && !gameState.tutorialShown && !this.previewMode) {
           this.activeModal = 'tutorial';
@@ -173,7 +179,7 @@ export class ParkourHeroUI extends LitElement {
 
   _handleUIButtonClick = ({ buttonId }) => {
     if (buttonId === 'pause') {
-      if (this.activeModal) { this._closeModal(); } 
+      if (this.activeModal) { this._closeModal(); }
       else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
     } else if (buttonId === 'stats') {
         this.activeModal = 'stats';
@@ -195,7 +201,7 @@ export class ParkourHeroUI extends LitElement {
     const newKeybinds = { ...this.keybinds, [action]: newKey };
     eventBus.publish('keybindsUpdated', newKeybinds);
   };
-  
+
   _closeModal = () => {
     const wasOpen = this.activeModal !== null;
     const modalThatWasClosed = this.activeModal;
@@ -213,20 +219,24 @@ export class ParkourHeroUI extends LitElement {
         eventBus.publish('allMenusClosed');
     }
   }
-  
+
   _openModalFromMenu(modalName) {
       eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
-      this.activeModal = modalName;
+      if (modalName === 'editor') {
+          window.location.href = 'editor.html';
+      } else {
+          this.activeModal = modalName;
+      }
   }
 
   _handleRestart() { this._closeModal(); eventBus.publish('requestLevelRestart'); }
   _handleOpenLevelsMenu() { this.activeModal = 'levels'; }
-  
+
   _handleLevelSelected(e) {
     const { sectionIndex, levelIndex } = e.detail;
     eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
   }
-  
+
   _handleCharacterSelected(e) {
     const { characterId } = e.detail;
     const newGameState = this.gameState.setSelectedCharacter(characterId);
@@ -272,10 +282,10 @@ export class ParkourHeroUI extends LitElement {
         </div>
       `;
     }
-    
+
     return this.renderActiveModal();
   }
-  
+
   renderLoadingScreen() {
       return html`
         <div class="loading-container">
@@ -288,14 +298,15 @@ export class ParkourHeroUI extends LitElement {
   renderMainMenuContent() {
     const hasProgress = this.gameState && (this.gameState.levelProgress.completedLevels.length > 0 || this.gameState.levelProgress.unlockedLevels[0] > 1);
     const startButtonText = hasProgress ? 'Continue' : 'Start Game';
-    
+
     const iconButtons = [
         { id: 'levels', title: 'Levels' },
         { id: 'character', title: 'Character' },
         { id: 'settings', title: 'Settings' },
         { id: 'info', title: 'How to Play' },
+        { id: 'editor', title: 'Level Editor' },
     ];
-    
+
     const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
     return html`
@@ -318,7 +329,7 @@ export class ParkourHeroUI extends LitElement {
       </div>
     `;
   }
-  
+
   renderActiveModal() {
     switch (this.activeModal) {
       case 'tutorial':
@@ -328,7 +339,7 @@ export class ParkourHeroUI extends LitElement {
                       @close-modal=${this._closeModal}
                     ></tutorial-modal>`;
       case 'settings':
-        return html`<settings-menu 
+        return html`<settings-menu
                       .keybinds=${this.keybinds} .soundSettings=${this.soundSettings} .fontRenderer=${this.fontRenderer}
                       @close-modal=${this._closeModal} @keybind-changed=${this._handleKeybindChange}
                     ></settings-menu>`;

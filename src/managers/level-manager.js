@@ -6,10 +6,26 @@ export class LevelManager {
   constructor(gameState) {
     this.gameState = gameState;
     this.levelSections = levelSections;
+    this.loadDIYLevels();
 
     eventBus.subscribe('requestNextLevel', () => this.goToNextLevel());
     eventBus.subscribe('requestPreviousLevel', () => this.goToPreviousLevel());
     eventBus.subscribe('gameStateUpdated', (newGameState) => this.gameState = newGameState);
+  }
+
+  loadDIYLevels() {
+    try {
+      const diyLevelsJSON = localStorage.getItem('parkourHeroDIYLevels');
+      if (diyLevelsJSON) {
+        const diyLevels = JSON.parse(diyLevelsJSON);
+        const diySection = this.levelSections.find(section => section.name === 'DIY');
+        if (diySection && Array.isArray(diyLevels)) {
+          diySection.levels = diyLevels;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load or parse DIY levels from localStorage", e);
+    }
   }
 
   async getLevelData(sectionIndex, levelIndex) {
@@ -20,7 +36,7 @@ export class LevelManager {
 
     let levelEntry = this.levelSections[sectionIndex].levels[levelIndex];
 
-    // Check if the level data is just a path (not yet loaded)
+
     if (levelEntry && typeof levelEntry.jsonPath === 'string') {
         try {
             const response = await fetch(levelEntry.jsonPath);
@@ -28,16 +44,16 @@ export class LevelManager {
                 throw new Error(`Failed to fetch level: ${levelEntry.jsonPath}, status: ${response.status}`);
             }
             const levelData = await response.json();
-            // Cache the loaded data by replacing the path object
+
             this.levelSections[sectionIndex].levels[levelIndex] = levelData;
             return levelData;
         } catch (error) {
             console.error(`Error loading level JSON from ${levelEntry.jsonPath}:`, error);
-            return null; // Or handle the error appropriately
+            return null;
         }
     }
 
-    // If it's not a path, the data is already loaded and cached
+
     return levelEntry;
   }
 

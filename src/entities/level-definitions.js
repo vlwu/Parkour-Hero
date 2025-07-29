@@ -200,4 +200,8 @@ export const levelSections = [
     ]
   }
   */
+  {
+    name: "DIY",
+    levels: []
+  }
 ];

@@ -16,9 +16,9 @@ export class LevelsMenu extends LitElement {
       display: flex; justify-content: center; align-items: center;
       z-index: 200;
     }
-    
-    /* --- MODIFICATION START --- */
-    /* 1. The main content container is now a flex column. */
+
+
+
     .modal-content {
       background-color: #333;
       border-radius: 12px;
@@ -29,32 +29,32 @@ export class LevelsMenu extends LitElement {
       width: 90%;
       max-width: 600px;
       max-height: 80vh;
-      /* Flexbox layout to structure header, body, and footer */
+
       display: flex;
       flex-direction: column;
-      /* Padding will be handled by inner elements now */
+
       padding: 20px;
       box-sizing: border-box;
     }
 
-    /* 2. A new container for the scrollable level list. */
+
     .scrollable-content {
-      flex-grow: 1; /* Allows this element to fill available space */
-      overflow-y: auto; /* This is where the scrolling happens now */
-      padding: 10px 5px; /* Add some padding for the scrollbar */
-      margin: 0 -5px; /* Counteract padding to keep alignment clean */
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 10px 5px;
+      margin: 0 -5px;
     }
-    
-    /* 3. The footer is now a simple flex item, no longer absolutely positioned. */
+
+
     .footer-actions {
-        flex-shrink: 0; /* Prevents the footer from shrinking */
-        padding-top: 20px; /* Space between level list and button */
+        flex-shrink: 0;
+        padding-top: 20px;
         display: flex;
         justify-content: center;
         align-items: center;
-        border-top: 1px solid #444; /* Visual separator */
+        border-top: 1px solid #444;
     }
-    /* --- MODIFICATION END --- */
+
 
     .close-button {
       position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
@@ -62,17 +62,17 @@ export class LevelsMenu extends LitElement {
       background-size: cover; background-color: transparent;
       border: none; cursor: pointer; border-radius: 50%;
       transition: transform 0.2s ease-in-out;
-      z-index: 10; /* Ensure it's on top */
+      z-index: 10;
     }
     .close-button:hover { transform: scale(1.1); }
-    
+
     .title-container {
       display: flex;
       justify-content: center;
       margin-bottom: 25px;
-      flex-shrink: 0; /* Prevent header from shrinking */
+      flex-shrink: 0;
     }
-    
+
     #level-selection-container {
       display: flex; flex-direction: column; gap: 20px;
     }
@@ -105,6 +105,16 @@ export class LevelsMenu extends LitElement {
     .level-button.locked { background-color: #444; color: #777; cursor: not-allowed; border-color: #666; }
     .level-button.locked svg { fill: #777; width: 24px; height: 24px; }
 
+    .level-button.add-level {
+        background-color: #444;
+        border-style: dashed;
+        font-size: 2em;
+    }
+    .level-button.add-level:hover {
+        background-color: #555;
+        border-color: #888;
+    }
+
     .footer-button {
       background-color: #007bff; color: #fff; border: 2px solid #0056b3;
       padding: 10px 20px; border-radius: 8px; cursor: pointer;
@@ -133,10 +143,14 @@ export class LevelsMenu extends LitElement {
       composed: true
     }));
   }
-  
+
   _openStatsModal() {
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     eventBus.publish('ui_button_clicked', { buttonId: 'stats' });
+  }
+
+  _goToEditor() {
+    window.location.href = 'editor.html';
   }
 
   render() {
@@ -148,7 +162,7 @@ export class LevelsMenu extends LitElement {
       <div class="modal-overlay" @click=${this._dispatchClose}>
         <div class="modal-content" @click=${e => e.stopPropagation()}>
           <button class="close-button" @click=${this._dispatchClose}></button>
-          
+
           <div class="title-container">
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Levels Menu" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
           </div>
@@ -166,7 +180,7 @@ export class LevelsMenu extends LitElement {
                       const isUnlocked = this.gameState.isLevelUnlocked(sectionIndex, levelIndex);
                       const isCompleted = this.gameState.isLevelCompleted(sectionIndex, levelIndex);
                       const isCurrent = this.gameState.currentSection === sectionIndex && this.gameState.currentLevelIndex === levelIndex;
-                      
+
                       const classes = `level-button ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''} ${!isUnlocked ? 'locked' : ''}`;
 
                       return isUnlocked
@@ -175,6 +189,7 @@ export class LevelsMenu extends LitElement {
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"></path></svg>
                            </button>`;
                     })}
+                    ${section.name === 'DIY' ? html`<button class="level-button add-level" @click=${this._goToEditor} title="Create New Level">+</button>` : ''}
                   </div>
                 </div>
               `)}
