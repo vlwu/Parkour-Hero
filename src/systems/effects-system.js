@@ -1,11 +1,15 @@
 import { eventBus } from '../utils/event-bus.js';
 
 export class EffectsSystem {
-    constructor(assets) {
+    constructor(assets, fontRenderer) {
         this.assets = assets;
+        this.fontRenderer = fontRenderer;
         this.activeEffects = [];
         this.effectsPool = [];
+        this.damageIndicators = [];
+        this.indicatorPool = [];
         eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
+        eventBus.subscribe('createDamageIndicator', (data) => this._onDamageTaken(data));
     }
 
     _onFruitCollected(fruit) {
@@ -28,11 +32,34 @@ export class EffectsSystem {
         this.activeEffects.push(effect);
     }
 
+    _onDamageTaken({ amount, x, y }) {
+        let indicator;
+        if (this.indicatorPool.length > 0) {
+            indicator = this.indicatorPool.pop();
+        } else {
+            indicator = {};
+        }
+
+        indicator.text = `-${Math.round(amount)}`;
+        indicator.x = x;
+        indicator.y = y;
+        indicator.life = 0.4;
+        indicator.maxLife = 0.4;
+        indicator.alpha = 1.0;
+        indicator.driftSpeed = -50;
+
+        this.damageIndicators.push(indicator);
+    }
+
     reset() {
         for (const effect of this.activeEffects) {
             this.effectsPool.push(effect);
         }
         this.activeEffects = [];
+        for (const indicator of this.damageIndicators) {
+            this.indicatorPool.push(indicator);
+        }
+        this.damageIndicators = [];
     }
 
     update(dt) {
@@ -48,10 +75,22 @@ export class EffectsSystem {
                 }
             }
         }
+
+        for (let i = this.damageIndicators.length - 1; i >= 0; i--) {
+            const indicator = this.damageIndicators[i];
+            indicator.life -= dt;
+
+            if (indicator.life <= 0) {
+                this.indicatorPool.push(this.damageIndicators.splice(i, 1));
+            } else {
+                indicator.y += indicator.driftSpeed * dt;
+                indicator.alpha = Math.min(1.0, (indicator.life / indicator.maxLife) * 2);
+            }
+        }
     }
 
     render(ctx, camera, alpha) {
-        if (this.activeEffects.length === 0) return;
+        if (this.activeEffects.length === 0 && this.damageIndicators.length === 0) return;
 
         camera.apply(ctx, alpha);
 
@@ -63,6 +102,21 @@ export class EffectsSystem {
                 const srcX = effect.frame * frameWidth;
                 ctx.drawImage(sprite, srcX, 0, frameWidth, sprite.height, effect.x - effect.size / 2, effect.y - effect.size / 2, effect.size, effect.size);
             }
+        }
+
+        if (this.damageIndicators.length > 0 && this.fontRenderer) {
+            this.damageIndicators.forEach(indicator => {
+                const color = `rgba(255, 0, 0, ${indicator.alpha})`;
+                const outlineColor = `rgba(0, 0, 0, ${indicator.alpha})`;
+
+                this.fontRenderer.drawText(ctx, indicator.text, indicator.x, indicator.y, {
+                    scale: 1,
+                    align: 'center',
+                    color: color,
+                    outlineColor: outlineColor,
+                    outlineWidth: 1
+                });
+            });
         }
 
         camera.restore(ctx);

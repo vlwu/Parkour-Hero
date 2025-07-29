@@ -68,7 +68,7 @@ export class Engine {
     this.collisionSystem = new CollisionSystem();
     this.gameplaySystem = new GameplaySystem();
     this.particleSystem = new ParticleSystemWebGL(this.gl, this.assets);
-    this.effectsSystem = new EffectsSystem(this.assets);
+    this.effectsSystem = new EffectsSystem(this.assets, fontRenderer);
     this.gameFlowSystem = new GameFlowSystem();
     this.uiSystem = new UISystem(this.uiCanvas, this.assets);
     this.enemySystem = new EnemySystem(this.collisionSystem);
@@ -290,6 +290,15 @@ export class Engine {
       const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
       if (health && playerCtrl && !playerCtrl.isHit && !playerCtrl.needsRespawn) {
           health.currentHealth = Math.max(0, health.currentHealth - amount);
+          const pos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
+          const col = this.entityManager.getComponent(this.playerEntityId, CollisionComponent);
+          if (pos && col) {
+              eventBus.publish('createDamageIndicator', {
+                  amount,
+                  x: pos.x + col.width / 2,
+                  y: pos.y
+              });
+          }
           this.camera.shake(8, 0.3);
           if (health.currentHealth <= 0) this._onPlayerDied();
       }
