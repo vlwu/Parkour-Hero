@@ -208,7 +208,10 @@ export class CollisionSystem {
                     }
                     vel.vx = 0;
                     entityRect.x = pos.x;
-                    col.isAgainstWall = !['sand', 'mud', 'ice', 'platform'].includes(collider.surfaceType);
+
+                    if (!collider.isOneWay) {
+                        col.isAgainstWall = !['sand', 'mud', 'ice', 'platform'].includes(collider.surfaceType);
+                    }
                 }
             }
 
@@ -270,7 +273,7 @@ export class CollisionSystem {
                            validGroundColliders.push(collider);
                         }
                     }
-                } else {
+                } else { // Moving Up
                     if (!collider.isOneWay) {
                         const prevPlayerTop = (pos.y - vel.vy * dt);
                         const prevPlayerXCenter = (pos.x - vel.vx * dt) + col.width / 2;
@@ -308,16 +311,14 @@ export class CollisionSystem {
                     if (ground.type === 'entity') continue;
 
                     if (this._isRectColliding(groundProbe, ground)) {
-                         if (!ground.isOneWay) {
-                            col.isGrounded = true;
-                            col.groundType = ground.surfaceType;
-                            col.groundEntity = ground.instance;
-                            break;
-                         }
+                        col.isGrounded = true;
+                        col.groundType = ground.surfaceType;
+                        col.groundEntity = ground.instance;
+                        break;
                     }
                 }
             }
-            
+
             if (playerCtrl && col.isGrounded && col.groundEntity && col.groundEntity !== playerCtrl.previousGroundEntity) {
                 if (typeof col.groundEntity.onLanded === 'function') {
                     col.groundEntity.onLanded(eventBus);
