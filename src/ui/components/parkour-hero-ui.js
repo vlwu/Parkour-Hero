@@ -312,7 +312,7 @@ export class ParkourHeroUI extends LitElement {
           .fontRenderer=${this.fontRenderer} text="Parkour Hero" scale="9" outlineColor="black" outlineWidth="2"
         ></bitmap-text>
         <div class="main-menu-buttons">
-          <button @click=${() => { this.activeModal = null; eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' }); eventBus.publish('requestStartGame'); }}>
+          <button @click=${() => { eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' }); eventBus.publish('requestStartGame'); }}>
               <bitmap-text .fontRenderer=${this.fontRenderer} text=${startButtonText} scale="2.5" outlineColor="#004a99" outlineWidth="1"></bitmap-text>
           </button>
         </div>
