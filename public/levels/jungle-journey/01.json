@@ -60,185 +60,105 @@
     {
       "type": "trampoline",
       "x": 9.06,
-      "y": 20.71,
-      "initialDragPos": {
-        "x": 9.06,
-        "y": 20.71
-      }
+      "y": 20.71
     },
     {
       "type": "trophy",
       "x": 2.81,
-      "y": 2.33,
-      "initialDragPos": {
-        "x": 3.17,
-        "y": 2.33
-      }
+      "y": 2.33
     },
     {
       "type": "wood_third_h",
       "x": 1.5,
-      "y": 39.5,
-      "initialDragPos": {
-        "x": 1.5,
-        "y": 39.5
-      }
+      "y": 39.5
     },
     {
       "type": "wood_third_h",
       "x": 2.5,
-      "y": 39.5,
-      "initialDragPos": {
-        "x": 2.5,
-        "y": 39.5
-      }
+      "y": 39.5
     },
     {
       "type": "wood_third_h",
       "x": 3.5,
-      "y": 39.5,
-      "initialDragPos": {
-        "x": 3.5,
-        "y": 39.5
-      }
+      "y": 39.5
     },
     {
       "type": "wood_ninth_sq",
       "x": 1.17,
-      "y": 39.17,
-      "initialDragPos": {
-        "x": 1.17,
-        "y": 39.17
-      }
+      "y": 39.17
     },
     {
       "type": "wood_ninth_sq",
       "x": 3.83,
-      "y": 39.83,
-      "initialDragPos": {
-        "x": 3.83,
-        "y": 39.83
-      }
+      "y": 39.83
     },
     {
       "type": "fire_trap",
       "x": 2.22,
       "y": 39.17,
-      "initialDragPos": {
-        "x": 2.28,
-        "y": 39.26
-      },
       "chainLength": 5
     },
     {
       "type": "fruit_apple",
       "x": 1.66,
-      "y": 37.32,
-      "initialDragPos": {
-        "x": 1.7,
-        "y": 38.15
-      }
+      "y": 37.32
     },
     {
       "type": "fruit_bananas",
       "x": 9.02,
-      "y": 31.43,
-      "initialDragPos": {
-        "x": 8.89,
-        "y": 31.4
-      }
+      "y": 31.43
     },
     {
       "type": "trampoline",
       "x": 1.62,
-      "y": 39.04,
-      "initialDragPos": {
-        "x": 1.62,
-        "y": 39.06
-      }
+      "y": 39.04
     },
     {
       "type": "fruit_cherries",
       "x": 16.63,
-      "y": 27.26,
-      "initialDragPos": {
-        "x": 15.73,
-        "y": 26.41
-      }
+      "y": 27.26
     },
     {
       "type": "fruit_kiwi",
       "x": 10.26,
-      "y": 20.27,
-      "initialDragPos": {
-        "x": 10.26,
-        "y": 20.27
-      }
+      "y": 20.27
     },
     {
       "type": "falling_platform",
       "x": 13.45,
-      "y": 30.96,
-      "initialDragPos": {
-        "x": 14.26,
-        "y": 30.66
-      }
+      "y": 30.96
     },
     {
       "type": "checkpoint",
       "x": 18.19,
-      "y": 27.33,
-      "initialDragPos": {
-        "x": 17.02,
-        "y": 27.33
-      }
+      "y": 27.33
     },
     {
       "type": "stone_third_h",
       "x": 6.5,
-      "y": 33.83,
-      "initialDragPos": {
-        "x": 6.5,
-        "y": 33.83
-      }
+      "y": 33.83
     },
     {
       "type": "stone_four_ninths_sq",
       "x": 6.67,
-      "y": 33.33,
-      "initialDragPos": {
-        "x": 6.67,
-        "y": 33.33
-      }
+      "y": 33.33
     },
     {
       "type": "arrow_bubble",
       "x": 4.91,
       "y": 35.63,
       "direction": "up",
-      "knockbackSpeed": 700,
-      "initialDragPos": {
-        "x": 5.05,
-        "y": 35.63
-      }
+      "knockbackSpeed": 700
     },
     {
       "type": "fruit_melon",
       "x": 6.57,
-      "y": 14.3,
-      "initialDragPos": {
-        "x": 6.57,
-        "y": 14.3
-      }
+      "y": 14.3
     },
     {
       "type": "wood_third_v",
       "x": 15.83,
-      "y": 28.5,
-      "initialDragPos": {
-        "x": 15.83,
-        "y": 28.5
-      }
+      "y": 28.5
     },
     {
       "type": "saw",
@@ -246,65 +166,37 @@
       "y": 30.99,
       "direction": "vertical",
       "distance": 200,
-      "speed": 80,
-      "initialDragPos": {
-        "x": 12.29,
-        "y": 31.43
-      }
+      "speed": 80
     },
     {
       "type": "trampoline",
       "x": 7.49,
-      "y": 14.71,
-      "initialDragPos": {
-        "x": 7.54,
-        "y": 14.71
-      }
+      "y": 14.71
     },
     {
       "type": "spike",
       "x": 11.26,
-      "y": 11.83,
-      "initialDragPos": {
-        "x": 11.26,
-        "y": 11.83
-      }
+      "y": 11.83
     },
     {
       "type": "spike",
       "x": 11.58,
-      "y": 11.83,
-      "initialDragPos": {
-        "x": 11.58,
-        "y": 11.83
-      }
+      "y": 11.83
     },
     {
       "type": "stone_four_ninths_sq",
       "x": 16.67,
-      "y": 8.33,
-      "initialDragPos": {
-        "x": 16.67,
-        "y": 8.33
-      }
+      "y": 8.33
     },
     {
       "type": "falling_platform",
       "x": 12.96,
-      "y": 7.85,
-      "initialDragPos": {
-        "x": 12.96,
-        "y": 7.85
-      }
+      "y": 7.85
     },
     {
       "type": "falling_platform",
       "x": 9.6,
-      "y": 6.19,
-      "initialDragPos": {
-        "x": 9.6,
-        "y": 6.19
-      }
+      "y": 6.19
     },
     {
       "type": "saw",
@@ -312,132 +204,76 @@
       "y": 5.37,
       "direction": "vertical",
       "distance": 200,
-      "speed": 200,
-      "initialDragPos": {
-        "x": 8,
-        "y": 5.14
-      }
+      "speed": 200
     },
     {
       "type": "stone_ninth_sq",
       "x": 7.83,
-      "y": 3.17,
-      "initialDragPos": {
-        "x": 7.83,
-        "y": 3.17
-      }
+      "y": 3.17
     },
     {
       "type": "stone_ninth_sq",
       "x": 7.83,
-      "y": 7.5,
-      "initialDragPos": {
-        "x": 7.83,
-        "y": 7.5
-      }
+      "y": 7.5
     },
     {
       "type": "stone_four_ninths_sq",
       "x": 8.33,
-      "y": 3.33,
-      "initialDragPos": {
-        "x": 8.33,
-        "y": 3.33
-      }
+      "y": 3.33
     },
     {
       "type": "fruit_orange",
       "x": 17.48,
-      "y": 7.25,
-      "initialDragPos": {
-        "x": 16.44,
-        "y": 9.13
-      }
+      "y": 7.25
     },
     {
       "type": "fruit_pineapple",
       "x": 8.11,
-      "y": 2.26,
-      "initialDragPos": {
-        "x": 8.11,
-        "y": 2.26
-      }
+      "y": 2.26
     },
     {
       "type": "checkpoint",
       "x": 12.92,
-      "y": 11.33,
-      "initialDragPos": {
-        "x": 12.77,
-        "y": 11.33
-      }
+      "y": 11.33
     },
     {
       "type": "fruit_strawberry",
       "x": 13.28,
-      "y": 9.97,
-      "initialDragPos": {
-        "x": 12.89,
-        "y": 10.03
-      }
+      "y": 9.97
     }
   ],
   "enemies": [
     {
       "type": "slime",
       "x": 9,
-      "y": 32.69,
-      "initialDragPos": {
-        "x": 9,
-        "y": 32.69
-      }
+      "y": 32.69
     },
     {
       "type": "mushroom",
       "x": 12,
-      "y": 24.67,
-      "initialDragPos": {
-        "x": 12,
-        "y": 24.67
-      }
+      "y": 24.67
     },
     {
       "type": "radish",
       "x": 16.14,
       "y": 25.55,
-      "patrolBoxSize": 150,
-      "initialDragPos": {
-        "x": 16.07,
-        "y": 25.71
-      }
+      "patrolBoxSize": 150
     },
     {
       "type": "bee",
       "x": 10.04,
       "y": 18.16,
-      "patrolBoxSize": 150,
-      "initialDragPos": {
-        "x": 9.9,
-        "y": 18.12
-      }
+      "patrolBoxSize": 150
     },
     {
       "type": "fatbird",
       "x": 6.52,
-      "y": 12.31,
-      "initialDragPos": {
-        "x": 6.48,
-        "y": 12.2
-      }
+      "y": 12.31
     },
     {
       "type": "turtle",
       "x": 4.41,
-      "y": 41.73,
-      "initialDragPos": {
-        "x": 4.43,
-        "y": 41.73
-      }
+      "y": 41.73
     },
     {
       "type": "bluebird",
@@ -445,11 +281,7 @@
       "y": 7.22,
       "patrolDistance": 150,
       "horizontalSpeed": 60,
-      "verticalAmplitude": 10,
-      "initialDragPos": {
-        "x": 14.4,
-        "y": 6.9
-      }
+      "verticalAmplitude": 10
     },
     {
       "type": "bluebird",
@@ -457,11 +289,7 @@
       "y": 5.26,
       "patrolDistance": 200,
       "horizontalSpeed": 100,
-      "verticalAmplitude": 12,
-      "initialDragPos": {
-        "x": 17.76,
-        "y": 5.26
-      }
+      "verticalAmplitude": 12
     }
   ]
 }
