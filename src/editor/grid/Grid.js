@@ -44,7 +44,7 @@ export class Grid {
         const scaleX = availableWidth / gridPixelWidth;
         const scaleY = availableHeight / gridPixelHeight;
 
-        this.setZoom(Math.min(scaleX, scaleY));
+        this.setZoom(Math.min(1.0, scaleX, scaleY));
     }
 
     setZoom(level) {

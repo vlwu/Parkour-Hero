@@ -40,6 +40,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-width: 0;
 }
 
 #left-panel h2, #right-panel h2 {
