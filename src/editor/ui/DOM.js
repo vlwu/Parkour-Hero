@@ -22,6 +22,13 @@ export const DOM = {
     zoomOutBtn: null,
     loadFileInput: null,
 
+    resizeModalOverlay: null,
+    newWidthInput: null,
+    newHeightInput: null,
+    anchorGrid: null,
+    confirmResizeBtn: null,
+    cancelResizeBtn: null,
+
 
     init() {
         this.gridContainer = document.getElementById('grid-container');
@@ -45,5 +52,12 @@ export const DOM = {
         this.zoomInBtn = document.getElementById('zoomInBtn');
         this.zoomOutBtn = document.getElementById('zoomOutBtn');
         this.loadFileInput = document.getElementById('loadFile');
+
+        this.resizeModalOverlay = document.getElementById('resize-modal-overlay');
+        this.newWidthInput = document.getElementById('newWidthInput');
+        this.newHeightInput = document.getElementById('newHeightInput');
+        this.anchorGrid = document.getElementById('anchor-grid');
+        this.confirmResizeBtn = document.getElementById('confirmResizeBtn');
+        this.cancelResizeBtn = document.getElementById('cancelResizeBtn');
     }
 };

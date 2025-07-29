@@ -88,6 +88,38 @@
         <button id="exit-preview-btn">Exit Preview</button>
     </div>
 
+    <div id="resize-modal-overlay" style="display: none;">
+        <div id="resize-modal-content">
+            <h2>Resize Level</h2>
+            <div class="resize-input-group">
+                <label for="newWidthInput">New Width:</label>
+                <input type="number" id="newWidthInput" min="1" value="28">
+            </div>
+            <div class="resize-input-group">
+                <label for="newHeightInput">New Height:</label>
+                <input type="number" id="newHeightInput" min="1" value="15">
+            </div>
+            <div class="resize-anchor-section">
+                <label>Anchor Point:</label>
+                <div id="anchor-grid">
+                    <div class="anchor-point" data-anchor="top-left"></div>
+                    <div class="anchor-point" data-anchor="top-center"></div>
+                    <div class="anchor-point" data-anchor="top-right"></div>
+                    <div class="anchor-point" data-anchor="middle-left"></div>
+                    <div class="anchor-point selected" data-anchor="center"></div>
+                    <div class="anchor-point" data-anchor="middle-right"></div>
+                    <div class="anchor-point" data-anchor="bottom-left"></div>
+                    <div class="anchor-point" data-anchor="bottom-center"></div>
+                    <div class="anchor-point" data-anchor="bottom-right"></div>
+                </div>
+            </div>
+            <div class="resize-button-group">
+                <button id="cancelResizeBtn" class="danger-action">Cancel</button>
+                <button id="confirmResizeBtn" class="success-action">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="/src/editor/editor.main.js"></script>
 </body>
 </html>

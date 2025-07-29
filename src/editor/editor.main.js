@@ -77,6 +77,7 @@ class EditorController {
         });
         this._onPaletteSelection(this.palette.getSelection());
         this._loadGameAssets();
+        this._setupResizeModalListeners();
     }
 
     async _loadGameAssets() {
@@ -401,9 +402,83 @@ class EditorController {
     }
 
     _onResize() {
-        const w = parseInt(prompt("Enter new grid width:", this.grid.width));
-        const h = parseInt(prompt("Enter new grid height:", this.grid.height));
-        if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0) { this.resetEditor(w, h); }
+        DOM.newWidthInput.value = this.grid.width;
+        DOM.newHeightInput.value = this.grid.height;
+        DOM.resizeModalOverlay.style.display = 'flex';
+    }
+
+    _setupResizeModalListeners() {
+        DOM.cancelResizeBtn.addEventListener('click', () => {
+            DOM.resizeModalOverlay.style.display = 'none';
+        });
+
+        DOM.confirmResizeBtn.addEventListener('click', () => {
+            const newWidth = parseInt(DOM.newWidthInput.value);
+            const newHeight = parseInt(DOM.newHeightInput.value);
+            const anchor = DOM.anchorGrid.querySelector('.selected').dataset.anchor;
+
+            if (isNaN(newWidth) || isNaN(newHeight) || newWidth <= 0 || newHeight <= 0) {
+                alert("Please enter valid positive numbers for width and height.");
+                return;
+            }
+
+            this._performResize(newWidth, newHeight, anchor);
+            DOM.resizeModalOverlay.style.display = 'none';
+        });
+
+        DOM.anchorGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('anchor-point')) {
+                DOM.anchorGrid.querySelector('.selected').classList.remove('selected');
+                e.target.classList.add('selected');
+            }
+        });
+    }
+
+    _performResize(newWidth, newHeight, anchor) {
+        const oldWidth = this.grid.width;
+        const oldHeight = this.grid.height;
+        const oldTileData = this.grid.getTileDataForExport();
+        const oldObjects = JSON.parse(JSON.stringify(this.objectManager.getAllObjects()));
+
+        const dx = newWidth - oldWidth;
+        const dy = newHeight - oldHeight;
+
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (anchor.includes('right')) offsetX = -dx;
+        else if (anchor.includes('center')) offsetX = -dx / 2;
+
+        if (anchor.includes('bottom')) offsetY = -dy;
+        else if (anchor.includes('middle')) offsetY = -dy / 2;
+
+        this.grid.resize(newWidth, newHeight);
+
+        const newTileData = [];
+        oldTileData.forEach(tile => {
+            const newX = tile.x + offsetX;
+            const newY = tile.y + offsetY;
+            if (newX >= 0 && newX < newWidth && newY >= 0 && newY < newHeight) {
+                const index = newY * newWidth + newX;
+                this.grid.paintCell(index, tile.id);
+                newTileData.push({ x: newX, y: newY, id: tile.id });
+            }
+        });
+
+        const newObjects = [];
+        this.objectManager.clear();
+        oldObjects.forEach(obj => {
+            const newX = obj.x + offsetX;
+            const newY = obj.y + offsetY;
+
+            if (newX >= 0 && newX < newWidth && newY >= 0 && newY < newHeight) {
+                obj.x = newX;
+                obj.y = newY;
+                this.objectManager.objects.push(obj);
+                newObjects.push(obj);
+            }
+        });
+        this.objectManager.render();
     }
 
     _onFileLoad(e) {
