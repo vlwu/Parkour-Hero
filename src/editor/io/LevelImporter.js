@@ -5,12 +5,11 @@ export class LevelImporter {
         reader.onload = (event) => {
             try {
                 const levelData = JSON.parse(event.target.result);
-                if (levelData.gridWidth) {
+                // Only accept the new format which must have gridWidth and tileData.
+                if (levelData.gridWidth && levelData.tileData) {
                     callback(levelData);
-                } else if (levelData.platforms) {
-                    alert('Old level format detected. Conversion is no longer supported.');
                 } else {
-                    alert('Unrecognized level format.');
+                    alert('Invalid or outdated level format. Please use a level file with the current "tileData" structure.');
                 }
             } catch (err) {
                 alert('Error parsing JSON file: ' + err.message);

@@ -29,9 +29,7 @@ export class ObjectManager {
         this.objects = [];
 
         const allEntities = [
-            ...(levelData.entities || []),
-            ...(levelData.objects || []),
-            ...(levelData.enemies || [])
+            ...(levelData.entities || [])
         ];
 
         allEntities.forEach(entityData => {

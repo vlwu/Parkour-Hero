@@ -111,17 +111,6 @@ export class Level {
                 this.tiles[tile.y][tile.x] = TILE_DEFINITIONS[tile.id] || TILE_DEFINITIONS['0'];
             }
         });
-    } else if (levelConfig.layout) {
-        console.warn(`Level "${levelConfig.name}" is using a legacy layout. Consider converting it to the new sparse format.`);
-        levelConfig.layout.forEach((rowString, y) => {
-            [...rowString].forEach((tileId, x) => {
-                if (tileId !== '0') {
-                    if (this.tiles[y] && this.tiles[y][x] !== undefined) {
-                        this.tiles[y][x] = TILE_DEFINITIONS[tileId] || TILE_DEFINITIONS['0'];
-                    }
-                }
-            });
-        });
     }
 
     this.spatialGrid = new SpatialGrid(this.width, this.height, GRID_CONSTANTS.TILE_SIZE * 4);
@@ -136,9 +125,7 @@ export class Level {
     eventBus.subscribe('createSlimePuddle', (pos) => this.addSlimePuddle(pos));
 
     const allEntities = [
-        ...(levelConfig.entities || []),
-        ...(levelConfig.objects || []),
-        ...(levelConfig.enemies || [])
+        ...(levelConfig.entities || [])
     ];
 
     allEntities.forEach(entityData => {
