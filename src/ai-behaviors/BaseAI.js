@@ -6,10 +6,6 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { KillableComponent } from '../components/KillableComponent.js';
 
-/**
- * Base class for all enemy AI behaviors.
- * Defines the common interface for the EnemySystem to use.
- */
 export class BaseAI {
     /**
      * @param {number} entityId The ID of the enemy entity.
@@ -36,15 +32,15 @@ export class BaseAI {
         throw new Error("AI Behavior 'update' method must be implemented.");
     }
 
-    _findPlatformEdges() {
-        if (!this.level || !this.pos || !this.col) return null;
+    _getPlatformEdgesForEntity(pos, col) {
+        if (!this.level || !pos || !col) return null;
 
         const TILE_SIZE = 48;
-        const checkY = Math.floor((this.pos.y + this.col.height + 1) / TILE_SIZE);
+        const checkY = Math.floor((pos.y + col.height + 1) / TILE_SIZE);
 
         if (checkY >= this.level.gridHeight || checkY < 0) return null;
 
-        const startGridX = Math.floor((this.pos.x + this.col.width / 2) / TILE_SIZE);
+        const startGridX = Math.floor((pos.x + col.width / 2) / TILE_SIZE);
 
         const initialTile = this.level.getTileAt(startGridX * TILE_SIZE, checkY * TILE_SIZE);
         if (!initialTile || !initialTile.solid || initialTile.oneWay) {
@@ -64,8 +60,8 @@ export class BaseAI {
             if (!tile || !tile.solid || tile.oneWay) break;
             rightGridX++;
         }
-        
-        // Correctly calculate the right edge based on the rightmost tile's collision box
+
+
         const rightTile = this.level.tiles[checkY][rightGridX];
         const rightEdge = (rightGridX * TILE_SIZE) + (rightTile.collisionBox ? rightTile.collisionBox.width : TILE_SIZE);
 
@@ -73,5 +69,9 @@ export class BaseAI {
             left: leftGridX * TILE_SIZE,
             right: rightEdge,
         };
+    }
+
+    _findPlatformEdges() {
+        return this._getPlatformEdgesForEntity(this.pos, this.col);
     }
 }

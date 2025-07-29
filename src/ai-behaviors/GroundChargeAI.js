@@ -23,42 +23,36 @@ export class GroundChargeAI extends BaseAI {
                 }
 
                 if (playerData) {
+                    const enemyEdges = this._getPlatformEdgesForEntity(this.pos, this.col);
+                    const playerEdges = this._getPlatformEdgesForEntity(playerPos, playerCol);
+                    
+                    const onSamePlatform = enemyEdges && playerEdges && enemyEdges.left === playerEdges.left && enemyEdges.right === playerEdges.right;
+
                     const verticalDistance = Math.abs((playerData.y + playerData.height / 2) - (this.pos.y + this.col.height / 2));
                     const onSameLevel = verticalDistance < this.col.height * 1.5;
                     const horizontalDistance = Math.abs((playerData.x + playerData.width / 2) - (this.pos.x + this.col.width / 2));
                     const inRange = horizontalDistance <= ai.aggroRange;
 
-                    if (onSameLevel && inRange) {
+                    if (onSamePlatform && onSameLevel && inRange) {
                         const isPlayerRight = (playerData.x + playerData.width / 2) > (this.pos.x + this.col.width / 2);
                         const chargeDirection = isPlayerRight ? 'right' : 'left';
-                        
-                        const edges = this._findPlatformEdges();
+
                         let hasRoomToCharge = true;
-                        if (edges) {
-                            if (chargeDirection === 'right' && (this.pos.x + this.col.width) >= edges.right - 1) {
+                        if (enemyEdges) {
+                            if (chargeDirection === 'right' && (this.pos.x + this.col.width) >= enemyEdges.right - 1) {
                                 hasRoomToCharge = false;
                             }
-                            if (chargeDirection === 'left' && this.pos.x <= edges.left + 1) {
+                            if (chargeDirection === 'left' && this.pos.x <= enemyEdges.left + 1) {
                                 hasRoomToCharge = false;
                             }
                         }
 
                         if (hasRoomToCharge) {
                             this.renderable.direction = chargeDirection;
-                            this.state.currentState = 'warning';
-                            this.enemy.timer = ai.idleTime;
+                            this.state.currentState = 'charging';
+                            this.vel.vx = (this.renderable.direction === 'right' ? 1 : -1) * ai.chargeSpeed;
                         }
                     }
-                }
-                break;
-
-            case 'warning':
-                this.vel.vx = 0;
-                this.renderable.animationState = 'idle';
-                this.enemy.timer -= dt;
-                if (this.enemy.timer <= 0) {
-                    this.state.currentState = 'charging';
-                    this.vel.vx = (this.renderable.direction === 'right' ? 1 : -1) * ai.chargeSpeed;
                 }
                 break;
 
@@ -69,7 +63,7 @@ export class GroundChargeAI extends BaseAI {
                 const edges = this._findPlatformEdges();
                 let atEdge = false;
                 if (edges) {
-                    if (this.vel.vx > 0 && (this.pos.x + this.col.width) >= edges.right) { atEdge = true; this.pos.x = edges.right - this.col.width; } 
+                    if (this.vel.vx > 0 && (this.pos.x + this.col.width) >= edges.right) { atEdge = true; this.pos.x = edges.right - this.col.width; }
                     else if (this.vel.vx < 0 && this.pos.x <= edges.left) { atEdge = true; this.pos.x = edges.left; }
                 } else { atEdge = true; }
 

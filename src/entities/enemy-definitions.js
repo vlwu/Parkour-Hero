@@ -28,7 +28,7 @@ export const ENEMY_DEFINITIONS = {
         spriteKey: 'chicken',
         animations: {
             idle: { frameCount: 13, speed: 0.1 },
-            run: { frameCount: 14, speed: 0.08 },
+            run: { frameCount: 14, speed: 0.1 },
             hit: { frameCount: 5, speed: 0.1 }
         },
         killable: {
@@ -38,9 +38,9 @@ export const ENEMY_DEFINITIONS = {
         },
         ai: {
             type: 'ground_charge',
-            aggroRange: 250,
-            chargeSpeed: 200,
-            idleTime: 1.5,
+            aggroRange: 300,
+            chargeSpeed: 130,
+            idleTime: 1.,
             chargeTime: 2.0,
             cooldownTime: 1.0,
         }
