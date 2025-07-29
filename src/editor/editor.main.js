@@ -24,6 +24,7 @@ class EditorController {
 
 
         this.selectedObject = null;
+        this.objectDragStartPosition = null;
         this.currentPaintAction = null;
         this.objectPropChange = {
             isChanging: false,
@@ -381,7 +382,7 @@ class EditorController {
 
         const finalX = round(obj.x);
         const finalY = round(obj.y);
-        const initial = this.selectedObject.initialDragPos;
+        const initial = this.objectDragStartPosition;
 
         if (initial && (initial.x !== finalX || initial.y !== finalY)) {
             this.history.push({
@@ -390,6 +391,8 @@ class EditorController {
                 to: { x: finalX, y: finalY }
             });
         }
+        
+        this.objectDragStartPosition = null;
 
         obj.x = finalX; obj.y = finalY;
         this.objectManager.render();
@@ -476,7 +479,7 @@ class EditorController {
         if (!obj) return;
         this.deselectObject();
         this.selectedObject = obj;
-        this.selectedObject.initialDragPos = { x: obj.x, y: obj.y };
+        this.objectDragStartPosition = { x: obj.x, y: obj.y };
         this.propertiesPanel.displayObject(obj);
         DOM.gridContainer.querySelector(`.dynamic-object[data-id='${obj.id}']`)?.classList.add('selected');
     }
