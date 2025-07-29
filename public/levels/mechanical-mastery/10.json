@@ -34,11 +34,7 @@
     {
       "type": "fruit_apple",
       "x": 7.86,
-      "y": 12.36,
-      "initialDragPos": {
-        "x": 3.71,
-        "y": 5.85
-      }
+      "y": 12.36
     },
     {
       "type": "fruit_bananas",
@@ -48,38 +44,22 @@
     {
       "type": "fruit_cherries",
       "x": 7.66,
-      "y": 5.62,
-      "initialDragPos": {
-        "x": 7.98,
-        "y": 5.96
-      }
+      "y": 5.62
     },
     {
       "type": "fruit_kiwi",
       "x": 11.49,
-      "y": 2.16,
-      "initialDragPos": {
-        "x": 11.55,
-        "y": 2.08
-      }
+      "y": 2.16
     },
     {
       "type": "fruit_melon",
       "x": 18.58,
-      "y": 5.22,
-      "initialDragPos": {
-        "x": 18.86,
-        "y": 4.92
-      }
+      "y": 5.22
     },
     {
       "type": "fruit_orange",
       "x": 24.26,
-      "y": 9.54,
-      "initialDragPos": {
-        "x": 24.12,
-        "y": 9.54
-      }
+      "y": 9.54
     },
     {
       "type": "fruit_pineapple",
@@ -94,47 +74,27 @@
     {
       "type": "trophy",
       "x": 22.63,
-      "y": 16.33,
-      "initialDragPos": {
-        "x": 22.71,
-        "y": 16.33
-      }
+      "y": 16.33
     },
     {
       "type": "trampoline",
       "x": 20.2,
-      "y": 6.71,
-      "initialDragPos": {
-        "x": 20.1,
-        "y": 5.71
-      }
+      "y": 6.71
     },
     {
       "type": "checkpoint",
       "x": 14.99,
-      "y": 7.33,
-      "initialDragPos": {
-        "x": 16.92,
-        "y": 5.84
-      }
+      "y": 7.33
     },
     {
       "type": "spike_head",
       "x": 11.49,
-      "y": 0.8,
-      "initialDragPos": {
-        "x": 11.45,
-        "y": 0.68
-      }
+      "y": 0.8
     },
     {
       "type": "falling_platform",
       "x": 13.85,
-      "y": 17.02,
-      "initialDragPos": {
-        "x": 13.28,
-        "y": 17
-      }
+      "y": 17.02
     },
     {
       "type": "saw",
@@ -142,44 +102,28 @@
       "y": 17.2,
       "direction": "vertical",
       "distance": 200,
-      "speed": 60,
-      "initialDragPos": {
-        "x": 12.02,
-        "y": 16.98
-      }
+      "speed": 60
     },
     {
       "type": "arrow_bubble",
       "x": 17.39,
       "y": 13.87,
       "direction": "up",
-      "knockbackSpeed": 700,
-      "initialDragPos": {
-        "x": 17.39,
-        "y": 13.87
-      }
+      "knockbackSpeed": 700
     },
     {
       "type": "arrow_bubble",
       "x": 17.39,
       "y": 11.14,
       "direction": "up",
-      "knockbackSpeed": 750,
-      "initialDragPos": {
-        "x": 17.39,
-        "y": 11.14
-      }
+      "knockbackSpeed": 750
     },
     {
       "type": "arrow_bubble",
       "x": 17.37,
       "y": 8.4,
       "direction": "up",
-      "knockbackSpeed": 500,
-      "initialDragPos": {
-        "x": 17.37,
-        "y": 8.4
-      }
+      "knockbackSpeed": 500
     },
     {
       "type": "saw",
@@ -187,20 +131,12 @@
       "y": 15.29,
       "direction": "vertical",
       "distance": 250,
-      "speed": 125,
-      "initialDragPos": {
-        "x": 20.07,
-        "y": 15.29
-      }
+      "speed": 125
     },
     {
       "type": "fire_trap",
       "x": 23.69,
       "y": 16.83,
-      "initialDragPos": {
-        "x": 24.25,
-        "y": 16.83
-      },
       "chainLength": 5
     },
     {
@@ -210,22 +146,14 @@
       "chainLength": 150,
       "swingArc": 100,
       "period": 3,
-      "tiltAmount": 1,
-      "initialDragPos": {
-        "x": 10.48,
-        "y": 4.24
-      }
+      "tiltAmount": 1
     }
   ],
   "enemies": [
     {
       "type": "turtle",
       "x": 8.78,
-      "y": 16.73,
-      "initialDragPos": {
-        "x": 8.78,
-        "y": 16.73
-      }
+      "y": 16.73
     }
   ]
 }

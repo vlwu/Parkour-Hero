@@ -28,11 +28,7 @@
     {
       "type": "fruit_apple",
       "x": 2.15,
-      "y": 4.65,
-      "initialDragPos": {
-        "x": 2.29,
-        "y": 5.4
-      }
+      "y": 4.65
     },
     {
       "type": "fruit_bananas",
@@ -42,56 +38,32 @@
     {
       "type": "fruit_cherries",
       "x": 10.47,
-      "y": 3.37,
-      "initialDragPos": {
-        "x": 10.94,
-        "y": 4
-      }
+      "y": 3.37
     },
     {
       "type": "fruit_kiwi",
       "x": 16.97,
-      "y": 2.3,
-      "initialDragPos": {
-        "x": 16.67,
-        "y": 2.3
-      }
+      "y": 2.3
     },
     {
       "type": "fruit_melon",
       "x": 21.29,
-      "y": 2.69,
-      "initialDragPos": {
-        "x": 21.25,
-        "y": 2.59
-      }
+      "y": 2.69
     },
     {
       "type": "fruit_orange",
       "x": 3.85,
-      "y": 5.86,
-      "initialDragPos": {
-        "x": 5.21,
-        "y": 6.25
-      }
+      "y": 5.86
     },
     {
       "type": "fruit_pineapple",
       "x": 13.36,
-      "y": 1.83,
-      "initialDragPos": {
-        "x": 13.54,
-        "y": 2.3
-      }
+      "y": 1.83
     },
     {
       "type": "fruit_strawberry",
       "x": 18.97,
-      "y": 1.65,
-      "initialDragPos": {
-        "x": 18.75,
-        "y": 1.67
-      }
+      "y": 1.65
     },
     {
       "type": "trophy",
@@ -123,20 +95,12 @@
     {
       "type": "chicken",
       "x": 11.49,
-      "y": 4.65,
-      "initialDragPos": {
-        "x": 10.82,
-        "y": 4.65
-      }
+      "y": 4.65
     },
     {
       "type": "turtle",
       "x": 15.4,
-      "y": 2.73,
-      "initialDragPos": {
-        "x": 15.4,
-        "y": 2.73
-      }
+      "y": 2.73
     }
   ]
 }

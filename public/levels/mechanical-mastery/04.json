@@ -34,101 +34,57 @@
     {
       "type": "fruit_bananas",
       "x": 5.46,
-      "y": 10.39,
-      "initialDragPos": {
-        "x": 5,
-        "y": 10.42
-      }
+      "y": 10.39
     },
     {
       "type": "fruit_cherries",
       "x": 8.05,
-      "y": 8.31,
-      "initialDragPos": {
-        "x": 8.05,
-        "y": 8.06
-      }
+      "y": 8.31
     },
     {
       "type": "fruit_kiwi",
       "x": 11.84,
-      "y": 6.38,
-      "initialDragPos": {
-        "x": 11.84,
-        "y": 6.05
-      }
+      "y": 6.38
     },
     {
       "type": "fruit_melon",
       "x": 17.49,
-      "y": 3.98,
-      "initialDragPos": {
-        "x": 19.38,
-        "y": 5.96
-      }
+      "y": 3.98
     },
     {
       "type": "fruit_orange",
       "x": 25.49,
-      "y": 3.88,
-      "initialDragPos": {
-        "x": 23.95,
-        "y": 1.56
-      }
+      "y": 3.88
     },
     {
       "type": "fruit_pineapple",
       "x": 9.9,
-      "y": 6.06,
-      "initialDragPos": {
-        "x": 9.84,
-        "y": 7.89
-      }
+      "y": 6.06
     },
     {
       "type": "fruit_strawberry",
       "x": 19.62,
-      "y": 10.81,
-      "initialDragPos": {
-        "x": 19.62,
-        "y": 10.81
-      }
+      "y": 10.81
     },
     {
       "type": "trophy",
       "x": 22.57,
-      "y": 2.36,
-      "initialDragPos": {
-        "x": 20.48,
-        "y": 2.33
-      }
+      "y": 2.36
     },
     {
       "type": "rock_head",
       "x": 11.87,
-      "y": 4.85,
-      "initialDragPos": {
-        "x": 11.84,
-        "y": 5.42
-      }
+      "y": 4.85
     },
     {
       "type": "rock_head",
       "x": 8.04,
-      "y": 6.83,
-      "initialDragPos": {
-        "x": 8.04,
-        "y": 7.24
-      }
+      "y": 6.83
     },
     {
       "type": "trampoline",
       "x": 13.47,
-      "y": 6.71,
-      "initialDragPos": {
-        "x": 13.38,
-        "y": 6.71
-      }
+      "y": 6.71
     },
     {
       "type": "spiked_ball",
@@ -137,38 +93,22 @@
       "chainLength": 196,
       "swingArc": 130,
       "period": 4,
-      "tiltAmount": 0.7,
-      "initialDragPos": {
-        "x": 17.58,
-        "y": 7.03
-      }
+      "tiltAmount": 0.7
     },
     {
       "type": "spike",
       "x": 20.28,
-      "y": 0.83,
-      "initialDragPos": {
-        "x": 20.33,
-        "y": 0.83
-      }
+      "y": 0.83
     },
     {
       "type": "spike",
       "x": 20.75,
-      "y": 0.83,
-      "initialDragPos": {
-        "x": 20.69,
-        "y": 0.83
-      }
+      "y": 0.83
     },
     {
       "type": "fire_trap",
       "x": 18.82,
       "y": 11.83,
-      "initialDragPos": {
-        "x": 18.82,
-        "y": 11.83
-      },
       "chainLength": 6
     },
     {
@@ -176,33 +116,21 @@
       "x": 25.48,
       "y": 6.94,
       "direction": "up",
-      "knockbackSpeed": 700,
-      "initialDragPos": {
-        "x": 25.48,
-        "y": 6.94
-      }
+      "knockbackSpeed": 700
     },
     {
       "type": "arrow_bubble",
       "x": 25.48,
       "y": 4.91,
       "direction": "up",
-      "knockbackSpeed": 700,
-      "initialDragPos": {
-        "x": 25.48,
-        "y": 4.91
-      }
+      "knockbackSpeed": 700
     },
     {
       "type": "arrow_bubble",
       "x": 25.46,
       "y": 2.84,
       "direction": "up",
-      "knockbackSpeed": 500,
-      "initialDragPos": {
-        "x": 25.46,
-        "y": 2.84
-      }
+      "knockbackSpeed": 500
     },
     {
       "type": "fan",
@@ -210,20 +138,12 @@
       "y": 1.5,
       "direction": "left",
       "pushStrength": 350,
-      "windHeight": 175,
-      "initialDragPos": {
-        "x": 25.92,
-        "y": 1.5
-      }
+      "windHeight": 175
     },
     {
       "type": "falling_platform",
       "x": 23.06,
-      "y": 11.48,
-      "initialDragPos": {
-        "x": 23.1,
-        "y": 11.57
-      }
+      "y": 11.48
     }
   ],
   "enemies": []

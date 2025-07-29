@@ -59,11 +59,7 @@
     {
       "type": "fruit_apple",
       "x": 8.32,
-      "y": 38.03,
-      "initialDragPos": {
-        "x": 7.8,
-        "y": 38.03
-      }
+      "y": 38.03
     },
     {
       "type": "fruit_bananas",
@@ -78,11 +74,7 @@
     {
       "type": "fruit_kiwi",
       "x": 18.47,
-      "y": 26.75,
-      "initialDragPos": {
-        "x": 18.26,
-        "y": 26.56
-      }
+      "y": 26.75
     },
     {
       "type": "fruit_melon",
@@ -97,20 +89,12 @@
     {
       "type": "fruit_pineapple",
       "x": 11.02,
-      "y": 10.59,
-      "initialDragPos": {
-        "x": 11.04,
-        "y": 11.46
-      }
+      "y": 10.59
     },
     {
       "type": "fruit_strawberry",
       "x": 15.87,
-      "y": 9.16,
-      "initialDragPos": {
-        "x": 16.67,
-        "y": 9.38
-      }
+      "y": 9.16
     },
     {
       "type": "checkpoint",
@@ -134,39 +118,23 @@
       "chainLength": 170,
       "swingArc": 90,
       "period": 3,
-      "tiltAmount": 1.2,
-      "initialDragPos": {
-        "x": 9.26,
-        "y": 33.68
-      }
+      "tiltAmount": 1.2
     },
     {
       "type": "fire_trap",
       "x": 13.36,
       "y": 29.83,
-      "initialDragPos": {
-        "x": 13.3,
-        "y": 29.83
-      },
       "chainLength": 2
     },
     {
       "type": "spike",
       "x": 17.52,
-      "y": 27.83,
-      "initialDragPos": {
-        "x": 17.52,
-        "y": 27.83
-      }
+      "y": 27.83
     },
     {
       "type": "rock_head",
       "x": 7.76,
-      "y": 36.53,
-      "initialDragPos": {
-        "x": 7.76,
-        "y": 36.53
-      }
+      "y": 36.53
     }
   ],
   "enemies": [
@@ -176,11 +144,7 @@
       "y": 8.73,
       "patrolDistance": 200,
       "horizontalSpeed": 60,
-      "verticalAmplitude": 10,
-      "initialDragPos": {
-        "x": 17.21,
-        "y": 8.18
-      }
+      "verticalAmplitude": 10
     },
     {
       "type": "bluebird",
@@ -188,11 +152,7 @@
       "y": 19.42,
       "patrolDistance": 200,
       "horizontalSpeed": 60,
-      "verticalAmplitude": 10,
-      "initialDragPos": {
-        "x": 11.16,
-        "y": 19.28
-      }
+      "verticalAmplitude": 10
     }
   ]
 }

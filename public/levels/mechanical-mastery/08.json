@@ -34,92 +34,52 @@
     {
       "type": "falling_platform",
       "x": 20.63,
-      "y": 7.61,
-      "initialDragPos": {
-        "x": 20.63,
-        "y": 7.61
-      }
+      "y": 7.61
     },
     {
       "type": "falling_platform",
       "x": 23.88,
-      "y": 7.63,
-      "initialDragPos": {
-        "x": 23.88,
-        "y": 7.63
-      }
+      "y": 7.63
     },
     {
       "type": "falling_platform",
       "x": 28.1,
-      "y": 9.62,
-      "initialDragPos": {
-        "x": 27.32,
-        "y": 9.66
-      }
+      "y": 9.62
     },
     {
       "type": "falling_platform",
       "x": 24.75,
-      "y": 11.78,
-      "initialDragPos": {
-        "x": 25.23,
-        "y": 11.78
-      }
+      "y": 11.78
     },
     {
       "type": "trophy",
       "x": 1.29,
-      "y": 17.33,
-      "initialDragPos": {
-        "x": 1.29,
-        "y": 17.33
-      }
+      "y": 17.33
     },
     {
       "type": "fruit_apple",
       "x": 5.63,
-      "y": 5.44,
-      "initialDragPos": {
-        "x": 5.63,
-        "y": 5.44
-      }
+      "y": 5.44
     },
     {
       "type": "fruit_bananas",
       "x": 17.46,
-      "y": 4.64,
-      "initialDragPos": {
-        "x": 17.34,
-        "y": 4.88
-      }
+      "y": 4.64
     },
     {
       "type": "fruit_cherries",
       "x": 28.14,
-      "y": 8.01,
-      "initialDragPos": {
-        "x": 28.18,
-        "y": 8.03
-      }
+      "y": 8.01
     },
     {
       "type": "fruit_kiwi",
       "x": 22.2,
-      "y": 5.95,
-      "initialDragPos": {
-        "x": 22.05,
-        "y": 6.03
-      }
+      "y": 5.95
     },
     {
       "type": "spike",
       "x": 19.75,
-      "y": 12.83,
-      "initialDragPos": {
-        "x": 19.77,
-        "y": 12.83
-      }
+      "y": 12.83
     },
     {
       "type": "spiked_ball",
@@ -128,47 +88,27 @@
       "chainLength": 175,
       "swingArc": 120,
       "period": 5,
-      "tiltAmount": 1.6,
-      "initialDragPos": {
-        "x": 11.5,
-        "y": 9.99
-      }
+      "tiltAmount": 1.6
     },
     {
       "type": "fruit_kiwi",
       "x": 20.49,
-      "y": 11.92,
-      "initialDragPos": {
-        "x": 21.35,
-        "y": 11.22
-      }
+      "y": 11.92
     },
     {
       "type": "fruit_melon",
       "x": 24.74,
-      "y": 10.35,
-      "initialDragPos": {
-        "x": 24.92,
-        "y": 10.35
-      }
+      "y": 10.35
     },
     {
       "type": "fruit_orange",
       "x": 11.56,
-      "y": 13.64,
-      "initialDragPos": {
-        "x": 11.51,
-        "y": 12.89
-      }
+      "y": 13.64
     },
     {
       "type": "trampoline",
       "x": 7.28,
-      "y": 14.71,
-      "initialDragPos": {
-        "x": 6.56,
-        "y": 14.71
-      }
+      "y": 14.71
     },
     {
       "type": "saw",
@@ -176,29 +116,17 @@
       "y": 14.97,
       "direction": "vertical",
       "distance": 300,
-      "speed": 50,
-      "initialDragPos": {
-        "x": 4.33,
-        "y": 14.97
-      }
+      "speed": 50
     },
     {
       "type": "fruit_pineapple",
       "x": 7.29,
-      "y": 12.86,
-      "initialDragPos": {
-        "x": 7,
-        "y": 12.08
-      }
+      "y": 12.86
     },
     {
       "type": "fruit_strawberry",
       "x": 12.23,
-      "y": 6.97,
-      "initialDragPos": {
-        "x": 12.19,
-        "y": 6.68
-      }
+      "y": 6.97
     },
     {
       "type": "fan",
@@ -206,85 +134,49 @@
       "y": 6.5,
       "direction": "right",
       "pushStrength": 375,
-      "windHeight": 200,
-      "initialDragPos": {
-        "x": 18.08,
-        "y": 6.5
-      }
+      "windHeight": 200
     },
     {
       "type": "stone_ninth_sq",
       "x": 12.17,
-      "y": 14.83,
-      "initialDragPos": {
-        "x": 12.17,
-        "y": 14.83
-      }
+      "y": 14.83
     },
     {
       "type": "stone_ninth_sq",
       "x": 15.83,
-      "y": 14.83,
-      "initialDragPos": {
-        "x": 15.83,
-        "y": 14.83
-      }
+      "y": 14.83
     },
     {
       "type": "stone_third_h",
       "x": 11.5,
-      "y": 14.83,
-      "initialDragPos": {
-        "x": 11.5,
-        "y": 14.83
-      }
+      "y": 14.83
     },
     {
       "type": "wood_third_h",
       "x": 4.5,
-      "y": 11.83,
-      "initialDragPos": {
-        "x": 4.5,
-        "y": 11.83
-      }
+      "y": 11.83
     },
     {
       "type": "wood_third_h",
       "x": 4.5,
-      "y": 18.17,
-      "initialDragPos": {
-        "x": 4.5,
-        "y": 18.17
-      }
+      "y": 18.17
     },
     {
       "type": "wood_four_ninths_sq",
       "x": 1.67,
-      "y": 8.67,
-      "initialDragPos": {
-        "x": 1.67,
-        "y": 8.33
-      }
+      "y": 8.67
     }
   ],
   "enemies": [
     {
       "type": "slime",
       "x": 7,
-      "y": 6.69,
-      "initialDragPos": {
-        "x": 7,
-        "y": 6.69
-      }
+      "y": 6.69
     },
     {
       "type": "snail",
       "x": 13.78,
-      "y": 14.75,
-      "initialDragPos": {
-        "x": 13.93,
-        "y": 14.75
-      }
+      "y": 14.75
     }
   ]
 }

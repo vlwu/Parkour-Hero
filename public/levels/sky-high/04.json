@@ -56,74 +56,42 @@
     {
       "type": "fruit_apple",
       "x": 1.57,
-      "y": 16.17,
-      "initialDragPos": {
-        "x": 1.57,
-        "y": 16.17
-      }
+      "y": 16.17
     },
     {
       "type": "fruit_bananas",
       "x": 15.19,
-      "y": 35.37,
-      "initialDragPos": {
-        "x": 15.63,
-        "y": 36.04
-      }
+      "y": 35.37
     },
     {
       "type": "fruit_cherries",
       "x": 23.43,
-      "y": 33.66,
-      "initialDragPos": {
-        "x": 23.43,
-        "y": 33.66
-      }
+      "y": 33.66
     },
     {
       "type": "fruit_kiwi",
       "x": 12.8,
-      "y": 16.98,
-      "initialDragPos": {
-        "x": 12.8,
-        "y": 16.98
-      }
+      "y": 16.98
     },
     {
       "type": "fruit_melon",
       "x": 5.21,
-      "y": 27.08,
-      "initialDragPos": {
-        "x": 5.21,
-        "y": 27.08
-      }
+      "y": 27.08
     },
     {
       "type": "fruit_orange",
       "x": 11.46,
-      "y": 23.96,
-      "initialDragPos": {
-        "x": 11.46,
-        "y": 23.96
-      }
+      "y": 23.96
     },
     {
       "type": "fruit_pineapple",
       "x": 17.53,
-      "y": 9.77,
-      "initialDragPos": {
-        "x": 11.86,
-        "y": 10.03
-      }
+      "y": 9.77
     },
     {
       "type": "fruit_strawberry",
       "x": 23.57,
-      "y": 21.37,
-      "initialDragPos": {
-        "x": 23.57,
-        "y": 21.37
-      }
+      "y": 21.37
     },
     {
       "type": "checkpoint",
@@ -133,56 +101,32 @@
     {
       "type": "trophy",
       "x": 23.07,
-      "y": 7.33,
-      "initialDragPos": {
-        "x": 23.23,
-        "y": 7.33
-      }
+      "y": 7.33
     },
     {
       "type": "falling_platform",
       "x": 8.14,
-      "y": 38.43,
-      "initialDragPos": {
-        "x": 9.32,
-        "y": 38.35
-      }
+      "y": 38.43
     },
     {
       "type": "falling_platform",
       "x": 11.76,
-      "y": 38.35,
-      "initialDragPos": {
-        "x": 11.33,
-        "y": 38.28
-      }
+      "y": 38.35
     },
     {
       "type": "falling_platform",
       "x": 16.71,
-      "y": 23.61,
-      "initialDragPos": {
-        "x": 16.71,
-        "y": 23.43
-      }
+      "y": 23.61
     },
     {
       "type": "falling_platform",
       "x": 14.76,
-      "y": 31.12,
-      "initialDragPos": {
-        "x": 13.73,
-        "y": 31.15
-      }
+      "y": 31.12
     },
     {
       "type": "spike",
       "x": 22.49,
-      "y": 34.83,
-      "initialDragPos": {
-        "x": 22.49,
-        "y": 34.83
-      }
+      "y": 34.83
     },
     {
       "type": "spiked_ball",
@@ -191,166 +135,94 @@
       "chainLength": 110,
       "swingArc": 120,
       "period": 3.5,
-      "tiltAmount": 0.8,
-      "initialDragPos": {
-        "x": 11.87,
-        "y": 25.99
-      }
+      "tiltAmount": 0.8
     },
     {
       "type": "stone_third_v",
       "x": 21.83,
-      "y": 22.5,
-      "initialDragPos": {
-        "x": 21.83,
-        "y": 22.5
-      }
+      "y": 22.5
     },
     {
       "type": "orange_dirt_third_v",
       "x": 19.17,
-      "y": 32.5,
-      "initialDragPos": {
-        "x": 19.17,
-        "y": 32.5
-      }
+      "y": 32.5
     },
     {
       "type": "rock_head",
       "x": 18.54,
-      "y": 29.73,
-      "initialDragPos": {
-        "x": 18.54,
-        "y": 30.4
-      }
+      "y": 29.73
     },
     {
       "type": "arrow_bubble",
       "x": 20.69,
       "y": 23.61,
       "direction": "up",
-      "knockbackSpeed": 700,
-      "initialDragPos": {
-        "x": 19.82,
-        "y": 22.87
-      }
+      "knockbackSpeed": 700
     },
     {
       "type": "spike_head",
       "x": 23.2,
-      "y": 19.48,
-      "initialDragPos": {
-        "x": 22.97,
-        "y": 19.55
-      }
+      "y": 19.48
     },
     {
       "type": "gold_third_v",
       "x": 20.17,
-      "y": 19.5,
-      "initialDragPos": {
-        "x": 20.17,
-        "y": 19.5
-      }
+      "y": 19.5
     },
     {
       "type": "gold_third_v",
       "x": 12.83,
-      "y": 18.5,
-      "initialDragPos": {
-        "x": 12.83,
-        "y": 18.5
-      }
+      "y": 18.5
     },
     {
       "type": "gold_third_v",
       "x": 7.83,
-      "y": 18.5,
-      "initialDragPos": {
-        "x": 7.83,
-        "y": 18.5
-      }
+      "y": 18.5
     },
     {
       "type": "gold_four_ninths_sq",
       "x": 4.33,
-      "y": 17.33,
-      "initialDragPos": {
-        "x": 4.33,
-        "y": 17.33
-      }
+      "y": 17.33
     },
     {
       "type": "trampoline",
       "x": 3.65,
-      "y": 16.71,
-      "initialDragPos": {
-        "x": 3.65,
-        "y": 16.71
-      }
+      "y": 16.71
     },
     {
       "type": "wood_third_v",
       "x": 4.83,
-      "y": 11.5,
-      "initialDragPos": {
-        "x": 5.17,
-        "y": 11.5
-      }
+      "y": 11.5
     },
     {
       "type": "wood_third_v",
       "x": 6.17,
-      "y": 11.5,
-      "initialDragPos": {
-        "x": 5.83,
-        "y": 11.5
-      }
+      "y": 11.5
     },
     {
       "type": "stone_third_v",
       "x": 11.83,
-      "y": 11.5,
-      "initialDragPos": {
-        "x": 11.83,
-        "y": 11.5
-      }
+      "y": 11.5
     },
     {
       "type": "stone_third_v",
       "x": 17.5,
-      "y": 11.5,
-      "initialDragPos": {
-        "x": 17.5,
-        "y": 11.5
-      }
+      "y": 11.5
     },
     {
       "type": "stone_ninth_sq",
       "x": 22.17,
-      "y": 8.83,
-      "initialDragPos": {
-        "x": 21.17,
-        "y": 8.83
-      }
+      "y": 8.83
     },
     {
       "type": "stone_four_ninths_sq",
       "x": 21.67,
-      "y": 8.67,
-      "initialDragPos": {
-        "x": 20.67,
-        "y": 8.67
-      }
+      "y": 8.67
     },
     {
       "type": "stone_four_ninths_sq",
       "x": 10.67,
-      "y": 25.67,
-      "initialDragPos": {
-        "x": 10.67,
-        "y": 25.67
-      }
+      "y": 25.67
     }
   ],
   "enemies": [
@@ -358,30 +230,18 @@
       "type": "radish",
       "x": 5.17,
       "y": 24.97,
-      "patrolBoxSize": 150,
-      "initialDragPos": {
-        "x": 5.17,
-        "y": 24.97
-      }
+      "patrolBoxSize": 150
     },
     {
       "type": "radish",
       "x": 7.26,
       "y": 25.81,
-      "patrolBoxSize": 100,
-      "initialDragPos": {
-        "x": 7.26,
-        "y": 25.73
-      }
+      "patrolBoxSize": 100
     },
     {
       "type": "turtle",
       "x": 19,
-      "y": 18.73,
-      "initialDragPos": {
-        "x": 18.75,
-        "y": 18.73
-      }
+      "y": 18.73
     },
     {
       "type": "bluebird",
@@ -389,20 +249,12 @@
       "y": 9.78,
       "patrolDistance": 200,
       "horizontalSpeed": 60,
-      "verticalAmplitude": 10,
-      "initialDragPos": {
-        "x": 14.75,
-        "y": 10.42
-      }
+      "verticalAmplitude": 10
     },
     {
       "type": "fatbird",
       "x": 2.23,
-      "y": 15.01,
-      "initialDragPos": {
-        "x": 2.23,
-        "y": 14.7
-      }
+      "y": 15.01
     }
   ]
 }

@@ -28,11 +28,7 @@
     {
       "type": "fruit_apple",
       "x": 11.94,
-      "y": 13.08,
-      "initialDragPos": {
-        "x": 12.1,
-        "y": 12.85
-      }
+      "y": 13.08
     },
     {
       "type": "fruit_bananas",
@@ -42,29 +38,17 @@
     {
       "type": "fruit_kiwi",
       "x": 13.13,
-      "y": 5.95,
-      "initialDragPos": {
-        "x": 13.69,
-        "y": 5.5
-      }
+      "y": 5.95
     },
     {
       "type": "fruit_melon",
       "x": 17.48,
-      "y": 3.11,
-      "initialDragPos": {
-        "x": 17.71,
-        "y": 3.13
-      }
+      "y": 3.11
     },
     {
       "type": "fruit_orange",
       "x": 16.54,
-      "y": 8.2,
-      "initialDragPos": {
-        "x": 24.52,
-        "y": 3.65
-      }
+      "y": 8.2
     },
     {
       "type": "fruit_pineapple",
@@ -74,11 +58,7 @@
     {
       "type": "fruit_strawberry",
       "x": 20.64,
-      "y": 4.39,
-      "initialDragPos": {
-        "x": 20.35,
-        "y": 4.92
-      }
+      "y": 4.39
     },
     {
       "type": "trophy",
@@ -91,11 +71,7 @@
       "y": 6.15,
       "direction": "vertical",
       "distance": 200,
-      "speed": 50,
-      "initialDragPos": {
-        "x": 8.5,
-        "y": 6.02
-      }
+      "speed": 50
     },
     {
       "type": "spiked_ball",
@@ -104,47 +80,27 @@
       "chainLength": 150,
       "swingArc": 100,
       "period": 2.5,
-      "tiltAmount": 1.2,
-      "initialDragPos": {
-        "x": 17.35,
-        "y": 4.96
-      }
+      "tiltAmount": 1.2
     },
     {
       "type": "fruit_cherries",
       "x": 9.31,
-      "y": 5.44,
-      "initialDragPos": {
-        "x": 15.36,
-        "y": 10.38
-      }
+      "y": 5.44
     },
     {
       "type": "trampoline",
       "x": 13.52,
-      "y": 13.71,
-      "initialDragPos": {
-        "x": 13.52,
-        "y": 13.71
-      }
+      "y": 13.71
     },
     {
       "type": "falling_platform",
       "x": 19.18,
-      "y": 7.46,
-      "initialDragPos": {
-        "x": 18.92,
-        "y": 7.99
-      }
+      "y": 7.46
     },
     {
       "type": "spike",
       "x": 17.5,
-      "y": 8.83,
-      "initialDragPos": {
-        "x": 17.39,
-        "y": 8.83
-      }
+      "y": 8.83
     },
     {
       "type": "saw",
@@ -152,11 +108,7 @@
       "y": 12.38,
       "direction": "horizontal",
       "distance": 200,
-      "speed": 40,
-      "initialDragPos": {
-        "x": 9.26,
-        "y": 12.33
-      }
+      "speed": 40
     },
     {
       "type": "saw",
@@ -164,20 +116,12 @@
       "y": 10.31,
       "direction": "vertical",
       "distance": 150,
-      "speed": 70,
-      "initialDragPos": {
-        "x": 12.64,
-        "y": 10.41
-      }
+      "speed": 70
     },
     {
       "type": "spike_head",
       "x": 17.45,
-      "y": 1.89,
-      "initialDragPos": {
-        "x": 17.11,
-        "y": 1.71
-      }
+      "y": 1.89
     }
   ]
 }
