@@ -269,6 +269,7 @@ export async function loadAssets() {
     rh_slam: '/assets/Sounds/RH Slam.mp3',
     sh_slam: '/assets/Sounds/SH Slam.mp3',
     snail_wall_hit: '/assets/Sounds/Snail Wall Hit.mp3',
+    spawned: '/assets/Sounds/Spawned.mp3',
   };
 
   console.log('Starting asset loading...');
