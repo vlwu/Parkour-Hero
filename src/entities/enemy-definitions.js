@@ -28,7 +28,7 @@ export const ENEMY_DEFINITIONS = {
         spriteKey: 'chicken',
         animations: {
             idle: { frameCount: 13, speed: 0.1 },
-            run: { frameCount: 14, speed: 0.1 },
+            run: { frameCount: 14, speed: 0.05 },
             hit: { frameCount: 5, speed: 0.1 }
         },
         killable: {
