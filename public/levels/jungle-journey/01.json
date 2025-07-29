@@ -3,10 +3,10 @@
   "gridWidth": 28,
   "gridHeight": 45,
   "background": "background_green",
-  "startPosition": {
-    "x": 2.08,
-    "y": 40.63
-  },
+  "startPosition": [
+    2.08,
+    40.63
+  ],
   "layout": [
     "0000000000000000000000000000",
     "0000000000000000000000000000",
@@ -56,240 +56,238 @@
     "0000000000000000000000000000",
     "0000000000000000000000000000"
   ],
-  "objects": [
-    {
-      "type": "trampoline",
-      "x": 9.06,
-      "y": 20.71
-    },
-    {
-      "type": "trophy",
-      "x": 2.81,
-      "y": 2.33
-    },
-    {
-      "type": "wood_third_h",
-      "x": 1.5,
-      "y": 39.5
-    },
-    {
-      "type": "wood_third_h",
-      "x": 2.5,
-      "y": 39.5
-    },
-    {
-      "type": "wood_third_h",
-      "x": 3.5,
-      "y": 39.5
-    },
-    {
-      "type": "wood_ninth_sq",
-      "x": 1.17,
-      "y": 39.17
-    },
-    {
-      "type": "wood_ninth_sq",
-      "x": 3.83,
-      "y": 39.83
-    },
-    {
-      "type": "fire_trap",
-      "x": 2.22,
-      "y": 39.17,
-      "chainLength": 5
-    },
-    {
-      "type": "fruit_apple",
-      "x": 1.66,
-      "y": 37.32
-    },
-    {
-      "type": "fruit_bananas",
-      "x": 9.02,
-      "y": 31.43
-    },
-    {
-      "type": "trampoline",
-      "x": 1.62,
-      "y": 39.04
-    },
-    {
-      "type": "fruit_cherries",
-      "x": 16.63,
-      "y": 27.26
-    },
-    {
-      "type": "fruit_kiwi",
-      "x": 10.26,
-      "y": 20.27
-    },
-    {
-      "type": "falling_platform",
-      "x": 13.45,
-      "y": 30.96
-    },
-    {
-      "type": "checkpoint",
-      "x": 18.19,
-      "y": 27.33
-    },
-    {
-      "type": "stone_third_h",
-      "x": 6.5,
-      "y": 33.83
-    },
-    {
-      "type": "stone_four_ninths_sq",
-      "x": 6.67,
-      "y": 33.33
-    },
-    {
-      "type": "arrow_bubble",
-      "x": 4.91,
-      "y": 35.63,
-      "direction": "up",
-      "knockbackSpeed": 700
-    },
-    {
-      "type": "fruit_melon",
-      "x": 6.57,
-      "y": 14.3
-    },
-    {
-      "type": "wood_third_v",
-      "x": 15.83,
-      "y": 28.5
-    },
-    {
-      "type": "saw",
-      "x": 11.95,
-      "y": 30.99,
-      "direction": "vertical",
-      "distance": 200,
-      "speed": 80
-    },
-    {
-      "type": "trampoline",
-      "x": 7.49,
-      "y": 14.71
-    },
-    {
-      "type": "spike",
-      "x": 11.26,
-      "y": 11.83
-    },
-    {
-      "type": "spike",
-      "x": 11.58,
-      "y": 11.83
-    },
-    {
-      "type": "stone_four_ninths_sq",
-      "x": 16.67,
-      "y": 8.33
-    },
-    {
-      "type": "falling_platform",
-      "x": 12.96,
-      "y": 7.85
-    },
-    {
-      "type": "falling_platform",
-      "x": 9.6,
-      "y": 6.19
-    },
-    {
-      "type": "saw",
-      "x": 7.82,
-      "y": 5.37,
-      "direction": "vertical",
-      "distance": 200,
-      "speed": 200
-    },
-    {
-      "type": "stone_ninth_sq",
-      "x": 7.83,
-      "y": 3.17
-    },
-    {
-      "type": "stone_ninth_sq",
-      "x": 7.83,
-      "y": 7.5
-    },
-    {
-      "type": "stone_four_ninths_sq",
-      "x": 8.33,
-      "y": 3.33
-    },
-    {
-      "type": "fruit_orange",
-      "x": 17.48,
-      "y": 7.25
-    },
-    {
-      "type": "fruit_pineapple",
-      "x": 8.11,
-      "y": 2.26
-    },
-    {
-      "type": "checkpoint",
-      "x": 12.92,
-      "y": 11.33
-    },
-    {
-      "type": "fruit_strawberry",
-      "x": 13.28,
-      "y": 9.97
-    }
-  ],
-  "enemies": [
-    {
-      "type": "slime",
-      "x": 9,
-      "y": 32.69
-    },
-    {
-      "type": "mushroom",
-      "x": 12,
-      "y": 24.67
-    },
-    {
-      "type": "radish",
-      "x": 16.14,
-      "y": 25.55,
-      "patrolBoxSize": 150
-    },
-    {
-      "type": "bee",
-      "x": 10.04,
-      "y": 18.16,
-      "patrolBoxSize": 150
-    },
-    {
-      "type": "fatbird",
-      "x": 6.52,
-      "y": 12.31
-    },
-    {
-      "type": "turtle",
-      "x": 4.41,
-      "y": 41.73
-    },
-    {
-      "type": "bluebird",
-      "x": 14.51,
-      "y": 7.22,
-      "patrolDistance": 150,
-      "horizontalSpeed": 60,
-      "verticalAmplitude": 10
-    },
-    {
-      "type": "bluebird",
-      "x": 17.76,
-      "y": 5.26,
-      "patrolDistance": 200,
-      "horizontalSpeed": 100,
-      "verticalAmplitude": 12
-    }
+  "entities": [
+    [
+      "trampoline",
+      9.06,
+      20.71
+    ],
+    [
+      "trophy",
+      2.81,
+      2.33
+    ],
+    [
+      "wood_third_h",
+      1.5,
+      39.5
+    ],
+    [
+      "wood_third_h",
+      2.5,
+      39.5
+    ],
+    [
+      "wood_third_h",
+      3.5,
+      39.5
+    ],
+    [
+      "wood_ninth_sq",
+      1.17,
+      39.17
+    ],
+    [
+      "wood_ninth_sq",
+      3.83,
+      39.83
+    ],
+    [
+      "fire_trap",
+      2.22,
+      39.17,
+      5
+    ],
+    [
+      "fruit_apple",
+      1.66,
+      37.32
+    ],
+    [
+      "fruit_bananas",
+      9.02,
+      31.43
+    ],
+    [
+      "trampoline",
+      1.62,
+      39.04
+    ],
+    [
+      "fruit_cherries",
+      16.63,
+      27.26
+    ],
+    [
+      "fruit_kiwi",
+      10.26,
+      20.27
+    ],
+    [
+      "falling_platform",
+      13.45,
+      30.96
+    ],
+    [
+      "checkpoint",
+      18.19,
+      27.33
+    ],
+    [
+      "stone_third_h",
+      6.5,
+      33.83
+    ],
+    [
+      "stone_four_ninths_sq",
+      6.67,
+      33.33
+    ],
+    [
+      "arrow_bubble",
+      4.91,
+      35.63,
+      "up",
+      700
+    ],
+    [
+      "fruit_melon",
+      6.57,
+      14.3
+    ],
+    [
+      "wood_third_v",
+      15.83,
+      28.5
+    ],
+    [
+      "saw",
+      11.95,
+      30.99,
+      "vertical",
+      200,
+      80
+    ],
+    [
+      "trampoline",
+      7.49,
+      14.71
+    ],
+    [
+      "spike",
+      11.26,
+      11.83
+    ],
+    [
+      "spike",
+      11.58,
+      11.83
+    ],
+    [
+      "stone_four_ninths_sq",
+      16.67,
+      8.33
+    ],
+    [
+      "falling_platform",
+      12.96,
+      7.85
+    ],
+    [
+      "falling_platform",
+      9.6,
+      6.19
+    ],
+    [
+      "saw",
+      7.82,
+      5.37,
+      "vertical",
+      200,
+      200
+    ],
+    [
+      "stone_ninth_sq",
+      7.83,
+      3.17
+    ],
+    [
+      "stone_ninth_sq",
+      7.83,
+      7.5
+    ],
+    [
+      "stone_four_ninths_sq",
+      8.33,
+      3.33
+    ],
+    [
+      "fruit_orange",
+      17.48,
+      7.25
+    ],
+    [
+      "fruit_pineapple",
+      8.11,
+      2.26
+    ],
+    [
+      "checkpoint",
+      12.92,
+      11.33
+    ],
+    [
+      "fruit_strawberry",
+      13.28,
+      9.97
+    ],
+    [
+      "slime",
+      9,
+      32.69
+    ],
+    [
+      "mushroom",
+      12,
+      24.67
+    ],
+    [
+      "radish",
+      16.14,
+      25.55,
+      150
+    ],
+    [
+      "bee",
+      10.04,
+      18.16,
+      150
+    ],
+    [
+      "fatbird",
+      6.52,
+      12.31
+    ],
+    [
+      "turtle",
+      4.41,
+      41.73
+    ],
+    [
+      "bluebird",
+      14.51,
+      7.22,
+      150,
+      60,
+      10
+    ],
+    [
+      "bluebird",
+      17.76,
+      5.26,
+      200,
+      100,
+      12
+    ]
   ]
 }
