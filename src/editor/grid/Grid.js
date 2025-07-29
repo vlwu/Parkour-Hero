@@ -145,7 +145,6 @@ export class Grid {
         return tileDef?.solid || false;
     }
 
-    // --- START REFACTOR ---
     getTileDataForExport() {
         const tileData = [];
         const cells = DOM.gridContainer.children;
@@ -159,5 +158,4 @@ export class Grid {
         }
         return tileData;
     }
-    // --- END REFACTOR ---
 }

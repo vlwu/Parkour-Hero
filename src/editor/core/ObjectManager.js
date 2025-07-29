@@ -24,7 +24,6 @@ export class ObjectManager {
         this.render();
     }
 
-    // --- START REFACTOR ---
     load(levelData) {
         this.nextObjectId = 0;
         this.objects = [];
@@ -105,8 +104,6 @@ export class ObjectManager {
         }
         this.render();
     }
-    // --- END REFACTOR ---
-
     addObject(type, pixelX, pixelY) {
         let replacedSpawn = null;
         if (type === 'player_spawn') {

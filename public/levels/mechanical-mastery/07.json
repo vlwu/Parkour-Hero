@@ -167,11 +167,6 @@
     ],
     [
       "stone_four_ninths_sq",
-      18.67,
-      13.67
-    ],
-    [
-      "stone_four_ninths_sq",
       23.33,
       13.67
     ],
@@ -242,11 +237,6 @@
       9.17
     ],
     [
-      "wood_third_v",
-      24.83,
-      8.5
-    ],
-    [
       "spike",
       25.14,
       7.83
@@ -294,6 +284,51 @@
       "orange_dirt_third_h",
       14.5,
       4.17
+    ],
+    [
+      "fruit_apple",
+      2.09,
+      16.13
+    ],
+    [
+      "fruit_bananas",
+      6.18,
+      11.11
+    ],
+    [
+      "fruit_cherries",
+      10.34,
+      6.26
+    ],
+    [
+      "fruit_kiwi",
+      14.51,
+      1.86
+    ],
+    [
+      "fruit_melon",
+      16.54,
+      6.16
+    ],
+    [
+      "fruit_orange",
+      17.48,
+      16
+    ],
+    [
+      "fruit_pineapple",
+      23.32,
+      11.3
+    ],
+    [
+      "fruit_strawberry",
+      25.41,
+      6.16
+    ],
+    [
+      "wood_four_ninths_sq",
+      24.67,
+      8.33
     ]
   ]
 }

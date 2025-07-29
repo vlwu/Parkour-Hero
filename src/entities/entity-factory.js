@@ -48,8 +48,7 @@ export function createPlayer(entityManager, x, y, characterId) {
         width: PLAYER_CONSTANTS.WIDTH,
         height: PLAYER_CONSTANTS.HEIGHT,
     }));
-    
-    // Add the components required for the refactored systems.
+
     entityManager.addComponent(playerEntityId, new InputComponent());
     entityManager.addComponent(playerEntityId, new StateComponent('spawn')); // This component still tracks the string name for simplicity
     entityManager.addComponent(playerEntityId, new HealthComponent());

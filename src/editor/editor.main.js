@@ -404,7 +404,6 @@ class EditorController {
         if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0) { this.resetEditor(w, h); }
     }
 
-    // --- START REFACTOR ---
     _onFileLoad(e) {
         const file = e.target.files[0];
         LevelImporter.load(file, (data) => {
@@ -431,7 +430,6 @@ class EditorController {
             this.history.clear();
         });
     }
-    // --- END REFACTOR ---
 
     _onExport() {
         LevelExporter.export(this.grid, this.objectManager, DOM.levelNameInput.value, DOM.backgroundInput.value);

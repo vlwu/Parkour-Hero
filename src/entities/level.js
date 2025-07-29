@@ -87,7 +87,6 @@ export class Level {
     this.background = levelConfig.background || 'background_blue';
     this.backgroundScroll = levelConfig.backgroundScroll || { x: 0, y: 15 };
 
-    // --- START REFACTOR ---
     let startX, startY;
     if (Array.isArray(levelConfig.startPosition)) {
         startX = levelConfig.startPosition[0];
@@ -124,7 +123,6 @@ export class Level {
             });
         });
     }
-    // --- END REFACTOR ---
 
     this.spatialGrid = new SpatialGrid(this.width, this.height, GRID_CONSTANTS.TILE_SIZE * 4);
 
@@ -137,7 +135,6 @@ export class Level {
     this.slimePuddlePool = [];
     eventBus.subscribe('createSlimePuddle', (pos) => this.addSlimePuddle(pos));
 
-    // --- START REFACTOR ---
     const allEntities = [
         ...(levelConfig.entities || []),
         ...(levelConfig.objects || []),
@@ -145,7 +142,6 @@ export class Level {
     ];
 
     allEntities.forEach(entityData => {
-    // --- END REFACTOR ---
         const type = entityData[0];
         const worldX = entityData[1] * GRID_CONSTANTS.TILE_SIZE;
         const worldY = entityData[2] * GRID_CONSTANTS.TILE_SIZE;
