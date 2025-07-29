@@ -29,6 +29,7 @@ import { StateComponent } from '../components/StateComponent.js';
 import { EnemySystem } from '../systems/enemy-system.js';
 import { Level } from '../entities/level.js';
 import { BulletSystem } from '../systems/bullet-system.js';
+import { TransitionSystem } from '../systems/transition-system.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -46,6 +47,7 @@ export class Engine {
     this.gameHasStarted = false;
     this.pauseForMenu = false;
     this.timeScale = 1.0;
+    this.isTransitioning = false;
 
     this.entityManager = new EntityManager();
     this.lastCheckpoint = null;
@@ -73,6 +75,7 @@ export class Engine {
     this.uiSystem = new UISystem(this.uiCanvas, this.assets);
     this.enemySystem = new EnemySystem(this.collisionSystem);
     this.bulletSystem = new BulletSystem(this.collisionSystem);
+    this.transitionSystem = new TransitionSystem(this.uiCanvas, this.assets);
 
     this.systems = [
         this.inputSystem,
@@ -100,9 +103,9 @@ export class Engine {
         eventBus.subscribe(eventName, boundCallback);
     };
 
-    subscribeAndTrack('requestStartGame', async () => await this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
-    subscribeAndTrack('requestLevelLoad', async ({ sectionIndex, levelIndex }) => await this.loadLevel(sectionIndex, levelIndex));
-    subscribeAndTrack('requestLevelRestart', async () => await this.loadLevel(this.gameState.currentSection, this.gameState.currentLevelIndex));
+    subscribeAndTrack('requestStartGame', () => this.initiateLevelLoad(this.gameState.currentSection, this.gameState.currentLevelIndex));
+    subscribeAndTrack('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.initiateLevelLoad(sectionIndex, levelIndex));
+    subscribeAndTrack('requestLevelRestart', () => this.initiateLevelLoad(this.gameState.currentSection, this.gameState.currentLevelIndex));
     subscribeAndTrack('keybindsUpdated', this.updateKeybinds);
     subscribeAndTrack('fruitCollected', this._onFruitCollected);
     subscribeAndTrack('playerTookDamage', this._onPlayerTookDamage);
@@ -131,7 +134,7 @@ export class Engine {
   }
 
   resume() {
-    if (this.pauseForMenu || !this.gameHasStarted || this.gameState.showingLevelComplete) return;
+    if (this.pauseForMenu || !this.gameHasStarted || this.gameState.showingLevelComplete || this.isTransitioning) return;
     if (this.timeScale === 1.0) return;
     this.timeScale = 1.0;
     eventBus.publish('gameResumed');
@@ -148,6 +151,8 @@ export class Engine {
     if (deltaTime > 0.25) {
         deltaTime = 0.25;
     }
+
+    this.transitionSystem.update(deltaTime);
 
     this.accumulator += deltaTime;
 
@@ -178,6 +183,22 @@ export class Engine {
       this.gameFlowSystem.reset(this.isRunning);
   }
 
+  initiateLevelLoad(sectionIndex, levelIndex) {
+    if (this.isTransitioning) return;
+    this.isTransitioning = true;
+    this.pause();
+
+    this.transitionSystem.start(
+        async () => {
+            await this.loadLevel(sectionIndex, levelIndex);
+        },
+        () => {
+            this.isTransitioning = false;
+            this.resume();
+        }
+    );
+  }
+
   async loadLevel(sectionIndex, levelIndex) {
     const levelData = await this.levelManager.getLevelData(sectionIndex, levelIndex);
     if (!levelData) { this.stop(); return; }
@@ -201,7 +222,6 @@ export class Engine {
     this.camera.snapToPlayer(this.entityManager, this.playerEntityId);
     this.renderer.preRenderLevel(this.currentLevel);
 
-    this.timeScale = 1.0;
     if (!this.gameHasStarted) {
       this.start();
     }
@@ -263,7 +283,8 @@ export class Engine {
     };
 
     for (const system of this.systems) {
-      system.update(dt, context);
+        if (system instanceof TransitionSystem) continue;
+        system.update(dt, context);
     }
 
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
@@ -419,6 +440,7 @@ export class Engine {
     this.effectsSystem.render(this.ctx, this.camera, alpha);
     this.hud.drawGameHUD(this.ctx, FIXED_DT);
     this.uiSystem.render(this.ctx, this.timeScale > 0);
+    this.transitionSystem.render(this.ctx);
   }
 
   destroy() {

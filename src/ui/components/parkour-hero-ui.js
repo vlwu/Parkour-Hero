@@ -119,7 +119,6 @@ export class ParkourHeroUI extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    eventBus.subscribe('requestStartGame', this._handleStartGame);
     eventBus.subscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.subscribe('keybindsUpdated', this._handleKeybindsUpdate);
     eventBus.subscribe('ui_button_clicked', this._handleUIButtonClick);
@@ -137,7 +136,6 @@ export class ParkourHeroUI extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    eventBus.unsubscribe('requestStartGame', this._handleStartGame);
     eventBus.unsubscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.unsubscribe('keybindsUpdated', this._handleKeybindsUpdate);
     eventBus.unsubscribe('ui_button_clicked', this._handleUIButtonClick);
@@ -163,12 +161,6 @@ export class ParkourHeroUI extends LitElement {
           eventBus.publish('menuOpened');
       }
   }
-
-  _handleStartGame = () => {
-    this.gameHasStarted = true;
-    this.activeModal = null;
-    eventBus.publish('allMenusClosed');
-  };
 
   _handleSoundUpdate = (settings) => { this.soundSettings = { ...settings }; };
   _handleKeybindsUpdate = (keybinds) => { this.keybinds = { ...keybinds }; };
@@ -235,7 +227,11 @@ export class ParkourHeroUI extends LitElement {
 
   _handleLevelSelected(e) {
     const { sectionIndex, levelIndex } = e.detail;
-    eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
+    this.activeModal = null;
+    eventBus.publish('allMenusClosed');
+    requestAnimationFrame(() => {
+        eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
+    });
   }
 
   _handleCharacterSelected(e) {
@@ -316,7 +312,7 @@ export class ParkourHeroUI extends LitElement {
           .fontRenderer=${this.fontRenderer} text="Parkour Hero" scale="9" outlineColor="black" outlineWidth="2"
         ></bitmap-text>
         <div class="main-menu-buttons">
-          <button @click=${() => { eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' }); eventBus.publish('requestStartGame'); }}>
+          <button @click=${() => { this.activeModal = null; eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' }); eventBus.publish('requestStartGame'); }}>
               <bitmap-text .fontRenderer=${this.fontRenderer} text=${startButtonText} scale="2.5" outlineColor="#004a99" outlineWidth="1"></bitmap-text>
           </button>
         </div>

@@ -136,6 +136,7 @@ export async function loadAssets() {
     info_icon: '/assets/Menu/Buttons/Info.png',
     editor_icon: '/assets/Menu/Buttons/Editor.png',
 
+    transition: '/assets/Other/Transition.png',
     background_blue: '/assets/Background/Blue.png',
     background_brown: '/assets/Background/Brown.png',
     background_gray: '/assets/Background/Gray.png',
