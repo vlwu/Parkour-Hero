@@ -185,6 +185,11 @@ export class Engine {
 
   initiateLevelLoad(sectionIndex, levelIndex) {
     if (this.isTransitioning) return;
+
+    if (!this.isRunning) {
+        this.start();
+    }
+
     this.isTransitioning = true;
     this.pause();
 
