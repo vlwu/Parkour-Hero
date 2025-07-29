@@ -121,7 +121,7 @@ export class Engine {
 
   updateKeybinds(newKeybinds) { this.keybinds = { ...newKeybinds }; }
 
-  start() { if (this.isRunning) return; this.isRunning = true; this.gameHasStarted = true; this.lastFrameTime = performance.now(); eventBus.publish('gameStarted'); eventBus.publish('gameResumed'); this.gameLoop(); }
+  start() { if (this.isRunning) return; this.isRunning = true; this.lastFrameTime = performance.now(); eventBus.publish('gameResumed'); this.gameLoop(); }
   stop() { this.isRunning = false; this.soundManager.stopAll(); }
 
   pause() {
@@ -188,6 +188,8 @@ export class Engine {
     this.isTransitioning = true;
     this.pause();
 
+    this.uiCanvas.style.zIndex = '1000';
+
     this.transitionSystem.start(
         async () => {
             await this.loadLevel(sectionIndex, levelIndex);
@@ -195,6 +197,7 @@ export class Engine {
         () => {
             this.isTransitioning = false;
             this.resume();
+            this.uiCanvas.style.zIndex = '100';
         }
     );
   }
@@ -223,7 +226,8 @@ export class Engine {
     this.renderer.preRenderLevel(this.currentLevel);
 
     if (!this.gameHasStarted) {
-      this.start();
+      this.gameHasStarted = true;
+      eventBus.publish('gameStarted');
     }
 
     eventBus.publish('levelLoaded', { gameState: this.gameState });

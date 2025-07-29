@@ -227,11 +227,7 @@ export class ParkourHeroUI extends LitElement {
 
   _handleLevelSelected(e) {
     const { sectionIndex, levelIndex } = e.detail;
-    this.activeModal = null;
-    eventBus.publish('allMenusClosed');
-    requestAnimationFrame(() => {
-        eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
-    });
+    eventBus.publish('requestLevelLoad', { sectionIndex, levelIndex });
   }
 
   _handleCharacterSelected(e) {
