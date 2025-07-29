@@ -2,15 +2,17 @@ export class LevelExporter {
     static export(grid, objectManager, levelName, background) {
         const { startPos, finalEntities } = objectManager.getObjectsForExport();
 
+        // --- START REFACTOR ---
         const exportData = {
             name: levelName,
             gridWidth: grid.width,
             gridHeight: grid.height,
             background: background,
             startPosition: startPos,
-            layout: grid.getLayout(),
+            tileData: grid.getTileDataForExport(), // Replaced layout with tileData
             entities: finalEntities,
         };
+        // --- END REFACTOR ---
 
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
         const dlAnchorElem = document.createElement('a');

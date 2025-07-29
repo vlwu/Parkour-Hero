@@ -87,15 +87,44 @@ export class Level {
     this.background = levelConfig.background || 'background_blue';
     this.backgroundScroll = levelConfig.backgroundScroll || { x: 0, y: 15 };
 
+    // --- START REFACTOR ---
+    let startX, startY;
+    if (Array.isArray(levelConfig.startPosition)) {
+        startX = levelConfig.startPosition[0];
+        startY = levelConfig.startPosition[1];
+    } else if (typeof levelConfig.startPosition === 'object' && levelConfig.startPosition !== null) {
+        startX = levelConfig.startPosition.x;
+        startY = levelConfig.startPosition.y;
+    }
 
     this.startPosition = {
-      x: levelConfig.startPosition[0] * GRID_CONSTANTS.TILE_SIZE,
-      y: levelConfig.startPosition[1] * GRID_CONSTANTS.TILE_SIZE,
+      x: startX * GRID_CONSTANTS.TILE_SIZE,
+      y: startY * GRID_CONSTANTS.TILE_SIZE,
     };
 
-    this.tiles = levelConfig.layout.map(rowString =>
-      [...rowString].map(tileId => TILE_DEFINITIONS[tileId] || TILE_DEFINITIONS['0'])
+    this.tiles = Array(this.gridHeight).fill(null).map(() =>
+        Array(this.gridWidth).fill(TILE_DEFINITIONS['0'])
     );
+
+    if (levelConfig.tileData) {
+        levelConfig.tileData.forEach(tile => {
+            if (this.tiles[tile.y] && this.tiles[tile.y][tile.x] !== undefined) {
+                this.tiles[tile.y][tile.x] = TILE_DEFINITIONS[tile.id] || TILE_DEFINITIONS['0'];
+            }
+        });
+    } else if (levelConfig.layout) {
+        console.warn(`Level "${levelConfig.name}" is using a legacy layout. Consider converting it to the new sparse format.`);
+        levelConfig.layout.forEach((rowString, y) => {
+            [...rowString].forEach((tileId, x) => {
+                if (tileId !== '0') {
+                    if (this.tiles[y] && this.tiles[y][x] !== undefined) {
+                        this.tiles[y][x] = TILE_DEFINITIONS[tileId] || TILE_DEFINITIONS['0'];
+                    }
+                }
+            });
+        });
+    }
+    // --- END REFACTOR ---
 
     this.spatialGrid = new SpatialGrid(this.width, this.height, GRID_CONSTANTS.TILE_SIZE * 4);
 
@@ -108,7 +137,15 @@ export class Level {
     this.slimePuddlePool = [];
     eventBus.subscribe('createSlimePuddle', (pos) => this.addSlimePuddle(pos));
 
-    (levelConfig.entities || []).forEach(entityData => {
+    // --- START REFACTOR ---
+    const allEntities = [
+        ...(levelConfig.entities || []),
+        ...(levelConfig.objects || []),
+        ...(levelConfig.enemies || [])
+    ];
+
+    allEntities.forEach(entityData => {
+    // --- END REFACTOR ---
         const type = entityData[0];
         const worldX = entityData[1] * GRID_CONSTANTS.TILE_SIZE;
         const worldY = entityData[2] * GRID_CONSTANTS.TILE_SIZE;

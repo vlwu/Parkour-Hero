@@ -146,16 +146,15 @@ class EditorController {
             return;
         }
 
-        const { startPos, finalObjects, finalEnemies } = this.objectManager.getObjectsForExport();
+        const { startPos, finalEntities } = this.objectManager.getObjectsForExport();
         const levelData = {
             name: `Preview: ${DOM.levelNameInput.value}`,
             gridWidth: this.grid.width,
             gridHeight: this.grid.height,
             background: DOM.backgroundInput.value,
             startPosition: startPos,
-            layout: this.grid.getLayout(),
-            objects: finalObjects,
-            enemies: finalEnemies,
+            tileData: this.grid.getTileDataForExport(),
+            entities: finalEntities,
         };
 
         const previewContainer = document.getElementById('game-preview-container');
@@ -391,7 +390,7 @@ class EditorController {
                 to: { x: finalX, y: finalY }
             });
         }
-        
+
         this.objectDragStartPosition = null;
 
         obj.x = finalX; obj.y = finalY;
@@ -405,22 +404,34 @@ class EditorController {
         if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0) { this.resetEditor(w, h); }
     }
 
+    // --- START REFACTOR ---
     _onFileLoad(e) {
         const file = e.target.files[0];
         LevelImporter.load(file, (data) => {
             this.resetEditor(data.gridWidth, data.gridHeight);
             DOM.levelNameInput.value = data.name;
             DOM.backgroundInput.value = data.background || 'background_blue';
-            data.layout.forEach((rowString, y) => {
-                [...rowString].forEach((tileId, x) => {
-                    const index = y * this.grid.width + x;
-                    this.grid.paintCell(index, tileId);
+
+            if (data.tileData) { // New sparse format
+                data.tileData.forEach(tile => {
+                    const index = tile.y * this.grid.width + tile.x;
+                    this.grid.paintCell(index, tile.id);
                 });
-            });
-            this.objectManager.load(data.objects, data.enemies, data.startPosition);
+            } else if (data.layout) { // Legacy full grid format
+                data.layout.forEach((rowString, y) => {
+                    [...rowString].forEach((tileId, x) => {
+                        if (tileId !== '0') {
+                            const index = y * this.grid.width + x;
+                            this.grid.paintCell(index, tileId);
+                        }
+                    });
+                });
+            }
+            this.objectManager.load(data);
             this.history.clear();
         });
     }
+    // --- END REFACTOR ---
 
     _onExport() {
         LevelExporter.export(this.grid, this.objectManager, DOM.levelNameInput.value, DOM.backgroundInput.value);

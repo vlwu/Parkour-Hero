@@ -22,7 +22,7 @@ export class Grid {
         for (let i = 0; i < this.width * this.height; i++) {
             const cell = document.createElement('div');
             cell.className = 'grid-cell';
-            cell.dataset.tileId = '0'; // '0' represents an empty tile
+            cell.dataset.tileId = '0';
             cell.dataset.index = i;
             DOM.gridContainer.appendChild(cell);
         }
@@ -67,17 +67,17 @@ export class Grid {
         cell.dataset.tileId = tileId;
         const def = TILE_DEFINITIONS[tileId];
 
-        // 1. Reset cell style
+
         cell.innerHTML = '';
         cell.style.backgroundColor = 'transparent';
         cell.style.borderTop = '';
         cell.style.backgroundImage = 'none';
 
         if (!def || def.type === 'empty') {
-            return; // Cell is empty
+            return;
         }
-        
-        // 2. Handle rendering
+
+
         if (def.collisionBox) {
             const viewport = document.createElement('span');
             viewport.style.display = 'block';
@@ -98,11 +98,11 @@ export class Grid {
             viewport.appendChild(spriteMover);
             cell.appendChild(viewport);
         } else if (!def.oneWay) {
-            // It's a standard, full-sized SOLID block. Render with background color.
+
             cell.style.backgroundColor = getPaletteColor(def.type);
         }
-        
-        // 3. Add one-way platform indicator (if applicable)
+
+
         if (def.oneWay) {
             cell.style.borderTop = `5px solid ${getPaletteColor(def.type)}`;
             if (!def.collisionBox) {
@@ -111,17 +111,17 @@ export class Grid {
             }
         }
     }
-    
-    // Helper to convert hex colors to rgba for transparency
+
+
     _hexToRgba(hex, alpha) {
         if (!hex) return '';
-        if (hex.startsWith('rgba')) return hex; // Already in correct format
+        if (hex.startsWith('rgba')) return hex;
         let r = 0, g = 0, b = 0;
-        if (hex.length === 4) { // #RGB
+        if (hex.length === 4) {
             r = "0x" + hex[1] + hex[1];
             g = "0x" + hex[2] + hex[2];
             b = "0x" + hex[3] + hex[3];
-        } else if (hex.length === 7) { // #RRGGBB
+        } else if (hex.length === 7) {
             r = "0x" + hex[1] + hex[2];
             g = "0x" + hex[3] + hex[4];
             b = "0x" + hex[5] + hex[6];
@@ -145,16 +145,19 @@ export class Grid {
         return tileDef?.solid || false;
     }
 
-    getLayout() {
-        const layout = [];
-        let rowString = '';
-        for (let i = 0; i < DOM.gridContainer.children.length; i++) {
-            rowString += this.getTileId(i);
-            if ((i + 1) % this.width === 0) {
-                layout.push(rowString);
-                rowString = '';
+    // --- START REFACTOR ---
+    getTileDataForExport() {
+        const tileData = [];
+        const cells = DOM.gridContainer.children;
+        for (let i = 0; i < cells.length; i++) {
+            const tileId = this.getTileId(i);
+            if (tileId !== '0') {
+                const x = i % this.width;
+                const y = Math.floor(i / this.width);
+                tileData.push({ x, y, id: tileId });
             }
         }
-        return layout;
+        return tileData;
     }
+    // --- END REFACTOR ---
 }

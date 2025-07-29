@@ -24,11 +24,18 @@ export class ObjectManager {
         this.render();
     }
 
+    // --- START REFACTOR ---
     load(levelData) {
         this.nextObjectId = 0;
         this.objects = [];
 
-        (levelData.entities || []).forEach(entityData => {
+        const allEntities = [
+            ...(levelData.entities || []),
+            ...(levelData.objects || []),
+            ...(levelData.enemies || [])
+        ];
+
+        allEntities.forEach(entityData => {
             const type = entityData[0];
             const x = entityData[1];
             const y = entityData[2];
@@ -75,18 +82,30 @@ export class ObjectManager {
         });
 
         if (levelData.startPosition) {
-            const { width, height } = this._getObjectDimensions('player_spawn');
-            this.objects.push({
-                id: this.nextObjectId++,
-                type: 'player_spawn',
-                x: levelData.startPosition[0],
-                y: levelData.startPosition[1],
-                width,
-                height
-            });
+            let startX, startY;
+            if (Array.isArray(levelData.startPosition)) {
+                startX = levelData.startPosition[0];
+                startY = levelData.startPosition[1];
+            } else if (typeof levelData.startPosition === 'object' && levelData.startPosition !== null) {
+                startX = levelData.startPosition.x;
+                startY = levelData.startPosition.y;
+            }
+
+            if (startX !== undefined && startY !== undefined) {
+                const { width, height } = this._getObjectDimensions('player_spawn');
+                this.objects.push({
+                    id: this.nextObjectId++,
+                    type: 'player_spawn',
+                    x: startX,
+                    y: startY,
+                    width,
+                    height
+                });
+            }
         }
         this.render();
     }
+    // --- END REFACTOR ---
 
     addObject(type, pixelX, pixelY) {
         let replacedSpawn = null;
