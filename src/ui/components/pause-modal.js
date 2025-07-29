@@ -35,7 +35,7 @@ export class PauseModal extends LitElement {
         gap: 12px; margin-bottom: 25px; padding: 15px;
         background-color: #444; border-radius: 8px;
     }
-    /* No styles needed for .stat-item anymore, as bitmap-text handles it */
+
     .button-container { display: flex; justify-content: center; gap: 15px; }
     .modal-image-button {
         background: transparent; border: none; padding: 0;
@@ -44,6 +44,28 @@ export class PauseModal extends LitElement {
     }
     .modal-image-button:hover { transform: scale(1.1); }
     .modal-image-button img { width: 100%; height: 100%; }
+    .exit-button-container {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #555;
+    }
+    .exit-button {
+      background-color: #e74c3c;
+      color: #fff;
+      border: 2px solid #c0392b;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.2s ease-in-out;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .exit-button:hover {
+      background-color: #c0392b;
+    }
   `;
 
   static properties = {
@@ -73,7 +95,7 @@ export class PauseModal extends LitElement {
               outlineWidth="2"
             ></bitmap-text>
           </div>
-          
+
           <div class="subtitle-container">
             <bitmap-text
                 .fontRenderer=${this.fontRenderer}
@@ -88,7 +110,7 @@ export class PauseModal extends LitElement {
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Deaths: ${this.stats.deathCount}" scale="1.8"></bitmap-text>
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Time: ${formatTime(this.stats.levelTime)}" scale="1.8"></bitmap-text>
           </div>
-          
+
           <div class="button-container">
             <button class="modal-image-button" title="Resume" @click=${() => this._dispatch('resume-game')}>
               <img src="/assets/Menu/Buttons/Play.png" alt="Resume">
@@ -98,6 +120,11 @@ export class PauseModal extends LitElement {
             </button>
             <button class="modal-image-button" title="Levels Menu" @click=${() => this._dispatch('open-levels-menu')}>
               <img src="/assets/Menu/Buttons/Levels.png" alt="Main Menu">
+            </button>
+          </div>
+          <div class="exit-button-container">
+            <button class="exit-button" @click=${() => this._dispatch('exit-to-menu')}>
+              <bitmap-text .fontRenderer=${this.fontRenderer} text="Exit to Main Menu" scale="1.8"></bitmap-text>
             </button>
           </div>
         </div>

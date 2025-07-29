@@ -44,8 +44,8 @@ export class ParkourHeroUI extends LitElement {
       border: none;
       padding: 0;
       cursor: pointer;
-      width: 54px;
-      height: 54px;
+      width: 64px;
+      height: 64px;
       transition: all 0.2s ease-in-out;
     }
     .icon-button:hover {
@@ -228,6 +228,10 @@ export class ParkourHeroUI extends LitElement {
 
   _handleRestart() { this._closeModal(); eventBus.publish('requestLevelRestart'); }
   _handleOpenLevelsMenu() { this.activeModal = 'levels'; }
+  _handleExitToMenu = () => {
+    this.gameHasStarted = false;
+    this.activeModal = 'main-menu';
+  };
 
   _handleLevelSelected(e) {
     const { sectionIndex, levelIndex } = e.detail;
@@ -344,6 +348,7 @@ export class ParkourHeroUI extends LitElement {
         return html`<pause-modal
                       .stats=${this.currentStats} .fontRenderer=${this.fontRenderer}
                       @resume-game=${this._closeModal} @restart-level=${this._handleRestart} @open-levels-menu=${this._handleOpenLevelsMenu}
+                      @exit-to-menu=${this._handleExitToMenu}
                     ></pause-modal>`;
       case 'levels':
         return html`<levels-menu
