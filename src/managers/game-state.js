@@ -20,7 +20,7 @@ function getSectionAndLevelFromLinearIndex(linearIndex, levelSections) {
         }
         levelCount += sectionLevelCount;
     }
-    // Fallback if index is out of bounds (e.g., all levels completed)
+
     const lastSectionIndex = levelSections.length - 1;
     if (lastSectionIndex < 0) return { sectionIndex: 0, levelIndex: 0 };
     const lastLevelIndex = levelSections[lastSectionIndex].levels.length - 1;
@@ -46,7 +46,7 @@ export class GameState {
           this.tutorialShown = savedState.tutorialShown;
           this.ensureStatsForAllLevels();
 
-          // Determine the level to start/continue on.
+
           const lastUnlockedLinearIndex = this.levelProgress.unlockedLevels[0] - 1;
           const { sectionIndex, levelIndex } = getSectionAndLevelFromLinearIndex(lastUnlockedLinearIndex, levelSections);
           this.currentSection = sectionIndex;
@@ -106,7 +106,7 @@ export class GameState {
         console.error("Failed to save game state to localStorage", e);
       }
   }
-  
+
   setSelectedCharacter(characterId) {
     if (characterConfig[characterId] && this.selectedCharacter !== characterId) {
       const newState = this._clone();
@@ -141,17 +141,17 @@ export class GameState {
     }
     return newState;
   }
-  
+
   onLevelComplete(runStats) {
       const newState = this._clone();
       const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
 
       if (!this.levelProgress.completedLevels.includes(levelId)) {
           newState.levelProgress.completedLevels.push(levelId);
-          
+
           const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
           const currentLinearIndex = getLinearIndex(this.currentSection, this.currentLevelIndex, levelSections);
-          
+
           if (currentLinearIndex + 1 < totalLevels) {
               const nextUnlockedCount = currentLinearIndex + 2;
               if (nextUnlockedCount > this.levelProgress.unlockedLevels[0]) {
@@ -173,7 +173,7 @@ export class GameState {
       newState.showingLevelComplete = true;
       newState.saveProgress();
       eventBus.publish('playSound', { key: 'level_complete', volume: 1.0, channel: 'UI' });
-      
+
       return newState;
   }
 
@@ -185,6 +185,10 @@ export class GameState {
   }
 
   isLevelUnlocked(sectionIndex, levelIndex) {
+      const section = levelSections[sectionIndex];
+      if (section && section.name === 'DIY') {
+        return true;
+      }
       const levelLinearIndex = getLinearIndex(sectionIndex, levelIndex, levelSections);
       return levelLinearIndex < this.levelProgress.unlockedLevels[0];
   }
@@ -193,19 +197,19 @@ export class GameState {
       const levelId = `${sectionIndex}-${levelIndex}`;
       return this.levelProgress.completedLevels.includes(levelId);
   }
-  
+
   resetProgress() {
     try {
       localStorage.removeItem('parkourGameState');
-      const newState = new GameState(); // Creates a fresh state from defaults
+      const newState = new GameState();
       newState.saveProgress();
       return newState;
     } catch (e) {
       console.error("Failed to reset game state in localStorage", e);
-      return this; // Return old state on failure
+      return this;
     }
   }
-  
+
   markTutorialAsShown() {
       if (this.tutorialShown) return this;
       const newState = this._clone();
@@ -213,20 +217,19 @@ export class GameState {
       newState.saveProgress();
       return newState;
   }
-  
+
   unlockAllLevels() {
       const newState = this._clone();
       const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
       newState.levelProgress.unlockedLevels[0] = totalLevels;
-      
-      // Mark all levels as completed to ensure characters are unlocked
+
       newState.levelProgress.completedLevels = [];
       levelSections.forEach((section, sIdx) => {
           section.levels.forEach((_, lIdx) => {
               newState.levelProgress.completedLevels.push(`${sIdx}-${lIdx}`);
           });
       });
-      
+
       newState.saveProgress();
       return newState;
   }

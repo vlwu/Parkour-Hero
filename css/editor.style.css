@@ -7,6 +7,7 @@
     --text-muted: #bdc3c7;
     --accent-color: #3498db;
     --danger-color: #e74c3c;
+    --success-color: #2ecc71;
     --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -24,7 +25,7 @@ body {
     height: 100%;
 }
 
-/* Panels */
+
 #left-panel, #right-panel {
     background-color: var(--bg-panel);
     padding: 15px;
@@ -49,7 +50,7 @@ body {
     font-size: 1.2em;
 }
 
-/* Toolbar */
+
 #toolbar {
     background-color: var(--bg-panel);
     padding: 10px;
@@ -95,6 +96,20 @@ body {
     background-color: #4aa3e0;
 }
 
+#toolbar button.danger-action {
+    background-color: var(--danger-color);
+}
+#toolbar button.danger-action:hover:not(:disabled) {
+    background-color: #c0392b;
+}
+
+#toolbar button.success-action {
+    background-color: var(--success-color);
+}
+#toolbar button.success-action:hover:not(:disabled) {
+    background-color: #27ae60;
+}
+
 #toolbar input[type="text"] {
     background-color: #2c3e50;
     border: 1px solid var(--border-color);
@@ -105,10 +120,10 @@ body {
 }
 
 
-/* Grid */
+
 #grid-parent {
     flex-grow: 1;
-    overflow: auto; /* Allow scrolling */
+    overflow: auto;
     background-color: var(--bg-grid);
     padding: 20px;
     user-select: none;
@@ -117,7 +132,7 @@ body {
 #grid-container {
     display: grid;
     position: relative;
-    transform-origin: top left; /* Keep zoom origin at the corner */
+    transform-origin: top left;
     box-shadow: 0 5px 15px rgba(0,0,0,0.4);
     background-color: #2c3e50;
 }
@@ -136,7 +151,7 @@ body {
     background-color: rgba(52, 152, 219, 0.2);
 }
 
-/* Palettes */
+
 #terrain-palette, #items-palette, #traps-palette, #enemies-palette {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
@@ -171,7 +186,7 @@ body {
     box-shadow: 0 0 10px var(--accent-color);
 }
 
-/* Dynamic Objects */
+
 .dynamic-object {
     position: absolute;
     cursor: grab;
@@ -198,7 +213,7 @@ body {
     box-shadow: 0 0 10px var(--danger-color);
 }
 
-/* Properties Panel */
+
 #properties-panel {
     background-color: #2c3e50;
     padding: 10px;
@@ -236,7 +251,7 @@ body {
     border-top: 1px solid var(--border-color);
 }
 
-/* Game Preview Styles */
+
 #game-preview-container {
     position: fixed;
     top: 0;

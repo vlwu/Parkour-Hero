@@ -459,7 +459,7 @@ class EditorController {
             diyLevels.push(levelData);
             localStorage.setItem('parkourHeroDIYLevels', JSON.stringify(diyLevels));
             alert('Level saved successfully! Returning to the main menu.');
-            window.location.href = 'index.html#levels';
+            window.location.href = 'index.html';
         } catch (e) {
             console.error('Failed to save level to localStorage:', e);
             alert('Error: Could not save the level. Your browser might be blocking localStorage or the data is too large.');
