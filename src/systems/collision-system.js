@@ -200,6 +200,10 @@ export class CollisionSystem {
                         continue;
                     }
 
+                    if (collider.isOneWay) {
+                        continue;
+                    }
+
                     const PUSH_BUFFER = 0.01;
                     if (vel.vx > 0) {
                         pos.x = collider.x - col.width - PUSH_BUFFER;
@@ -273,7 +277,7 @@ export class CollisionSystem {
                            validGroundColliders.push(collider);
                         }
                     }
-                } else { // Moving Up
+                } else {
                     if (!collider.isOneWay) {
                         const prevPlayerTop = (pos.y - vel.vy * dt);
                         const prevPlayerXCenter = (pos.x - vel.vx * dt) + col.width / 2;

@@ -392,6 +392,7 @@ export class ObjectManager {
     _snapFractionalPlatform(obj) {
         const gridX = Math.floor(obj.x);
         const gridY = Math.floor(obj.y);
+        const SNAPPING_EPSILON = 0.01;
 
         let snapX, snapY;
 
@@ -401,20 +402,20 @@ export class ObjectManager {
 
         if (obj.type.endsWith('_third_h')) {
             snapX = gridX + 0.5;
-            const yOptions = [gridY + 1/6, gridY + 3/6, gridY + 5/6];
+            const yOptions = [gridY + 1/6, gridY + 3/6, gridY + 5/6 + SNAPPING_EPSILON];
             snapY = findClosest(obj.y, yOptions);
         } else if (obj.type.endsWith('_third_v')) {
             snapY = gridY + 0.5;
             const xOptions = [gridX + 1/6, gridX + 3/6, gridX + 5/6];
             snapX = findClosest(obj.x, xOptions);
         } else if (obj.type.endsWith('_ninth_sq')) {
-            const xOptions = [gridX + 1/6, gridX + 3/6, gridX + 5/6];
-            const yOptions = [gridY + 1/6, gridY + 3/6, gridY + 5/6];
+            const xOptions = [gridX + 1/6, gridX + 3/6, gridX + 5/6 + SNAPPING_EPSILON];
+            const yOptions = [gridY + 1/6, gridY + 3/6, gridY + 5/6 + SNAPPING_EPSILON];
             snapX = findClosest(obj.x, xOptions);
             snapY = findClosest(obj.y, yOptions);
         } else if (obj.type.endsWith('_four_ninths_sq')) {
             const xOptions = [gridX + 1/3, gridX + 2/3];
-            const yOptions = [gridY + 1/3, gridY + 2/3];
+            const yOptions = [gridY + 1/3, gridY + 2/3 + SNAPPING_EPSILON];
             snapX = findClosest(obj.x, xOptions);
             snapY = findClosest(obj.y, yOptions);
         } else {
