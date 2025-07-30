@@ -3,228 +3,256 @@
   "gridWidth": 27,
   "gridHeight": 15,
   "background": "background_green",
-  "startPosition": {
-    "x": 1.04,
-    "y": 11.46
-  },
-  "layout": [
-    "000000000000000000000000000",
-    "000000000000000000003000001",
-    "000000000000000000003000000",
-    "000000000000000000000333000",
-    "000000000000000000000000000",
-    "000000000000000009000000000",
-    "000000000000000009a00000000",
-    "0000000000011a0000000000000",
-    "000000000000000000000000020",
-    "000000033300000000000000020",
-    "000000000000000000000000020",
-    "000008000000000000000000000",
-    "000000000000000000444000000",
-    "111100000000000000000000000",
-    "000000000000000000000000000",
-    "000000000000000000000000000"
+  "startPosition": [
+    1.04,
+    11.46
   ],
-  "objects": [
+  "tileData": [
     {
-      "type": "fruit_apple",
-      "x": 2.08,
-      "y": 9.38
+      "x": 20,
+      "y": 1,
+      "id": "3"
     },
     {
-      "type": "fruit_bananas",
-      "x": 5.46,
-      "y": 10.39,
-      "initialDragPos": {
-        "x": 5,
-        "y": 10.42
-      }
+      "x": 26,
+      "y": 1,
+      "id": "1"
     },
     {
-      "type": "fruit_cherries",
-      "x": 8.05,
-      "y": 8.31,
-      "initialDragPos": {
-        "x": 8.05,
-        "y": 8.06
-      }
+      "x": 20,
+      "y": 2,
+      "id": "3"
     },
     {
-      "type": "fruit_kiwi",
-      "x": 11.84,
-      "y": 6.38,
-      "initialDragPos": {
-        "x": 11.84,
-        "y": 6.05
-      }
+      "x": 21,
+      "y": 3,
+      "id": "3"
     },
     {
-      "type": "fruit_melon",
-      "x": 17.49,
-      "y": 3.98,
-      "initialDragPos": {
-        "x": 19.38,
-        "y": 5.96
-      }
+      "x": 22,
+      "y": 3,
+      "id": "3"
     },
     {
-      "type": "fruit_orange",
-      "x": 25.49,
-      "y": 3.88,
-      "initialDragPos": {
-        "x": 23.95,
-        "y": 1.56
-      }
+      "x": 23,
+      "y": 3,
+      "id": "3"
     },
     {
-      "type": "fruit_pineapple",
-      "x": 9.9,
-      "y": 6.06,
-      "initialDragPos": {
-        "x": 9.84,
-        "y": 7.89
-      }
+      "x": 17,
+      "y": 5,
+      "id": "9"
     },
     {
-      "type": "fruit_strawberry",
-      "x": 19.62,
-      "y": 10.81,
-      "initialDragPos": {
-        "x": 19.62,
-        "y": 10.81
-      }
+      "x": 17,
+      "y": 6,
+      "id": "9"
     },
     {
-      "type": "trophy",
-      "x": 22.57,
-      "y": 2.36,
-      "initialDragPos": {
-        "x": 20.48,
-        "y": 2.33
-      }
+      "x": 18,
+      "y": 6,
+      "id": "a"
     },
     {
-      "type": "rock_head",
-      "x": 11.87,
-      "y": 4.85,
-      "initialDragPos": {
-        "x": 11.84,
-        "y": 5.42
-      }
+      "x": 11,
+      "y": 7,
+      "id": "1"
     },
     {
-      "type": "rock_head",
-      "x": 8.04,
-      "y": 6.83,
-      "initialDragPos": {
-        "x": 8.04,
-        "y": 7.24
-      }
+      "x": 12,
+      "y": 7,
+      "id": "1"
     },
     {
-      "type": "trampoline",
-      "x": 13.47,
-      "y": 6.71,
-      "initialDragPos": {
-        "x": 13.38,
-        "y": 6.71
-      }
+      "x": 13,
+      "y": 7,
+      "id": "c"
     },
     {
-      "type": "spiked_ball",
-      "x": 17.53,
-      "y": 7.03,
-      "chainLength": 196,
-      "swingArc": 130,
-      "period": 4,
-      "tiltAmount": 0.7,
-      "initialDragPos": {
-        "x": 17.58,
-        "y": 7.03
-      }
+      "x": 25,
+      "y": 8,
+      "id": "2"
     },
     {
-      "type": "spike",
-      "x": 20.28,
-      "y": 0.83,
-      "initialDragPos": {
-        "x": 20.33,
-        "y": 0.83
-      }
+      "x": 7,
+      "y": 9,
+      "id": "3"
     },
     {
-      "type": "spike",
-      "x": 20.75,
-      "y": 0.83,
-      "initialDragPos": {
-        "x": 20.69,
-        "y": 0.83
-      }
+      "x": 8,
+      "y": 9,
+      "id": "3"
     },
     {
-      "type": "fire_trap",
-      "x": 18.82,
-      "y": 11.83,
-      "initialDragPos": {
-        "x": 18.82,
-        "y": 11.83
-      },
-      "chainLength": 6
+      "x": 9,
+      "y": 9,
+      "id": "3"
     },
     {
-      "type": "arrow_bubble",
-      "x": 25.48,
-      "y": 6.94,
-      "direction": "up",
-      "knockbackSpeed": 700,
-      "initialDragPos": {
-        "x": 25.48,
-        "y": 6.94
-      }
+      "x": 25,
+      "y": 9,
+      "id": "2"
     },
     {
-      "type": "arrow_bubble",
-      "x": 25.48,
-      "y": 4.91,
-      "direction": "up",
-      "knockbackSpeed": 700,
-      "initialDragPos": {
-        "x": 25.48,
-        "y": 4.91
-      }
+      "x": 25,
+      "y": 10,
+      "id": "2"
     },
     {
-      "type": "arrow_bubble",
-      "x": 25.46,
-      "y": 2.84,
-      "direction": "up",
-      "knockbackSpeed": 500,
-      "initialDragPos": {
-        "x": 25.46,
-        "y": 2.84
-      }
+      "x": 5,
+      "y": 11,
+      "id": "8"
     },
     {
-      "type": "fan",
-      "x": 25.92,
-      "y": 1.5,
-      "direction": "left",
-      "pushStrength": 350,
-      "windHeight": 175,
-      "initialDragPos": {
-        "x": 25.92,
-        "y": 1.5
-      }
+      "x": 18,
+      "y": 12,
+      "id": "4"
     },
     {
-      "type": "falling_platform",
-      "x": 23.06,
-      "y": 11.48,
-      "initialDragPos": {
-        "x": 23.1,
-        "y": 11.57
-      }
+      "x": 19,
+      "y": 12,
+      "id": "4"
+    },
+    {
+      "x": 20,
+      "y": 12,
+      "id": "4"
+    },
+    {
+      "x": 0,
+      "y": 13,
+      "id": "1"
+    },
+    {
+      "x": 1,
+      "y": 13,
+      "id": "1"
+    },
+    {
+      "x": 2,
+      "y": 13,
+      "id": "1"
     }
   ],
-  "enemies": []
+  "entities": [
+    [
+      "fruit_apple",
+      2.78,
+      9.95
+    ],
+    [
+      "fruit_bananas",
+      5.46,
+      10.39
+    ],
+    [
+      "fruit_cherries",
+      8.05,
+      8.31
+    ],
+    [
+      "fruit_kiwi",
+      11.84,
+      6.38
+    ],
+    [
+      "fruit_melon",
+      17.49,
+      3.98
+    ],
+    [
+      "fruit_orange",
+      25.49,
+      3.88
+    ],
+    [
+      "fruit_pineapple",
+      9.9,
+      6.06
+    ],
+    [
+      "fruit_strawberry",
+      19.62,
+      10.81
+    ],
+    [
+      "trophy",
+      22.57,
+      2.36
+    ],
+    [
+      "rock_head",
+      11.87,
+      4.85
+    ],
+    [
+      "rock_head",
+      8.04,
+      6.83
+    ],
+    [
+      "trampoline",
+      13.47,
+      6.71
+    ],
+    [
+      "spiked_ball",
+      17.53,
+      7.03,
+      196,
+      130,
+      4,
+      0.7
+    ],
+    [
+      "spike",
+      20.28,
+      0.83
+    ],
+    [
+      "spike",
+      20.75,
+      0.83
+    ],
+    [
+      "fire_trap",
+      18.82,
+      11.83,
+      6
+    ],
+    [
+      "arrow_bubble",
+      25.48,
+      6.94,
+      "up",
+      700
+    ],
+    [
+      "arrow_bubble",
+      25.48,
+      4.91,
+      "up",
+      700
+    ],
+    [
+      "arrow_bubble",
+      25.46,
+      2.84,
+      "up",
+      500
+    ],
+    [
+      "fan",
+      25.92,
+      1.5,
+      "left",
+      350,
+      175
+    ],
+    [
+      "falling_platform",
+      23.06,
+      11.48
+    ]
+  ]
 }
