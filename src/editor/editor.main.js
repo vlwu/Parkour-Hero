@@ -30,6 +30,7 @@ class EditorController {
             isChanging: false,
             oldValue: 0
         };
+        this.editingLevelIndex = null;
 
         this.assets = null;
         this.fontRenderer = null;
@@ -78,6 +79,42 @@ class EditorController {
         this._onPaletteSelection(this.palette.getSelection());
         this._loadGameAssets();
         this._setupResizeModalListeners();
+        this._checkForEditMode();
+    }
+
+    _checkForEditMode() {
+        const levelDataJSON = sessionStorage.getItem('editingLevelData');
+        const levelIndex = sessionStorage.getItem('editingLevelIndex');
+
+        if (levelDataJSON && levelIndex !== null) {
+            try {
+                const levelData = JSON.parse(levelDataJSON);
+                this.editingLevelIndex = parseInt(levelIndex, 10);
+
+                this.resetEditor(levelData.gridWidth, levelData.gridHeight);
+                DOM.levelNameInput.value = levelData.name;
+                DOM.backgroundInput.value = levelData.background || 'background_blue';
+
+                if (levelData.tileData) {
+                    levelData.tileData.forEach(tile => {
+                        const index = tile.y * this.grid.width + tile.x;
+                        this.grid.paintCell(index, tile.id);
+                    });
+                }
+                this.objectManager.load(levelData);
+                this.history.clear();
+
+                DOM.createLevelBtn.textContent = 'Save Changes';
+                document.title = `Editing: ${levelData.name}`;
+
+                sessionStorage.removeItem('editingLevelData');
+                sessionStorage.removeItem('editingLevelIndex');
+            } catch (e) {
+                console.error("Failed to load level for editing:", e);
+                alert("There was an error loading the level data for editing.");
+                this.editingLevelIndex = null;
+            }
+        }
     }
 
     async _loadGameAssets() {
@@ -513,7 +550,7 @@ class EditorController {
     }
 
     _onBack() {
-        window.location.href = 'index.html';
+        window.location.href = 'index.html#levels';
     }
 
     _onCreateLevel() {
@@ -531,10 +568,22 @@ class EditorController {
         try {
             const diyLevelsJSON = localStorage.getItem('parkourHeroDIYLevels');
             const diyLevels = diyLevelsJSON ? JSON.parse(diyLevelsJSON) : [];
-            diyLevels.push(levelData);
-            localStorage.setItem('parkourHeroDIYLevels', JSON.stringify(diyLevels));
-            alert('Level saved successfully! Returning to the main menu.');
-            window.location.href = 'index.html';
+
+            if (this.editingLevelIndex !== null) {
+                if (this.editingLevelIndex >= 0 && this.editingLevelIndex < diyLevels.length) {
+                    diyLevels[this.editingLevelIndex] = levelData;
+                    localStorage.setItem('parkourHeroDIYLevels', JSON.stringify(diyLevels));
+                    alert('Level saved successfully! Returning to the main menu.');
+                    window.location.href = 'index.html#levels';
+                } else {
+                    alert('Error: Could not find the level to update.');
+                }
+            } else {
+                diyLevels.push(levelData);
+                localStorage.setItem('parkourHeroDIYLevels', JSON.stringify(diyLevels));
+                alert('Level saved successfully! Returning to the main menu.');
+                window.location.href = 'index.html#levels';
+            }
         } catch (e) {
             console.error('Failed to save level to localStorage:', e);
             alert('Error: Could not save the level. Your browser might be blocking localStorage or the data is too large.');

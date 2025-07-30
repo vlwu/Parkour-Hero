@@ -11,6 +11,7 @@ export class LevelManager {
     eventBus.subscribe('requestNextLevel', () => this.goToNextLevel());
     eventBus.subscribe('requestPreviousLevel', () => this.goToPreviousLevel());
     eventBus.subscribe('gameStateUpdated', (newGameState) => this.gameState = newGameState);
+    eventBus.subscribe('deleteDIYLevel', ({ levelIndex }) => this.deleteDIYLevel(levelIndex));
   }
 
   loadDIYLevels() {
@@ -25,6 +26,29 @@ export class LevelManager {
       }
     } catch (e) {
       console.error("Failed to load or parse DIY levels from localStorage", e);
+    }
+  }
+
+  deleteDIYLevel(levelIndex) {
+    try {
+        const diyLevelsJSON = localStorage.getItem('parkourHeroDIYLevels');
+        if (diyLevelsJSON) {
+            const diyLevels = JSON.parse(diyLevelsJSON);
+            if (Array.isArray(diyLevels) && levelIndex >= 0 && levelIndex < diyLevels.length) {
+                diyLevels.splice(levelIndex, 1);
+                localStorage.setItem('parkourHeroDIYLevels', JSON.stringify(diyLevels));
+
+                const diySection = this.levelSections.find(section => section.name === 'DIY');
+                if (diySection) {
+                    diySection.levels.splice(levelIndex, 1);
+                }
+                
+                eventBus.publish('gameStateUpdated', this.gameState._clone());
+                console.log(`DIY Level at index ${levelIndex} deleted.`);
+            }
+        }
+    } catch (e) {
+        console.error("Failed to delete DIY level from localStorage", e);
     }
   }
 
