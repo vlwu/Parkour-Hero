@@ -409,7 +409,7 @@ export class ObjectManager {
             const xOptions = [gridX + 1/6, gridX + 3/6, gridX + 5/6];
             snapX = findClosest(obj.x, xOptions);
         } else if (obj.type.endsWith('_ninth_sq')) {
-            const xOptions = [gridX + 1/6, gridX + 3/6, gridX + 5/6 + SNAPPING_EPSILON];
+            const xOptions = [gridX + 1/6 - SNAPPING_EPSILON, gridX + 3/6, gridX + 5/6 + SNAPPING_EPSILON];
             const yOptions = [gridY + 1/6, gridY + 3/6, gridY + 5/6 + SNAPPING_EPSILON];
             snapX = findClosest(obj.x, xOptions);
             snapY = findClosest(obj.y, yOptions);
