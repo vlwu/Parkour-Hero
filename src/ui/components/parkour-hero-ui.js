@@ -113,7 +113,6 @@ export class ParkourHeroUI extends LitElement {
 
     if (window.location.hash === '#levels') {
       this.activeModal = 'levels';
-      this.gameHasStarted = true;
       history.pushState("", document.title, window.location.pathname + window.location.search);
     }
   }
