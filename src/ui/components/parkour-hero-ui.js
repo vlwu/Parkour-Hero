@@ -8,6 +8,7 @@ import './info-modal.js';
 import './level-complete-modal.js';
 import './stats-modal.js';
 import './tutorial-modal.js';
+import './enemy-catalogue-modal.js';
 import './bitmap-text.js';
 
 export class ParkourHeroUI extends LitElement {
@@ -172,6 +173,9 @@ export class ParkourHeroUI extends LitElement {
       else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
     } else if (buttonId === 'stats') {
         this.activeModal = 'stats';
+        eventBus.publish('menuOpened');
+    } else if (buttonId === 'enemy-catalogue') {
+        this.activeModal = 'enemy-catalogue';
         eventBus.publish('menuOpened');
     } else {
       this.activeModal = buttonId;
@@ -368,6 +372,11 @@ export class ParkourHeroUI extends LitElement {
                       .fontRenderer=${this.fontRenderer}
                       @close-modal=${this._closeModal}
                     ></stats-modal>`;
+      case 'enemy-catalogue':
+        return html`<enemy-catalogue-modal
+                      .fontRenderer=${this.fontRenderer}
+                      @close-modal=${this._closeModal}
+                    ></enemy-catalogue-modal>`;
       default:
         return html``;
     }
