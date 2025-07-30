@@ -7,7 +7,7 @@ import './bitmap-text.js';
 const ENEMY_DESCRIPTIONS = {
     mushroom: "A simple-minded fungus that patrols back and forth on its platform. Be careful not to run into it.",
     chicken: "This feisty fowl stays put until it spots a target on its level. Once provoked, it charges relentlessly.",
-    snail: "Moves slowly and predictably. A single stomp will cause it to retreat into its shell, which can then be kicked as a projectile.",
+    snail: "Moves slowly and predictably. A single stomp will cause it fall out of its shell. The shell then continues to bounce around.",
     slime: "Hops along platforms, leaving behind a trail of damaging goo. Time your jumps to avoid both the slime and its puddles.",
     turtle: "A defensive creature. It periodically extends sharp spikes from its shell, making it dangerous to touch. It can only be stomped when its spikes are retracted.",
     bluebird: "Flies in a horizontal pattern, bobbing gently up and down. Its flight path is consistent, making it a predictable obstacle.",
