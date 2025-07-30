@@ -8,14 +8,12 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 
-// Import all the new state classes
 import { SpawnState } from '../states/player/SpawnState.js';
 import { IdleState } from '../states/player/IdleState.js';
 import { JumpState } from '../states/player/JumpState.js';
 import { DoubleJumpState } from '../states/player/DoubleJumpState.js';
 import { DashState } from '../states/player/DashState.js';
 import { HitState } from '../states/player/HitState.js';
-
 
 export class PlayerStateSystem {
     constructor() {
@@ -27,13 +25,12 @@ export class PlayerStateSystem {
         });
         eventBus.subscribe('playerKnockback', (e) => this.handleKnockback(e));
         eventBus.subscribe('enemyStomped', (e) => this.handleEnemyStomped(e));
-        
+
         this.damageEvents = [];
         this.knockbackEvents = [];
         this.stompEvents = [];
     }
 
-    // --- Event Handling ---
     clearDamageEvents() { this.damageEvents = []; }
     clearKnockbackEvents() { this.knockbackEvents = []; }
     clearStompEvents() { this.stompEvents = []; }
@@ -42,7 +39,6 @@ export class PlayerStateSystem {
     handleKnockback(event) { this.knockbackEvents.push(event); }
     handleEnemyStomped(event) { this.stompEvents.push(event); }
 
-    // --- State Machine Transition ---
     _transitionTo(entityId, newState, entityManager) {
         const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
         if (ctrl.currentState) {
@@ -51,10 +47,9 @@ export class PlayerStateSystem {
         ctrl.currentState = newState;
         ctrl.currentState.enter();
     }
-    
-    // --- System Update Method ---
+
     update(dt, { entityManager }) {
-        // Process discrete events first
+
         this._processDamageEvents(entityManager);
         this._processKnockbackEvents(entityManager);
         this._processStompEvents(entityManager);
@@ -63,25 +58,22 @@ export class PlayerStateSystem {
 
         for (const entityId of entities) {
             const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-            
-            // Initialize state machine on first run
+
             if (!ctrl.currentState) {
                 this._transitionTo(entityId, new SpawnState(entityId, entityManager), entityManager);
             }
 
-            // Update timers and core logic that affects all states
             this._updateTimers(dt, ctrl);
             this._handleGlobalInputLogic(entityId, entityManager);
 
-            // Delegate state-specific logic and check for a returned state transition
+
             if (ctrl.currentState) {
                 const nextState = ctrl.currentState.update(dt);
                 if (nextState) {
                     this._transitionTo(entityId, nextState, entityManager);
                 }
             }
-            
-            // Update animation and other continuous processes
+
             this._updateAnimation(dt, entityId, entityManager);
             this._handleJumpTrail(dt, entityId, entityManager);
 
@@ -97,7 +89,7 @@ export class PlayerStateSystem {
         for (const entityId of entities) {
             const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
             if (ctrl.isHit || ctrl.isSpawning) continue;
-            
+
             ctrl.isHit = true;
             ctrl.hitStunTimer = PLAYER_CONSTANTS.HIT_STUN_DURATION;
             this._transitionTo(entityId, new HitState(entityId, entityManager), entityManager);
@@ -148,7 +140,7 @@ export class PlayerStateSystem {
             if (ctrl.dashTimer <= 0) ctrl.isDashing = false;
         }
     }
-    
+
     _handleGlobalInputLogic(entityId, entityManager) {
         const input = entityManager.getComponent(entityId, InputComponent);
         const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
@@ -192,7 +184,7 @@ export class PlayerStateSystem {
             }
         }
         ctrl.vLock = false;
-        
+
         if (input.dashPressedThisFrame && ctrl.dashCooldownTimer <= 0) {
             ctrl.isDashing = true;
             ctrl.dashTimer = ctrl.dashDuration;
@@ -210,7 +202,7 @@ export class PlayerStateSystem {
         const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
         const pos = entityManager.getComponent(entityId, PositionComponent);
         const col = entityManager.getComponent(entityId, CollisionComponent);
-        
+
         if (state.currentState === 'jump' && ctrl.jumpCount === 1) {
             ctrl.jumpParticleTimer -= dt;
             if (ctrl.jumpParticleTimer <= 0) {
@@ -221,7 +213,7 @@ export class PlayerStateSystem {
             ctrl.jumpParticleTimer = 0;
         }
     }
-    
+
     _updateAnimation(dt, entityId, entityManager) {
         const renderable = entityManager.getComponent(entityId, RenderableComponent);
         const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
@@ -229,7 +221,6 @@ export class PlayerStateSystem {
         renderable.animationTimer += dt;
         const stateName = renderable.animationState;
 
-        // Revert to the original, correct logic for determining animation speed.
         let speed;
         if (stateName === 'spawn' || stateName === 'despawn') {
             speed = PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED;
@@ -253,6 +244,7 @@ export class PlayerStateSystem {
                     ctrl.spawnComplete = true;
                     renderable.width = PLAYER_CONSTANTS.WIDTH;
                     renderable.height = PLAYER_CONSTANTS.HEIGHT;
+                    eventBus.publish('playSound', { key: 'spawned', volume: 0.8, channel: 'SFX' });
                 }
                 if (stateName === 'despawn') {
                     ctrl.isDespawning = false;
