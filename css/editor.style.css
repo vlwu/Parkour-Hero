@@ -411,3 +411,19 @@ body {
     cursor: pointer;
     color: var(--text-color);
 }
+
+.resize-button-group button.danger-action {
+    background-color: var(--danger-color);
+}
+
+.resize-button-group button.danger-action:hover {
+    background-color: #c0392b;
+}
+
+.resize-button-group button.success-action {
+    background-color: var(--success-color);
+}
+
+.resize-button-group button.success-action:hover {
+    background-color: #27ae60;
+}
