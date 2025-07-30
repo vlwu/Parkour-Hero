@@ -241,6 +241,12 @@ export async function loadAssets() {
     bat_ceiling_in: '/assets/Enemies/Bat/Ceiling In.png',
     bat_ceiling_out: '/assets/Enemies/Bat/Ceiling Out.png',
 
+    ghost_hit: '/assets/Enemies/Ghost/Hit.png',
+    ghost_idle: '/assets/Enemies/Ghost/Idle.png',
+    ghost_appear: '/assets/Enemies/Ghost/Appear.png',
+    ghost_disappear: '/assets/Enemies/Ghost/Disappear.png',
+    ghost_particles: '/assets/Enemies/Ghost/Ghost Particles.png',
+
     dust_particle: '/assets/Other/Dust Particle.png',
     ice_particle: '/assets/Traps/Sand Mud Ice/Ice Particle.png',
     sand_particle: '/assets/Traps/Sand Mud Ice/Sand Particle.png',
