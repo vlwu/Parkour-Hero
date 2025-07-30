@@ -96,6 +96,8 @@ export class LevelsMenu extends LitElement {
       display: flex; justify-content: center; align-items: center;
       min-height: 53px; box-sizing: border-box;
       aspect-ratio: 1 / 1;
+      width: 100%;
+      height: 100%;
     }
     .level-button:not(:disabled):hover {
       background-color: #007bff; border-color: #0056b3; transform: translateY(-2px);
@@ -127,15 +129,17 @@ export class LevelsMenu extends LitElement {
 
     .level-button-container {
       position: relative;
+      aspect-ratio: 1 / 1;
+      display: flex;
     }
     .menu-button {
       position: absolute;
-      top: 2px;
-      right: 2px;
+      top: 4px;
+      right: 4px;
       width: 24px;
       height: 24px;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.3);
       border-radius: 50%;
       color: white;
       cursor: pointer;
@@ -144,20 +148,22 @@ export class LevelsMenu extends LitElement {
       align-items: center;
       padding: 0;
       line-height: 1;
+      font-size: 18px;
+      z-index: 5;
     }
     .menu-button:hover {
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.8);
     }
     .context-menu {
       position: absolute;
-      top: 30px;
-      right: 0;
+      top: 32px;
+      right: 2px;
       background-color: #444;
       border: 1px solid #555;
       border-radius: 6px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.3);
       z-index: 10;
-      width: 120px;
+      width: 100px;
     }
     .context-menu button {
       display: block;
