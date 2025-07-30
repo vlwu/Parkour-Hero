@@ -15,6 +15,7 @@ export class FlyingSlamAI extends BaseAI {
         this.gravity = this.enemy.ai.gravity || 120;
         this.flapForce = this.enemy.ai.flapForce || -140;
         this.tetherStrength = this.enemy.ai.tetherStrength || 5;
+        this.soundRadius = this.enemy.ai.soundRadius || 200;
 
         this.slamSpeed = this.enemy.ai.slamSpeed || 350;
         this.retractSpeed = this.enemy.ai.retractSpeed || 100;
@@ -30,7 +31,7 @@ export class FlyingSlamAI extends BaseAI {
     update(dt) {
         const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
         const playerCol = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, CollisionComponent) : null;
-        this._handleAnimationEvents();
+        this._handleAnimationEvents(playerPos);
 
         switch (this.state.currentState) {
             case 'idle':
@@ -153,7 +154,7 @@ export class FlyingSlamAI extends BaseAI {
         );
     }
 
-    _handleAnimationEvents() {
+    _handleAnimationEvents(playerPos) {
         const currentFrame = this.renderable.animationFrame;
         if (currentFrame !== this.lastFrame) {
             if (this.state.currentState === 'idle' && (currentFrame === 7 || currentFrame === 8)) {
@@ -161,6 +162,12 @@ export class FlyingSlamAI extends BaseAI {
                 const particleY = this.pos.y + this.col.height / 2;
                 eventBus.publish('createParticles', { x: this.pos.x, y: particleY, type: 'wing_flap' });
                 eventBus.publish('createParticles', { x: this.pos.x + this.col.width, y: particleY, type: 'wing_flap' });
+                if (playerPos) {
+                    const distance = Math.sqrt(Math.pow(playerPos.x - this.pos.x, 2) + Math.pow(playerPos.y - this.pos.y, 2));
+                    if (distance < this.soundRadius) {
+                        eventBus.publish('playSound', { key: 'wing_flap', volume: 0.3, channel: 'SFX' });
+                    }
+                }
             }
         }
         this.lastFrame = currentFrame;

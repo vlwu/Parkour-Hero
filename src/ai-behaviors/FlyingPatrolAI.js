@@ -1,5 +1,6 @@
 import { BaseAI } from './BaseAI.js';
 import { eventBus } from '../utils/event-bus.js';
+import { PositionComponent } from '../components/PositionComponent.js';
 
 export class FlyingPatrolAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -20,6 +21,7 @@ export class FlyingPatrolAI extends BaseAI {
 
         this.turnDuration = this.enemy.ai.turnDuration || 1;
         this.acceleration = this.enemy.ai.acceleration || 120;
+        this.soundRadius = this.enemy.ai.soundRadius || 200;
 
 
         this.state.currentState = 'patrolling';
@@ -30,7 +32,8 @@ export class FlyingPatrolAI extends BaseAI {
     update(dt) {
         this.renderable.animationState = 'flying';
 
-        this._handleAnimationEvents();
+        const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
+        this._handleAnimationEvents(playerPos);
 
         switch (this.state.currentState) {
             case 'patrolling':
@@ -108,7 +111,7 @@ export class FlyingPatrolAI extends BaseAI {
         }
     }
 
-    _handleAnimationEvents() {
+    _handleAnimationEvents(playerPos) {
         const currentFrame = this.renderable.animationFrame;
 
         if (currentFrame !== this.lastFrame && currentFrame === 5) {
@@ -122,6 +125,12 @@ export class FlyingPatrolAI extends BaseAI {
                 y: particleY,
                 type: 'wing_flap',
             });
+            if (playerPos) {
+                const distance = Math.sqrt(Math.pow(playerPos.x - this.pos.x, 2) + Math.pow(playerPos.y - this.pos.y, 2));
+                if (distance < this.soundRadius) {
+                    eventBus.publish('playSound', { key: 'wing_flap', volume: 0.3, channel: 'SFX' });
+                }
+            }
         }
         this.lastFrame = currentFrame;
     }
