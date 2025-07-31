@@ -298,7 +298,7 @@ export class CollisionSystem {
 
             if (validGroundColliders.length > 0) {
                 const highestGround = validGroundColliders.reduce((prev, current) => (prev.y < current.y ? prev : current));
-                this._landOnSurface(pos, vel, col, highestGround.y, highestGround.surfaceType, highestGround.instance, entityId);
+                this._landOnSurface(pos, vel, col, highestGround.y, highestGround.surfaceType, highestGround.instance, entityId, entityManager);
                 entityRect.y = pos.y;
             }
 
@@ -355,11 +355,14 @@ export class CollisionSystem {
         );
     }
 
-    _landOnSurface(pos, vel, col, surfaceTopY, surfaceType, groundInstance, entityId) {
+    _landOnSurface(pos, vel, col, surfaceTopY, surfaceType, groundInstance, entityId, entityManager) {
         const landingVelocity = vel.vy;
-        if (landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY) {
+        const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+
+        if (playerCtrl && landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY && playerCtrl.fallDistance > PLAYER_CONSTANTS.HEIGHT) {
             eventBus.publish('playerLandedHard', { entityId, landingVelocity });
         }
+
         const PUSH_BUFFER = 0.01;
         pos.y = surfaceTopY - col.height - PUSH_BUFFER;
         vel.vy = 0;

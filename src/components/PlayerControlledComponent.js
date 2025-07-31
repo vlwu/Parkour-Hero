@@ -56,6 +56,7 @@ export class PlayerControlledComponent {
         this.deathCount = deathCount;
         this.activeSurfaceSound = activeSurfaceSound;
         this.previousGroundEntity = null;
+        this.fallDistance = 0; // New property to track fall distance
 
 
         this.currentState = null;

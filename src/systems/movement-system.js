@@ -30,8 +30,17 @@ export class MovementSystem {
 
             this._applyHorizontalMovement(dt, input, vel, col, ctrl);
             this._applyVerticalMovement(dt, vel, col, ctrl, state);
-            this._applyStickyPlatformMovement(pos, col); // ADDED
+            this._applyStickyPlatformMovement(pos, col);
             this._updateSurfaceEffects(dt, pos, vel, col, ctrl, entityId, entityManager);
+            
+            // Update fall distance
+            if (!col.isGrounded) {
+                if (vel.vy > 0) { // Only track downward movement
+                    ctrl.fallDistance += vel.vy * dt;
+                }
+            } else {
+                ctrl.fallDistance = 0;
+            }
         }
     }
 
@@ -92,8 +101,8 @@ export class MovementSystem {
 
         vel.vy = Math.min(vel.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
     }
-    
-    // ADDED: New method for sticky platform logic
+
+
     _applyStickyPlatformMovement(pos, col) {
         if (col.isGrounded && col.groundEntity && typeof col.groundEntity.getMovementDelta === 'function') {
             const delta = col.groundEntity.getMovementDelta();
