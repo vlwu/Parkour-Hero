@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { eventBus } from '../../utils/event-bus.js';
+import { GameState } from '../../managers/game-state.js';
 import './settings-modal.js';
 import './pause-modal.js';
 import './levels-modal.js';
@@ -105,7 +106,7 @@ export class ParkourHeroUI extends LitElement {
     this.keybinds = { moveLeft: 'a', moveRight: 'd', jump: 'w', dash: ' ' };
     this.soundSettings = { soundEnabled: true, soundVolume: 0.5 };
     this.currentStats = {};
-    this.gameState = null;
+    this.gameState = new GameState();
     this.assets = null;
     this.fontRenderer = null;
     this.levelCompleteStats = null;
