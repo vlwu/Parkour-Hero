@@ -58,17 +58,18 @@ export class SlammingHead extends Trap {
         }
 
         let detectionBottomY = this.y + this.height / 2 + zone.height;
-        const startGridY = Math.floor((this.y + this.height / 2) / GRID_CONSTANTS.TILE_SIZE);
-        const endGridY = Math.floor(detectionBottomY / GRID_CONSTANTS.TILE_SIZE);
-        const startGridX = Math.floor(zone.x / GRID_CONSTANTS.TILE_SIZE);
-        const endGridX = Math.floor((zone.x + zone.width) / GRID_CONSTANTS.TILE_SIZE);
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const startGridY = Math.floor((this.y + this.height / 2) / TILE_SIZE);
+        const endGridY = Math.floor(detectionBottomY / TILE_SIZE);
+        const startGridX = Math.floor(zone.x / TILE_SIZE);
+        const endGridX = Math.floor((zone.x + zone.width) / TILE_SIZE);
 
         for (let y = startGridY; y <= endGridY; y++) {
             for (let x = startGridX; x <= endGridX; x++) {
-                const tileProps = level.getTilePropertiesAt(x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE);
+                const tileProps = level.getTilePropertiesAt(x * TILE_SIZE, y * TILE_SIZE);
                 if (tileProps && tileProps.solid && !tileProps.oneWay) {
-                    detectionBottomY = y * GRID_CONSTANTS.TILE_SIZE;
-                    y = endGridY + 1;
+                    detectionBottomY = y * TILE_SIZE;
+                    y = endGridY + 1; // Break outer loop
                     break;
                 }
             }
@@ -132,42 +133,73 @@ export class SlammingHead extends Trap {
     }
 
     _update_slamming(dt, playerData, eventBus, level) {
-        this.y += this.velocities.slam * dt;
-        const groundCheckY = this.y + this.height / 2;
-        const groundCheckX = this.x;
+        const moveDistance = this.velocities.slam * dt;
+        const steps = Math.ceil(moveDistance / (GRID_CONSTANTS.TILE_SIZE / 2));
+        const stepY = moveDistance / steps;
 
-        const hitCollider = this._findSurface(level, groundCheckX, groundCheckY);
-        if (hitCollider) {
-            this.y = hitCollider.y - this.height / 2;
-            this.state = 'slammed';
-            this.timers.slammed = 0.4;
-            this.animations.hit.frame = 0;
-            eventBus.publish('playSound', { key: this.soundKey, volume: 1.5, channel: 'SFX' });
-            eventBus.publish('cameraShakeRequested', { intensity: 15, duration: 0.3 });
-            eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'walk_dust', particleSpeed: 200 });
-            eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'sand', particleSpeed: 200 });
+        for (let i = 0; i < steps; i++) {
+            this.y += stepY;
+            const groundCheckY = this.y + this.height / 2;
+
+            const hitCollider = this._findSurface(level, groundCheckY);
+            if (hitCollider) {
+                this.y = hitCollider.y - this.height / 2;
+                this.state = 'slammed';
+                this.timers.slammed = 0.4;
+                this.animations.hit.frame = 0;
+                eventBus.publish('playSound', { key: this.soundKey, volume: 1.5, channel: 'SFX' });
+                eventBus.publish('cameraShakeRequested', { intensity: 15, duration: 0.3 });
+                eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'walk_dust', particleSpeed: 200 });
+                eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'sand', particleSpeed: 200 });
+                return;
+            }
         }
     }
 
-    _findSurface(level, worldX, worldY) {
+    _findSurface(level, checkY) {
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const headLeft = this.x - this.width / 2;
+        const headRight = this.x + this.width / 2;
+        const startGridX = Math.floor(headLeft / TILE_SIZE);
+        const endGridX = Math.floor(headRight / TILE_SIZE);
 
-        const tileProps = level.getTilePropertiesAt(worldX, worldY);
-        if (tileProps && tileProps.solid && !tileProps.oneWay) {
-            const gridY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE);
-            return { y: gridY * GRID_CONSTANTS.TILE_SIZE };
-        }
+        let highestSurfaceY = Infinity;
+        let surfaceFound = false;
 
-
-        const potentialColliders = level.spatialGrid.query({ x: worldX, y: worldY, width: 1, height: 1 });
-        for (const obj of potentialColliders) {
-            if (obj.instance && obj.instance.solid && !obj.isOneWay) {
-                const hitbox = obj.instance.hitbox || obj;
-                if (worldX >= hitbox.x && worldX < hitbox.x + hitbox.width && worldY >= hitbox.y && worldY < hitbox.y + hitbox.height) {
-                    return { y: hitbox.y };
+        // Check tiles under the head's width
+        for (let x = startGridX; x <= endGridX; x++) {
+            const tileProps = level.getTilePropertiesAt(x * TILE_SIZE, checkY);
+            if (tileProps && tileProps.solid && !tileProps.oneWay) {
+                const gridY = Math.floor(checkY / TILE_SIZE);
+                const tileTopY = gridY * TILE_SIZE;
+                if (tileTopY < highestSurfaceY) {
+                    highestSurfaceY = tileTopY;
+                    surfaceFound = true;
                 }
             }
         }
-        return null;
+
+        // Check dynamic/trap objects
+        const queryBox = { x: headLeft, y: checkY - 1, width: this.width, height: 2 };
+        const potentialColliders = level.spatialGrid.query(queryBox);
+
+        for (const obj of potentialColliders) {
+            if (obj.instance && obj.instance.solid && !obj.isOneWay) {
+                const hitbox = obj.instance.hitbox || obj;
+                if (
+                    headRight > hitbox.x &&
+                    headLeft < hitbox.x + hitbox.width &&
+                    checkY >= hitbox.y && checkY < hitbox.y + hitbox.height
+                ) {
+                    if (hitbox.y < highestSurfaceY) {
+                        highestSurfaceY = hitbox.y;
+                        surfaceFound = true;
+                    }
+                }
+            }
+        }
+
+        return surfaceFound ? { y: highestSurfaceY } : null;
     }
 
     _update_slammed(dt) {
