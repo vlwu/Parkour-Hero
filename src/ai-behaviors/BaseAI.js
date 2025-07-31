@@ -5,14 +5,9 @@ import { StateComponent } from '../components/StateComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { KillableComponent } from '../components/KillableComponent.js';
+import { GRID_CONSTANTS } from '../utils/constants.js';
 
 export class BaseAI {
-    /**
-     * @param {number} entityId The ID of the enemy entity.
-     * @param {import('../core/entity-manager.js').EntityManager} entityManager The entity manager to access components.
-     * @param {object} level The current level data for collision checks.
-     * @param {number|null} playerEntityId The player's entity ID for targeting.
-     */
     constructor(entityId, entityManager, level, playerEntityId) {
         this.entityId = entityId;
         this.entityManager = entityManager;
@@ -35,39 +30,38 @@ export class BaseAI {
     _getPlatformEdgesForEntity(pos, col) {
         if (!this.level || !pos || !col) return null;
 
-        const TILE_SIZE = 48;
-        const checkY = Math.floor((pos.y + col.height + 1) / TILE_SIZE);
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const checkY = pos.y + col.height + 1;
+        const checkX = pos.x + col.width / 2;
 
-        if (checkY >= this.level.gridHeight || checkY < 0) return null;
-
-        const startGridX = Math.floor((pos.x + col.width / 2) / TILE_SIZE);
-
-        const initialTile = this.level.getTileAt(startGridX * TILE_SIZE, checkY * TILE_SIZE);
-        if (!initialTile || !initialTile.solid || initialTile.oneWay) {
+        const initialTileProps = this.level.getTilePropertiesAt(checkX, checkY);
+        if (!initialTileProps || !initialTileProps.solid || initialTileProps.oneWay) {
             return null;
         }
 
+        const startGridX = Math.floor(checkX / TILE_SIZE);
+        const gridY = Math.floor(checkY / TILE_SIZE);
+
         let leftGridX = startGridX;
         while (leftGridX > 0) {
-            const tile = this.level.getTileAt((leftGridX - 1) * TILE_SIZE, checkY * TILE_SIZE);
-            if (!tile || !tile.solid || tile.oneWay) break;
+            const props = this.level.getTilePropertiesAt((leftGridX - 1) * TILE_SIZE, checkY);
+            if (!props || !props.solid || props.oneWay) break;
             leftGridX--;
         }
 
         let rightGridX = startGridX;
         while (rightGridX < this.level.gridWidth - 1) {
-            const tile = this.level.getTileAt((rightGridX + 1) * TILE_SIZE, checkY * TILE_SIZE);
-            if (!tile || !tile.solid || tile.oneWay) break;
+            const props = this.level.getTilePropertiesAt((rightGridX + 1) * TILE_SIZE, checkY);
+            if (!props || !props.solid || props.oneWay) break;
             rightGridX++;
         }
 
-
-        const rightTile = this.level.tiles[checkY][rightGridX];
-        const rightEdge = (rightGridX * TILE_SIZE) + (rightTile.collisionBox ? rightTile.collisionBox.width : TILE_SIZE);
+        const rightTileProps = this.level.getTilePropertiesAt(rightGridX * TILE_SIZE, checkY);
+        const rightEdgeWidth = rightTileProps.collisionBox ? rightTileProps.collisionBox.width : TILE_SIZE;
 
         return {
             left: leftGridX * TILE_SIZE,
-            right: rightEdge,
+            right: (rightGridX * TILE_SIZE) + rightEdgeWidth,
         };
     }
 
