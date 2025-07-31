@@ -59,10 +59,9 @@ export class Engine {
     this.camera = new Camera(this.canvas.width, this.canvas.height);
     this.hud = new HUD(this.ctx, fontRenderer);
     this.soundManager = new SoundManager();
-    this.soundManager.addSounds(assets, coreSoundKeys);
+    this.soundManager.addSounds(assets, coreSoundKeys); // Load only core sounds initially
     this.renderer = new Renderer(this.gl, this.canvas, this.assets);
-    this.gameState = new GameState();
-    eventBus.publish('gameStateUpdated', this.gameState);
+    this.gameState = gameStateManager.getState();
 
     this.levelManager = new LevelManager(this.gameState);
 
@@ -172,7 +171,11 @@ export class Engine {
 
   _resetForNewLevel() {
       this.pauseForMenu = false;
-      this.gameState.showingLevelComplete = false;
+
+      const currentState = gameStateManager.getState();
+      const newStateData = JSON.parse(JSON.stringify(currentState));
+      newStateData.showingLevelComplete = false;
+      this.gameState = new GameState(newStateData);
       eventBus.publish('gameStateUpdated', this.gameState);
 
       this.lastCheckpoint = null;
@@ -200,7 +203,7 @@ export class Engine {
     this.transitionSystem.start(
         async () => {
             await this.assetManager.loadGameplayAssets();
-
+            
             this.renderer.syncTextures();
             this.particleSystem.syncTextures();
             this.soundManager.addSounds(this.assetManager.assets, gameplaySoundKeys);
@@ -455,7 +458,7 @@ export class Engine {
 
     this.ctx.clearRect(0, 0, this.uiCanvas.width, this.uiCanvas.height);
     this.effectsSystem.render(this.ctx, this.camera, alpha);
-    this.hud.drawGameHUD(this.ctx, FIXED_DT, this.camera, this.currentLevel, this.entityManager, this.playerEntityId);
+    this.hud.drawGameHUD(this.ctx, FIXED_DT);
     this.uiSystem.render(this.ctx, this.timeScale > 0);
     this.transitionSystem.render(this.ctx);
   }

@@ -1,6 +1,4 @@
 import { eventBus } from '../utils/event-bus.js';
-import { PositionComponent } from '../components/PositionComponent.js';
-import { CollisionComponent } from '../components/CollisionComponent.js';
 
 export class HUD {
   constructor(ctx, fontRenderer) {
@@ -35,8 +33,9 @@ export class HUD {
     this.stats = { ...this.stats, ...newStats };
   }
 
-  drawGameHUD(ctx, dt, camera, level, entityManager, playerEntityId) {
+  drawGameHUD(ctx, dt) {
     if (!this.isVisible || !this.fontRenderer) return;
+
 
     this.frameCount++;
     this.elapsedTime += dt;
@@ -67,6 +66,7 @@ export class HUD {
           outlineWidth: 1
       };
 
+
       let maxWidth = 0;
       lines.forEach(line => {
         const width = this.fontRenderer.getTextWidth(line, fontOptions.scale);
@@ -81,6 +81,7 @@ export class HUD {
       const hudWidth = maxWidth + horizontalPadding;
       const hudHeight = 180;
 
+
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
       ctx.roundRect(hudX, hudY, hudWidth, hudHeight, 10);
@@ -94,6 +95,7 @@ export class HUD {
         const y = startY + index * lineHeight;
         this.fontRenderer.drawText(ctx, text, textX, y, fontOptions);
       });
+
 
       const healthBarWidth = 150;
       const healthBarHeight = 20;
@@ -120,6 +122,7 @@ export class HUD {
 
       this.fontRenderer.drawText(ctx, `HP`, healthBarX + healthBarWidth + 10, healthBarY + healthBarHeight / 2 - 12, { scale: 2, align: 'left' });
 
+
       const fpsText = `FPS: ${this.fps}`;
       const fpsFontOptions = {
           scale: 2,
@@ -132,76 +135,10 @@ export class HUD {
       const fpsY = healthBarY + healthBarHeight + 10;
       this.fontRenderer.drawText(ctx, fpsText, fpsX, fpsY, fpsFontOptions);
 
-      if (camera && level) {
-          this._drawMinimap(ctx, camera, level, entityManager, playerEntityId);
-      }
-
       ctx.restore();
 
     } catch (error) {
       console.warn('Error drawing HUD:', error);
     }
   }
-
-  _drawMinimap(ctx, camera, level, entityManager, playerEntityId) {
-        const MAP_MAX_SIZE = 200;
-        const MAP_MARGIN = 20;
-
-        const levelAspectRatio = level.width / level.height;
-        let mapWidth, mapHeight;
-
-        if (levelAspectRatio > 1) {
-            mapWidth = MAP_MAX_SIZE;
-            mapHeight = MAP_MAX_SIZE / levelAspectRatio;
-        } else {
-            mapHeight = MAP_MAX_SIZE;
-            mapWidth = MAP_MAX_SIZE * levelAspectRatio;
-        }
-
-        const mapX = ctx.canvas.width - mapWidth - MAP_MARGIN;
-        const mapY = ctx.canvas.height - mapHeight - MAP_MARGIN;
-
-        const scaleX = mapWidth / level.width;
-        const scaleY = mapHeight / level.height;
-
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(mapX, mapY, mapWidth, mapHeight);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.strokeRect(mapX, mapY, mapWidth, mapHeight);
-
-
-        const viewRectX = mapX + camera.x * scaleX;
-        const viewRectY = mapY + camera.y * scaleY;
-        const viewRectWidth = camera.width * scaleX;
-        const viewRectHeight = camera.height * scaleY;
-
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(viewRectX, viewRectY, viewRectWidth, viewRectHeight);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.strokeRect(viewRectX, viewRectY, viewRectWidth, viewRectHeight);
-
-
-        if (entityManager && playerEntityId !== null) {
-            const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
-            const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
-
-            if (playerPos && playerCol) {
-                const playerCenterX = playerPos.x + playerCol.width / 2;
-                const playerCenterY = playerPos.y + playerCol.height / 2;
-                const playerMapX = mapX + playerCenterX * scaleX;
-                const playerMapY = mapY + playerCenterY * scaleY;
-
-                ctx.fillStyle = '#FFD700';
-                ctx.beginPath();
-                ctx.arc(playerMapX, playerMapY, 3, 0, 2 * Math.PI);
-                ctx.fill();
-            }
-        }
-
-        ctx.restore();
-    }
 }

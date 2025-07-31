@@ -127,7 +127,7 @@ class EditorController {
         document.body.appendChild(loadingOverlay);
 
         try {
-
+            // The editor needs all assets, so we load both core and gameplay assets.
             await assetManager.loadCoreAssets();
             await assetManager.loadGameplayAssets();
             this.assets = assetManager.assets;
@@ -143,6 +143,48 @@ class EditorController {
         }
 
         loadingOverlay.remove();
+    }
+
+    _drawPreviewMinimap(ctx, camera, level) {
+        const MAP_MAX_SIZE = 200;
+        const MAP_MARGIN = 20;
+
+        const levelAspectRatio = level.width / level.height;
+        let mapWidth, mapHeight;
+
+        if (levelAspectRatio > 1) {
+            mapWidth = MAP_MAX_SIZE;
+            mapHeight = MAP_MAX_SIZE / levelAspectRatio;
+        } else {
+            mapHeight = MAP_MAX_SIZE;
+            mapWidth = MAP_MAX_SIZE * levelAspectRatio;
+        }
+
+        const mapX = ctx.canvas.width - mapWidth - MAP_MARGIN;
+        const mapY = ctx.canvas.height - mapHeight - MAP_MARGIN;
+
+        const scaleX = mapWidth / level.width;
+        const scaleY = mapHeight / level.height;
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(mapX, mapY, mapWidth, mapHeight);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.strokeRect(mapX, mapY, mapWidth, mapHeight);
+
+
+        const viewRectX = mapX + camera.x * scaleX;
+        const viewRectY = mapY + camera.y * scaleY;
+        const viewRectWidth = camera.width * scaleX;
+        const viewRectHeight = camera.height * scaleY;
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fillRect(viewRectX, viewRectY, viewRectWidth, viewRectHeight);
+
+        ctx.restore();
     }
 
     _onTestLevel() {
@@ -257,6 +299,7 @@ class EditorController {
             this.engine.camera.update(this.engine.entityManager, null, deltaTime);
 
             this.engine.render(deltaTime, 1.0);
+            this._drawPreviewMinimap(ctx, this.engine.camera, this.engine.currentLevel);
 
 
             animationFrameId = requestAnimationFrame(previewLoop);
