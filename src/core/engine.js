@@ -59,10 +59,10 @@ export class Engine {
     this.camera = new Camera(this.canvas.width, this.canvas.height);
     this.hud = new HUD(this.ctx, fontRenderer);
     this.soundManager = new SoundManager();
-    this.soundManager.addSounds(assets, coreSoundKeys); // Load only core sounds initially
+    this.soundManager.addSounds(assets, coreSoundKeys);
     this.renderer = new Renderer(this.gl, this.canvas, this.assets);
     this.gameState = gameStateManager.getState();
-    
+
     this.levelManager = new LevelManager(this.gameState);
 
     this.inputSystem = new InputSystem(this.entityManager);
@@ -171,7 +171,7 @@ export class Engine {
 
   _resetForNewLevel() {
       this.pauseForMenu = false;
-      
+
       const currentState = gameStateManager.getState();
       const newStateData = JSON.parse(JSON.stringify(currentState));
       newStateData.showingLevelComplete = false;
@@ -204,7 +204,7 @@ export class Engine {
     this.transitionSystem.start(
         async () => {
             await this.assetManager.loadGameplayAssets();
-            
+
             this.renderer.syncTextures();
             this.particleSystem.syncTextures();
             this.soundManager.addSounds(this.assetManager.assets, gameplaySoundKeys);
@@ -224,16 +224,16 @@ export class Engine {
     if (!levelData) { this.stop(); return; }
 
     this._resetForNewLevel();
-    
-    // Set current level in state but let manager handle mutations
+
+
     const currentState = gameStateManager.getState();
     const newStateData = JSON.parse(JSON.stringify(currentState));
     newStateData.currentSection = sectionIndex;
     newStateData.currentLevelIndex = levelIndex;
     this.gameState = new GameState(newStateData);
-    
+
     eventBus.publish('incrementAttempts', { sectionIndex, levelIndex });
-    this.gameState = gameStateManager.getState(); // Get the updated state from the manager
+    this.gameState = gameStateManager.getState();
 
     this.currentLevel = new Level(levelData, this.entityManager);
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
@@ -459,7 +459,7 @@ export class Engine {
 
     this.ctx.clearRect(0, 0, this.uiCanvas.width, this.uiCanvas.height);
     this.effectsSystem.render(this.ctx, this.camera, alpha);
-    this.hud.drawGameHUD(this.ctx, FIXED_DT);
+    this.hud.drawGameHUD(this.ctx, FIXED_DT, this.camera, this.currentLevel, this.entityManager, this.playerEntityId);
     this.uiSystem.render(this.ctx, this.timeScale > 0);
     this.transitionSystem.render(this.ctx);
   }
