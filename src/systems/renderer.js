@@ -52,12 +52,13 @@ export class Renderer {
     this.textures = {};
     this.syncTextures();
 
-    const quadVertices = new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]);
+    const quadVertices = new Float32Array();
     this.quadBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, quadVertices, gl.STATIC_DRAW);
 
     this.staticBatches = new Map();
+    this.staticOverlayBatches = new Map();
 
     this.dynamicVBO = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.dynamicVBO);
@@ -134,69 +135,78 @@ export class Renderer {
     this.currentLevel = level;
     const gl = this.gl;
     this.staticBatches.clear();
+    this.staticOverlayBatches.clear();
     const staticGroups = new Map();
+    const staticOverlayGroups = new Map();
 
-    const addToStaticGroup = (item, spriteKey) => {
-        if (!staticGroups.has(spriteKey)) {
-            staticGroups.set(spriteKey, []);
+    const addToGroup = (item, spriteKey, isOverlay) => {
+        const groupMap = isOverlay ? staticOverlayGroups : staticGroups;
+        if (!groupMap.has(spriteKey)) {
+            groupMap.set(spriteKey, []);
         }
-        staticGroups.get(spriteKey).push(item);
+        groupMap.get(spriteKey).push(item);
     };
 
     for (let y = 0; y < level.gridHeight; y++) {
         for (let x = 0; x < level.gridWidth; x++) {
             const tile = level.tiles[y][x];
             if (tile.solid && tile.spriteConfig) {
-                addToStaticGroup({ tile, x, y }, tile.spriteKey);
+                const isOverlay = tile.type === 'mud';
+                addToGroup({ tile, x, y }, tile.spriteKey, isOverlay);
             }
         }
     }
 
     level.traps.forEach(trap => {
         if (fractionalPlatformTypes.includes(trap.type)) {
-            addToStaticGroup({ trap }, 'block');
+            addToGroup({ trap }, 'block', false);
         }
     });
 
-    for (const [spriteKey, items] of staticGroups.entries()) {
-        const staticData = [];
-        items.forEach(item => {
-            if (item.tile) {
-                const { tile, x, y } = item;
-                const dWidth = tile.collisionBox ? tile.collisionBox.width : GRID_CONSTANTS.TILE_SIZE;
-                const dHeight = tile.collisionBox ? tile.collisionBox.height : GRID_CONSTANTS.TILE_SIZE;
-                const finalDHeight = tile.oneWay && !tile.collisionBox ? tile.spriteConfig.height : dHeight;
-                staticData.push(
-                    x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE,
-                    dWidth, finalDHeight,
-                    tile.spriteConfig.srcX, tile.spriteConfig.srcY,
-                    tile.spriteConfig.width || GRID_CONSTANTS.TILE_SIZE, tile.spriteConfig.height || GRID_CONSTANTS.TILE_SIZE,
-                    0.0, 1.0, 0.0
-                );
-            } else if (item.trap) {
-                 const { trap } = item;
-                 staticData.push(
-                    trap.x - trap.width / 2, trap.y - trap.height / 2,
-                    trap.width, trap.height,
-                    trap.spriteConfig.srcX, trap.spriteConfig.srcY,
-                    trap.spriteConfig.width, trap.spriteConfig.height,
-                    0.0, 1.0, 0.0
-                );
-            }
-        });
+    const createBatches = (groupMap, batchMap) => {
+        for (const [spriteKey, items] of groupMap.entries()) {
+            const staticData = [];
+            items.forEach(item => {
+                if (item.tile) {
+                    const { tile, x, y } = item;
+                    const dWidth = tile.collisionBox ? tile.collisionBox.width : GRID_CONSTANTS.TILE_SIZE;
+                    const dHeight = tile.collisionBox ? tile.collisionBox.height : GRID_CONSTANTS.TILE_SIZE;
+                    const finalDHeight = tile.oneWay && !tile.collisionBox ? tile.spriteConfig.height : dHeight;
+                    staticData.push(
+                        x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE,
+                        dWidth, finalDHeight,
+                        tile.spriteConfig.srcX, tile.spriteConfig.srcY,
+                        tile.spriteConfig.width || GRID_CONSTANTS.TILE_SIZE, tile.spriteConfig.height || GRID_CONSTANTS.TILE_SIZE,
+                        0.0, 1.0, 0.0
+                    );
+                } else if (item.trap) {
+                     const { trap } = item;
+                     staticData.push(
+                        trap.x - trap.width / 2, trap.y - trap.height / 2,
+                        trap.width, trap.height,
+                        trap.spriteConfig.srcX, trap.spriteConfig.srcY,
+                        trap.spriteConfig.width, trap.spriteConfig.height,
+                        0.0, 1.0, 0.0
+                    );
+                }
+            });
 
-        const vbo = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(staticData), gl.STATIC_DRAW);
-        const vao = gl.createVertexArray();
-        this._setupVAO(vao, vbo);
+            const vbo = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(staticData), gl.STATIC_DRAW);
+            const vao = gl.createVertexArray();
+            this._setupVAO(vao, vbo);
 
-        this.staticBatches.set(spriteKey, {
-            vao,
-            instanceCount: staticData.length / ATTRIBUTES_PER_INSTANCE,
-            texture: this.textures[spriteKey]
-        });
+            batchMap.set(spriteKey, {
+                vao,
+                instanceCount: staticData.length / ATTRIBUTES_PER_INSTANCE,
+                texture: this.textures[spriteKey]
+            });
+        }
     }
+
+    createBatches(staticGroups, this.staticBatches);
+    createBatches(staticOverlayGroups, this.staticOverlayBatches);
   }
 
   update(dt) {
@@ -230,6 +240,15 @@ export class Renderer {
 
     this._batchAndDrawDynamicObjects(camera, level, entityManager, alpha);
 
+    for (const [_, batch] of this.staticOverlayBatches.entries()) {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, batch.texture.glTexture);
+        gl.uniform1i(this.sceneUniforms.texture, 0);
+        gl.uniform2f(this.sceneUniforms.texture_size, batch.texture.width, batch.texture.height);
+        gl.bindVertexArray(batch.vao);
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, batch.instanceCount);
+    }
+
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
   }
@@ -260,8 +279,12 @@ export class Renderer {
 
             if (isPlayer) {
                 const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-                if (playerCtrl.isInMud) {
-                    renderY += playerCtrl.mudSinkAmount;
+                if (playerCtrl.isSpawning || playerCtrl.isDespawning) {
+                    renderX -= (renderable.width - PLAYER_CONSTANTS.WIDTH) / 2;
+                    renderY -= (renderable.height - PLAYER_CONSTANTS.HEIGHT) / 2;
+                } else if (renderable.animationState === 'cling') {
+                    const offset = renderable.direction === 'left' ? -PLAYER_CONSTANTS.CLING_OFFSET : PLAYER_CONSTANTS.CLING_OFFSET;
+                    renderX += offset;
                 }
             }
 

@@ -363,15 +363,15 @@ export class CollisionSystem {
         }
 
         if (touchingMud) {
-            if (!playerCtrl.isInMud) {
-                playerCtrl.isInMud = true;
-                eventBus.publish('createParticles', {
-                    x: pos.x + col.width / 2,
-                    y: highestMudY,
-                    type: 'mud_splash'
-                });
-            }
             if (vel.vy >= 0) {
+                if (!playerCtrl.isInMud) {
+                    playerCtrl.isInMud = true;
+                    eventBus.publish('createParticles', {
+                        x: pos.x + col.width / 2,
+                        y: highestMudY,
+                        type: 'mud_splash'
+                    });
+                }
                 pos.y = highestMudY - col.height + playerCtrl.mudSinkAmount;
                 vel.vy = 0;
                 col.isGrounded = true;
