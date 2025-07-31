@@ -1,5 +1,5 @@
 import { Engine } from './src/core/engine.js';
-import { assetManager } from './src/managers/asset-manager.js';
+import { assetManager, gameplaySoundKeys } from './src/managers/asset-manager.js';
 import { eventBus } from './src/utils/event-bus.js';
 import { FontRenderer } from './src/ui/font-renderer.js';
 import './src/ui/ui-main.js';
@@ -82,7 +82,7 @@ let keybinds = {
 
 let engine;
 
-assetManager.loadCoreAssets().then((assets) => {
+assetManager.loadCoreAssets().then(async (assets) => {
   console.log('Core assets loaded successfully, preparing main menu...');
 
   try {
@@ -100,6 +100,14 @@ assetManager.loadCoreAssets().then((assets) => {
     eventBus.subscribe('requestStartGame', () => {
         engine.start();
     });
+
+    // Pre-load gameplay assets after the main menu is ready
+    await assetManager.loadGameplayAssets();
+    engine.renderer.syncTextures();
+    engine.particleSystem.syncTextures();
+    engine.soundManager.addSounds(assetManager.assets, gameplaySoundKeys);
+    console.log("All gameplay assets are now loaded and ready.");
+
 
     window.unlockAllLevels = () => {
         if (engine && engine.gameState) {

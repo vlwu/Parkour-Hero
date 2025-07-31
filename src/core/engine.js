@@ -202,17 +202,10 @@ export class Engine {
 
     this.transitionSystem.start(
         async () => {
-            await this.assetManager.loadGameplayAssets();
-
-            this.renderer.syncTextures();
-            this.particleSystem.syncTextures();
-            this.soundManager.addSounds(this.assetManager.assets, gameplaySoundKeys);
-
             await this.loadLevel(sectionIndex, levelIndex);
         },
         () => {
             this.isTransitioning = false;
-            this.soundManager.unlockAudio();
             this.resume();
             this.uiCanvas.style.zIndex = '100';
         }
