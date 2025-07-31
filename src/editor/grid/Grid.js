@@ -7,10 +7,10 @@ export class Grid {
         this.width = width;
         this.height = height;
         this.zoomLevel = 1;
-        
+
         this.tilesetImage = new Image();
         this.tilesetImage.src = TILESET_CONFIG.image;
-        
+
         this.specialTilesetImage = new Image();
         this.specialTilesetImage.src = TILESET_CONFIG_SPECIAL.image;
     }
@@ -82,10 +82,10 @@ export class Grid {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (tileId > 0) {
-            const isSpecial = tileId >= SPECIAL_TILE_ID_OFFSET;
+            const isSpecial = tileId > SPECIAL_TILE_ID_OFFSET;
             const sourceImage = isSpecial ? this.specialTilesetImage : this.tilesetImage;
             const sourceConfig = isSpecial ? TILESET_CONFIG_SPECIAL : TILESET_CONFIG;
-            const localId = isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId;
+            const localId = (isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId) - 1;
 
             if (!sourceImage.complete) return;
 

@@ -152,7 +152,7 @@ export class Renderer {
         for (let x = 0; x < level.gridWidth; x++) {
             const tileId = level.tiles[y][x];
             if (tileId > 0) {
-                const isSpecial = tileId >= SPECIAL_TILE_ID_OFFSET;
+                const isSpecial = tileId > SPECIAL_TILE_ID_OFFSET;
                 const spriteKey = isSpecial ? 'sand_mud_ice' : 'block';
                 if (!staticGroups.has(spriteKey)) {
                     staticGroups.set(spriteKey, []);
@@ -164,7 +164,7 @@ export class Renderer {
 
     level.traps.forEach(trap => {
         if (fractionalPlatformTypes.includes(trap.type)) {
-            // Fractional platforms still use the main 'block' texture
+
             const spriteKey = 'block';
             if (!staticGroups.has(spriteKey)) {
                 staticGroups.set(spriteKey, []);
@@ -178,9 +178,9 @@ export class Renderer {
         groupItems.forEach(item => {
             if (item.tileId !== undefined) {
                 const { tileId, x, y } = item;
-                const isSpecial = tileId >= SPECIAL_TILE_ID_OFFSET;
+                const isSpecial = tileId > SPECIAL_TILE_ID_OFFSET;
                 const config = isSpecial ? TILESET_CONFIG_SPECIAL : TILESET_CONFIG;
-                const localId = isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId;
+                const localId = (isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId) - 1;
 
                 const sx = (localId % config.columns) * config.tileWidth;
                 const sy = Math.floor(localId / config.columns) * config.tileHeight;

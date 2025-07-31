@@ -19,10 +19,10 @@
         <h1>Parkour Hero: Legacy Level Converter (v2)</h1>
         <p>This tool will convert old 48x48 grid level files to the new 16x16 grid format. It now supports fractional and special platforms (sand, mud, ice).</p>
         <p><strong>Important:</strong> Please back up your original level files before converting!</p>
-        
+
         <label for="fileInput">Select one or more old .json level files:</label><br>
         <input type="file" id="fileInput" multiple accept=".json">
-        
+
         <h2>Conversion Log:</h2>
         <pre id="log">Awaiting files...</pre>
     </div>
@@ -34,20 +34,20 @@
         // The "Rosetta Stone" mapping old tile characters to new 16x16 tile IDs.
         // This maps to the top-left tile of a 3x3 block in the spritesheet.
         const LEGACY_ID_TO_NEW_ID_MAP = {
-            '1': 6,   // Dirt
-            '2': 0,   // Stone
-            '3': 88,  // Wood
-            '4': 176, // Green Block
-            '5': 94,  // Orange Dirt
-            '6': 182, // Pink Dirt
-            '7': SPECIAL_TILE_ID_OFFSET + 0, // Sand
-            '8': SPECIAL_TILE_ID_OFFSET + 4, // Mud
-            '9': SPECIAL_TILE_ID_OFFSET + 8, // Ice
-            'a': 17,  // Oneway Gold
-            'b': 39,  // Oneway Wood
-            'c': 61,  // Oneway Stone
+            '1': 7,   // Dirt
+            '2': 1,   // Stone
+            '3': 89,  // Wood
+            '4': 177, // Green Block
+            '5': 95,  // Orange Dirt
+            '6': 183, // Pink Dirt
+            '7': SPECIAL_TILE_ID_OFFSET + 1, // Sand
+            '8': SPECIAL_TILE_ID_OFFSET + 5, // Mud
+            '9': SPECIAL_TILE_ID_OFFSET + 9, // Ice
+            'a': 18,  // Oneway Gold
+            'b': 40,  // Oneway Wood
+            'c': 62,  // Oneway Stone
         };
-        
+
         const FRACTIONAL_PLATFORM_TYPES = [
             'wood_third_h', 'wood_third_v', 'wood_ninth_sq', 'wood_four_ninths_sq',
             'stone_third_h', 'stone_third_v', 'stone_ninth_sq', 'stone_four_ninths_sq',
@@ -68,7 +68,7 @@
             }
 
             log.textContent = `Found ${files.length} file(s). Processing...\n\n`;
-            
+
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -134,9 +134,14 @@
                                 const newX = oldX * 3 + xOffset;
                                 const newY = oldY * 3 + yOffset;
                                 const newIndex = newY * newData.gridWidth + newX;
-                                
+
                                 // Calculate the specific tile ID for the 3x3 block from the spritesheet
-                                const newTileId = newTopLeftId + (yOffset * TILESET_COLUMNS) + xOffset;
+                                let offsetFromTopLeft = (yOffset * TILESET_COLUMNS) + xOffset;
+                                if(newTopLeftId > SPECIAL_TILE_ID_OFFSET) {
+                                  offsetFromTopLeft = (yOffset * 12) + xOffset; // special tileset columns
+                                }
+
+                                const newTileId = newTopLeftId + offsetFromTopLeft;
                                 newGrid[newIndex] = newTileId.toString();
                             }
                         }
@@ -144,10 +149,10 @@
                 }
             }
             newData.tileData = encodeRLE(newGrid);
-            
+
             return newData;
         }
-        
+
         // RLE Helper Functions
         function decodeRLE(rleString, width, height) {
             const grid = new Array(width * height);

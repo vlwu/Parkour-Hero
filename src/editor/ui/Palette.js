@@ -13,7 +13,7 @@ export class Palette {
             ctx: DOM.tilesetCanvas.getContext('2d'),
             image: new Image(),
             config: TILESET_CONFIG,
-            idOffset: 0
+            idOffset: 1
         };
 
         this.specialTileset = {
@@ -21,7 +21,7 @@ export class Palette {
             ctx: DOM.specialTilesetCanvas.getContext('2d'),
             image: new Image(),
             config: TILESET_CONFIG_SPECIAL,
-            idOffset: SPECIAL_TILE_ID_OFFSET
+            idOffset: SPECIAL_TILE_ID_OFFSET + 1
         };
     }
 
@@ -113,13 +113,13 @@ export class Palette {
 
         if (this.selectedPaletteItem.type === 'tile') {
             const selectedId = parseInt(this.selectedPaletteItem.id, 10);
-            const targetTileset = selectedId >= SPECIAL_TILE_ID_OFFSET ? this.specialTileset : this.mainTileset;
-            
+            const targetTileset = selectedId > SPECIAL_TILE_ID_OFFSET ? this.specialTileset : this.mainTileset;
+
             const localId = selectedId - targetTileset.idOffset;
             const tileX = (localId % targetTileset.config.columns) * targetTileset.config.tileWidth;
             const tileY = Math.floor(localId / targetTileset.config.columns) * targetTileset.config.tileHeight;
 
-            targetTileset.ctx.strokeStyle = '#3498db'; // --accent-color
+            targetTileset.ctx.strokeStyle = '#3498db';
             targetTileset.ctx.lineWidth = 2;
             targetTileset.ctx.strokeRect(tileX + 1, tileY + 1, targetTileset.config.tileWidth - 2, targetTileset.config.tileHeight - 2);
         }
