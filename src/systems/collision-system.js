@@ -468,6 +468,10 @@ export class CollisionSystem {
         if (vel.vy >= 0 && prevPlayerBottom <= trophyHitbox.y) {
             if (!trophy.isAnimating) {
                 trophy.isAnimating = true;
+                const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+                if (playerCtrl) {
+                    playerCtrl.inputLocked = true;
+                }
                 eventBus.publish('playerKnockback', { entityId, entityManager, vx: 0, vy: -300 });
                 eventBus.publish('playSound', { key: 'trophy_activated', volume: 0.9, channel: 'UI' });
                 eventBus.publish('cameraShakeRequested', { intensity: 6, duration: 0.25 });

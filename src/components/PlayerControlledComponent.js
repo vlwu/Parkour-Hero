@@ -24,7 +24,8 @@ export class PlayerControlledComponent {
         surfaceParticleTimer = 0,
         jumpParticleTimer = 0,
         hLock = false,
-        vLock = false
+        vLock = false,
+        inputLocked = false
     } = {}) {
         this.speed = speed;
         this.jumpForce = jumpForce;
@@ -51,12 +52,13 @@ export class PlayerControlledComponent {
         this.needsRespawn = needsRespawn;
         this.hLock = hLock;
         this.vLock = vLock;
+        this.inputLocked = inputLocked;
 
 
         this.deathCount = deathCount;
         this.activeSurfaceSound = activeSurfaceSound;
         this.previousGroundEntity = null;
-        this.fallDistance = 0; // New property to track fall distance
+        this.fallDistance = 0;
         this.isInMud = false;
         this.mudSinkAmount = PLAYER_CONSTANTS.HEIGHT / 5;
 

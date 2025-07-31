@@ -73,7 +73,7 @@ export class PlayerStateSystem {
                     this._transitionTo(entityId, nextState, entityManager);
                 }
             }
-            
+
             if (ctrl.isInMud && ctrl.currentState.constructor !== IdleState) {
                 this._transitionTo(entityId, new IdleState(entityId, entityManager), entityManager);
             }
@@ -152,8 +152,9 @@ export class PlayerStateSystem {
         const vel = entityManager.getComponent(entityId, VelocityComponent);
         const col = entityManager.getComponent(entityId, CollisionComponent);
         const pos = entityManager.getComponent(entityId, PositionComponent);
+        const state = entityManager.getComponent(entityId, StateComponent);
 
-        if (ctrl.isSpawning || ctrl.isDashing || ctrl.isDespawning || ctrl.isHit) {
+        if (state.currentState === 'spawn' || state.currentState === 'dash' || state.currentState === 'despawn' || state.currentState === 'hit' || ctrl.inputLocked) {
             return;
         }
 

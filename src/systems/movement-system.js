@@ -32,10 +32,10 @@ export class MovementSystem {
             this._applyVerticalMovement(dt, vel, col, ctrl, state);
             this._applyStickyPlatformMovement(pos, col);
             this._updateSurfaceEffects(dt, pos, vel, col, ctrl, entityId, entityManager);
-            
-            // Update fall distance
+
+
             if (!col.isGrounded) {
-                if (vel.vy > 0) { // Only track downward movement
+                if (vel.vy > 0) {
                     ctrl.fallDistance += vel.vy * dt;
                 }
             } else {
@@ -45,8 +45,8 @@ export class MovementSystem {
     }
 
     _applyHorizontalMovement(dt, input, vel, col, ctrl) {
-        if (ctrl.isInMud || ctrl.isDashing || ctrl.isHit) {
-            if (ctrl.isHit || ctrl.isInMud) vel.vx = 0;
+        if (ctrl.isInMud || ctrl.isDashing || ctrl.isHit || ctrl.inputLocked) {
+            if (ctrl.isHit || ctrl.isInMud || ctrl.inputLocked) vel.vx = 0;
             return;
         }
 
