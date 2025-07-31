@@ -358,7 +358,8 @@ export class Renderer {
 
     const texture = isSpecialAnim ? this.textures[spriteAssetKey] : this.textures.characters[charComp.characterId]?.[spriteAssetKey];
 
-    const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
+    const animDef = PLAYER_CONSTANTS.ANIMATIONS[stateName];
+    const frameCount = animDef ? animDef.frameCount : 1;
     const frameWidth = sprite.width / frameCount;
     const srcX = frameWidth * renderable.animationFrame;
     const isFlipped = renderable.direction === 'left' ? 1.0 : 0.0;

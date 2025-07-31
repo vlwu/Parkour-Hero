@@ -1,6 +1,6 @@
 import { SlammingHead } from './templates/SlammingHead.js';
 
-export class RockHead extends Trap {
+export class RockHead extends SlammingHead {
     constructor(x, y, config) {
         super(x, y, {
             ...config,

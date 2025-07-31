@@ -1,6 +1,6 @@
 import { SlammingHead } from './templates/SlammingHead.js';
 
-export class SpikeHead extends Trap {
+export class SpikeHead extends SlammingHead {
     constructor(x, y, config) {
         super(x, y, {
             ...config,
