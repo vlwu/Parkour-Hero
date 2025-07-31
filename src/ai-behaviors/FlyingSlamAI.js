@@ -136,8 +136,8 @@ export class FlyingSlamAI extends BaseAI {
         const checkGridX = Math.floor((zone.x + zone.width / 2) / TILE_SIZE);
 
         for (let y = startGridY; y <= endGridY; y++) {
-            const tile = this.level.getTileAt(checkGridX * TILE_SIZE, y * TILE_SIZE);
-            if (tile && tile.solid && !tile.oneWay) {
+            const tileProps = this.level.getTilePropertiesAt(checkGridX * TILE_SIZE, y * TILE_SIZE);
+            if (tileProps && tileProps.solid && !tileProps.oneWay) {
                 detectionBottomY = y * TILE_SIZE;
                 break;
             }

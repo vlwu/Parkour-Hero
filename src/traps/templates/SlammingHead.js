@@ -8,8 +8,8 @@ export class SlammingHead extends Trap {
         this.initialY = y;
         this.type = config.type;
 
-        // Configurable properties
-        this.spriteKeys = config.spriteKeys; // { idle, blink, hit }
+
+        this.spriteKeys = config.spriteKeys;
         this.soundKey = config.soundKey;
         this.velocities = config.velocities;
         this.timersConfig = config.timers;
@@ -65,8 +65,8 @@ export class SlammingHead extends Trap {
 
         for (let y = startGridY; y <= endGridY; y++) {
             for (let x = startGridX; x <= endGridX; x++) {
-                const tile = level.getTileAt(x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE);
-                if (tile && tile.solid && !tile.oneWay) {
+                const tileProps = level.getTilePropertiesAt(x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE);
+                if (tileProps && tileProps.solid && !tileProps.oneWay) {
                     detectionBottomY = y * GRID_CONSTANTS.TILE_SIZE;
                     y = endGridY + 1;
                     break;
@@ -133,10 +133,12 @@ export class SlammingHead extends Trap {
 
     _update_slamming(dt, playerData, eventBus, level) {
         this.y += this.velocities.slam * dt;
+        const groundCheckY = this.y + this.height / 2;
+        const groundCheckX = this.x;
 
-        const groundTile = level.getTileAt(this.x, this.y + this.height / 2);
-        if (groundTile.solid) {
-            this.y = Math.floor((this.y + this.height / 2) / GRID_CONSTANTS.TILE_SIZE) * GRID_CONSTANTS.TILE_SIZE - this.height / 2;
+        const hitCollider = this._findSurface(level, groundCheckX, groundCheckY);
+        if (hitCollider) {
+            this.y = hitCollider.y - this.height / 2;
             this.state = 'slammed';
             this.timers.slammed = 0.4;
             this.animations.hit.frame = 0;
@@ -145,6 +147,27 @@ export class SlammingHead extends Trap {
             eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'walk_dust', particleSpeed: 200 });
             eventBus.publish('createParticles', { x: this.x, y: this.y + this.height / 2, type: 'sand', particleSpeed: 200 });
         }
+    }
+
+    _findSurface(level, worldX, worldY) {
+
+        const tileProps = level.getTilePropertiesAt(worldX, worldY);
+        if (tileProps && tileProps.solid && !tileProps.oneWay) {
+            const gridY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE);
+            return { y: gridY * GRID_CONSTANTS.TILE_SIZE };
+        }
+
+
+        const potentialColliders = level.spatialGrid.query({ x: worldX, y: worldY, width: 1, height: 1 });
+        for (const obj of potentialColliders) {
+            if (obj.instance && obj.instance.solid && !obj.isOneWay) {
+                const hitbox = obj.instance.hitbox || obj;
+                if (worldX >= hitbox.x && worldX < hitbox.x + hitbox.width && worldY >= hitbox.y && worldY < hitbox.y + hitbox.height) {
+                    return { y: hitbox.y };
+                }
+            }
+        }
+        return null;
     }
 
     _update_slammed(dt) {
