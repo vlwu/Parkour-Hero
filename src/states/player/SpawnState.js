@@ -10,10 +10,13 @@ export class SpawnState extends PlayerBaseState {
         const renderable = this.entityManager.getComponent(this.entityId, RenderableComponent);
         const state = this.entityManager.getComponent(this.entityId, StateComponent);
         const ctrl = this.entityManager.getComponent(this.entityId, PlayerControlledComponent);
-        
+
         state.currentState = 'spawn';
         renderable.animationState = 'spawn';
+        renderable.animationFrame = 0;
+        renderable.animationTimer = 0;
         ctrl.isSpawning = true;
+        ctrl.spawnComplete = false;
     }
 
     update(dt) {

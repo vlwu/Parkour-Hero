@@ -135,7 +135,7 @@ export class Engine {
   }
 
   resume() {
-    if (this.pauseForMenu || !this.gameHasStarted || this.gameState.showingLevelComplete || this.isTransitioning) return;
+    if (this.pauseForMenu || !this.gameHasStarted || this.isTransitioning) return;
     if (this.timeScale === 1.0) return;
     this.timeScale = 1.0;
     eventBus.publish('gameResumed');
