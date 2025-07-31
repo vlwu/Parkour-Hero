@@ -121,6 +121,10 @@ export class ParkourHeroUI extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    this.boundHandleLevelComplete = (stats) => {
+        this.levelCompleteStats = stats;
+        this.activeModal = 'level-complete';
+    };
     eventBus.subscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.subscribe('keybindsUpdated', this._handleKeybindsUpdate);
     eventBus.subscribe('ui_button_clicked', this._handleUIButtonClick);
@@ -129,7 +133,7 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('levelLoaded', this._handleLevelLoad);
     eventBus.subscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
     eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets);
-    eventBus.subscribe('levelCompleteModal', (stats) => this.levelCompleteStats = stats);
+    eventBus.subscribe('levelCompleteModal', this.boundHandleLevelComplete);
     if (this.previewMode) {
         this.gameHasStarted = true;
         this.activeModal = null;
@@ -146,7 +150,7 @@ export class ParkourHeroUI extends LitElement {
     eventBus.unsubscribe('levelLoaded', this._handleLevelLoad);
     eventBus.unsubscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
     eventBus.unsubscribe('assetsLoaded', (assets) => this.assets = assets);
-    eventBus.unsubscribe('levelCompleteModal', (stats) => this.levelCompleteStats = stats);
+    eventBus.unsubscribe('levelCompleteModal', this.boundHandleLevelComplete);
   }
 
   _handleLevelLoad = ({ gameState }) => {
@@ -201,6 +205,10 @@ export class ParkourHeroUI extends LitElement {
     this.activeModal = (this.gameHasStarted && !this.previewMode) ? null : 'main-menu';
     if (this.previewMode) this.activeModal = null;
 
+    if (modalThatWasClosed === 'level-complete') {
+        this.levelCompleteStats = null;
+    }
+
     if (wasOpen && this.gameHasStarted) {
         if (modalThatWasClosed === 'tutorial') {
             eventBus.publish('markTutorialAsShown');
@@ -243,6 +251,9 @@ export class ParkourHeroUI extends LitElement {
 
   _handleLevelAction(action) {
       this.levelCompleteStats = null;
+      this.activeModal = null;
+      eventBus.publish('allMenusClosed');
+
       if (action === 'restart') { eventBus.publish('requestLevelRestart'); }
       else if (action === 'next') { eventBus.publish('requestNextLevel'); }
       else if (action === 'previous') { eventBus.publish('requestPreviousLevel'); }
@@ -289,7 +300,7 @@ export class ParkourHeroUI extends LitElement {
   }
 
   renderMainMenuContent() {
-    const hasProgress = this.gameState && (this.gameState.levelProgress.completedLevels.length > 0 || this.gameState.levelProgress.unlockedLevels[0] > 1);
+    const hasProgress = this.gameState && (this.gameState.levelProgress.completedLevels.length > 0 || this.gameState.levelProgress.unlockedLevelsCount > 1);
     const startButtonText = hasProgress ? 'Continue' : 'Start Game';
 
     const iconButtons = [
