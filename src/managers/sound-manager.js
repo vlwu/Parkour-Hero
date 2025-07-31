@@ -3,9 +3,9 @@ import { eventBus } from '../utils/event-bus.js';
 export class SoundManager {
   constructor() {
     this.sounds = {};
-    this.soundPool = {}; // Stores arrays of pooled audio objects for reuse.
-    this.poolSize = 5; // Number of audio objects per sound effect.
-    
+    this.soundPool = {};
+    this.poolSize = 5;
+
     this.channels = {
       SFX: new Set(),
       UI: new Set(),
@@ -20,7 +20,7 @@ export class SoundManager {
     };
     this.subscriptions = [];
     this._unlockHandler = null;
-    
+
     this.loadSettings();
     this._setupEventSubscriptions();
     this._addInteractionListenerForAudioUnlock();
@@ -38,7 +38,7 @@ export class SoundManager {
     window.addEventListener('keydown', this._unlockHandler);
     window.addEventListener('touchstart', this._unlockHandler);
   }
-  
+
   destroyInteractionListeners() {
       if (this._unlockHandler) {
           window.removeEventListener('click', this._unlockHandler);
@@ -77,19 +77,14 @@ export class SoundManager {
 
   saveSettings() {}
 
-  loadSounds(assets) {
-    const soundKeys = ['button_click', 'jump', 'double_jump', 'collect', 'level_complete', 'trophy_activated', 'death_sound', 'dash', 'checkpoint_activated', 
-      'hit', 'enemy_stomp', 'sand_walk', 'mud_run', 'ice_run', 'trampoline_bounce', 'fire_activated', 'arrow_pop', 'fan_blowing', 'rh_slam', 'sh_slam',
-      'snail_wall_hit', 'spawned', 'wing_flap', 'ghost'];
+  addSounds(assets, soundKeys) {
     soundKeys.forEach(key => {
-      if (assets[key]) {
+      if (assets[key] && !this.sounds[key]) {
         this.sounds[key] = assets[key];
         this.soundPool[key] = [];
         for (let i = 0; i < this.poolSize; i++) {
             this.soundPool[key].push(this.sounds[key].cloneNode(true));
         }
-      } else {
-        console.warn(`Sound asset ${key} not found in assets`);
       }
     });
   }
@@ -108,15 +103,15 @@ export class SoundManager {
       console.warn(`Sound pool for ${key} not found.`);
       return;
     }
-    
+
     const audio = pool.find(a => a.paused || a.ended);
-    
+
     if (audio) {
       audio.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
       audio.currentTime = 0;
-      
+
       this.channels[channel].add(audio);
-      
+
       audio.onended = () => {
         this.channels[channel].delete(audio);
         audio.onended = null;
@@ -159,7 +154,7 @@ export class SoundManager {
   stopLoop(soundKey) {
     const soundSrc = this.sounds[soundKey]?.src;
     if (!soundSrc) return;
-    
+
     for (const channelName in this.channels) {
         this.channels[channelName].forEach(audio => {
             if (audio.src === soundSrc && audio.loop) {
@@ -198,9 +193,9 @@ export class SoundManager {
         return;
       }
     }
-    
+
     if (!this.audioContext) return;
-    
+
     if (this.audioContext.state === 'suspended') {
       await this.audioContext.resume().catch(e => console.error("Failed to resume AudioContext", e));
     }
@@ -209,10 +204,10 @@ export class SoundManager {
         this.audioUnlocked = true;
     }
   }
-  
+
   setVolume(volume) {
     this.settings.volume = Math.max(0, Math.min(1, volume));
-    
+
     for (const channelName in this.channels) {
         this.channels[channelName].forEach(audio => {
             audio.volume = this.settings.volume;
@@ -221,7 +216,7 @@ export class SoundManager {
     this.saveSettings();
     eventBus.publish('soundSettingsChanged', { soundEnabled: this.settings.enabled, soundVolume: this.settings.volume });
   }
-  
+
   setEnabled(enabled) {
     this.settings.enabled = enabled;
     if (!this.settings.enabled) {
@@ -230,7 +225,7 @@ export class SoundManager {
     this.saveSettings();
     eventBus.publish('soundSettingsChanged', { soundEnabled: this.settings.enabled, soundVolume: this.settings.volume });
   }
-  
+
   toggleSound() {
     this.setEnabled(!this.settings.enabled);
     return this.settings.enabled;

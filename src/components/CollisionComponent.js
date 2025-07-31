@@ -17,7 +17,6 @@ export class CollisionComponent {
         this.isGrounded = isGrounded;
         this.isAgainstWall = isAgainstWall;
         this.groundType = groundType;
-        // ADDED: A reference to the entity this component is standing on.
         this.groundEntity = null;
     }
 }

@@ -30,16 +30,18 @@ import { EnemySystem } from '../systems/enemy-system.js';
 import { Level } from '../entities/level.js';
 import { BulletSystem } from '../systems/bullet-system.js';
 import { TransitionSystem } from '../systems/transition-system.js';
+import { coreSoundKeys, gameplaySoundKeys } from '../managers/asset-manager.js';
 
 const FIXED_DT = 1 / 60;
 
 export class Engine {
-  constructor(gl, uiCanvas, ctx, assets, initialKeybinds, fontRenderer) {
+  constructor(gl, uiCanvas, ctx, assets, initialKeybinds, fontRenderer, assetManager) {
     this.gl = gl;
     this.canvas = gl.canvas;
     this.uiCanvas = uiCanvas;
     this.ctx = ctx;
     this.assets = assets;
+    this.assetManager = assetManager;
     this.lastFrameTime = 0;
     this.accumulator = 0;
     this.keybinds = initialKeybinds;
@@ -57,7 +59,7 @@ export class Engine {
     this.camera = new Camera(this.canvas.width, this.canvas.height);
     this.hud = new HUD(this.ctx, fontRenderer);
     this.soundManager = new SoundManager();
-    this.soundManager.loadSounds(assets);
+    this.soundManager.addSounds(assets, coreSoundKeys); // Load only core sounds initially
     this.renderer = new Renderer(this.gl, this.canvas, this.assets);
     this.gameState = new GameState();
     eventBus.publish('gameStateUpdated', this.gameState);
@@ -197,6 +199,11 @@ export class Engine {
 
     this.transitionSystem.start(
         async () => {
+            await this.assetManager.loadGameplayAssets();
+            
+            this.renderer.syncTextures();
+            this.soundManager.addSounds(this.assetManager.assets, gameplaySoundKeys);
+
             await this.loadLevel(sectionIndex, levelIndex);
         },
         () => {

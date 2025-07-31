@@ -50,7 +50,7 @@ export class Renderer {
     };
 
     this.textures = {};
-    this._initializeTextures();
+    this.syncTextures();
 
     const quadVertices = new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]);
     this.quadBuffer = gl.createBuffer();
@@ -83,9 +83,9 @@ export class Renderer {
     return texture;
   }
 
-  _initializeTextures() {
+  syncTextures() {
     Object.keys(this.assets).forEach(key => {
-        if (this.assets[key] instanceof HTMLImageElement) {
+        if (this.assets[key] instanceof HTMLImageElement && !this.textures[key]) {
             const isBackground = key.startsWith('background_');
             this.textures[key] = {
                 glTexture: this._createTexture(this.assets[key], isBackground),
@@ -95,16 +95,18 @@ export class Renderer {
         }
     });
 
-    this.textures.characters = {};
+    if (!this.textures.characters) this.textures.characters = {};
     Object.keys(this.assets.characters).forEach(charId => {
-        this.textures.characters[charId] = {};
+        if (!this.textures.characters[charId]) this.textures.characters[charId] = {};
         Object.keys(this.assets.characters[charId]).forEach(spriteKey => {
-            const img = this.assets.characters[charId][spriteKey];
-            this.textures.characters[charId][spriteKey] = {
-                glTexture: this._createTexture(img),
-                width: img.width,
-                height: img.height
-            };
+            if (!this.textures.characters[charId][spriteKey]) {
+                const img = this.assets.characters[charId][spriteKey];
+                this.textures.characters[charId][spriteKey] = {
+                    glTexture: this._createTexture(img),
+                    width: img.width,
+                    height: img.height
+                };
+            }
         });
     });
   }

@@ -10,7 +10,7 @@ import { LevelExporter } from './io/LevelExporter.js';
 import { LevelImporter } from './io/LevelImporter.js';
 
 import { Engine } from '../core/engine.js';
-import { loadAssets } from '../managers/asset-manager.js';
+import { assetManager } from '../managers/asset-manager.js';
 import { FontRenderer } from '../ui/font-renderer.js';
 
 const round = (val) => Math.round(val * 100) / 100;
@@ -124,7 +124,11 @@ class EditorController {
         document.body.appendChild(loadingOverlay);
 
         try {
-            this.assets = await loadAssets();
+            // The editor needs all assets, so we load both core and gameplay assets.
+            await assetManager.loadCoreAssets();
+            await assetManager.loadGameplayAssets();
+            this.assets = assetManager.assets;
+
             this.fontRenderer = new FontRenderer(this.assets.font_spritesheet);
             console.log("Editor: Game assets loaded successfully.");
             DOM.testLevelBtn.disabled = false;
@@ -241,7 +245,7 @@ class EditorController {
         const gl = particleCanvas.getContext('webgl2', { alpha: true });
         ctx.imageSmoothingEnabled = false;
 
-        this.engine = new Engine(gl, gameCanvas, ctx, this.assets, {}, this.fontRenderer);
+        this.engine = new Engine(gl, gameCanvas, ctx, this.assets, {}, this.fontRenderer, assetManager);
         this.engine.renderer.previewMode = true;
         this.engine.soundManager.setEnabled(false);
         this.engine.loadLevelFromData(levelData);
@@ -655,7 +659,6 @@ class EditorController {
         this.propertiesPanel.clear();
     }
 }
-
 
 document.addEventListener('DOMContentLoaded', () => {
     DOM.init();

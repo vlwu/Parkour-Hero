@@ -124,9 +124,7 @@ const playerSpriteFiles = {
     playerHit: 'hit.png',
 };
 
-export async function loadAssets() {
-  const imagePaths = {
-
+const coreImagePaths = {
     font_spritesheet: '/assets/Menu/Text/Text (White) (8x10).png',
     settings_icon: '/assets/Menu/Buttons/Settings.png',
     pause_icon: '/assets/Menu/Buttons/Pause.png',
@@ -135,8 +133,10 @@ export async function loadAssets() {
     character_icon: '/assets/Menu/Buttons/Character.png',
     info_icon: '/assets/Menu/Buttons/Info.png',
     editor_icon: '/assets/Menu/Buttons/Editor.png',
-
     transition: '/assets/Other/Transition.png',
+};
+
+const gameplayImagePaths = {
     background_blue: '/assets/Background/Blue.png',
     background_brown: '/assets/Background/Brown.png',
     background_gray: '/assets/Background/Gray.png',
@@ -146,10 +146,8 @@ export async function loadAssets() {
     background_red: '/assets/Background/Red.png',
     background_yellow: '/assets/Background/Yellow.png',
     block: '/assets/Terrain/Terrain.png',
-
     playerAppear: '/assets/MainCharacters/Appearing.png',
     playerDisappear: '/assets/MainCharacters/Disappearing.png',
-
     fruit_apple: '/assets/Items/Fruits/Apple.png',
     fruit_bananas: '/assets/Items/Fruits/Bananas.png',
     fruit_cherries: '/assets/Items/Fruits/Cherries.png',
@@ -164,7 +162,6 @@ export async function loadAssets() {
     checkpoint_active: '/assets/Items/Checkpoints/Checkpoint/Checkpoint (Flag Idle).png',
     trophy_idle: '/assets/Items/Checkpoints/End/End (Idle).png',
     trophy_pressed: '/assets/Items/Checkpoints/End/End (Pressed).png',
-
     spike_two: '/assets/Traps/Spikes/Two.png',
     fire_off: '/assets/Traps/Fire/off.png',
     fire_hit: '/assets/Traps/Fire/hit.png',
@@ -188,15 +185,12 @@ export async function loadAssets() {
     sand_mud_ice: '/assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
     trampoline_idle: '/assets/Traps/Trampoline/Idle.png',
     trampoline_jump: '/assets/Traps/Trampoline/Jump.png',
-
     mushroom_hit: '/assets/Enemies/Mushroom/Hit.png',
     mushroom_idle: '/assets/Enemies/Mushroom/Idle.png',
     mushroom_run: '/assets/Enemies/Mushroom/Run.png',
-
     chicken_hit: '/assets/Enemies/Chicken/Hit.png',
     chicken_idle: '/assets/Enemies/Chicken/Idle.png',
     chicken_run: '/assets/Enemies/Chicken/Run.png',
-
     snail_hit: '/assets/Enemies/Snail/Hit.png',
     snail_idle: '/assets/Enemies/Snail/Idle.png',
     snail_walk: '/assets/Enemies/Snail/Walk.png',
@@ -204,57 +198,41 @@ export async function loadAssets() {
     snail_shell_idle: '/assets/Enemies/Snail/Shell Idle.png',
     snail_shell_top_hit: '/assets/Enemies/Snail/Shell Top Hit.png',
     snail_shell_wall_hit: '/assets/Enemies/Snail/Shell Wall Hit.png',
-
     slime_hit: '/assets/Enemies/Slime/Hit.png',
     slime_idle_run: '/assets/Enemies/Slime/Idle-Run.png',
     slime_particles: '/assets/Enemies/Slime/Particles.png',
-
     turtle_hit: '/assets/Enemies/Turtle/Hit.png',
     turtle_idle1: '/assets/Enemies/Turtle/Idle 1.png',
     turtle_idle2: '/assets/Enemies/Turtle/Idle 2.png',
     turtle_spikes_in: '/assets/Enemies/Turtle/Spikes in.png',
     turtle_spikes_out: '/assets/Enemies/Turtle/Spikes out.png',
-
-    bee_hit : '/assets/Enemies/Bee/Hit.png',
-    bee_attack : '/assets/Enemies/Bee/Attack.png',
-    bee_idle : '/assets/Enemies/Bee/Idle.png',
+    bee_hit: '/assets/Enemies/Bee/Hit.png',
+    bee_attack: '/assets/Enemies/Bee/Attack.png',
+    bee_idle: '/assets/Enemies/Bee/Idle.png',
     bee_bullet: '/assets/Enemies/Bee/Bullet.png',
     bee_bullet_pieces: '/assets/Enemies/Bee/Bullet Pieces.png',
-
     bluebird_flying: '/assets/Enemies/BlueBird/Flying.png',
     bluebird_hit: '/assets/Enemies/BlueBird/Hit.png',
-
     fatbird_hit: '/assets/Enemies/FatBird/Hit.png',
     fatbird_idle: '/assets/Enemies/FatBird/Idle.png',
     fatbird_fall: '/assets/Enemies/FatBird/Fall.png',
     fatbird_ground: '/assets/Enemies/FatBird/Ground.png',
-
     radish_hit: '/assets/Enemies/Radish/Hit.png',
     radish_idle1: '/assets/Enemies/Radish/Idle 1.png',
     radish_idle2: '/assets/Enemies/Radish/Idle 2.png',
     radish_leaves: '/assets/Enemies/Radish/Leaves.png',
     radish_run: '/assets/Enemies/Radish/Run.png',
-
-    bat_hit: '/assets/Enemies/Bat/Hit.png',
-    bat_idle: '/assets/Enemies/Bat/Idle.png',
-    bat_flying: '/assets/Enemies/Bat/Flying.png',
-    bat_ceiling_in: '/assets/Enemies/Bat/Ceiling In.png',
-    bat_ceiling_out: '/assets/Enemies/Bat/Ceiling Out.png',
-
-    ghost_hit: '/assets/Enemies/Ghost/Hit.png',
-    ghost_idle: '/assets/Enemies/Ghost/Idle.png',
-    ghost_appear: '/assets/Enemies/Ghost/Appear.png',
-    ghost_disappear: '/assets/Enemies/Ghost/Disappear.png',
-    ghost_particles: '/assets/Enemies/Ghost/Ghost Particles.png',
-
     dust_particle: '/assets/Other/Dust Particle.png',
     ice_particle: '/assets/Traps/Sand Mud Ice/Ice Particle.png',
     sand_particle: '/assets/Traps/Sand Mud Ice/Sand Particle.png',
     mud_particle: '/assets/Traps/Sand Mud Ice/Mud Particle.png',
-  };
+};
 
-  const soundPaths = {
+const coreSoundPaths = {
     button_click: '/assets/Sounds/Button Click.mp3',
+};
+
+const gameplaySoundPaths = {
     jump: '/assets/Sounds/Player Jump.mp3',
     double_jump: '/assets/Sounds/Player Double Jump.mp3',
     collect: '/assets/Sounds/Fruit Collect.mp3',
@@ -278,54 +256,65 @@ export async function loadAssets() {
     spawned: '/assets/Sounds/Spawned.mp3',
     wing_flap: '/assets/Sounds/Wing Flap.mp3',
     ghost: '/assets/Sounds/Ghost.mp3',
-  };
+};
 
-  console.log('Starting asset loading...');
+export const coreSoundKeys = Object.keys(coreSoundPaths);
+export const gameplaySoundKeys = Object.keys(gameplaySoundPaths);
 
-
-  const regularImagePromises = Object.entries(imagePaths).map(([key, src]) =>
-    loadImage(src, key).then(img => ({ [key]: img }))
-  );
-  const soundPromises = Object.entries(soundPaths).map(([key, src]) =>
-    loadSound(src, key).then(audio => ({ [key]: audio }))
-  );
-
-
-  const characterPromises = [];
-  for (const charKey in characterData) {
-    for (const spriteKey in playerSpriteFiles) {
-        const fullPath = characterData[charKey].path + playerSpriteFiles[spriteKey];
-        const promise = loadImage(fullPath, `${charKey}-${spriteKey}`)
-            .then(img => ({ type: 'character', charKey, spriteKey, img }));
-        characterPromises.push(promise);
-    }
-  }
-
-  const allPromises = [...regularImagePromises, ...soundPromises, ...characterPromises];
-
-  try {
-    const loadedAssetParts = await Promise.all(allPromises);
-
-
-    const assets = { characters: {} };
-    for (const charKey in characterData) {
-        assets.characters[charKey] = {};
+class AssetManager {
+    constructor() {
+        this.assets = { characters: {} };
+        this.gameplayAssetsLoaded = false;
     }
 
-    for (const part of loadedAssetParts) {
-        if (!part) continue;
+    async _loadAssetGroup(imagePaths, soundPaths, characterPaths = null) {
+        const imagePromises = Object.entries(imagePaths).map(([key, src]) =>
+            loadImage(src, key).then(img => ({ [key]: img }))
+        );
+        const soundPromises = Object.entries(soundPaths).map(([key, src]) =>
+            loadSound(src, key).then(audio => ({ [key]: audio }))
+        );
 
-        if (part.type === 'character') {
-            assets.characters[part.charKey][part.spriteKey] = part.img;
-        } else {
-            Object.assign(assets, part);
+        const characterPromises = [];
+        if (characterPaths) {
+            for (const charKey in characterPaths) {
+                if (!this.assets.characters[charKey]) {
+                    this.assets.characters[charKey] = {};
+                }
+                for (const spriteKey in playerSpriteFiles) {
+                    const fullPath = characterPaths[charKey].path + playerSpriteFiles[spriteKey];
+                    const promise = loadImage(fullPath, `${charKey}-${spriteKey}`)
+                        .then(img => ({ type: 'character', charKey, spriteKey, img }));
+                    characterPromises.push(promise);
+                }
+            }
+        }
+
+        const loadedParts = await Promise.all([...imagePromises, ...soundPromises, ...characterPromises]);
+
+        for (const part of loadedParts) {
+            if (part.type === 'character') {
+                this.assets.characters[part.charKey][part.spriteKey] = part.img;
+            } else {
+                Object.assign(this.assets, part);
+            }
         }
     }
 
-    console.log('All assets loaded. Level data will be loaded on demand. Available assets:', Object.keys(assets).length);
-    return assets;
-  } catch (error) {
-    console.error('A critical error occurred during asset loading:', error);
-    throw error;
-  }
+    async loadCoreAssets() {
+        console.log("Loading core assets...");
+        await this._loadAssetGroup(coreImagePaths, coreSoundPaths, characterData);
+        console.log("Core assets loaded.");
+        return this.assets;
+    }
+
+    async loadGameplayAssets() {
+        if (this.gameplayAssetsLoaded) return;
+        console.log("Loading gameplay assets for the first time...");
+        await this._loadAssetGroup(gameplayImagePaths, gameplaySoundPaths);
+        this.gameplayAssetsLoaded = true;
+        console.log("Gameplay assets loaded.");
+    }
 }
+
+export const assetManager = new AssetManager();

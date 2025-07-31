@@ -1,5 +1,5 @@
 import { Engine } from './src/core/engine.js';
-import { loadAssets } from './src/managers/asset-manager.js';
+import { assetManager } from './src/managers/asset-manager.js';
 import { eventBus } from './src/utils/event-bus.js';
 import { FontRenderer } from './src/ui/font-renderer.js';
 import './src/ui/ui-main.js';
@@ -82,13 +82,13 @@ let keybinds = {
 
 let engine;
 
-loadAssets().then((assets) => {
-  console.log('Assets loaded successfully, preparing main menu...');
+assetManager.loadCoreAssets().then((assets) => {
+  console.log('Core assets loaded successfully, preparing main menu...');
 
   try {
     const fontRenderer = new FontRenderer(assets.font_spritesheet);
-    // Corrected the order of arguments to match the Engine constructor
-    engine = new Engine(gl, uiCanvas, ctx, assets, keybinds, fontRenderer);
+
+    engine = new Engine(gl, uiCanvas, ctx, assets, keybinds, fontRenderer, assetManager);
 
     eventBus.publish('assetsLoaded', assets);
 
