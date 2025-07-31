@@ -33,7 +33,49 @@ export class HUD {
     this.stats = { ...this.stats, ...newStats };
   }
 
-  drawGameHUD(ctx, dt) {
+  drawMinimap(ctx, camera, level) {
+    if (!level) return;
+
+    const MAP_MAX_SIZE = 200;
+    const MAP_MARGIN = 20;
+
+    const levelAspectRatio = level.width / level.height;
+    let mapWidth, mapHeight;
+
+    if (levelAspectRatio > 1) {
+        mapWidth = MAP_MAX_SIZE;
+        mapHeight = MAP_MAX_SIZE / levelAspectRatio;
+    } else {
+        mapHeight = MAP_MAX_SIZE;
+        mapWidth = MAP_MAX_SIZE * levelAspectRatio;
+    }
+
+    const mapX = ctx.canvas.width - mapWidth - MAP_MARGIN;
+    const mapY = ctx.canvas.height - mapHeight - MAP_MARGIN;
+
+    const scaleX = mapWidth / level.width;
+    const scaleY = mapHeight / level.height;
+
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(mapX, mapY, mapWidth, mapHeight);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.strokeRect(mapX, mapY, mapWidth, mapHeight);
+
+    const viewRectX = mapX + camera.x * scaleX;
+    const viewRectY = mapY + camera.y * scaleY;
+    const viewRectWidth = camera.width * scaleX;
+    const viewRectHeight = camera.height * scaleY;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillRect(viewRectX, viewRectY, viewRectWidth, viewRectHeight);
+
+    ctx.restore();
+  }
+
+  drawGameHUD(ctx, camera, level, dt) {
     if (!this.isVisible || !this.fontRenderer) return;
 
 
@@ -134,6 +176,8 @@ export class HUD {
       const fpsX = healthBarX;
       const fpsY = healthBarY + healthBarHeight + 10;
       this.fontRenderer.drawText(ctx, fpsText, fpsX, fpsY, fpsFontOptions);
+
+      this.drawMinimap(ctx, camera, level);
 
       ctx.restore();
 
