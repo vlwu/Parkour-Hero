@@ -81,7 +81,7 @@ export class HUD {
             const playerMapX = mapX + (playerPos.x + playerCol.width / 2) * scaleX;
             const playerMapY = mapY + (playerPos.y + playerCol.height / 2) * scaleY;
 
-            ctx.fillStyle = '#26d620ff';
+            ctx.fillStyle = '#1a8916ff';
             ctx.beginPath();
             ctx.arc(playerMapX, playerMapY, 5, 0, 2 * Math.PI);
             ctx.fill();
