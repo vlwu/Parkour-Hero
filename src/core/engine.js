@@ -202,6 +202,7 @@ export class Engine {
             await this.assetManager.loadGameplayAssets();
             
             this.renderer.syncTextures();
+            this.particleSystem.syncTextures();
             this.soundManager.addSounds(this.assetManager.assets, gameplaySoundKeys);
 
             await this.loadLevel(sectionIndex, levelIndex);

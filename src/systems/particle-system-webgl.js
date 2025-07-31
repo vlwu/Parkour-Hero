@@ -15,7 +15,16 @@ export class ParticleSystemWebGL {
             this.inactivePool.push({});
         }
 
+        this.program = null;
+        this.uniformLocations = {};
+        this.quadBuffer = null;
+        this.texCoordBuffer = null;
+        this.particleBuffer = null;
+        this.vao = null;
+        this.textures = {};
+
         this._setupWebGLResources();
+        this.syncTextures(); // Sync with any initially loaded assets
 
         eventBus.subscribe('createParticles', (data) => this.create(data));
     }
@@ -108,14 +117,6 @@ export class ParticleSystemWebGL {
 
         gl.bindVertexArray(null);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-        this.textures = {};
-        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles', 'snail_die', 'radish_leaves', 'bee_bullet_pieces'];
-        for (const key of textureKeys) {
-            if (this.assets[key]) {
-                this.textures[key] = this._createTexture(this.assets[key]);
-            }
-        }
     }
 
     _createTexture(image) {
@@ -127,7 +128,20 @@ export class ParticleSystemWebGL {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        return texture;
+        return {
+            glTexture: texture,
+            width: image.width,
+            height: image.height
+        };
+    }
+
+    syncTextures() {
+        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles', 'snail_die', 'radish_leaves', 'bee_bullet_pieces'];
+        for (const key of textureKeys) {
+            if (this.assets[key] && !this.textures[key]) {
+                this.textures[key] = this._createTexture(this.assets[key]);
+            }
+        }
     }
 
     create({ x, y, type, direction = 'right', particleSpeed = null, leafIndex = 0 }) {
@@ -288,12 +302,15 @@ export class ParticleSystemWebGL {
                     instanceData[offset + 7] = 1;
                 }
             }
+            
+            const textureInfo = this.textures[spriteKey];
+            if (textureInfo) {
+                gl.bindTexture(gl.TEXTURE_2D, textureInfo.glTexture);
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceData);
 
-            gl.bindTexture(gl.TEXTURE_2D, this.textures[spriteKey]);
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceData);
-
-            gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+                gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+            }
         }
 
         gl.bindVertexArray(null);
