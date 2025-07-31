@@ -170,13 +170,12 @@ export class CollisionSystem {
             entityRect.width = col.width;
             entityRect.height = col.height;
 
-            // --- FIX START: Correctly calculate horizontal query box ---
             const oldX = pos.x - vel.vx * dt;
             queryBoxH.x = Math.min(pos.x, oldX);
             queryBoxH.y = pos.y; // Y position is constant during horizontal check
             queryBoxH.width = col.width + Math.abs(vel.vx * dt);
             queryBoxH.height = col.height;
-            // --- FIX END ---
+
 
             const potentialCollidersH = this.spatialGrid.query(queryBoxH);
 
@@ -233,13 +232,11 @@ export class CollisionSystem {
             entityRect.x = pos.x;
             entityRect.y = pos.y;
 
-            // --- FIX START: Correctly calculate vertical query box ---
             const oldY = pos.y - vel.vy * dt;
             queryBoxV.x = pos.x; // X position is already resolved
             queryBoxV.y = Math.min(pos.y, oldY);
             queryBoxV.width = col.width;
             queryBoxV.height = col.height + Math.abs(vel.vy * dt);
-            // --- FIX END ---
 
             const potentialCollidersV = this.spatialGrid.query(queryBoxV);
             const validGroundColliders = [];

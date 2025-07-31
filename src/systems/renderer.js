@@ -148,7 +148,6 @@ export class Renderer {
     this.staticOverlayBatches.clear();
     const staticGroups = new Map();
 
-    // --- FIX START: Group tiles by their spritesheet ---
     for (let y = 0; y < level.gridHeight; y++) {
         for (let x = 0; x < level.gridWidth; x++) {
             const tileId = level.tiles[y][x];
@@ -162,7 +161,6 @@ export class Renderer {
             }
         }
     }
-    // --- FIX END ---
 
     level.traps.forEach(trap => {
         if (fractionalPlatformTypes.includes(trap.type)) {
@@ -180,14 +178,12 @@ export class Renderer {
         groupItems.forEach(item => {
             if (item.tileId !== undefined) {
                 const { tileId, x, y } = item;
-                // --- FIX START: Use correct config for special tiles ---
                 const isSpecial = tileId >= SPECIAL_TILE_ID_OFFSET;
                 const config = isSpecial ? TILESET_CONFIG_SPECIAL : TILESET_CONFIG;
                 const localId = isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId;
 
                 const sx = (localId % config.columns) * config.tileWidth;
                 const sy = Math.floor(localId / config.columns) * config.tileHeight;
-                // --- FIX END ---
 
                 staticData.push(
                     x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE,
