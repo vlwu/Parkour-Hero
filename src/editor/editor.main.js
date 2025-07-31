@@ -96,7 +96,8 @@ class EditorController {
                 DOM.backgroundInput.value = levelData.background || 'background_blue';
 
                 if (levelData.tileData) {
-                    levelData.tileData.forEach(tile => {
+                    const decodedTileData = LevelImporter._decodeRLEToTileData(levelData.tileData, levelData.gridWidth, levelData.gridHeight);
+                    decodedTileData.forEach(tile => {
                         const index = tile.y * this.grid.width + tile.x;
                         this.grid.paintCell(index, tile.id);
                     });
@@ -197,7 +198,7 @@ class EditorController {
             gridHeight: this.grid.height,
             background: DOM.backgroundInput.value,
             startPosition: startPos,
-            tileData: this.grid.getTileDataForExport(),
+            tileData: LevelExporter._encodeTileDataToRLE(this.grid.getTileDataForExport(), this.grid.width, this.grid.height),
             entities: finalEntities,
         };
 
