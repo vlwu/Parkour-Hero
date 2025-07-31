@@ -12,7 +12,7 @@ import { CharacterComponent } from '../components/CharacterComponent.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
-import { TILESET_CONFIG } from '../entities/tile-definitions.js';
+import { TILESET_CONFIG, TILESET_CONFIG_SPECIAL, SPECIAL_TILE_ID_OFFSET } from '../entities/tile-definitions.js';
 
 const MAX_SPRITES_PER_BATCH = 5000;
 const ATTRIBUTES_PER_INSTANCE = 11;
@@ -145,29 +145,33 @@ export class Renderer {
     this.currentLevel = level;
     const gl = this.gl;
     this.staticBatches.clear();
-    this.staticOverlayBatches.clear(); // Although unused now, good practice to clear
+    this.staticOverlayBatches.clear();
     const staticGroups = new Map();
 
-    const mainSpriteKey = 'block'; // This corresponds to the 'Terrain.png' asset
-    if (!staticGroups.has(mainSpriteKey)) {
-        staticGroups.set(mainSpriteKey, []);
-    }
-    const items = staticGroups.get(mainSpriteKey);
-
-    // Add all 16x16 tiles from the level grid
+    // --- FIX START: Group tiles by their spritesheet ---
     for (let y = 0; y < level.gridHeight; y++) {
         for (let x = 0; x < level.gridWidth; x++) {
             const tileId = level.tiles[y][x];
-            if (tileId > 0) { // Assuming tile ID 0 is empty
-                items.push({ tileId, x, y });
+            if (tileId > 0) {
+                const isSpecial = tileId >= SPECIAL_TILE_ID_OFFSET;
+                const spriteKey = isSpecial ? 'sand_mud_ice' : 'block';
+                if (!staticGroups.has(spriteKey)) {
+                    staticGroups.set(spriteKey, []);
+                }
+                staticGroups.get(spriteKey).push({ tileId, x, y });
             }
         }
     }
+    // --- FIX END ---
 
-    // Add all fractional platforms
     level.traps.forEach(trap => {
         if (fractionalPlatformTypes.includes(trap.type)) {
-            items.push({ trap });
+            // Fractional platforms still use the main 'block' texture
+            const spriteKey = 'block';
+            if (!staticGroups.has(spriteKey)) {
+                staticGroups.set(spriteKey, []);
+            }
+            staticGroups.get(spriteKey).push({ trap });
         }
     });
 
@@ -176,14 +180,20 @@ export class Renderer {
         groupItems.forEach(item => {
             if (item.tileId !== undefined) {
                 const { tileId, x, y } = item;
-                const sx = (tileId % TILESET_CONFIG.columns) * TILESET_CONFIG.tileWidth;
-                const sy = Math.floor(tileId / TILESET_CONFIG.columns) * TILESET_CONFIG.tileHeight;
+                // --- FIX START: Use correct config for special tiles ---
+                const isSpecial = tileId >= SPECIAL_TILE_ID_OFFSET;
+                const config = isSpecial ? TILESET_CONFIG_SPECIAL : TILESET_CONFIG;
+                const localId = isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId;
+
+                const sx = (localId % config.columns) * config.tileWidth;
+                const sy = Math.floor(localId / config.columns) * config.tileHeight;
+                // --- FIX END ---
 
                 staticData.push(
                     x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE,
                     GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE,
                     sx, sy,
-                    TILESET_CONFIG.tileWidth, TILESET_CONFIG.tileHeight,
+                    config.tileWidth, config.tileHeight,
                     0.0, 1.0, 0.0
                 );
             } else if (item.trap) {
