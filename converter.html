@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Parkour Hero Level Converter</title>
+    <style>
+        body { font-family: sans-serif; background-color: #2c3e50; color: #ecf0f1; padding: 20px; }
+        h1, h2 { color: #3498db; }
+        #container { max-width: 800px; margin: auto; background: #34495e; padding: 20px; border-radius: 8px; }
+        input, button { font-size: 1em; padding: 10px; margin-top: 10px; border-radius: 4px; border: 1px solid #4a627a; }
+        button { cursor: pointer; background: #3498db; color: white; border-color: #2980b9; }
+        button:hover { background: #2980b9; }
+        pre { background: #212f3d; padding: 15px; border-radius: 4px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; }
+        .file-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #4a627a; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Parkour Hero: Legacy Level Converter</h1>
+        <p>This tool will convert old 48x48 grid level files to the new 16x16 grid format.</p>
+        <p><strong>Important:</strong> Please back up your original level files before converting!</p>
+        
+        <label for="fileInput">Select one or more old .json level files:</label><br>
+        <input type="file" id="fileInput" multiple accept=".json">
+        
+        <h2>Conversion Log:</h2>
+        <pre id="log">Awaiting files...</pre>
+    </div>
+
+    <script>
+        const TILESET_COLUMNS = 22; // From Terrain.json (352 / 16)
+
+        // The "Rosetta Stone" mapping old tile characters to new 16x16 tile IDs.
+        // This maps to the top-left tile of a 3x3 block in the spritesheet.
+        const LEGACY_ID_TO_NEW_ID_MAP = {
+            '1': 6,   // Dirt
+            '2': 0,   // Stone
+            '3': 88,  // Wood
+            '4': 176, // Green Block
+            '5': 94,  // Orange Dirt
+            '6': 182, // Pink Dirt
+            'a': 17,  // Oneway Gold
+            'b': 39,  // Oneway Wood
+            'c': 61,  // Oneway Stone
+        };
+
+        const fileInput = document.getElementById('fileInput');
+        const log = document.getElementById('log');
+
+        fileInput.addEventListener('change', handleFiles);
+
+        function handleFiles(event) {
+            const files = event.target.files;
+            if (files.length === 0) {
+                log.textContent = "No files selected.";
+                return;
+            }
+
+            log.textContent = `Found ${files.length} file(s). Processing...\n\n`;
+            
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const oldLevelData = JSON.parse(e.target.result);
+                        log.textContent += `--- Converting "${file.name}" ---\n`;
+                        const newLevelData = convertLevel(oldLevelData);
+                        log.textContent += `Conversion successful for "${file.name}"!\n`;
+                        downloadJSON(newLevelData, `converted-${file.name}`);
+                        log.textContent += `Download initiated for "converted-${file.name}".\n\n`;
+                    } catch (err) {
+                        log.textContent += `ERROR converting "${file.name}": ${err.message}\n\n`;
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function convertLevel(oldData) {
+            const newData = JSON.parse(JSON.stringify(oldData)); // Deep clone
+
+            // 1. Scale Grid Dimensions
+            log.textContent += `  Scaling grid from ${oldData.gridWidth}x${oldData.gridHeight} to ${oldData.gridWidth * 3}x${oldData.gridHeight * 3}\n`;
+            newData.gridWidth *= 3;
+            newData.gridHeight *= 3;
+
+            // 2. Scale Coordinates
+            log.textContent += `  Scaling entity coordinates...\n`;
+            if (newData.startPosition) {
+                newData.startPosition[0] *= 3;
+                newData.startPosition[1] *= 3;
+            }
+            if (newData.entities) {
+                newData.entities.forEach(entity => {
+                    entity[1] *= 3; // X coordinate
+                    entity[2] *= 3; // Y coordinate
+                });
+            }
+
+            // 3. Expand and Map Tile Data
+            log.textContent += `  Expanding and re-mapping tile data...\n`;
+            const oldGrid = decodeRLE(oldData.tileData, oldData.gridWidth, oldData.gridHeight);
+            const newGrid = new Array(newData.gridWidth * newData.gridHeight).fill('0');
+
+            for (let oldY = 0; oldY < oldData.gridHeight; oldY++) {
+                for (let oldX = 0; oldX < oldData.gridWidth; oldX++) {
+                    const oldIndex = oldY * oldData.gridWidth + oldX;
+                    const legacyId = oldGrid[oldIndex];
+
+                    if (legacyId && legacyId !== '0') {
+                        const newTopLeftId = LEGACY_ID_TO_NEW_ID_MAP[legacyId];
+                        if (newTopLeftId === undefined) {
+                            log.textContent += `  WARNING: No mapping found for legacy tile ID "${legacyId}". Skipping.\n`;
+                            continue;
+                        }
+
+                        // Place a 3x3 block of new tiles
+                        for (let yOffset = 0; yOffset < 3; yOffset++) {
+                            for (let xOffset = 0; xOffset < 3; xOffset++) {
+                                const newX = oldX * 3 + xOffset;
+                                const newY = oldY * 3 + yOffset;
+                                const newIndex = newY * newData.gridWidth + newX;
+                                
+                                // Calculate the specific tile ID for the 3x3 block from the spritesheet
+                                const newTileId = newTopLeftId + (yOffset * TILESET_COLUMNS) + xOffset;
+                                newGrid[newIndex] = newTileId.toString();
+                            }
+                        }
+                    }
+                }
+            }
+            newData.tileData = encodeRLE(newGrid);
+            
+            return newData;
+        }
+        
+        // RLE Helper Functions
+        function decodeRLE(rleString, width, height) {
+            const grid = new Array(width * height);
+            let i = 0;
+            const parts = rleString.split(',');
+            for (const part of parts) {
+                const [countStr, tileId] = part.split(':');
+                const count = parseInt(countStr, 10);
+                for (let j = 0; j < count; j++) {
+                    grid[i++] = tileId;
+                }
+            }
+            return grid;
+        }
+
+        function encodeRLE(grid) {
+            if (grid.length === 0) return "";
+            const rleParts = [];
+            let currentTileId = grid[0];
+            let count = 1;
+            for (let i = 1; i < grid.length; i++) {
+                if (grid[i] === currentTileId) {
+                    count++;
+                } else {
+                    rleParts.push(`${count}:${currentTileId}`);
+                    currentTileId = grid[i];
+                    count = 1;
+                }
+            }
+            rleParts.push(`${count}:${currentTileId}`);
+            return rleParts.join(',');
+        }
+
+        function downloadJSON(data, filename) {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", filename);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+        }
+
+    </script>
+</body>
+</html>

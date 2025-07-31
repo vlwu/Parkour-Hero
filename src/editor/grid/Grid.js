@@ -1,4 +1,4 @@
-import { TILESET_CONFIG, getTileProperties } from '../../entities/tile-definitions.js';
+import { TILESET_CONFIG, TILESET_CONFIG_SPECIAL, SPECIAL_TILE_ID_OFFSET, getTileProperties } from '../../entities/tile-definitions.js';
 import { GRID_CONSTANTS } from '../../utils/constants.js';
 import { DOM } from '../ui/DOM.js';
 
@@ -7,8 +7,12 @@ export class Grid {
         this.width = width;
         this.height = height;
         this.zoomLevel = 1;
+        
         this.tilesetImage = new Image();
         this.tilesetImage.src = TILESET_CONFIG.image;
+        
+        this.specialTilesetImage = new Image();
+        this.specialTilesetImage.src = TILESET_CONFIG_SPECIAL.image;
     }
 
     generate() {
@@ -60,7 +64,7 @@ export class Grid {
 
     paintCell(index, tileIdStr) {
         const cell = DOM.gridContainer.children[index];
-        if (!cell || !this.tilesetImage.complete) return;
+        if (!cell) return;
 
         const tileId = parseInt(tileIdStr, 10);
         cell.dataset.tileId = tileIdStr;
@@ -70,7 +74,7 @@ export class Grid {
             canvas = document.createElement('canvas');
             canvas.width = GRID_CONSTANTS.TILE_SIZE;
             canvas.height = GRID_CONSTANTS.TILE_SIZE;
-            cell.innerHTML = ''; // Clear any old background styles or content
+            cell.innerHTML = '';
             cell.appendChild(canvas);
         }
         const ctx = canvas.getContext('2d');
@@ -78,12 +82,19 @@ export class Grid {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (tileId > 0) {
-            const sx = (tileId % TILESET_CONFIG.columns) * TILESET_CONFIG.tileWidth;
-            const sy = Math.floor(tileId / TILESET_CONFIG.columns) * TILESET_CONFIG.tileHeight;
+            const isSpecial = tileId >= SPECIAL_TILE_ID_OFFSET;
+            const sourceImage = isSpecial ? this.specialTilesetImage : this.tilesetImage;
+            const sourceConfig = isSpecial ? TILESET_CONFIG_SPECIAL : TILESET_CONFIG;
+            const localId = isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId;
+
+            if (!sourceImage.complete) return;
+
+            const sx = (localId % sourceConfig.columns) * sourceConfig.tileWidth;
+            const sy = Math.floor(localId / sourceConfig.columns) * sourceConfig.tileHeight;
 
             ctx.drawImage(
-                this.tilesetImage,
-                sx, sy, TILESET_CONFIG.tileWidth, TILESET_CONFIG.tileHeight,
+                sourceImage,
+                sx, sy, sourceConfig.tileWidth, sourceConfig.tileHeight,
                 0, 0, GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE
             );
         }

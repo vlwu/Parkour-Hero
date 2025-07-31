@@ -1,4 +1,4 @@
-import { TILESET_CONFIG, getTileProperties } from '../../entities/tile-definitions.js';
+import { TILESET_CONFIG, TILESET_CONFIG_SPECIAL, SPECIAL_TILE_ID_OFFSET } from '../../entities/tile-definitions.js';
 import { ENEMY_DEFINITIONS } from '../../entities/enemy-definitions.js';
 import { OBJECT_DESCRIPTIONS, PALETTE_ABBREVIATIONS, getPaletteColor } from '../config/EditorSettings.js';
 import { DOM } from './DOM.js';
@@ -6,38 +6,28 @@ import { DOM } from './DOM.js';
 export class Palette {
     constructor(onSelectionChange) {
         this.onSelectionChange = onSelectionChange;
-        this.selectedPaletteItem = { type: 'tile', id: '1' }; // Default selection is tile with ID '1'
+        this.selectedPaletteItem = { type: 'tile', id: '1' };
 
-        this.canvas = DOM.tilesetCanvas;
-        this.ctx = this.canvas.getContext('2d');
-        this.tilesetImage = new Image();
+        this.mainTileset = {
+            canvas: DOM.tilesetCanvas,
+            ctx: DOM.tilesetCanvas.getContext('2d'),
+            image: new Image(),
+            config: TILESET_CONFIG,
+            idOffset: 0
+        };
+
+        this.specialTileset = {
+            canvas: DOM.specialTilesetCanvas,
+            ctx: DOM.specialTilesetCanvas.getContext('2d'),
+            image: new Image(),
+            config: TILESET_CONFIG_SPECIAL,
+            idOffset: SPECIAL_TILE_ID_OFFSET
+        };
     }
 
     populate() {
-        this.tilesetImage.onload = () => {
-            this.canvas.width = this.tilesetImage.width;
-            this.canvas.height = this.tilesetImage.height;
-            this.ctx.imageSmoothingEnabled = false;
-            this.updateSelectionVisuals();
-        };
-        this.tilesetImage.src = TILESET_CONFIG.image;
-
-        this.canvas.addEventListener('click', (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this.canvas.width / rect.width;
-            const scaleY = this.canvas.height / rect.height;
-            const x = (e.clientX - rect.left) * scaleX;
-            const y = (e.clientY - rect.top) * scaleY;
-
-            const tileX = Math.floor(x / TILESET_CONFIG.tileWidth);
-            const tileY = Math.floor(y / TILESET_CONFIG.tileHeight);
-
-            const tileId = (tileY * TILESET_CONFIG.columns + tileX).toString();
-
-            this.selectedPaletteItem = { type: 'tile', id: tileId };
-            this.updateSelectionVisuals();
-            this.onSelectionChange(this.selectedPaletteItem);
-        });
+        this._initializeTileset(this.mainTileset);
+        this._initializeTileset(this.specialTileset);
 
         const itemTypes = ['player_spawn', 'fruit_apple', 'fruit_bananas', 'fruit_cherries', 'fruit_kiwi', 'fruit_melon', 'fruit_orange', 'fruit_pineapple', 'fruit_strawberry', 'checkpoint', 'trophy'];
         itemTypes.forEach(type => {
@@ -71,6 +61,33 @@ export class Palette {
         this.updateSelectionVisuals();
     }
 
+    _initializeTileset(tileset) {
+        tileset.image.onload = () => {
+            tileset.canvas.width = tileset.image.width;
+            tileset.canvas.height = tileset.image.height;
+            tileset.ctx.imageSmoothingEnabled = false;
+            this.updateSelectionVisuals();
+        };
+        tileset.image.src = tileset.config.image;
+
+        tileset.canvas.addEventListener('click', (e) => {
+            const rect = tileset.canvas.getBoundingClientRect();
+            const scaleX = tileset.canvas.width / rect.width;
+            const scaleY = tileset.canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            const tileX = Math.floor(x / tileset.config.tileWidth);
+            const tileY = Math.floor(y / tileset.config.tileHeight);
+
+            let tileId = (tileY * tileset.config.columns + tileX) + tileset.idOffset;
+
+            this.selectedPaletteItem = { type: 'tile', id: tileId.toString() };
+            this.updateSelectionVisuals();
+            this.onSelectionChange(this.selectedPaletteItem);
+        });
+    }
+
     _createPaletteItem(type, id, title, abbreviation) {
         const item = document.createElement('div');
         item.className = 'palette-item';
@@ -91,24 +108,26 @@ export class Palette {
     }
 
     updateSelectionVisuals() {
-        // Redraw the base tileset image
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        if (this.tilesetImage.complete) {
-            this.ctx.drawImage(this.tilesetImage, 0, 0);
-        }
+        [this.mainTileset, this.specialTileset].forEach(tileset => {
+            tileset.ctx.clearRect(0, 0, tileset.canvas.width, tileset.canvas.height);
+            if (tileset.image.complete) {
+                tileset.ctx.drawImage(tileset.image, 0, 0);
+            }
+        });
 
-        // Highlight selected tile on the canvas
         if (this.selectedPaletteItem.type === 'tile') {
-            const id = parseInt(this.selectedPaletteItem.id, 10);
-            const tileX = (id % TILESET_CONFIG.columns) * TILESET_CONFIG.tileWidth;
-            const tileY = Math.floor(id / TILESET_CONFIG.columns) * TILESET_CONFIG.tileHeight;
+            const selectedId = parseInt(this.selectedPaletteItem.id, 10);
+            const targetTileset = selectedId >= SPECIAL_TILE_ID_OFFSET ? this.specialTileset : this.mainTileset;
+            
+            const localId = selectedId - targetTileset.idOffset;
+            const tileX = (localId % targetTileset.config.columns) * targetTileset.config.tileWidth;
+            const tileY = Math.floor(localId / targetTileset.config.columns) * targetTileset.config.tileHeight;
 
-            this.ctx.strokeStyle = '#3498db'; // --accent-color
-            this.ctx.lineWidth = 2;
-            this.ctx.strokeRect(tileX + 1, tileY + 1, TILESET_CONFIG.tileWidth - 2, TILESET_CONFIG.tileHeight - 2);
+            targetTileset.ctx.strokeStyle = '#3498db'; // --accent-color
+            targetTileset.ctx.lineWidth = 2;
+            targetTileset.ctx.strokeRect(tileX + 1, tileY + 1, targetTileset.config.tileWidth - 2, targetTileset.config.tileHeight - 2);
         }
 
-        // Toggle 'selected' class on other palette items
         document.querySelectorAll('.palette-item').forEach(el => {
             const isSelected = el.dataset.type === this.selectedPaletteItem.type && el.dataset.id === this.selectedPaletteItem.id;
             el.classList.toggle('selected', isSelected);

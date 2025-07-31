@@ -163,7 +163,6 @@ body {
     height: 16px;
     box-sizing: border-box;
     background-color: transparent;
-    /* Use outline instead of border to avoid affecting the layout */
     outline: 1px solid rgba(149, 165, 166, 0.1);
 }
 
@@ -178,7 +177,7 @@ body {
     image-rendering: crisp-edges;
 }
 
-#tileset-palette-container {
+.tileset-palette-container {
     position: relative;
     margin-bottom: 20px;
     background-color: var(--bg-grid);
@@ -187,7 +186,7 @@ body {
     overflow: auto;
 }
 
-#tileset-canvas {
+.tileset-canvas {
     display: block;
     cursor: pointer;
     image-rendering: pixelated;

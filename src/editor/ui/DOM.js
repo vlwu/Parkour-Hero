@@ -4,6 +4,7 @@ export const DOM = {
     gridParent: null,
     propertiesPanel: null,
     tilesetCanvas: null,
+    specialTilesetCanvas: null,
     tilesetPaletteContainer: null,
     itemsPalette: null,
     trapsPalette: null,
@@ -36,7 +37,8 @@ export const DOM = {
         this.gridParent = document.getElementById('grid-parent');
         this.propertiesPanel = document.getElementById('properties-panel');
         this.tilesetCanvas = document.getElementById('tileset-canvas');
-        this.tilesetPaletteContainer = document.getElementById('tileset-palette-container');
+        this.specialTilesetCanvas = document.getElementById('special-tileset-canvas');
+        this.tilesetPaletteContainer = document.querySelector('.tileset-palette-container');
         this.itemsPalette = document.getElementById('items-palette');
         this.trapsPalette = document.getElementById('traps-palette');
         this.enemiesPalette = document.getElementById('enemies-palette');
