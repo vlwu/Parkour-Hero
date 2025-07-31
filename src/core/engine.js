@@ -220,16 +220,16 @@ export class Engine {
     if (!levelData) { this.stop(); return; }
 
     this._resetForNewLevel();
-
-    let newState = new GameState(this.gameState);
-    newState.showingLevelComplete = false;
-    newState.currentSection = sectionIndex;
-    newState.currentLevelIndex = levelIndex;
-
-    newState = newState.incrementAttempts(sectionIndex, levelIndex);
-
-    this.gameState = newState;
-    eventBus.publish('gameStateUpdated', this.gameState);
+    
+    // Set current level in state but let manager handle mutations
+    const currentState = gameStateManager.getState();
+    const newStateData = JSON.parse(JSON.stringify(currentState));
+    newStateData.currentSection = sectionIndex;
+    newStateData.currentLevelIndex = levelIndex;
+    this.gameState = new GameState(newStateData);
+    
+    eventBus.publish('incrementAttempts', { sectionIndex, levelIndex });
+    this.gameState = gameStateManager.getState(); // Get the updated state from the manager
 
     this.currentLevel = new Level(levelData, this.entityManager);
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);

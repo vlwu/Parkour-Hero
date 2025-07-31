@@ -2,7 +2,6 @@ import { LitElement, html, css } from 'lit';
 import { map } from 'lit/directives/map.js';
 import { levelSections } from '../../entities/level-definitions.js';
 import { eventBus } from '../../utils/event-bus.js';
-import { gameStateManager } from '../../managers/game-state.js';
 import './bitmap-text.js';
 
 export class LevelsMenu extends LitElement {
@@ -17,6 +16,8 @@ export class LevelsMenu extends LitElement {
       display: flex; justify-content: center; align-items: center;
       z-index: 200;
     }
+
+
 
     .modal-content {
       background-color: #333;
@@ -44,6 +45,7 @@ export class LevelsMenu extends LitElement {
       margin: 0 -5px;
     }
 
+
     .footer-actions {
         flex-shrink: 0;
         padding-top: 20px;
@@ -52,6 +54,7 @@ export class LevelsMenu extends LitElement {
         align-items: center;
         border-top: 1px solid #444;
     }
+
 
     .close-button {
       position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
@@ -265,8 +268,8 @@ export class LevelsMenu extends LitElement {
                   </div>
                   <div class="level-grid">
                     ${map(section.levels, (_, levelIndex) => {
-                      const isUnlocked = gameStateManager.isLevelUnlocked(sectionIndex, levelIndex);
-                      const isCompleted = gameStateManager.isLevelCompleted(sectionIndex, levelIndex);
+                      const isUnlocked = this.gameState.isLevelUnlocked(sectionIndex, levelIndex);
+                      const isCompleted = this.gameState.isLevelCompleted(sectionIndex, levelIndex);
                       const isCurrent = this.gameState.currentSection === sectionIndex && this.gameState.currentLevelIndex === levelIndex;
                       const classes = `level-button ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''} ${!isUnlocked ? 'locked' : ''}`;
 

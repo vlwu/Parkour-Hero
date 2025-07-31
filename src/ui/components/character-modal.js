@@ -2,7 +2,6 @@ import { LitElement, html, css } from 'lit';
 import { map } from 'lit/directives/map.js';
 import { characterConfig } from '../../entities/level-definitions.js';
 import { eventBus } from '../../utils/event-bus.js';
-import { gameStateManager } from '../../managers/game-state.js';
 import './character-card.js';
 import './bitmap-text.js';
 
@@ -19,10 +18,10 @@ export class CharacterMenu extends LitElement {
       background-color: #333; padding: 30px; border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); color: #eee;
       text-align: center; position: relative; width: 90%;
-
-      max-width: 800px;
+      /* Increase max-width to better accommodate wider cards on larger screens */
+      max-width: 800px; 
       max-height: 80vh; overflow-y: auto;
-      box-sizing: border-box;
+      box-sizing: border-box; 
     }
     .close-button {
       position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
@@ -40,7 +39,7 @@ export class CharacterMenu extends LitElement {
     .subtitle-container {
         margin-bottom: 25px;
     }
-
+    
     #character-selection-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -49,13 +48,13 @@ export class CharacterMenu extends LitElement {
       grid-auto-rows: 1fr;
     }
   `;
-
+  
   static properties = {
       gameState: { type: Object },
       assets: { type: Object },
       fontRenderer: { type: Object },
   };
-
+  
   _dispatchClose() {
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     this.dispatchEvent(new CustomEvent('close-modal', { bubbles: true, composed: true }));
@@ -83,7 +82,7 @@ export class CharacterMenu extends LitElement {
                         <character-card
                             .characterId=${id}
                             .idleSprite=${this.assets.characters[id]?.playerIdle}
-                            .isLocked=${!gameStateManager.isCharacterUnlocked(id)}
+                            .isLocked=${!this.gameState.isCharacterUnlocked(id)}
                             .isSelected=${this.gameState.selectedCharacter === id}
                             .fontRenderer=${this.fontRenderer}
                         ></character-card>
