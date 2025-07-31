@@ -10,6 +10,7 @@ import { EnemyComponent } from '../components/EnemyComponent.js';
 import { KillableComponent } from '../components/KillableComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { IdleState } from '../states/player/IdleState.js';
+import { getTileProperties } from '../entities/tile-definitions.js';
 
 export class CollisionSystem {
     constructor() {
@@ -24,21 +25,20 @@ export class CollisionSystem {
         this.currentLevel = level;
         this.trapGridCells.clear();
 
-
+        // Correctly build the spatial grid from the new tile ID system
         for (let y = 0; y < level.gridHeight; y++) {
             for (let x = 0; x < level.gridWidth; x++) {
-                const tile = level.tiles[y][x];
-                if (tile && tile.solid) {
-                    const collisionWidth = tile.collisionBox ? tile.collisionBox.width : GRID_CONSTANTS.TILE_SIZE;
-                    const collisionHeight = tile.collisionBox ? tile.collisionBox.height : GRID_CONSTANTS.TILE_SIZE;
+                const tileId = level.tiles[y][x];
+                const properties = getTileProperties(tileId);
 
+                if (properties && properties.solid) {
                     this.spatialGrid.insert({
                         x: x * GRID_CONSTANTS.TILE_SIZE,
                         y: y * GRID_CONSTANTS.TILE_SIZE,
-                        width: collisionWidth,
-                        height: collisionHeight,
-                        isOneWay: tile.oneWay || false,
-                        surfaceType: tile.interaction || tile.type,
+                        width: GRID_CONSTANTS.TILE_SIZE,
+                        height: GRID_CONSTANTS.TILE_SIZE,
+                        isOneWay: properties.oneWay || false,
+                        surfaceType: properties.interaction || properties.type,
                         type: 'tile'
                     });
                 }

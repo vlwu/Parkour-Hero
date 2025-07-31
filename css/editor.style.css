@@ -163,13 +163,19 @@ body {
     height: 16px;
     box-sizing: border-box;
     background-color: transparent;
-    border: 1px solid rgba(149, 165, 166, 0.1);
-    background-size: cover;
-    background-repeat: no-repeat;
+    /* Use outline instead of border to avoid affecting the layout */
+    outline: 1px solid rgba(149, 165, 166, 0.1);
 }
 
 .grid-cell:hover {
     background-color: rgba(52, 152, 219, 0.2);
+}
+
+.grid-cell canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
 
 #tileset-palette-container {
