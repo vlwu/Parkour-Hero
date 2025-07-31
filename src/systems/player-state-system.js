@@ -220,25 +220,17 @@ export class PlayerStateSystem {
 
         renderable.animationTimer += dt;
         const stateName = renderable.animationState;
+        const animDef = PLAYER_CONSTANTS.ANIMATIONS[stateName];
+        if (!animDef) return;
 
-        let speed;
-        if (stateName === 'spawn' || stateName === 'despawn') {
-            speed = PLAYER_CONSTANTS.SPAWN_ANIMATION_SPEED;
-        } else if (stateName === 'hit') {
-            speed = PLAYER_CONSTANTS.HIT_ANIMATION_SPEED;
-        } else {
-            speed = PLAYER_CONSTANTS.ANIMATION_SPEED;
-        }
+        if (renderable.animationTimer < animDef.speed) return;
 
-        if (renderable.animationTimer < speed) return;
-
-        renderable.animationTimer -= speed;
-        const frameCount = PLAYER_CONSTANTS.ANIMATION_FRAMES[stateName] || 1;
+        renderable.animationTimer -= animDef.speed;
         renderable.animationFrame++;
 
         if (stateName === 'spawn' || stateName === 'despawn' || stateName === 'hit') {
-            if (renderable.animationFrame >= frameCount) {
-                renderable.animationFrame = frameCount - 1;
+            if (renderable.animationFrame >= animDef.frameCount) {
+                renderable.animationFrame = animDef.frameCount - 1;
                 if (stateName === 'spawn') {
                     ctrl.isSpawning = false;
                     ctrl.spawnComplete = true;
@@ -252,7 +244,7 @@ export class PlayerStateSystem {
                 }
             }
         } else {
-            renderable.animationFrame %= frameCount;
+            renderable.animationFrame %= animDef.frameCount;
         }
     }
 }

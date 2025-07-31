@@ -17,8 +17,8 @@ export class BeeAI extends BaseAI {
         this.moveTimer = 0;
         this.attackTimer = this.attackInterval;
         this.hasFired = false;
-        
-        // Ensure the initial state is set correctly
+
+
         this.state.currentState = 'flying';
     }
 
@@ -75,7 +75,7 @@ export class BeeAI extends BaseAI {
         this.vel.vy = 0;
 
         const attackAnim = ENEMY_DEFINITIONS.bee.animations.attack;
-        const fireFrame = 4;
+        const fireFrame = attackAnim.fireFrame || 4; 
 
         if (this.renderable.animationFrame >= fireFrame && !this.hasFired) {
             this.hasFired = true;
@@ -85,7 +85,7 @@ export class BeeAI extends BaseAI {
                 config: this.enemy.ai.bullet
             });
         }
-        
+
         const animTimer = this.renderable.animationTimer + dt;
         if (this.renderable.animationFrame >= attackAnim.frameCount - 1 && animTimer >= attackAnim.speed) {
              this.state.currentState = 'flying';

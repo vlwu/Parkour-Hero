@@ -36,21 +36,17 @@ export const PLAYER_CONSTANTS = {
   TRAMPOLINE_BOUNCE_MULTIPLIER: 2,
 
 
-  ANIMATION_SPEED: 0.06,
-  SPAWN_ANIMATION_SPEED: 0.08,
-  HIT_ANIMATION_SPEED: 0.1,
-
-  ANIMATION_FRAMES: {
-    idle: 11,
-    run: 12,
-    double_jump: 6,
-    jump: 1,
-    fall: 1,
-    dash: 1,
-    cling: 5,
-    spawn: 7,
-    despawn: 7,
-    hit: 7,
+  ANIMATIONS: {
+    idle: { frameCount: 11, speed: 0.06 },
+    run: { frameCount: 12, speed: 0.06 },
+    double_jump: { frameCount: 6, speed: 0.06 },
+    jump: { frameCount: 1, speed: 0.06 },
+    fall: { frameCount: 1, speed: 0.06 },
+    dash: { frameCount: 1, speed: 0.06 },
+    cling: { frameCount: 5, speed: 0.06 },
+    spawn: { frameCount: 7, speed: 0.08 },
+    despawn: { frameCount: 7, speed: 0.08 },
+    hit: { frameCount: 7, speed: 0.1 },
   }
 };
 

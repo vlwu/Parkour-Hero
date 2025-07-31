@@ -204,7 +204,7 @@ export const ENEMY_DEFINITIONS = {
         spriteKey: 'bee',
         animations: {
             idle: { frameCount: 6, speed: 0.05 },
-            attack: { frameCount: 8, speed: 0.08 },
+            attack: { frameCount: 8, speed: 0.08, fireFrame: 4 },
             hit: { frameCount: 5, speed: 0.1 }
         },
         killable: {
