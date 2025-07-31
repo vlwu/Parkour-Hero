@@ -1,6 +1,5 @@
 import { LitElement, html, css } from 'lit';
 import { eventBus } from '../../utils/event-bus.js';
-import { gameStateManager } from '../../managers/game-state.js';
 import './settings-modal.js';
 import './pause-modal.js';
 import './levels-modal.js';
@@ -106,12 +105,11 @@ export class ParkourHeroUI extends LitElement {
     this.keybinds = { moveLeft: 'a', moveRight: 'd', jump: 'w', dash: ' ' };
     this.soundSettings = { soundEnabled: true, soundVolume: 0.5 };
     this.currentStats = {};
+    this.gameState = null;
     this.assets = null;
     this.fontRenderer = null;
     this.levelCompleteStats = null;
     this.previewMode = false;
-
-    this.gameState = gameStateManager.getState();
 
     if (window.location.hash === '#levels') {
       this.activeModal = 'levels';
@@ -129,7 +127,7 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('levelLoaded', this._handleLevelLoad);
     eventBus.subscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
     eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets);
-    eventBus.subscribe('levelCompleteModal', (stats) => this.levelCompleteStats = stats);
+    eventBus.subscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
     if (this.previewMode) {
         this.gameHasStarted = true;
         this.activeModal = null;
@@ -146,10 +144,11 @@ export class ParkourHeroUI extends LitElement {
     eventBus.unsubscribe('levelLoaded', this._handleLevelLoad);
     eventBus.unsubscribe('gameStateUpdated', (gameState) => this.gameState = gameState);
     eventBus.unsubscribe('assetsLoaded', (assets) => this.assets = assets);
-    eventBus.unsubscribe('levelCompleteModal', (stats) => this.levelCompleteStats = stats);
+    eventBus.unsubscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
   }
 
   _handleLevelLoad = ({ gameState }) => {
+      this.gameState = gameState;
       this.levelCompleteStats = null;
       if (!this.gameHasStarted) {
           this.gameHasStarted = true;
@@ -203,7 +202,11 @@ export class ParkourHeroUI extends LitElement {
 
     if (wasOpen && this.gameHasStarted) {
         if (modalThatWasClosed === 'tutorial') {
-            eventBus.publish('markTutorialAsShown');
+            const newGameState = this.gameState.markTutorialAsShown();
+            if (newGameState !== this.gameState) {
+                this.gameState = newGameState;
+                eventBus.publish('gameStateUpdated', this.gameState);
+            }
         }
         eventBus.publish('allMenusClosed');
     }
@@ -236,7 +239,11 @@ export class ParkourHeroUI extends LitElement {
 
   _handleCharacterSelected(e) {
     const { characterId } = e.detail;
-    eventBus.publish('setSelectedCharacter', characterId);
+    const newGameState = this.gameState.setSelectedCharacter(characterId);
+    if (newGameState !== this.gameState) {
+        this.gameState = newGameState;
+        eventBus.publish('gameStateUpdated', this.gameState);
+    }
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     eventBus.publish('characterUpdated', characterId);
   }
