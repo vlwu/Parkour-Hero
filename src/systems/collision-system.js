@@ -176,6 +176,7 @@ export class CollisionSystem {
             const potentialCollidersH = this.spatialGrid.query(queryBoxH);
 
             for (const collider of potentialCollidersH) {
+                if (playerCtrl && collider.surfaceType === 'mud') continue;
                 if (collider.type === 'entity' && collider.entityId === entityId) continue;
 
                 if (this._isRectColliding(entityRect, collider)) {
@@ -236,6 +237,7 @@ export class CollisionSystem {
             const validGroundColliders = [];
 
             for (const collider of potentialCollidersV) {
+                if (playerCtrl && collider.surfaceType === 'mud') continue;
                 if (collider.type === 'entity' && collider.entityId === entityId) continue;
                 if (!this._isRectColliding(entityRect, collider)) continue;
 
@@ -339,12 +341,13 @@ export class CollisionSystem {
             this._checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager);
 
             if (playerCtrl) {
-                this._handleMudInteraction(entityId, pos, col, playerCtrl, level);
+                this._handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager);
             }
         }
     }
 
-    _handleMudInteraction(entityId, pos, col, playerCtrl, level) {
+    _handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager) {
+        const vel = entityManager.getComponent(entityId, VelocityComponent);
         const checkRect = { x: pos.x, y: pos.y, width: col.width, height: col.height + 1 };
         const potentialColliders = this.spatialGrid.query(checkRect);
         let touchingMud = false;
@@ -368,7 +371,12 @@ export class CollisionSystem {
                     type: 'mud_splash'
                 });
             }
-            pos.y = highestMudY - col.height + playerCtrl.mudSinkAmount;
+            if (vel.vy >= 0) {
+                pos.y = highestMudY - col.height + playerCtrl.mudSinkAmount;
+                vel.vy = 0;
+                col.isGrounded = true;
+                col.groundType = 'mud';
+            }
         } else if (playerCtrl.isInMud) {
             playerCtrl.isInMud = false;
         }
