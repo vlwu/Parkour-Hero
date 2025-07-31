@@ -73,6 +73,10 @@ export class PlayerStateSystem {
                     this._transitionTo(entityId, nextState, entityManager);
                 }
             }
+            
+            if (ctrl.isInMud && ctrl.currentState.constructor !== IdleState) {
+                this._transitionTo(entityId, new IdleState(entityId, entityManager), entityManager);
+            }
 
             this._updateAnimation(dt, entityId, entityManager);
             this._handleJumpTrail(dt, entityId, entityManager);
@@ -153,6 +157,17 @@ export class PlayerStateSystem {
             return;
         }
 
+        if (ctrl.isInMud) {
+            if (input.jumpPressedThisFrame) {
+                ctrl.isInMud = false;
+                vel.vy = -ctrl.jumpForce;
+                ctrl.jumpCount = 1;
+                eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
+                this._transitionTo(entityId, new JumpState(entityId, entityManager), entityManager);
+            }
+            return;
+        }
+
         if (input.moveLeft) renderable.direction = 'left';
         else if (input.moveRight) renderable.direction = 'right';
 
@@ -162,7 +177,7 @@ export class PlayerStateSystem {
             const justPressedJump = input.jumpPressedThisFrame;
 
             if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0) && ctrl.jumpCount === 0) {
-                vel.vy = -ctrl.jumpForce * (col.groundType === 'mud' ? PLAYER_CONSTANTS.MUD_JUMP_MULTIPLIER : 1);
+                vel.vy = -ctrl.jumpForce;
                 ctrl.jumpCount = 1;
                 ctrl.jumpBufferTimer = 0;
                 ctrl.coyoteTimer = 0;

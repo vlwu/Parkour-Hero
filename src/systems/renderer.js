@@ -258,6 +258,13 @@ export class Renderer {
             const isPlayer = entityManager.hasComponent(entityId, CharacterComponent);
             const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
 
+            if (isPlayer) {
+                const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+                if (playerCtrl.isInMud) {
+                    renderY += playerCtrl.mudSinkAmount;
+                }
+            }
+
             let spriteData;
             if (isPlayer) {
                 const stateName = renderable.animationState;

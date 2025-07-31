@@ -57,6 +57,8 @@ export class PlayerControlledComponent {
         this.activeSurfaceSound = activeSurfaceSound;
         this.previousGroundEntity = null;
         this.fallDistance = 0; // New property to track fall distance
+        this.isInMud = false;
+        this.mudSinkAmount = PLAYER_CONSTANTS.HEIGHT / 2;
 
 
         this.currentState = null;

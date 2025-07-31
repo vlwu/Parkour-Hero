@@ -150,6 +150,7 @@ export class ParticleSystemWebGL {
             double_jump: { count: 7, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
             sand: { count: 2, baseSpeed: 20, spriteKey: 'sand_particle', life: 0.5, gravity: 120 },
             mud: { count: 2, baseSpeed: 15, spriteKey: 'mud_particle', life: 0.6, gravity: 100 },
+            mud_splash: { count: 12, baseSpeed: 200, spriteKey: 'mud_particle', life: 0.8, gravity: 400 },
             ice: { count: 3, baseSpeed: 80, spriteKey: 'ice_particle', life: 0.6, gravity: 250 },
             walk_dust: { count: 1, baseSpeed: 15, spriteKey: 'dust_particle', life: 0.4, gravity: 80 },
             jump_trail: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.3, gravity: 20 },
@@ -183,7 +184,7 @@ export class ParticleSystemWebGL {
             }
             else if (type === 'enemy_death' || type === 'radish_leaf' || type === 'bee_bullet_pieces') angle = Math.random() * Math.PI * 2;
             else if (type === 'dash') angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
-            else if (type === 'double_jump') angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
+            else if (type === 'double_jump' || type === 'mud_splash') angle = -(Math.PI / 2) + (Math.random() - 0.5) * (Math.PI * 0.8);
             else if (type === 'jump_trail') { angle = (Math.random() * Math.PI * 2); speed *= (Math.random() * 0.5); }
             else if (type === 'fan_push') {
                 let baseAngle = 0;

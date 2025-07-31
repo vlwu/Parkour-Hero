@@ -8,6 +8,8 @@ import { SpatialGrid } from '../utils/spatial-grid.js';
 import { DynamicColliderComponent } from '../components/DynamicColliderComponent.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { KillableComponent } from '../components/KillableComponent.js';
+import { StateComponent } from '../components/StateComponent.js';
+import { IdleState } from '../states/player/IdleState.js';
 
 export class CollisionSystem {
     constructor() {
@@ -335,6 +337,38 @@ export class CollisionSystem {
                 if (vel.vy < 0) vel.vy = 0;
             }
             this._checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager);
+
+            if (playerCtrl) {
+                this._handleMudInteraction(entityId, pos, col, playerCtrl, level);
+            }
+        }
+    }
+    
+    _handleMudInteraction(entityId, pos, col, playerCtrl, level) {
+        const checkRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
+        const potentialColliders = this.spatialGrid.query(checkRect);
+        let touchingMud = false;
+        let highestMudY = -Infinity;
+    
+        for (const collider of potentialColliders) {
+            if (collider.surfaceType === 'mud' && this._isRectColliding(checkRect, collider)) {
+                touchingMud = true;
+                if (collider.y > highestMudY) {
+                    highestMudY = collider.y;
+                }
+            }
+        }
+    
+        if (touchingMud && !playerCtrl.isInMud) {
+            playerCtrl.isInMud = true;
+            pos.y = highestMudY - col.height + playerCtrl.mudSinkAmount; // Snap to surface
+            eventBus.publish('createParticles', {
+                x: pos.x + col.width / 2,
+                y: highestMudY,
+                type: 'mud_splash'
+            });
+        } else if (!touchingMud && playerCtrl.isInMud) {
+            playerCtrl.isInMud = false;
         }
     }
 

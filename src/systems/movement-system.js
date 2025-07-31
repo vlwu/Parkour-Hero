@@ -45,8 +45,8 @@ export class MovementSystem {
     }
 
     _applyHorizontalMovement(dt, input, vel, col, ctrl) {
-        if (ctrl.isDashing || ctrl.isHit) {
-            if (ctrl.isHit) vel.vx = 0;
+        if (ctrl.isInMud || ctrl.isDashing || ctrl.isHit) {
+            if (ctrl.isHit || ctrl.isInMud) vel.vx = 0;
             return;
         }
 
@@ -91,6 +91,10 @@ export class MovementSystem {
     }
 
     _applyVerticalMovement(dt, vel, col, ctrl, state) {
+        if (ctrl.isInMud) {
+            vel.vy = 0;
+            return;
+        }
         if (!col.isGrounded && !ctrl.isDashing && !ctrl.isSpawning) {
             vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
         }
