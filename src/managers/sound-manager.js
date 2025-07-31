@@ -94,8 +94,9 @@ export class SoundManager {
       return;
     }
 
+    await this.unlockAudio();
     if (!this.audioUnlocked) {
-      await this.unlockAudio();
+      return;
     }
 
     const pool = this.soundPool[key];
@@ -123,6 +124,7 @@ export class SoundManager {
         if (e.name !== 'AbortError') {
           console.error(`Audio pool play failed for ${key}:`, e);
         }
+        this.audioUnlocked = this.audioContext.state === 'running';
         this.channels[channel].delete(audio);
       }
     } else {
@@ -138,7 +140,8 @@ export class SoundManager {
         return;
     }
 
-    if (!this.audioUnlocked) await this.unlockAudio();
+    await this.unlockAudio();
+    if (!this.audioUnlocked) return;
 
     try {
       const audio = this.sounds[key].cloneNode(true);
@@ -148,6 +151,7 @@ export class SoundManager {
       this.channels[channel].add(audio);
     } catch (error) {
       console.error(`Failed to play looping sound ${key}:`, error);
+      this.audioUnlocked = this.audioContext.state === 'running';
     }
   }
 
@@ -180,29 +184,32 @@ export class SoundManager {
   }
 
   async unlockAudio() {
-    if (this.audioUnlocked) return;
-
     if (!this.audioContext) {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) {
           this.audioContext = new AudioContext();
+        } else {
+            console.warn("AudioContext not supported.");
+            this.audioUnlocked = false;
+            return;
         }
       } catch (e) {
-        console.error("Failed to create AudioContext", e);
+        console.error("Failed to create AudioContext:", e);
+        this.audioUnlocked = false;
         return;
       }
     }
 
-    if (!this.audioContext) return;
-
     if (this.audioContext.state === 'suspended') {
-      await this.audioContext.resume().catch(e => console.error("Failed to resume AudioContext", e));
+      try {
+          await this.audioContext.resume();
+      } catch(e) {
+          console.error("Failed to resume AudioContext:", e);
+      }
     }
-
-    if (this.audioContext.state === 'running') {
-        this.audioUnlocked = true;
-    }
+    
+    this.audioUnlocked = this.audioContext.state === 'running';
   }
 
   setVolume(volume) {
