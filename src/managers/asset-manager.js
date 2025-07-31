@@ -244,7 +244,7 @@ const gameplaySoundPaths = {
     hit: '/assets/Sounds/Hit.mp3',
     enemy_stomp: '/assets/Sounds/Enemy Stomp.mp3',
     sand_walk: '/assets/Sounds/Sand Walk.mp3',
-    mud_run: '/assets/Sounds/Mud Run.mp3',
+    mud_splat: '/assets/Sounds/Mud Splat.mp3',
     ice_run: '/assets/Sounds/Ice Run.mp3',
     trampoline_bounce: '/assets/Sounds/Boing.mp3',
     fire_activated: '/assets/Sounds/Fire (Activated).mp3',
