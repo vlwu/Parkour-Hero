@@ -27,14 +27,12 @@ export class LevelImporter {
             try {
                 const levelData = JSON.parse(event.target.result);
 
-                if (levelData.gridWidth && levelData.tileData) {
-                    // Check if tileData is in RLE format and convert it
-                    if (typeof levelData.tileData === 'string') {
-                        levelData.tileData = this._decodeRLEToTileData(levelData.tileData, levelData.gridWidth, levelData.gridHeight);
-                    }
+                if (levelData.gridWidth && typeof levelData.tileData === 'string') {
+                    // Decode the RLE string into the array format the editor uses.
+                    levelData.tileData = this._decodeRLEToTileData(levelData.tileData, levelData.gridWidth, levelData.gridHeight);
                     callback(levelData);
                 } else {
-                    alert('Invalid or outdated level format. Please use a level file with the current "tileData" structure.');
+                    alert('Invalid level format. The level file must use the new RLE string format for "tileData".');
                 }
             } catch (err) {
                 alert('Error parsing JSON file: ' + err.message);

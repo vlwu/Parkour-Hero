@@ -105,16 +105,10 @@ export class Level {
         Array(this.gridWidth).fill(TILE_DEFINITIONS['0'])
     );
 
-    if (Array.isArray(levelConfig.tileData)) {
-        // Handle old array format for backward compatibility
-        levelConfig.tileData.forEach(tile => {
-            if (this.tiles[tile.y] && this.tiles[tile.y][tile.x] !== undefined) {
-                this.tiles[tile.y][tile.x] = TILE_DEFINITIONS[tile.id] || TILE_DEFINITIONS['0'];
-            }
-        });
-    } else if (typeof levelConfig.tileData === 'string') {
-        // Handle new RLE string format
+    if (typeof levelConfig.tileData === 'string') {
         this._parseRLETileData(levelConfig.tileData);
+    } else {
+        console.warn(`Level "${this.name}" was loaded with an invalid or outdated tileData format. Tiles will not be loaded.`);
     }
 
     this.spatialGrid = new SpatialGrid(this.width, this.height, GRID_CONSTANTS.TILE_SIZE * 4);
