@@ -1,4 +1,6 @@
 import { eventBus } from '../utils/event-bus.js';
+import { PositionComponent } from '../components/PositionComponent.js';
+import { CollisionComponent } from '../components/CollisionComponent.js';
 
 export class HUD {
   constructor(ctx, fontRenderer) {
@@ -33,10 +35,10 @@ export class HUD {
     this.stats = { ...this.stats, ...newStats };
   }
 
-  drawMinimap(ctx, camera, level) {
+  drawMinimap(ctx, camera, level, entityManager, playerEntityId) {
     if (!level) return;
 
-    const MAP_MAX_SIZE = 200;
+    const MAP_MAX_SIZE = 300;
     const MAP_MARGIN = 20;
 
     const levelAspectRatio = level.width / level.height;
@@ -69,13 +71,27 @@ export class HUD {
     const viewRectWidth = camera.width * scaleX;
     const viewRectHeight = camera.height * scaleY;
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.fillRect(viewRectX, viewRectY, viewRectWidth, viewRectHeight);
+
+    if (entityManager && playerEntityId !== null) {
+        const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
+        const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
+        if (playerPos && playerCol) {
+            const playerMapX = mapX + (playerPos.x + playerCol.width / 2) * scaleX;
+            const playerMapY = mapY + (playerPos.y + playerCol.height / 2) * scaleY;
+
+            ctx.fillStyle = '#26d620ff';
+            ctx.beginPath();
+            ctx.arc(playerMapX, playerMapY, 5, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    }
 
     ctx.restore();
   }
 
-  drawGameHUD(ctx, camera, level, dt) {
+  drawGameHUD(ctx, camera, level, dt, entityManager, playerEntityId) {
     if (!this.isVisible || !this.fontRenderer) return;
 
 
@@ -177,7 +193,7 @@ export class HUD {
       const fpsY = healthBarY + healthBarHeight + 10;
       this.fontRenderer.drawText(ctx, fpsText, fpsX, fpsY, fpsFontOptions);
 
-      this.drawMinimap(ctx, camera, level);
+      this.drawMinimap(ctx, camera, level, entityManager, playerEntityId);
 
       ctx.restore();
 

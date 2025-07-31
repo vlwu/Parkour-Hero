@@ -454,7 +454,7 @@ export class Engine {
 
     this.ctx.clearRect(0, 0, this.uiCanvas.width, this.uiCanvas.height);
     this.effectsSystem.render(this.ctx, this.camera, alpha);
-    this.hud.drawGameHUD(this.ctx, this.camera, this.currentLevel, FIXED_DT);
+    this.hud.drawGameHUD(this.ctx, this.camera, this.currentLevel, FIXED_DT, this.entityManager, this.playerEntityId);
     this.uiSystem.render(this.ctx, this.timeScale > 0);
     this.transitionSystem.render(this.ctx);
   }
