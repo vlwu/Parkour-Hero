@@ -1,16 +1,14 @@
-import { TILE_DEFINITIONS } from '../../entities/tile-definitions.js';
+import { TILESET_CONFIG, getTileProperties } from '../../entities/tile-definitions.js';
 import { GRID_CONSTANTS } from '../../utils/constants.js';
-import { getPaletteColor } from '../config/EditorSettings.js';
 import { DOM } from '../ui/DOM.js';
-
-const TERRAIN_SPRITESHEET_WIDTH = 352;
-const TERRAIN_SPRITESHEET_HEIGHT = 176;
 
 export class Grid {
     constructor(width, height) {
         this.width = width;
         this.height = height;
         this.zoomLevel = 1;
+        this.tilesetImage = new Image();
+        this.tilesetImage.src = TILESET_CONFIG.image;
     }
 
     generate() {
@@ -60,73 +58,35 @@ export class Grid {
         DOM.gridContainer.style.transform = `scale(${this.zoomLevel})`;
     }
 
-    paintCell(index, tileId) {
+    paintCell(index, tileIdStr) {
         const cell = DOM.gridContainer.children[index];
-        if (!cell) return;
+        if (!cell || !this.tilesetImage.complete) return;
 
-        cell.dataset.tileId = tileId;
-        const def = TILE_DEFINITIONS[tileId];
+        const tileId = parseInt(tileIdStr, 10);
+        cell.dataset.tileId = tileIdStr;
 
-
-        cell.innerHTML = '';
-        cell.style.backgroundColor = 'transparent';
-        cell.style.borderTop = '';
-        cell.style.backgroundImage = 'none';
-
-        if (!def || def.type === 'empty') {
-            return;
+        let canvas = cell.querySelector('canvas');
+        if (!canvas) {
+            canvas = document.createElement('canvas');
+            canvas.width = GRID_CONSTANTS.TILE_SIZE;
+            canvas.height = GRID_CONSTANTS.TILE_SIZE;
+            cell.innerHTML = ''; // Clear any old background styles or content
+            cell.appendChild(canvas);
         }
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        if (tileId > 0) {
+            const sx = (tileId % TILESET_CONFIG.columns) * TILESET_CONFIG.tileWidth;
+            const sy = Math.floor(tileId / TILESET_CONFIG.columns) * TILESET_CONFIG.tileHeight;
 
-        if (def.collisionBox) {
-            const viewport = document.createElement('span');
-            viewport.style.display = 'block';
-            viewport.style.width = `${def.collisionBox.width}px`;
-            viewport.style.height = `${def.collisionBox.height}px`;
-            viewport.style.overflow = 'hidden';
-            viewport.style.position = 'relative';
-
-            const spriteMover = document.createElement('span');
-            spriteMover.style.display = 'block';
-            spriteMover.style.position = 'absolute';
-            spriteMover.style.width = `${TERRAIN_SPRITESHEET_WIDTH}px`;
-            spriteMover.style.height = `${TERRAIN_SPRITESHEET_HEIGHT}px`;
-            spriteMover.style.backgroundImage = `url('/assets/Terrain/Terrain.png')`;
-            spriteMover.style.left = `-${def.spriteConfig.srcX}px`;
-            spriteMover.style.top = `-${def.spriteConfig.srcY}px`;
-
-            viewport.appendChild(spriteMover);
-            cell.appendChild(viewport);
-        } else if (!def.oneWay) {
-
-            cell.style.backgroundColor = getPaletteColor(def.type);
+            ctx.drawImage(
+                this.tilesetImage,
+                sx, sy, TILESET_CONFIG.tileWidth, TILESET_CONFIG.tileHeight,
+                0, 0, GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE
+            );
         }
-
-
-        if (def.oneWay) {
-            cell.style.borderTop = `5px solid ${getPaletteColor(def.type)}`;
-            if (!def.collisionBox) {
-                 const color = getPaletteColor(def.type);
-                 cell.style.backgroundColor = this._hexToRgba(color, 0.3);
-            }
-        }
-    }
-
-
-    _hexToRgba(hex, alpha) {
-        if (!hex) return '';
-        if (hex.startsWith('rgba')) return hex;
-        let r = 0, g = 0, b = 0;
-        if (hex.length === 4) {
-            r = "0x" + hex[1] + hex[1];
-            g = "0x" + hex[2] + hex[2];
-            b = "0x" + hex[3] + hex[3];
-        } else if (hex.length === 7) {
-            r = "0x" + hex[1] + hex[2];
-            g = "0x" + hex[3] + hex[4];
-            b = "0x" + hex[5] + hex[6];
-        }
-        return `rgba(${+r},${+g},${+b},${alpha})`;
     }
 
     getTileId(index) {
@@ -141,8 +101,8 @@ export class Grid {
         }
         const index = y * this.width + x;
         const tileId = this.getTileId(index);
-        const tileDef = TILE_DEFINITIONS[tileId];
-        return tileDef?.solid || false;
+        const properties = getTileProperties(parseInt(tileId, 10));
+        return properties?.solid || false;
     }
 
     getTileDataForExport() {

@@ -1,4 +1,4 @@
-import { TILE_DEFINITIONS } from './tile-definitions.js';
+import { getTileProperties } from './tile-definitions.js';
 import { GRID_CONSTANTS } from '../utils/constants.js';
 import * as Traps from '../traps/index.js';
 import { PositionComponent } from '../components/PositionComponent.js';
@@ -102,7 +102,7 @@ export class Level {
     };
 
     this.tiles = Array(this.gridHeight).fill(null).map(() =>
-        Array(this.gridWidth).fill(TILE_DEFINITIONS['0'])
+        Array(this.gridWidth).fill(0)
     );
 
     if (typeof levelConfig.tileData === 'string') {
@@ -232,13 +232,14 @@ export class Level {
     const parts = rleString.split(',');
     let i = 0;
     for (const part of parts) {
-        const [countStr, tileId] = part.split(':');
+        const [countStr, tileIdStr] = part.split(':');
         const count = parseInt(countStr, 10);
+        const tileId = parseInt(tileIdStr, 10);
         for (let j = 0; j < count; j++) {
             if (i >= this.gridWidth * this.gridHeight) break;
             const x = i % this.gridWidth;
             const y = Math.floor(i / this.gridWidth);
-            this.tiles[y][x] = TILE_DEFINITIONS[tileId] || TILE_DEFINITIONS['0'];
+            this.tiles[y][x] = tileId;
             i++;
         }
     }
@@ -277,40 +278,27 @@ export class Level {
     const gridX = Math.floor(worldX / GRID_CONSTANTS.TILE_SIZE);
     const gridY = Math.floor(worldY / GRID_CONSTANTS.TILE_SIZE);
 
-
-    if (gridX < 0 || gridX >= this.gridWidth) {
-      return TILE_DEFINITIONS['0'];
+    if (gridX < 0 || gridX >= this.gridWidth || gridY < 0 || gridY >= this.gridHeight) {
+      return 0;
     }
-    if (gridY < 0) {
-      return TILE_DEFINITIONS['1'];
-    }
-
-
-    if (gridY >= this.gridHeight || !this.tiles[gridY]) {
-      return TILE_DEFINITIONS['0'];
-    }
-
-
-    return this.tiles[gridY][gridX] || TILE_DEFINITIONS['0'];
+    return this.tiles[gridY]?.[gridX] || 0;
   }
 
+  getTilePropertiesAt(worldX, worldY) {
+    const tileId = this.getTileAt(worldX, worldY);
+    return getTileProperties(tileId);
+  }
 
   isSolidAt(worldX, worldY, ignoreOneWay = false) {
-
-    const tile = this.getTileAt(worldX, worldY);
-    if (tile && tile.solid) {
-
-      if (!(ignoreOneWay && tile.oneWay)) {
-
-
+    const tileProperties = this.getTilePropertiesAt(worldX, worldY);
+    if (tileProperties && tileProperties.solid) {
+      if (!(ignoreOneWay && tileProperties.oneWay)) {
         return true;
       }
     }
 
-
     const potentialColliders = this.spatialGrid.query({ x: worldX, y: worldY, width: 1, height: 1 });
     for (const obj of potentialColliders) {
-
       if (obj.instance && obj.instance.solid && obj.type === 'trap') {
         if (ignoreOneWay && obj.instance.oneway) {
           continue;

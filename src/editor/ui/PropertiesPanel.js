@@ -1,4 +1,4 @@
-import { TILE_DEFINITIONS } from '../../entities/tile-definitions.js';
+import { getTileProperties } from '../../entities/tile-definitions.js';
 import { OBJECT_DESCRIPTIONS } from '../config/EditorSettings.js';
 import { DOM } from './DOM.js';
 
@@ -10,9 +10,10 @@ export class PropertiesPanel {
     showItemDescription(itemType, itemId) {
         let title = '', description = '';
         if (itemType === 'tile') {
-            const def = TILE_DEFINITIONS[itemId];
+            const tileId = parseInt(itemId, 10);
+            const def = getTileProperties(tileId);
             title = def.type.replace(/_/g, ' ');
-            description = def.description;
+            description = `Tile ID: ${tileId}. ` + (def.description || 'A standard terrain block.');
         } else {
             title = itemId.replace(/_/g, ' ');
             description = OBJECT_DESCRIPTIONS[itemId];

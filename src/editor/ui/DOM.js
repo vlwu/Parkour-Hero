@@ -3,7 +3,8 @@ export const DOM = {
     gridContainer: null,
     gridParent: null,
     propertiesPanel: null,
-    terrainPalette: null,
+    tilesetCanvas: null,
+    tilesetPaletteContainer: null,
     itemsPalette: null,
     trapsPalette: null,
     enemiesPalette: null,
@@ -34,7 +35,8 @@ export const DOM = {
         this.gridContainer = document.getElementById('grid-container');
         this.gridParent = document.getElementById('grid-parent');
         this.propertiesPanel = document.getElementById('properties-panel');
-        this.terrainPalette = document.getElementById('terrain-palette');
+        this.tilesetCanvas = document.getElementById('tileset-canvas');
+        this.tilesetPaletteContainer = document.getElementById('tileset-palette-container');
         this.itemsPalette = document.getElementById('items-palette');
         this.trapsPalette = document.getElementById('traps-palette');
         this.enemiesPalette = document.getElementById('enemies-palette');

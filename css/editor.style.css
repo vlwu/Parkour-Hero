@@ -159,8 +159,8 @@ body {
 }
 
 .grid-cell {
-    width: 48px;
-    height: 48px;
+    width: 16px;
+    height: 16px;
     box-sizing: border-box;
     background-color: transparent;
     border: 1px solid rgba(149, 165, 166, 0.1);
@@ -172,8 +172,24 @@ body {
     background-color: rgba(52, 152, 219, 0.2);
 }
 
+#tileset-palette-container {
+    position: relative;
+    margin-bottom: 20px;
+    background-color: var(--bg-grid);
+    border: 1px solid var(--border-color);
+    max-width: 100%;
+    overflow: auto;
+}
 
-#terrain-palette, #items-palette, #traps-palette, #enemies-palette {
+#tileset-canvas {
+    display: block;
+    cursor: pointer;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+#items-palette, #traps-palette, #enemies-palette {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
     gap: 8px;
