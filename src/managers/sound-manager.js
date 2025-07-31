@@ -56,9 +56,14 @@ export class SoundManager {
     soundKeys.forEach(key => {
       if (assets[key] && !this.sounds[key]) {
         this.sounds[key] = assets[key];
-        this.soundPool[key] = [];
+        this.soundPool[key] = {
+            pool: [],
+            next: 0
+        };
         for (let i = 0; i < this.poolSize; i++) {
-            this.soundPool[key].push(this.sounds[key].cloneNode(true));
+            const clone = this.sounds[key].cloneNode(true);
+            clone.load(); // Preload the audio data for the clone
+            this.soundPool[key].pool.push(clone);
         }
       }
     });
@@ -74,36 +79,34 @@ export class SoundManager {
       return;
     }
 
-    const pool = this.soundPool[key];
-    if (!pool) {
-      console.warn(`Sound pool for ${key} not found.`);
+    const poolData = this.soundPool[key];
+    if (!poolData || poolData.pool.length === 0) {
+      console.warn(`Sound pool for ${key} not found or is empty.`);
       return;
     }
 
-    const audio = pool.find(a => a.paused || a.ended);
+    // Use a round-robin strategy to select the next audio element
+    const audio = poolData.pool[poolData.next];
+    poolData.next = (poolData.next + 1) % this.poolSize;
 
-    if (audio) {
-      audio.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
-      audio.currentTime = 0;
+    audio.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
+    audio.currentTime = 0; // This allows for rapid re-triggering of the same sound effect
 
-      this.channels[channel].add(audio);
+    this.channels[channel].add(audio);
 
-      audio.onended = () => {
-        this.channels[channel].delete(audio);
-        audio.onended = null;
-      };
+    audio.onended = () => {
+      this.channels[channel].delete(audio);
+      audio.onended = null;
+    };
 
-      try {
-        await audio.play();
-      } catch (e) {
-        if (e.name !== 'AbortError') {
-          console.error(`Audio pool play failed for ${key}:`, e);
-        }
-        this.audioUnlocked = this.audioContext.state === 'running';
-        this.channels[channel].delete(audio);
+    try {
+      await audio.play();
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        console.error(`Audio pool play failed for ${key}:`, e);
       }
-    } else {
-      console.warn(`Sound pool for ${key} was depleted. No sound played.`);
+      this.audioUnlocked = this.audioContext.state === 'running';
+      this.channels[channel].delete(audio);
     }
   }
 

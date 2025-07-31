@@ -212,6 +212,7 @@ export class Engine {
         },
         () => {
             this.isTransitioning = false;
+            this.soundManager.unlockAudio();
             this.resume();
             this.uiCanvas.style.zIndex = '100';
         }
