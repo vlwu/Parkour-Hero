@@ -101,6 +101,8 @@ class EditorController {
                         const index = tile.y * this.grid.width + tile.x;
                         this.grid.paintCell(index, tile.id);
                     });
+                    // IMPORTANT: Replace the RLE string with the decoded array for the object manager
+                    levelData.tileData = decodedTileData;
                 }
                 this.objectManager.load(levelData);
                 this.history.clear();
@@ -534,15 +536,6 @@ class EditorController {
                 data.tileData.forEach(tile => {
                     const index = tile.y * this.grid.width + tile.x;
                     this.grid.paintCell(index, tile.id);
-                });
-            } else if (data.layout) {
-                data.layout.forEach((rowString, y) => {
-                    [...rowString].forEach((tileId, x) => {
-                        if (tileId !== '0') {
-                            const index = y * this.grid.width + x;
-                            this.grid.paintCell(index, tileId);
-                        }
-                    });
                 });
             }
             this.objectManager.load(data);
