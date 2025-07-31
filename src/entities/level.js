@@ -105,12 +105,16 @@ export class Level {
         Array(this.gridWidth).fill(TILE_DEFINITIONS['0'])
     );
 
-    if (levelConfig.tileData) {
+    if (Array.isArray(levelConfig.tileData)) {
+        // Handle old array format for backward compatibility
         levelConfig.tileData.forEach(tile => {
             if (this.tiles[tile.y] && this.tiles[tile.y][tile.x] !== undefined) {
                 this.tiles[tile.y][tile.x] = TILE_DEFINITIONS[tile.id] || TILE_DEFINITIONS['0'];
             }
         });
+    } else if (typeof levelConfig.tileData === 'string') {
+        // Handle new RLE string format
+        this._parseRLETileData(levelConfig.tileData);
     }
 
     this.spatialGrid = new SpatialGrid(this.width, this.height, GRID_CONSTANTS.TILE_SIZE * 4);
@@ -226,6 +230,24 @@ export class Level {
     this.totalFruitCount = this.fruits.length;
     this.collectedFruitCount = 0;
     this.completed = false;
+  }
+
+  _parseRLETileData(rleString) {
+    if (!rleString) return;
+
+    const parts = rleString.split(',');
+    let i = 0;
+    for (const part of parts) {
+        const [countStr, tileId] = part.split(':');
+        const count = parseInt(countStr, 10);
+        for (let j = 0; j < count; j++) {
+            if (i >= this.gridWidth * this.gridHeight) break;
+            const x = i % this.gridWidth;
+            const y = Math.floor(i / this.gridWidth);
+            this.tiles[y][x] = TILE_DEFINITIONS[tileId] || TILE_DEFINITIONS['0'];
+            i++;
+        }
+    }
   }
 
   addSlimePuddle(position) {
