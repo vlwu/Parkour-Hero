@@ -19,33 +19,9 @@ export class SoundManager {
       volume: 0.5,
     };
     this.subscriptions = [];
-    this._unlockHandler = null;
 
     this.loadSettings();
     this._setupEventSubscriptions();
-    this._addInteractionListenerForAudioUnlock();
-  }
-
-  _addInteractionListenerForAudioUnlock() {
-    this._unlockHandler = async () => {
-        await this.unlockAudio();
-        if (this.audioUnlocked) {
-            this.destroyInteractionListeners();
-        }
-    };
-
-    window.addEventListener('click', this._unlockHandler);
-    window.addEventListener('keydown', this._unlockHandler);
-    window.addEventListener('touchstart', this._unlockHandler);
-  }
-
-  destroyInteractionListeners() {
-      if (this._unlockHandler) {
-          window.removeEventListener('click', this._unlockHandler);
-          window.removeEventListener('keydown', this._unlockHandler);
-          window.removeEventListener('touchstart', this._unlockHandler);
-          this._unlockHandler = null;
-      }
   }
 
   _setupEventSubscriptions() {
@@ -66,7 +42,6 @@ export class SoundManager {
           eventBus.unsubscribe(eventName, callback);
       });
       this.subscriptions = [];
-      this.destroyInteractionListeners();
       this.stopAll();
   }
 

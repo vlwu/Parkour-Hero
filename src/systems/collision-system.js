@@ -371,6 +371,7 @@ export class CollisionSystem {
                         y: highestMudY,
                         type: 'mud_splash'
                     });
+                    eventBus.publish('playSound', { key: 'mud_splat', volume: 0.8, channel: 'SFX' });
                 }
                 pos.y = highestMudY - col.height + playerCtrl.mudSinkAmount;
                 vel.vy = 0;
