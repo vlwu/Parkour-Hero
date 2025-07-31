@@ -50,7 +50,7 @@ export const PLAYER_CONSTANTS = {
 };
 
 export const GRID_CONSTANTS = {
-  TILE_SIZE: 48,
+  TILE_SIZE: 16,
 };
 
 export const TRAP_CONSTANTS = {
