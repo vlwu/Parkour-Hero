@@ -1,7 +1,7 @@
 import { Camera } from './camera.js';
 import { SoundManager } from '../managers/sound-manager.js';
 import { HUD } from '../ui/hud.js';
-import { GameState } from '../managers/game-state.js';
+import { GameState, gameStateManager } from '../managers/game-state.js';
 import { CollisionSystem } from '../systems/collision-system.js';
 import { Renderer } from '../systems/renderer.js';
 import { LevelManager } from '../managers/level-manager.js';
@@ -61,9 +61,8 @@ export class Engine {
     this.soundManager = new SoundManager();
     this.soundManager.addSounds(assets, coreSoundKeys); // Load only core sounds initially
     this.renderer = new Renderer(this.gl, this.canvas, this.assets);
-    this.gameState = new GameState();
-    eventBus.publish('gameStateUpdated', this.gameState);
-
+    this.gameState = gameStateManager.getState();
+    
     this.levelManager = new LevelManager(this.gameState);
 
     this.inputSystem = new InputSystem(this.entityManager);
@@ -172,8 +171,13 @@ export class Engine {
 
   _resetForNewLevel() {
       this.pauseForMenu = false;
-      this.gameState.showingLevelComplete = false;
+      
+      const currentState = gameStateManager.getState();
+      const newStateData = JSON.parse(JSON.stringify(currentState));
+      newStateData.showingLevelComplete = false;
+      this.gameState = new GameState(newStateData);
       eventBus.publish('gameStateUpdated', this.gameState);
+
 
       this.lastCheckpoint = null;
       this.fruitsAtLastCheckpoint.clear();
@@ -220,16 +224,15 @@ export class Engine {
     if (!levelData) { this.stop(); return; }
 
     this._resetForNewLevel();
-
-    let newState = new GameState(this.gameState);
-    newState.showingLevelComplete = false;
-    newState.currentSection = sectionIndex;
-    newState.currentLevelIndex = levelIndex;
-
-    newState = newState.incrementAttempts(sectionIndex, levelIndex);
-
-    this.gameState = newState;
-    eventBus.publish('gameStateUpdated', this.gameState);
+    
+    const currentState = gameStateManager.getState();
+    const newStateData = JSON.parse(JSON.stringify(currentState));
+    newStateData.currentSection = sectionIndex;
+    newStateData.currentLevelIndex = levelIndex;
+    this.gameState = new GameState(newStateData);
+    
+    eventBus.publish('incrementAttempts', { sectionIndex, levelIndex });
+    this.gameState = gameStateManager.getState();
 
     this.currentLevel = new Level(levelData, this.entityManager);
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);

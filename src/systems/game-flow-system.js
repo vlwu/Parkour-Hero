@@ -3,6 +3,7 @@ import { PlayerControlledComponent } from '../components/PlayerControlledCompone
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { gameStateManager } from '../managers/game-state.js';
 
 export class GameFlowSystem {
     constructor() {
@@ -19,7 +20,8 @@ export class GameFlowSystem {
         this.levelTime = 0;
     }
 
-    update(dt, { entityManager, playerEntityId, level, isRunning, gameState, levelManager }) {
+    update(dt, { entityManager, playerEntityId, level, isRunning, levelManager }) {
+        const gameState = gameStateManager.getState();
         if (this.levelStartTime === 0 && isRunning) {
             this.levelStartTime = performance.now();
         }
@@ -31,12 +33,10 @@ export class GameFlowSystem {
         const playerCtrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);
         if (!playerCtrl) return;
 
-        // Check for win condition
         if (level.trophy && level.trophy.acquired && !playerCtrl.isDespawning) {
             this._startPlayerDespawnSequence(entityManager, playerEntityId);
         }
 
-        // Check for level completion sequence finish
         if (playerCtrl.despawnAnimationFinished && !gameState.showingLevelComplete) {
             playerCtrl.despawnAnimationFinished = false;
 
@@ -45,18 +45,15 @@ export class GameFlowSystem {
                 time: this.levelTime,
             };
 
-            const newGameState = gameState.onLevelComplete(runStats);
-            if (newGameState !== gameState) {
-                eventBus.publish('gameStateUpdated', newGameState);
-                eventBus.publish('pauseGame'); // Use a generic event to signal the engine
+            eventBus.publish('levelComplete', runStats);
+            eventBus.publish('pauseGame');
 
-                eventBus.publish('levelComplete', {
-                    deaths: runStats.deaths,
-                    time: runStats.time,
-                    hasNextLevel: levelManager.hasNextLevel(),
-                    hasPreviousLevel: levelManager.hasPreviousLevel(),
-                });
-            }
+            eventBus.publish('levelCompleteModal', {
+                deaths: runStats.deaths,
+                time: runStats.time,
+                hasNextLevel: levelManager.hasNextLevel(),
+                hasPreviousLevel: levelManager.hasPreviousLevel(),
+            });
         }
     }
 

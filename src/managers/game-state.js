@@ -28,209 +28,220 @@ function getSectionAndLevelFromLinearIndex(linearIndex, levelSections) {
 }
 
 export class GameState {
-  constructor(initialState = null) {
-      if (initialState) {
-          this.currentSection = initialState.currentSection;
-          this.currentLevelIndex = initialState.currentLevelIndex;
-          this.showingLevelComplete = initialState.showingLevelComplete;
-          this.levelProgress = initialState.levelProgress;
-          this.selectedCharacter = initialState.selectedCharacter;
-          this.levelStats = initialState.levelStats;
-          this.tutorialShown = initialState.tutorialShown;
-      } else {
-          this.showingLevelComplete = false;
-          const savedState = this.loadProgress();
-          this.levelProgress = savedState.levelProgress;
-          this.selectedCharacter = savedState.selectedCharacter;
-          this.levelStats = savedState.levelStats;
-          this.tutorialShown = savedState.tutorialShown;
-          this.ensureStatsForAllLevels();
-
-
-          const lastUnlockedLinearIndex = this.levelProgress.unlockedLevels[0] - 1;
-          const { sectionIndex, levelIndex } = getSectionAndLevelFromLinearIndex(lastUnlockedLinearIndex, levelSections);
-          this.currentSection = sectionIndex;
-          this.currentLevelIndex = levelIndex;
-      }
-  }
-
-  _clone() {
-      const clonedState = JSON.parse(JSON.stringify(this));
-      return new GameState(clonedState);
-  }
-
-  _getDefaultState() {
-    return {
-      levelProgress: { unlockedLevels: [1], completedLevels: [] },
-      selectedCharacter: 'PinkMan',
-      levelStats: {},
-      tutorialShown: false,
-    };
-  }
-
-  loadProgress() {
-      try {
-        const saved = localStorage.getItem('parkourGameState');
-        if (!saved) return this._getDefaultState();
-        const state = JSON.parse(saved);
-        if (typeof state !== 'object' || state === null) return this._getDefaultState();
-        const lp = state.levelProgress;
-        if (typeof lp !== 'object' || lp === null || !Array.isArray(lp.unlockedLevels) || !Array.isArray(lp.completedLevels)) return this._getDefaultState();
-        if (typeof state.selectedCharacter !== 'string' || !characterConfig[state.selectedCharacter]) {
-            state.selectedCharacter = 'PinkMan';
-        }
-        if (!state.levelStats || typeof state.levelStats !== 'object') {
-            state.levelStats = {};
-        }
-        if (typeof state.tutorialShown !== 'boolean') {
-            state.tutorialShown = false;
-        }
-        return state;
-      } catch (e) {
-        console.error("Failed to parse game state from localStorage. Resetting to default.", e);
-        return this._getDefaultState();
-      }
-  }
-
-  saveProgress() {
-      try {
-        const stateToSave = {
-          levelProgress: this.levelProgress,
-          selectedCharacter: this.selectedCharacter,
-          levelStats: this.levelStats,
-          tutorialShown: this.tutorialShown,
-        };
-        localStorage.setItem('parkourGameState', JSON.stringify(stateToSave));
-        console.log("Progress saved:", stateToSave);
-      } catch (e) {
-        console.error("Failed to save game state to localStorage", e);
-      }
-  }
-
-  setSelectedCharacter(characterId) {
-    if (characterConfig[characterId] && this.selectedCharacter !== characterId) {
-      const newState = this._clone();
-      newState.selectedCharacter = characterId;
-      newState.saveProgress();
-      return newState;
-    }
-    return this;
-  }
-
-  ensureStatsForAllLevels() {
-    levelSections.forEach((section, sectionIndex) => {
-        section.levels.forEach((_, levelIndex) => {
-            const levelId = `${sectionIndex}-${levelIndex}`;
-            if (!this.levelStats[levelId]) {
-                this.levelStats[levelId] = {
-                    fastestTime: null,
-                    lowestDeaths: null,
-                    totalAttempts: 0,
-                };
-            }
-        });
-    });
-  }
-
-  incrementAttempts(sectionIndex, levelIndex) {
-    const newState = this._clone();
-    const levelId = `${sectionIndex}-${levelIndex}`;
-    if (newState.levelStats[levelId]) {
-        newState.levelStats[levelId].totalAttempts += 1;
-        newState.saveProgress();
-    }
-    return newState;
-  }
-
-  onLevelComplete(runStats) {
-      const newState = this._clone();
-      const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
-
-      if (!this.levelProgress.completedLevels.includes(levelId)) {
-          newState.levelProgress.completedLevels.push(levelId);
-
-          const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
-          const currentLinearIndex = getLinearIndex(this.currentSection, this.currentLevelIndex, levelSections);
-
-          if (currentLinearIndex + 1 < totalLevels) {
-              const nextUnlockedCount = currentLinearIndex + 2;
-              if (nextUnlockedCount > this.levelProgress.unlockedLevels[0]) {
-                  newState.levelProgress.unlockedLevels[0] = nextUnlockedCount;
-              }
-          }
-      }
-
-      const currentStats = newState.levelStats[levelId];
-      if (currentStats) {
-          if (currentStats.fastestTime === null || runStats.time < currentStats.fastestTime) {
-              currentStats.fastestTime = runStats.time;
-          }
-          if (currentStats.lowestDeaths === null || runStats.deaths < currentStats.lowestDeaths) {
-              currentStats.lowestDeaths = runStats.deaths;
-          }
-      }
-
-      newState.showingLevelComplete = true;
-      newState.saveProgress();
-      eventBus.publish('playSound', { key: 'level_complete', volume: 1.0, channel: 'UI' });
-
-      return newState;
-  }
-
-  isCharacterUnlocked(characterId) {
-    const config = characterConfig[characterId];
-    if (!config) return false;
-    const completedCount = this.levelProgress.completedLevels.length;
-    return completedCount >= config.unlockRequirement;
-  }
-
-  isLevelUnlocked(sectionIndex, levelIndex) {
-      const section = levelSections[sectionIndex];
-      if (section && section.name === 'DIY') {
-        return true;
-      }
-      const levelLinearIndex = getLinearIndex(sectionIndex, levelIndex, levelSections);
-      return levelLinearIndex < this.levelProgress.unlockedLevels[0];
-  }
-
-  isLevelCompleted(sectionIndex, levelIndex) {
-      const levelId = `${sectionIndex}-${levelIndex}`;
-      return this.levelProgress.completedLevels.includes(levelId);
-  }
-
-  resetProgress() {
-    try {
-      localStorage.removeItem('parkourGameState');
-      const newState = new GameState();
-      newState.saveProgress();
-      return newState;
-    } catch (e) {
-      console.error("Failed to reset game state in localStorage", e);
-      return this;
-    }
-  }
-
-  markTutorialAsShown() {
-      if (this.tutorialShown) return this;
-      const newState = this._clone();
-      newState.tutorialShown = true;
-      newState.saveProgress();
-      return newState;
-  }
-
-  unlockAllLevels() {
-      const newState = this._clone();
-      const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
-      newState.levelProgress.unlockedLevels[0] = totalLevels;
-
-      newState.levelProgress.completedLevels = [];
-      levelSections.forEach((section, sIdx) => {
-          section.levels.forEach((_, lIdx) => {
-              newState.levelProgress.completedLevels.push(`${sIdx}-${lIdx}`);
-          });
-      });
-
-      newState.saveProgress();
-      return newState;
+  constructor(initialState) {
+    this.currentSection = initialState.currentSection;
+    this.currentLevelIndex = initialState.currentLevelIndex;
+    this.showingLevelComplete = initialState.showingLevelComplete;
+    this.levelProgress = initialState.levelProgress;
+    this.selectedCharacter = initialState.selectedCharacter;
+    this.levelStats = initialState.levelStats;
+    this.tutorialShown = initialState.tutorialShown;
   }
 }
+
+class GameStateManager {
+    constructor() {
+        this.state = null;
+        this.loadProgress();
+        this._subscribeToEvents();
+    }
+
+    _subscribeToEvents() {
+        eventBus.subscribe('levelComplete', (runStats) => this.onLevelComplete(runStats));
+        eventBus.subscribe('setSelectedCharacter', (characterId) => this.setSelectedCharacter(characterId));
+        eventBus.subscribe('incrementAttempts', ({ sectionIndex, levelIndex }) => this.incrementAttempts(sectionIndex, levelIndex));
+        eventBus.subscribe('markTutorialAsShown', () => this.markTutorialAsShown());
+        eventBus.subscribe('resetProgress', () => this.resetProgress());
+        eventBus.subscribe('unlockAllLevels', () => this.unlockAllLevels());
+    }
+
+    getState() {
+        return this.state;
+    }
+
+    _cloneState() {
+        return JSON.parse(JSON.stringify(this.state));
+    }
+
+    _getDefaultState() {
+        return {
+            levelProgress: { unlockedLevels: [1], completedLevels: [] },
+            selectedCharacter: 'PinkMan',
+            levelStats: {},
+            tutorialShown: false,
+        };
+    }
+
+    loadProgress() {
+        let loadedState;
+        try {
+            const saved = localStorage.getItem('parkourGameState');
+            if (!saved) {
+                loadedState = this._getDefaultState();
+            } else {
+                const parsed = JSON.parse(saved);
+                if (typeof parsed !== 'object' || parsed === null) throw new Error("Invalid saved state.");
+                
+                const lp = parsed.levelProgress;
+                if (typeof lp !== 'object' || lp === null || !Array.isArray(lp.unlockedLevels) || !Array.isArray(lp.completedLevels)) throw new Error("Invalid level progress.");
+                if (typeof parsed.selectedCharacter !== 'string' || !characterConfig[parsed.selectedCharacter]) parsed.selectedCharacter = 'PinkMan';
+                if (!parsed.levelStats || typeof parsed.levelStats !== 'object') parsed.levelStats = {};
+                if (typeof parsed.tutorialShown !== 'boolean') parsed.tutorialShown = false;
+                
+                loadedState = parsed;
+            }
+        } catch (e) {
+            console.error("Failed to parse game state from localStorage. Resetting to default.", e);
+            loadedState = this._getDefaultState();
+        }
+
+        this._ensureStatsForAllLevels(loadedState);
+        const lastUnlockedLinearIndex = loadedState.levelProgress.unlockedLevels[0] - 1;
+        const { sectionIndex, levelIndex } = getSectionAndLevelFromLinearIndex(lastUnlockedLinearIndex, levelSections);
+        loadedState.currentSection = sectionIndex;
+        loadedState.currentLevelIndex = levelIndex;
+        loadedState.showingLevelComplete = false;
+
+        this.state = new GameState(loadedState);
+        eventBus.publish('gameStateUpdated', this.state);
+    }
+
+    saveProgress() {
+        try {
+            const stateToSave = {
+                levelProgress: this.state.levelProgress,
+                selectedCharacter: this.state.selectedCharacter,
+                levelStats: this.state.levelStats,
+                tutorialShown: this.state.tutorialShown,
+            };
+            localStorage.setItem('parkourGameState', JSON.stringify(stateToSave));
+        } catch (e) {
+            console.error("Failed to save game state to localStorage", e);
+        }
+    }
+
+    _ensureStatsForAllLevels(state) {
+        levelSections.forEach((section, sectionIndex) => {
+            section.levels.forEach((_, levelIndex) => {
+                const levelId = `${sectionIndex}-${levelIndex}`;
+                if (!state.levelStats[levelId]) {
+                    state.levelStats[levelId] = { fastestTime: null, lowestDeaths: null, totalAttempts: 0 };
+                }
+            });
+        });
+    }
+
+    setSelectedCharacter(characterId) {
+        if (characterConfig[characterId] && this.state.selectedCharacter !== characterId) {
+            const newStateData = this._cloneState();
+            newStateData.selectedCharacter = characterId;
+            this.state = new GameState(newStateData);
+            this.saveProgress();
+            eventBus.publish('gameStateUpdated', this.state);
+        }
+    }
+
+    incrementAttempts(sectionIndex, levelIndex) {
+        const newStateData = this._cloneState();
+        const levelId = `${sectionIndex}-${levelIndex}`;
+        if (newStateData.levelStats[levelId]) {
+            newStateData.levelStats[levelId].totalAttempts += 1;
+            this.state = new GameState(newStateData);
+            this.saveProgress();
+            eventBus.publish('gameStateUpdated', this.state);
+        }
+    }
+
+    onLevelComplete(runStats) {
+        const newStateData = this._cloneState();
+        const levelId = `${this.state.currentSection}-${this.state.currentLevelIndex}`;
+
+        if (!newStateData.levelProgress.completedLevels.includes(levelId)) {
+            newStateData.levelProgress.completedLevels.push(levelId);
+            const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
+            const currentLinearIndex = getLinearIndex(this.state.currentSection, this.state.currentLevelIndex, levelSections);
+            if (currentLinearIndex + 1 < totalLevels) {
+                const nextUnlockedCount = currentLinearIndex + 2;
+                if (nextUnlockedCount > newStateData.levelProgress.unlockedLevels[0]) {
+                    newStateData.levelProgress.unlockedLevels[0] = nextUnlockedCount;
+                }
+            }
+        }
+
+        const currentStats = newStateData.levelStats[levelId];
+        if (currentStats) {
+            if (currentStats.fastestTime === null || runStats.time < currentStats.fastestTime) {
+                currentStats.fastestTime = runStats.time;
+            }
+            if (currentStats.lowestDeaths === null || runStats.deaths < currentStats.lowestDeaths) {
+                currentStats.lowestDeaths = runStats.deaths;
+            }
+        }
+
+        newStateData.showingLevelComplete = true;
+        this.state = new GameState(newStateData);
+        this.saveProgress();
+        eventBus.publish('gameStateUpdated', this.state);
+        eventBus.publish('playSound', { key: 'level_complete', volume: 1.0, channel: 'UI' });
+    }
+
+    isCharacterUnlocked(characterId) {
+        const config = characterConfig[characterId];
+        if (!config) return false;
+        const completedCount = this.state.levelProgress.completedLevels.length;
+        return completedCount >= config.unlockRequirement;
+    }
+
+    isLevelUnlocked(sectionIndex, levelIndex) {
+        const section = levelSections[sectionIndex];
+        if (section && section.name === 'DIY') return true;
+        const levelLinearIndex = getLinearIndex(sectionIndex, levelIndex, levelSections);
+        return levelLinearIndex < this.state.levelProgress.unlockedLevels[0];
+    }
+
+    isLevelCompleted(sectionIndex, levelIndex) {
+        const levelId = `${sectionIndex}-${levelIndex}`;
+        return this.state.levelProgress.completedLevels.includes(levelId);
+    }
+    
+    resetProgress() {
+        try {
+            localStorage.removeItem('parkourGameState');
+            this.loadProgress();
+            console.log("Game progress has been reset.");
+        } catch (e) {
+            console.error("Failed to reset game state in localStorage", e);
+        }
+    }
+
+    markTutorialAsShown() {
+        if (this.state.tutorialShown) return;
+        const newStateData = this._cloneState();
+        newStateData.tutorialShown = true;
+        this.state = new GameState(newStateData);
+        this.saveProgress();
+        eventBus.publish('gameStateUpdated', this.state);
+    }
+
+    unlockAllLevels() {
+        const newStateData = this._cloneState();
+        const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
+        newStateData.levelProgress.unlockedLevels[0] = totalLevels;
+
+        newStateData.levelProgress.completedLevels = [];
+        levelSections.forEach((section, sIdx) => {
+            if (section.name !== 'DIY') {
+                section.levels.forEach((_, lIdx) => {
+                    newStateData.levelProgress.completedLevels.push(`${sIdx}-${lIdx}`);
+                });
+            }
+        });
+
+        this.state = new GameState(newStateData);
+        this.saveProgress();
+        eventBus.publish('gameStateUpdated', this.state);
+        console.log("All levels have been unlocked.");
+    }
+}
+
+export const gameStateManager = new GameStateManager();
