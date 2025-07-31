@@ -60,8 +60,24 @@ export const TILE_PROPERTIES = {
     226: { type: 'pink_dirt', solid: true }, 227: { type: 'pink_dirt', solid: true }, 228: { type: 'pink_dirt', solid: true },
     229: { type: 'pink_dirt', solid: true }, 230: { type: 'pink_dirt', solid: true }, 231: { type: 'pink_dirt', solid: true },
 
+    // --- Fractional Platforms ---
+    130: { type: 'wood', solid: true, collisionBox: { width: 48, height: 16 } },  // wood_third_h
+    131: { type: 'wood', solid: true, collisionBox: { width: 16, height: 16 } },  // wood_ninth_sq
+    152: { type: 'wood', solid: true, collisionBox: { width: 16, height: 48 } },  // wood_third_v
+    153: { type: 'wood', solid: true, collisionBox: { width: 32, height: 32 } },  // wood_four_ninths_sq
+    
+    196: { type: 'stone', solid: true, collisionBox: { width: 48, height: 16 } }, // stone_third_h
+    197: { type: 'stone', solid: true, collisionBox: { width: 16, height: 16 } }, // stone_ninth_sq
+    218: { type: 'stone', solid: true, collisionBox: { width: 16, height: 48 } }, // stone_third_v
+    219: { type: 'stone', solid: true, collisionBox: { width: 32, height: 32 } }, // stone_four_ninths_sq
+
+    238: { type: 'orange_dirt', solid: true, collisionBox: { width: 48, height: 16 } }, // orange_dirt_third_h
+    239: { type: 'orange_dirt', solid: true, collisionBox: { width: 16, height: 16 } }, // orange_dirt_ninth_sq
+    // Assuming the next row starts at 238+22 = 260 for vertical pieces, this is an estimate
+    260: { type: 'orange_dirt', solid: true, collisionBox: { width: 16, height: 48 } }, // orange_dirt_third_v
+    261: { type: 'orange_dirt', solid: true, collisionBox: { width: 32, height: 32 } }, // orange_dirt_four_ninths_sq
+
     // --- Special Interaction Tiles (using offset) ---
-    // Assuming Sand starts at ID 0 of the special sheet, Mud at ID 4, Ice at ID 8
     [SPECIAL_TILE_ID_OFFSET + 0]: { type: 'sand', solid: true, interaction: 'sand' },
     [SPECIAL_TILE_ID_OFFSET + 1]: { type: 'sand', solid: true, interaction: 'sand' },
     [SPECIAL_TILE_ID_OFFSET + 2]: { type: 'sand', solid: true, interaction: 'sand' },

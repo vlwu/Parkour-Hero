@@ -39,10 +39,6 @@ export class Palette {
 
         const trapTypes = [
             'spike', 'fire_trap', 'trampoline', 'spiked_ball', 'arrow_bubble', 'fan', 'falling_platform', 'rock_head', 'spike_head', 'saw',
-            'wood_third_h', 'wood_third_v', 'wood_ninth_sq', 'wood_four_ninths_sq',
-            'stone_third_h', 'stone_third_v', 'stone_ninth_sq', 'stone_four_ninths_sq',
-            'gold_third_h', 'gold_third_v', 'gold_ninth_sq', 'gold_four_ninths_sq',
-            'orange_dirt_third_h', 'orange_dirt_third_v', 'orange_dirt_ninth_sq', 'orange_dirt_four_ninths_sq'
         ];
         trapTypes.forEach(type => {
             const abbreviation = PALETTE_ABBREVIATIONS[type] || '???';
