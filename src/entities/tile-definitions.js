@@ -9,7 +9,7 @@ export const TILE_DEFINITIONS = {
   '6': { type: 'pink_dirt', solid: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 96, srcY: 128 }, description: 'Solid pink dirt. Wall-jumps are not possible on this surface.' },
 
   '7': { type: 'sand', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 0, srcY: 0 }, interaction: 'sand', description: 'A solid block of sand. Slows player movement. Wall-jumps are not possible.' },
-  '8': { type: 'mud', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 64, srcY: 0 }, interaction: 'mud', description: 'A solid block of mud. Reduces jump height. Wall-jumps are not possible.' },
+  '8': { type: 'mud', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 64, srcY: 0 }, interaction: 'mud', description: 'A block of mud. Players sink into it and are unable to move, but can jump out. Wall-jumps are not possible.' },
   '9': { type: 'ice', solid: true, hazard: false, spriteKey: 'sand_mud_ice', spriteConfig: { srcX: 128, srcY: 0 }, interaction: 'ice', description: 'A solid block of slippery ice. Reduces friction. Wall-jumps are not possible.' },
 
   'a': { type: 'oneway_gold', solid: true, oneWay: true, hazard: false, spriteKey: 'block', spriteConfig: { srcX: 272, srcY: 0, height: 5 }, collisionBox: { width: 48, height: 5 }, description: 'A one-way platform made of gold. The player can jump through it from below.' },

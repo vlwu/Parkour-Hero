@@ -343,13 +343,13 @@ export class CollisionSystem {
             }
         }
     }
-    
+
     _handleMudInteraction(entityId, pos, col, playerCtrl, level) {
-        const checkRect = { x: pos.x, y: pos.y, width: col.width, height: col.height };
+        const checkRect = { x: pos.x, y: pos.y, width: col.width, height: col.height + 1 };
         const potentialColliders = this.spatialGrid.query(checkRect);
         let touchingMud = false;
         let highestMudY = -Infinity;
-    
+
         for (const collider of potentialColliders) {
             if (collider.surfaceType === 'mud' && this._isRectColliding(checkRect, collider)) {
                 touchingMud = true;
@@ -358,16 +358,18 @@ export class CollisionSystem {
                 }
             }
         }
-    
-        if (touchingMud && !playerCtrl.isInMud) {
-            playerCtrl.isInMud = true;
-            pos.y = highestMudY - col.height + playerCtrl.mudSinkAmount; // Snap to surface
-            eventBus.publish('createParticles', {
-                x: pos.x + col.width / 2,
-                y: highestMudY,
-                type: 'mud_splash'
-            });
-        } else if (!touchingMud && playerCtrl.isInMud) {
+
+        if (touchingMud) {
+            if (!playerCtrl.isInMud) {
+                playerCtrl.isInMud = true;
+                eventBus.publish('createParticles', {
+                    x: pos.x + col.width / 2,
+                    y: highestMudY,
+                    type: 'mud_splash'
+                });
+            }
+            pos.y = highestMudY - col.height + playerCtrl.mudSinkAmount;
+        } else if (playerCtrl.isInMud) {
             playerCtrl.isInMud = false;
         }
     }
