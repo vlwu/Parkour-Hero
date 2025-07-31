@@ -62,7 +62,7 @@ export class Engine {
     this.soundManager.addSounds(assets, coreSoundKeys); // Load only core sounds initially
     this.renderer = new Renderer(this.gl, this.canvas, this.assets);
     this.gameState = gameStateManager.getState();
-
+    
     this.levelManager = new LevelManager(this.gameState);
 
     this.inputSystem = new InputSystem(this.entityManager);
@@ -171,7 +171,7 @@ export class Engine {
 
   _resetForNewLevel() {
       this.pauseForMenu = false;
-
+      
       const currentState = gameStateManager.getState();
       const newStateData = JSON.parse(JSON.stringify(currentState));
       newStateData.showingLevelComplete = false;
@@ -224,7 +224,6 @@ export class Engine {
 
     this._resetForNewLevel();
     
-    // Set current level in state but let manager handle mutations
     const currentState = gameStateManager.getState();
     const newStateData = JSON.parse(JSON.stringify(currentState));
     newStateData.currentSection = sectionIndex;
@@ -232,7 +231,7 @@ export class Engine {
     this.gameState = new GameState(newStateData);
     
     eventBus.publish('incrementAttempts', { sectionIndex, levelIndex });
-    this.gameState = gameStateManager.getState(); // Get the updated state from the manager
+    this.gameState = gameStateManager.getState();
 
     this.currentLevel = new Level(levelData, this.entityManager);
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
