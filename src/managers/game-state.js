@@ -53,17 +53,6 @@ class GameStateManager {
         eventBus.subscribe('markTutorialAsShown', () => this.markTutorialAsShown());
         eventBus.subscribe('resetProgress', () => this.resetProgress());
         eventBus.subscribe('unlockAllLevels', () => this.unlockAllLevels());
-        eventBus.subscribe('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.setCurrentLevel(sectionIndex, levelIndex));
-    }
-
-    setCurrentLevel(sectionIndex, levelIndex) {
-        if (this.state.currentSection !== sectionIndex || this.state.currentLevelIndex !== levelIndex) {
-            const newStateData = this._cloneState();
-            newStateData.currentSection = sectionIndex;
-            newStateData.currentLevelIndex = levelIndex;
-            this.state = new GameState(newStateData);
-            eventBus.publish('gameStateUpdated', this.state);
-        }
     }
 
     getState() {
@@ -76,7 +65,7 @@ class GameStateManager {
 
     _getDefaultState() {
         return {
-            levelProgress: { unlockedLevelsCount: 1, completedLevels: [] },
+            levelProgress: { unlockedLevels: [1], completedLevels: [] },
             selectedCharacter: 'PinkMan',
             levelStats: {},
             tutorialShown: false,
@@ -92,22 +81,13 @@ class GameStateManager {
             } else {
                 const parsed = JSON.parse(saved);
                 if (typeof parsed !== 'object' || parsed === null) throw new Error("Invalid saved state.");
-
+                
                 const lp = parsed.levelProgress;
-                if (typeof lp !== 'object' || lp === null || !Array.isArray(lp.completedLevels)) throw new Error("Invalid level progress.");
-
-                if (lp.unlockedLevels && Array.isArray(lp.unlockedLevels)) {
-                    lp.unlockedLevelsCount = lp.unlockedLevels[0];
-                    delete lp.unlockedLevels;
-                }
-                if (typeof lp.unlockedLevelsCount !== 'number' || lp.unlockedLevelsCount < 1) {
-                    lp.unlockedLevelsCount = 1;
-                }
-
+                if (typeof lp !== 'object' || lp === null || !Array.isArray(lp.unlockedLevels) || !Array.isArray(lp.completedLevels)) throw new Error("Invalid level progress.");
                 if (typeof parsed.selectedCharacter !== 'string' || !characterConfig[parsed.selectedCharacter]) parsed.selectedCharacter = 'PinkMan';
                 if (!parsed.levelStats || typeof parsed.levelStats !== 'object') parsed.levelStats = {};
                 if (typeof parsed.tutorialShown !== 'boolean') parsed.tutorialShown = false;
-
+                
                 loadedState = parsed;
             }
         } catch (e) {
@@ -116,7 +96,7 @@ class GameStateManager {
         }
 
         this._ensureStatsForAllLevels(loadedState);
-        const lastUnlockedLinearIndex = loadedState.levelProgress.unlockedLevelsCount - 1;
+        const lastUnlockedLinearIndex = loadedState.levelProgress.unlockedLevels[0] - 1;
         const { sectionIndex, levelIndex } = getSectionAndLevelFromLinearIndex(lastUnlockedLinearIndex, levelSections);
         loadedState.currentSection = sectionIndex;
         loadedState.currentLevelIndex = levelIndex;
@@ -178,16 +158,13 @@ class GameStateManager {
 
         if (!newStateData.levelProgress.completedLevels.includes(levelId)) {
             newStateData.levelProgress.completedLevels.push(levelId);
-        }
-
-        const currentLinearIndex = getLinearIndex(this.state.currentSection, this.state.currentLevelIndex, levelSections);
-        const nextLevelLinearIndex = currentLinearIndex + 1;
-        const totalOfficialLevels = levelSections.filter(s => s.name !== 'DIY').reduce((acc, s) => acc + s.levels.length, 0);
-
-        if (nextLevelLinearIndex < totalOfficialLevels) {
-            const newUnlockedCount = nextLevelLinearIndex + 1;
-            if (newUnlockedCount > newStateData.levelProgress.unlockedLevelsCount) {
-                newStateData.levelProgress.unlockedLevelsCount = newUnlockedCount;
+            const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
+            const currentLinearIndex = getLinearIndex(this.state.currentSection, this.state.currentLevelIndex, levelSections);
+            if (currentLinearIndex + 1 < totalLevels) {
+                const nextUnlockedCount = currentLinearIndex + 2;
+                if (nextUnlockedCount > newStateData.levelProgress.unlockedLevels[0]) {
+                    newStateData.levelProgress.unlockedLevels[0] = nextUnlockedCount;
+                }
             }
         }
 
@@ -219,14 +196,14 @@ class GameStateManager {
         const section = levelSections[sectionIndex];
         if (section && section.name === 'DIY') return true;
         const levelLinearIndex = getLinearIndex(sectionIndex, levelIndex, levelSections);
-        return levelLinearIndex < this.state.levelProgress.unlockedLevelsCount;
+        return levelLinearIndex < this.state.levelProgress.unlockedLevels[0];
     }
 
     isLevelCompleted(sectionIndex, levelIndex) {
         const levelId = `${sectionIndex}-${levelIndex}`;
         return this.state.levelProgress.completedLevels.includes(levelId);
     }
-
+    
     resetProgress() {
         try {
             localStorage.removeItem('parkourGameState');
@@ -248,8 +225,8 @@ class GameStateManager {
 
     unlockAllLevels() {
         const newStateData = this._cloneState();
-        const totalOfficialLevels = levelSections.filter(s => s.name !== 'DIY').reduce((acc, s) => acc + s.levels.length, 0);
-        newStateData.levelProgress.unlockedLevelsCount = totalOfficialLevels;
+        const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
+        newStateData.levelProgress.unlockedLevels[0] = totalLevels;
 
         newStateData.levelProgress.completedLevels = [];
         levelSections.forEach((section, sIdx) => {
