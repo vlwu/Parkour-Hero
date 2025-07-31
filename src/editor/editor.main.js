@@ -206,7 +206,7 @@ class EditorController {
         const gl = particleCanvas.getContext('webgl2', { alpha: true });
         ctx.imageSmoothingEnabled = false;
 
-        this.engine = new Engine(gl, gameCanvas, ctx, this.assets, {}, this.fontRenderer, assetManager);
+        this.engine = new Engine(gl, uiRoot, ctx, this.assets, {}, this.fontRenderer, assetManager);
         this.engine.renderer.previewMode = true;
         this.engine.soundManager.setEnabled(false);
         this.engine.loadLevelFromData(levelData);
@@ -482,7 +482,12 @@ class EditorController {
     }
 
     _onFileLoad(e) {
-        const file = e.target.files;
+        const files = e.target.files;
+        if (!files || files.length === 0) {
+            return; // No file selected
+        }
+        const file = files[0]; // Use the first selected file
+
         LevelImporter.load(file, (data) => {
             this.resetEditor(data.gridWidth, data.gridHeight);
             DOM.levelNameInput.value = data.name;
@@ -492,15 +497,6 @@ class EditorController {
                 data.tileData.forEach(tile => {
                     const index = tile.y * this.grid.width + tile.x;
                     this.grid.paintCell(index, tile.id);
-                });
-            } else if (data.layout) {
-                data.layout.forEach((rowString, y) => {
-                    [...rowString].forEach((tileId, x) => {
-                        if (tileId !== '0') {
-                            const index = y * this.grid.width + x;
-                            this.grid.paintCell(index, tileId);
-                        }
-                    });
                 });
             }
             this.objectManager.load(data);
@@ -524,7 +520,7 @@ class EditorController {
             gridHeight: this.grid.height,
             background: DOM.backgroundInput.value,
             startPosition: startPos,
-            tileData: this.grid.getTileDataForExport(),
+            tileData: LevelExporter._encodeTileDataToRLE(this.grid.getTileDataForExport(), this.grid.width, this.grid.height),
             entities: finalEntities,
         };
 

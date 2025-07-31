@@ -16,8 +16,8 @@
 </head>
 <body>
     <div id="container">
-        <h1>Parkour Hero: Legacy Level Converter</h1>
-        <p>This tool will convert old 48x48 grid level files to the new 16x16 grid format.</p>
+        <h1>Parkour Hero: Legacy Level Converter (v2)</h1>
+        <p>This tool will convert old 48x48 grid level files to the new 16x16 grid format. It now supports fractional and special platforms (sand, mud, ice).</p>
         <p><strong>Important:</strong> Please back up your original level files before converting!</p>
         
         <label for="fileInput">Select one or more old .json level files:</label><br>
@@ -29,6 +29,7 @@
 
     <script>
         const TILESET_COLUMNS = 22; // From Terrain.json (352 / 16)
+        const SPECIAL_TILE_ID_OFFSET = 1000;
 
         // The "Rosetta Stone" mapping old tile characters to new 16x16 tile IDs.
         // This maps to the top-left tile of a 3x3 block in the spritesheet.
@@ -39,10 +40,20 @@
             '4': 176, // Green Block
             '5': 94,  // Orange Dirt
             '6': 182, // Pink Dirt
+            '7': SPECIAL_TILE_ID_OFFSET + 0, // Sand
+            '8': SPECIAL_TILE_ID_OFFSET + 4, // Mud
+            '9': SPECIAL_TILE_ID_OFFSET + 8, // Ice
             'a': 17,  // Oneway Gold
             'b': 39,  // Oneway Wood
             'c': 61,  // Oneway Stone
         };
+        
+        const FRACTIONAL_PLATFORM_TYPES = [
+            'wood_third_h', 'wood_third_v', 'wood_ninth_sq', 'wood_four_ninths_sq',
+            'stone_third_h', 'stone_third_v', 'stone_ninth_sq', 'stone_four_ninths_sq',
+            'gold_third_h', 'gold_third_v', 'gold_ninth_sq', 'gold_four_ninths_sq',
+            'orange_dirt_third_h', 'orange_dirt_third_v', 'orange_dirt_ninth_sq', 'orange_dirt_four_ninths_sq'
+        ];
 
         const fileInput = document.getElementById('fileInput');
         const log = document.getElementById('log');
@@ -84,13 +95,16 @@
             newData.gridWidth *= 3;
             newData.gridHeight *= 3;
 
-            // 2. Scale Coordinates
-            log.textContent += `  Scaling entity coordinates...\n`;
+            // 2. Scale Coordinates & Filter Entities
+            log.textContent += `  Scaling entity coordinates and removing old fractional platforms...\n`;
             if (newData.startPosition) {
                 newData.startPosition[0] *= 3;
                 newData.startPosition[1] *= 3;
             }
             if (newData.entities) {
+                // Filter out the now-obsolete fractional platforms
+                newData.entities = newData.entities.filter(entity => !FRACTIONAL_PLATFORM_TYPES.includes(entity[0]));
+
                 newData.entities.forEach(entity => {
                     entity[1] *= 3; // X coordinate
                     entity[2] *= 3; // Y coordinate
