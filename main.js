@@ -99,6 +99,10 @@ assetManager.loadCoreAssets().then((assets) => {
         uiRootEl.fontRenderer = fontRenderer;
     }
 
+    eventBus.subscribe('requestStartGame', () => {
+        engine.start();
+    });
+
     window.unlockAllLevels = () => {
         gameStateManager.unlockAllLevels();
     };
