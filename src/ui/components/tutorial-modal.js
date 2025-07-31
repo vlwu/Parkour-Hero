@@ -16,10 +16,23 @@ export class TutorialModal extends LitElement {
       background-color: #333; padding: 30px; border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); color: #eee;
       text-align: center; position: relative; width: 90%; max-width: 700px;
-      max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;
+      max-height: 90vh; display: flex; flex-direction: column;
+    }
+    .scrollable-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 5px; /* Add a little padding for the scrollbar */
+        margin: 0 -5px;
     }
     .title-container, .section-title-container {
       display: flex; justify-content: center;
+    }
+    .title-container {
+      margin-bottom: 20px;
+      flex-shrink: 0;
     }
     .section {
       background-color: #444; border-radius: 8px; border: 1px solid #555;
@@ -35,11 +48,18 @@ export class TutorialModal extends LitElement {
       min-width: 20px; display: inline-flex; justify-content: center;
       align-items: center; padding: 5px 8px;
     }
+    .footer-actions {
+        flex-shrink: 0;
+        padding-top: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
     .action-button {
       background-color: #007bff; color: #fff; border: 2px solid #0056b3;
       padding: 10px 20px; border-radius: 8px; cursor: pointer;
       display: flex; justify-content: center; align-items: center;
-      transition: all 0.2s ease-in-out; margin-top: 10px;
+      transition: all 0.2s ease-in-out;
     }
     .action-button:hover { background-color: #0056b3; }
   `;
@@ -64,49 +84,53 @@ export class TutorialModal extends LitElement {
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Welcome to Parkour Hero!" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
           </div>
 
-          <div class="section">
-            <div class="section-title-container">
-                <bitmap-text .fontRenderer=${this.fontRenderer} text="The Goal" scale="2.2"></bitmap-text>
-            </div>
-            <p>Your mission is to collect all the fruit to unlock the trophy, then reach it to complete the level!</p>
-          </div>
-
-          <div class="section">
-            <div class="section-title-container">
-                <bitmap-text .fontRenderer=${this.fontRenderer} text="Basic Controls" scale="2.2"></bitmap-text>
-            </div>
-            <div class="controls-grid">
-                <span>Move Left / Right</span>
-                <div style="display: flex; gap: 5px;">
-                    <div class="key-display"><bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.moveLeft)} scale="1.5"></bitmap-text></div>
-                    <div class="key-display"><bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.moveRight)} scale="1.5"></bitmap-text></div>
+          <div class="scrollable-content">
+              <div class="section">
+                <div class="section-title-container">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="The Goal" scale="2.2"></bitmap-text>
                 </div>
-                <span>Jump</span>
-                <div class="key-display"><bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.jump)} scale="1.5"></bitmap-text></div>
-                <span>Dash</span>
-                <div class="key-display"><bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.dash)} scale="1.5"></bitmap-text></div>
-            </div>
-             <p><strong>Advanced Moves:</strong> Press Jump in the air for a <strong>Double Jump</strong>. Move into a wall while falling to slide, then press Jump for a <strong>Wall Jump</strong>!</p>
-          </div>
+                <p>Your mission is to collect all the fruit to unlock the trophy, then reach it to complete the level!</p>
+              </div>
 
-          <div class="section">
-            <div class="section-title-container">
-                <bitmap-text .fontRenderer=${this.fontRenderer} text="Enemies & Environment" scale="2.2"></bitmap-text>
-            </div>
-            <p>This world is full of critters! Most can be defeated by jumping on their heads. Bumping into them from the side is a bad idea. Some foes are trickier than they look!</p>
-            <p>Also, be sure to avoid dangerous traps as you traverse each section! Luckily, fruits do heal you from most damage.</p>
-          </div>
+              <div class="section">
+                <div class="section-title-container">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="Basic Controls" scale="2.2"></bitmap-text>
+                </div>
+                <div class="controls-grid">
+                    <span>Move Left / Right</span>
+                    <div style="display: flex; gap: 5px;">
+                        <div class="key-display"><bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.moveLeft)} scale="1.5"></bitmap-text></div>
+                        <div class="key-display"><bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.moveRight)} scale="1.5"></bitmap-text></div>
+                    </div>
+                    <span>Jump</span>
+                    <div class="key-display"><bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.jump)} scale="1.5"></bitmap-text></div>
+                    <span>Dash</span>
+                    <div class="key-display"><bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.dash)} scale="1.5"></bitmap-text></div>
+                </div>
+                 <p><strong>Advanced Moves:</strong> Press Jump in the air for a <strong>Double Jump</strong>. Move into a wall while falling to slide, then press Jump for a <strong>Wall Jump</strong>!</p>
+              </div>
 
-          <div class="section">
-            <div class="section-title-container">
-                <bitmap-text .fontRenderer=${this.fontRenderer} text="Interface" scale="2.2"></bitmap-text>
-            </div>
-            <p>The buttons in the top-right corner allow you to change settings, pause the game, select levels, and more at any time.</p>
-          </div>
+              <div class="section">
+                <div class="section-title-container">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="Enemies & Environment" scale="2.2"></bitmap-text>
+                </div>
+                <p>This world is full of critters! Most can be defeated by jumping on their heads. Bumping into them from the side is a bad idea. Some foes are trickier than they look!</p>
+                <p>Also, be sure to avoid dangerous traps as you traverse each section! Luckily, fruits do heal you from most damage.</p>
+              </div>
 
-          <button class="action-button" @click=${this._dispatchClose}>
-            <bitmap-text .fontRenderer=${this.fontRenderer} text="Got It!" scale="2"></bitmap-text>
-          </button>
+              <div class="section">
+                <div class="section-title-container">
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="Interface" scale="2.2"></bitmap-text>
+                </div>
+                <p>The buttons in the top-right corner allow you to change settings, pause the game, select levels, and more at any time.</p>
+              </div>
+          </div>
+          
+          <div class="footer-actions">
+            <button class="action-button" @click=${this._dispatchClose}>
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Got It!" scale="2"></bitmap-text>
+            </button>
+          </div>
         </div>
       </div>
     `;
