@@ -52,7 +52,16 @@ export class Renderer {
     this.textures = {};
     this.syncTextures();
 
-    const quadVertices = new Float32Array();
+    const quadVertices = new Float32Array([
+        // 1st triangle
+        0.0, 0.0,
+        1.0, 0.0,
+        0.0, 1.0,
+        // 2nd triangle
+        0.0, 1.0,
+        1.0, 0.0,
+        1.0, 1.0,
+    ]);
     this.quadBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, quadVertices, gl.STATIC_DRAW);
@@ -290,15 +299,6 @@ export class Renderer {
 
             let spriteData;
             if (isPlayer) {
-                const stateName = renderable.animationState;
-                const isSpecialAnim = stateName === 'spawn' || stateName === 'despawn';
-                if (isSpecialAnim) {
-                    renderX -= (renderable.width - PLAYER_CONSTANTS.WIDTH) / 2;
-                    renderY -= (renderable.height - PLAYER_CONSTANTS.HEIGHT) / 2;
-                } else if (stateName === 'cling') {
-                    const offset = renderable.direction === 'left' ? -PLAYER_CONSTANTS.CLING_OFFSET : PLAYER_CONSTANTS.CLING_OFFSET;
-                    renderX += offset;
-                }
                 spriteData = this._getPlayerSpriteData(renderable, entityManager.getComponent(entityId, CharacterComponent));
             } else if (isEnemy) {
                 spriteData = this._getEnemySpriteData(renderable);
