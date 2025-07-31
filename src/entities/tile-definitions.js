@@ -5,7 +5,6 @@ export const TILESET_CONFIG = {
     columns: 22,
 };
 
-
 export const TILESET_CONFIG_SPECIAL = {
     image: '/assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
     tileWidth: 16,
@@ -13,9 +12,7 @@ export const TILESET_CONFIG_SPECIAL = {
     columns: 12,
 };
 
-
 export const SPECIAL_TILE_ID_OFFSET = 1000;
-
 
 export const TILE_PROPERTIES = {
 
@@ -24,17 +21,17 @@ export const TILE_PROPERTIES = {
     4: { type: 'stone', solid: true }, 5: { type: 'stone', solid: true }, 6: { type: 'stone', solid: true },
     7: { type: 'dirt', solid: true }, 8: { type: 'dirt', solid: true }, 9: { type: 'dirt', solid: true },
     10: { type: 'dirt', solid: true }, 11: { type: 'dirt', solid: true }, 12: { type: 'dirt', solid: true },
-    18: { type: 'oneway_gold', solid: true, oneWay: true },
+    18: { type: 'oneway_gold', solid: true, oneWay: true }, 19: { type: 'oneway_gold', solid: true, oneWay: true }, 20: { type: 'oneway_gold', solid: true, oneWay: true },
     23: { type: 'stone', solid: true }, 24: { type: 'stone', solid: true }, 25: { type: 'stone', solid: true },
     26: { type: 'stone', solid: true }, 27: { type: 'stone', solid: true }, 28: { type: 'stone', solid: true },
     29: { type: 'dirt', solid: true }, 30: { type: 'dirt', solid: true }, 31: { type: 'dirt', solid: true },
     32: { type: 'dirt', solid: true }, 33: { type: 'dirt', solid: true }, 34: { type: 'dirt', solid: true },
-    40: { type: 'oneway_wood', solid: true, oneWay: true },
+    40: { type: 'oneway_wood', solid: true, oneWay: true }, 41: { type: 'oneway_wood', solid: true, oneWay: true }, 42: { type: 'oneway_wood', solid: true, oneWay: true },
     45: { type: 'stone', solid: true }, 46: { type: 'stone', solid: true }, 47: { type: 'stone', solid: true },
     48: { type: 'stone', solid: true }, 49: { type: 'stone', solid: true }, 50: { type: 'stone', solid: true },
     51: { type: 'dirt', solid: true }, 52: { type: 'dirt', solid: true }, 53: { type: 'dirt', solid: true },
     54: { type: 'dirt', solid: true }, 55: { type: 'dirt', solid: true }, 56: { type: 'dirt', solid: true },
-    62: { type: 'oneway_stone', solid: true, oneWay: true },
+    62: { type: 'oneway_stone', solid: true, oneWay: true }, 63: { type: 'oneway_stone', solid: true, oneWay: true }, 64: { type: 'oneway_stone', solid: true, oneWay: true },
     89: { type: 'wood', solid: true }, 90: { type: 'wood', solid: true }, 91: { type: 'wood', solid: true },
     92: { type: 'wood', solid: true }, 93: { type: 'wood', solid: true }, 94: { type: 'wood', solid: true },
     95: { type: 'orange_dirt', solid: true }, 96: { type: 'orange_dirt', solid: true }, 97: { type: 'orange_dirt', solid: true },
