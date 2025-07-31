@@ -172,7 +172,7 @@ export class CollisionSystem {
 
             const oldX = pos.x - vel.vx * dt;
             queryBoxH.x = Math.min(pos.x, oldX);
-            queryBoxH.y = pos.y; // Y position is constant during horizontal check
+            queryBoxH.y = pos.y;
             queryBoxH.width = col.width + Math.abs(vel.vx * dt);
             queryBoxH.height = col.height;
 
@@ -233,7 +233,7 @@ export class CollisionSystem {
             entityRect.y = pos.y;
 
             const oldY = pos.y - vel.vy * dt;
-            queryBoxV.x = pos.x; // X position is already resolved
+            queryBoxV.x = pos.x;
             queryBoxV.y = Math.min(pos.y, oldY);
             queryBoxV.width = col.width;
             queryBoxV.height = col.height + Math.abs(vel.vy * dt);
@@ -409,7 +409,7 @@ export class CollisionSystem {
         const landingVelocity = vel.vy;
         const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
 
-        if (playerCtrl && landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY && playerCtrl.fallDistance > PLAYER_CONSTANTS.HEIGHT) {
+        if (playerCtrl && landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY && playerCtrl.fallDistance > PLAYER_CONSTANTS.HEIGHT && surfaceType !== 'mud') {
             eventBus.publish('playerLandedHard', { entityId, landingVelocity });
         }
 

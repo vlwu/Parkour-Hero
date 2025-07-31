@@ -12,7 +12,7 @@ import { CharacterComponent } from '../components/CharacterComponent.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
-import { TILESET_CONFIG, TILESET_CONFIG_SPECIAL, SPECIAL_TILE_ID_OFFSET } from '../entities/tile-definitions.js';
+import { TILESET_CONFIG, TILESET_CONFIG_SPECIAL, SPECIAL_TILE_ID_OFFSET, getTileProperties } from '../entities/tile-definitions.js';
 
 const MAX_SPRITES_PER_BATCH = 5000;
 const ATTRIBUTES_PER_INSTANCE = 11;
@@ -147,24 +147,28 @@ export class Renderer {
     this.staticBatches.clear();
     this.staticOverlayBatches.clear();
     const staticGroups = new Map();
+    const staticOverlayGroups = new Map();
 
     for (let y = 0; y < level.gridHeight; y++) {
         for (let x = 0; x < level.gridWidth; x++) {
             const tileId = level.tiles[y][x];
             if (tileId > 0) {
+                const properties = getTileProperties(tileId);
+                const isOverlay = properties && properties.interaction === 'mud';
+                const targetGroups = isOverlay ? staticOverlayGroups : staticGroups;
+
                 const isSpecial = tileId > SPECIAL_TILE_ID_OFFSET;
                 const spriteKey = isSpecial ? 'sand_mud_ice' : 'block';
-                if (!staticGroups.has(spriteKey)) {
-                    staticGroups.set(spriteKey, []);
+                if (!targetGroups.has(spriteKey)) {
+                    targetGroups.set(spriteKey, []);
                 }
-                staticGroups.get(spriteKey).push({ tileId, x, y });
+                targetGroups.get(spriteKey).push({ tileId, x, y });
             }
         }
     }
 
     level.traps.forEach(trap => {
         if (fractionalPlatformTypes.includes(trap.type)) {
-
             const spriteKey = 'block';
             if (!staticGroups.has(spriteKey)) {
                 staticGroups.set(spriteKey, []);
@@ -211,6 +215,37 @@ export class Renderer {
         this._setupVAO(vao, vbo);
 
         this.staticBatches.set(spriteKey, {
+            vao,
+            instanceCount: staticData.length / ATTRIBUTES_PER_INSTANCE,
+            texture: this.textures[spriteKey]
+        });
+    }
+
+    for (const [spriteKey, groupItems] of staticOverlayGroups.entries()) {
+        const staticData = [];
+        groupItems.forEach(item => {
+            if (item.tileId !== undefined) {
+                const { tileId, x, y } = item;
+                const isSpecial = tileId > SPECIAL_TILE_ID_OFFSET;
+                const config = isSpecial ? TILESET_CONFIG_SPECIAL : TILESET_CONFIG;
+                const localId = (isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId) - 1;
+                const sx = (localId % config.columns) * config.tileWidth;
+                const sy = Math.floor(localId / config.columns) * config.tileHeight;
+                staticData.push(
+                    x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE,
+                    GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE,
+                    sx, sy,
+                    config.tileWidth, config.tileHeight,
+                    0.0, 1.0, 0.0
+                );
+            }
+        });
+        const vbo = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(staticData), gl.STATIC_DRAW);
+        const vao = gl.createVertexArray();
+        this._setupVAO(vao, vbo);
+        this.staticOverlayBatches.set(spriteKey, {
             vao,
             instanceCount: staticData.length / ATTRIBUTES_PER_INSTANCE,
             texture: this.textures[spriteKey]
