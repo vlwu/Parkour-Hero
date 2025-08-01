@@ -17,6 +17,7 @@ import { Palette } from './ui/Palette.js';
 import { PropertiesPanel } from './ui/PropertiesPanel.js';
 import { KeyboardManager } from './core/KeyboardManager.js';
 import { GRID_CONSTANTS } from '../utils/constants.js';
+import { UpdatePropertyCommand } from './commands/UpdatePropertyCommand.js';
 
 /**
  * @typedef {object} EditorAppContext
@@ -33,11 +34,12 @@ import { GRID_CONSTANTS } from '../utils/constants.js';
  * @property {ToolManager} toolManager
  * @property {GridInputHandler} inputHandler
  * @property {UIManager} uiManager
+ * @property {PreviewManager} previewManager
+ * @property {KeyboardManager} keyboardManager
  * @property {EditorApp} app
- * @property {(id: number) => void} selectObject
- * @property {() => void} deselectObject
- * @property {(id: number, newX: number, newY: number) => void} onObjectDrag
  */
+
+const round = (val) => Math.round(val * 100) / 100;
 
 class EditorApp {
     constructor() {
@@ -52,38 +54,38 @@ class EditorApp {
             app: this,
         };
 
-        // Instantiate managers that depend on the core context
+        // Instantiate and attach all managers to the context
         this.context.palette = new Palette(this._onPaletteSelection.bind(this));
         this.context.propertiesPanel = new PropertiesPanel(this._onPropertyUpdate.bind(this));
         this.context.selectionManager = new SelectionManager(this.context);
         this.context.clipboardManager = new ClipboardManager(this.context);
         this.context.toolManager = new ToolManager(this.context);
         this.context.uiManager = new UIManager(this.context);
-        this.context.inputHandler = new GridInputHandler(DOM.gridContainer, this.context.grid, this.context.toolManager, this.context.uiManager);
-        
-        this.previewManager = new PreviewManager(this.context);
-        this.keyboardManager = new KeyboardManager(this.context);
+        this.context.previewManager = new PreviewManager(this.context);
+        this.context.keyboardManager = new KeyboardManager(this.context);
+        this.context.inputHandler = new GridInputHandler(this.context);
         
         this.editingLevelIndex = null;
         this.lastTimestamp = 0;
+        this.objectPropChange = { isChanging: false, oldValue: 0 };
     }
 
     async init() {
         this.context.grid.generate();
-        this.uiManager.init();
-        this.keyboardManager.init();
+        this.context.uiManager.init();
+        this.context.keyboardManager.init();
 
         Toolbar.setup({
             onNew: () => this.resetEditor(28, 15),
             onResize: () => DOM.resizeModalOverlay.style.display = 'flex',
-            onFileLoad: (e) => this.uiManager.handleFileLoad(e),
-            onExport: () => this.uiManager.handleExport(),
-            onTestLevel: () => this.previewManager.start(),
+            onFileLoad: (e) => this.context.uiManager.handleFileLoad(e),
+            onExport: () => this.context.uiManager.handleExport(),
+            onTestLevel: () => this.context.previewManager.start(),
             onUndo: () => this.context.history.undo(),
             onRedo: () => this.context.history.redo(),
             onZoomIn: () => this.context.grid.zoom(0.1),
             onZoomOut: () => this.context.grid.zoom(-0.1),
-            onCreateLevel: () => this.uiManager.handleCreateLevel(),
+            onCreateLevel: () => this.context.uiManager.handleCreateLevel(),
             onBack: () => { window.location.href = 'index.html#levels'; },
             onCopySelection: () => this.context.clipboardManager.handleSelectionAction('copy'),
             onCutSelection: () => this.context.clipboardManager.handleSelectionAction('cut'),
@@ -115,36 +117,64 @@ class EditorApp {
             console.error("Editor: Failed to load game assets.", error);
             loadingOverlay.textContent = 'Error loading assets. Preview disabled.';
             setTimeout(() => loadingOverlay.remove(), 3000);
-            return;
+        } finally {
+            if (loadingOverlay) loadingOverlay.remove();
         }
-        loadingOverlay.remove();
     }
     
     _onPaletteSelection(selection) {
-        this.context.uiManager.deselectObject();
-        this.context.selectionManager.clearSelection();
-        this.context.state.pastePreview = null;
-        this.context.state.clipboard = null;
+        const { state, uiManager, selectionManager, propertiesPanel, toolManager, inputHandler } = this.context;
+        uiManager.deselectObject();
+        selectionManager.clearSelection();
+        state.pastePreview = null;
+        state.clipboard = null;
     
         let toolName = selection.type;
         if (selection.type === 'tile') toolName = 'paint';
         else if (selection.type === 'object' || selection.type === 'enemy') toolName = 'place';
     
-        this.context.state.currentTool = { type: toolName, id: selection.id };
-        this.context.toolManager.setActiveTool(toolName);
+        state.currentTool = { type: toolName, id: selection.id };
+        toolManager.setActiveTool(toolName);
     
         if (selection.type === 'tool') {
-            this.context.propertiesPanel.displayToolProperties(selection.id, { eraserSize: this.context.state.eraserSize });
-            this.context.inputHandler.setCursor(selection.id === 'select' ? 'crosshair' : 'none');
+            propertiesPanel.displayToolProperties(selection.id, { eraserSize: state.eraserSize });
+            inputHandler.setCursor(selection.id === 'select' ? 'crosshair' : 'none');
         } else {
-            this.context.propertiesPanel.showItemDescription(selection.type, selection.id);
-            this.context.inputHandler.setCursor('crosshair');
+            propertiesPanel.showItemDescription(selection.type, selection.id);
+            inputHandler.setCursor('crosshair');
         }
     }
     
     _onPropertyUpdate(id, prop, value, type) {
-        // ... (This method will be moved to UIManager in a deeper refactor, but is fine here for now)
-        // ... (Implementation remains the same)
+        if (id === null) {
+            if (prop === 'eraserSize') { this.context.state.eraserSize = value; }
+            return;
+        }
+        const obj = this.context.objectManager.getObject(id);
+        if (!obj) return;
+
+        if (type === 'live') {
+            if (!this.objectPropChange.isChanging) {
+                this.objectPropChange.isChanging = true;
+                this.objectPropChange.oldValue = obj[prop];
+            }
+            this.context.objectManager.updateObjectProp(id, prop, value);
+        } else if (type === 'final') {
+            let oldValue;
+            if (this.objectPropChange.isChanging) {
+                oldValue = this.objectPropChange.oldValue;
+                this.objectPropChange.isChanging = false;
+            } else {
+                oldValue = obj[prop];
+            }
+            const finalValue = typeof value === 'number' ? round(value) : value;
+            if (oldValue !== finalValue) {
+                this.context.objectManager.updateObjectProp(id, prop, finalValue);
+                this.context.history.push(new UpdatePropertyCommand(this.context.objectManager, id, prop, oldValue, finalValue));
+            } else {
+                 this.context.objectManager.updateObjectProp(id, prop, finalValue);
+            }
+        }
     }
     
     _onObjectDrag(id, newX, newY) {
@@ -179,7 +209,7 @@ class EditorApp {
         this.context.grid.resize(width, height);
         this.context.objectManager.clear();
         this.context.history.clear();
-        this.uiManager.deselectObject();
+        this.context.uiManager.deselectObject();
     }
 
     _checkForEditMode() {
@@ -222,6 +252,6 @@ class EditorApp {
 
 document.addEventListener('DOMContentLoaded', () => {
     DOM.init();
-    const editor = new EditorApp();
-    editor.init();
+    const app = new EditorApp();
+    app.init();
 });

@@ -1,11 +1,12 @@
 import { GRID_CONSTANTS } from '../../utils/constants.js';
+import { DOM } from '../ui/DOM.js';
 
 export class GridInputHandler {
-    constructor(gridContainer, grid, toolManager, uiManager) {
-        this.gridContainer = gridContainer;
-        this.grid = grid;
-        this.toolManager = toolManager;
-        this.uiManager = uiManager; // Added UIManager reference
+    constructor(context) {
+        /** @type {import('../EditorApp.js').EditorAppContext} */
+        this.context = context;
+        this.gridContainer = DOM.gridContainer;
+        this.grid = context.grid;
 
         this.lastHoveredIndex = -1;
 
@@ -26,7 +27,7 @@ export class GridInputHandler {
 
     _handleContextMenu(e) {
         e.preventDefault();
-        this.uiManager._onRightClick();
+        this.context.uiManager._onRightClick();
     }
 
     _getGridCoordsFromEvent(e) {
@@ -42,23 +43,47 @@ export class GridInputHandler {
 
     _handleMouseDown(e) {
         const coords = this._getGridCoordsFromEvent(e);
-        this.toolManager.onMouseDown(e, coords);
+        this.context.toolManager.onMouseDown(e, coords);
     }
 
     _handleMouseMove(e) {
         const coords = this._getGridCoordsFromEvent(e);
-        this.toolManager.onMouseMove(e, coords);
+        this.context.toolManager.onMouseMove(e, coords);
 
         // Hover logic is separate from tool logic
         if (coords.index !== this.lastHoveredIndex) {
-            this.toolManager.onHover(coords);
+            // This could also be a tool manager event if desired
+            this._onHover(coords);
             this.lastHoveredIndex = coords.index;
+        }
+    }
+    
+    _onHover({ gridX, gridY }) {
+        const { state, inputHandler } = this.context;
+        if(state.currentTool.type === 'eraser' || state.currentTool.type === 'paste') {
+            const pixelX = gridX * GRID_CONSTANTS.TILE_SIZE + GRID_CONSTANTS.TILE_SIZE / 2;
+            const pixelY = gridY * GRID_CONSTANTS.TILE_SIZE + GRID_CONSTANTS.TILE_SIZE / 2;
+            state.pastePreview = { pixelX, pixelY, gridX, gridY };
+        } else {
+            state.pastePreview = null;
+        }
+
+        const selection = state.selection;
+        if (selection && gridX >= selection.x && gridX < selection.x + selection.width &&
+            gridY >= selection.y && gridY < selection.y + selection.height) {
+            inputHandler.setCursor('move');
+        } else if (state.currentTool.type === 'select') {
+            inputHandler.setCursor('crosshair');
+        } else if (state.currentTool.type === 'eraser') {
+            inputHandler.setCursor('none');
+        } else {
+            inputHandler.setCursor('crosshair');
         }
     }
 
     _handleMouseUp(e) {
         const coords = this._getGridCoordsFromEvent(e);
-        this.toolManager.onMouseUp(e, coords);
+        this.context.toolManager.onMouseUp(e, coords);
     }
 
     setCursor(cursorStyle) {

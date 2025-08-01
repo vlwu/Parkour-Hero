@@ -6,6 +6,7 @@ import { PasteTool } from './PasteTool.js';
 
 export class ToolManager {
     constructor(editorContext) {
+        /** @type {import('../EditorApp.js').EditorAppContext} */
         this.context = editorContext;
         this.tools = {
             'paint': new PaintTool(this.context),
