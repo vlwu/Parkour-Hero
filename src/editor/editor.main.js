@@ -68,7 +68,11 @@ class EditorApp {
             onZoomIn: () => this.context.grid.zoom(0.1),
             onZoomOut: () => this.context.grid.zoom(-0.1),
             onCreateLevel: () => this.context.uiManager.handleCreateLevel(),
-            onBack: () => { window.location.href = 'index.html#levels'; },
+            onBack: () => {
+                if (confirm("Are you sure you want to return to the main menu? Any unsaved changes will be lost.")) {
+                    window.location.href = 'index.html#levels';
+                }
+            },
             onCopySelection: () => this.context.clipboardManager.handleSelectionAction('copy'),
             onCutSelection: () => this.context.clipboardManager.handleSelectionAction('cut'),
             onDeleteSelection: () => this.context.clipboardManager.handleSelectionAction('delete'),
