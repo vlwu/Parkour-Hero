@@ -57,29 +57,12 @@ const properties = {
     227: { type: 'pink_dirt', solid: true }, 228: { type: 'pink_dirt', solid: true }, 229: { type: 'pink_dirt', solid: true },
     230: { type: 'pink_dirt', solid: true }, 231: { type: 'pink_dirt', solid: true }, 232: { type: 'pink_dirt', solid: true },
 
-
-    131: { type: 'wood', solid: true, collisionBox: { width: 48, height: 16 } },
-    132: { type: 'wood', solid: true, collisionBox: { width: 16, height: 16 } },
-    153: { type: 'wood', solid: true, collisionBox: { width: 16, height: 48 } },
-    154: { type: 'wood', solid: true, collisionBox: { width: 32, height: 32 } },
-
-    197: { type: 'stone', solid: true, collisionBox: { width: 48, height: 16 } },
-    198: { type: 'stone', solid: true, collisionBox: { width: 16, height: 16 } },
-    219: { type: 'stone', solid: true, collisionBox: { width: 16, height: 48 } },
-    220: { type: 'stone', solid: true, collisionBox: { width: 32, height: 32 } },
-
-    239: { type: 'orange_dirt', solid: true, collisionBox: { width: 48, height: 16 } },
-    240: { type: 'orange_dirt', solid: true, collisionBox: { width: 16, height: 16 } },
-
-    261: { type: 'orange_dirt', solid: true, collisionBox: { width: 16, height: 48 } },
-    262: { type: 'orange_dirt', solid: true, collisionBox: { width: 32, height: 32 } },
-
     default: { type: 'empty', solid: false }
 };
 
 const specialColumns = TILESET_CONFIG_SPECIAL.columns;
 
-// Sand: 3x3 block starting at column 0
+
 for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
         const tileId = (row * specialColumns) + col + 1;
@@ -87,7 +70,7 @@ for (let row = 0; row < 3; row++) {
     }
 }
 
-// Mud: 3x3 block starting at column 4
+
 for (let row = 0; row < 3; row++) {
     for (let col = 4; col < 7; col++) {
         const tileId = (row * specialColumns) + col + 1;
@@ -95,7 +78,7 @@ for (let row = 0; row < 3; row++) {
     }
 }
 
-// Ice: 3x3 block starting at column 8
+
 for (let row = 0; row < 3; row++) {
     for (let col = 8; col < 11; col++) {
         const tileId = (row * specialColumns) + col + 1;
