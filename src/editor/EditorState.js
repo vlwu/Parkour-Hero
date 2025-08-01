@@ -6,5 +6,10 @@ export class EditorState {
         this.selection = null;
         this.clipboard = null;
         this.pastePreview = null;
+        
+        // Properties for moving a selection
+        this.isDraggingSelection = false;
+        this.selectionDragPreview = { deltaX: 0, deltaY: 0 };
+        this.selectionSnapshot = null;
     }
 }

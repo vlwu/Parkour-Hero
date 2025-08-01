@@ -13,6 +13,7 @@ export class Tool {
     onHover(e, coords) {}
     activate() {}
     deactivate() {}
+    drawPreview(dt) {}
 
     get grid() { return this.context.grid; }
     get state() { return this.context.state; }

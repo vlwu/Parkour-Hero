@@ -191,6 +191,8 @@ class EditorApp {
 
         selectionManager.update(deltaTime);
         selectionManager.draw();
+        
+        this.context.toolManager.activeTool?.drawPreview(deltaTime);
 
         if (state.currentTool.type === 'eraser' && state.pastePreview) {
             this._drawEraserCursor();
