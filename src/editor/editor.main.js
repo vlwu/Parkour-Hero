@@ -15,6 +15,16 @@ import { FontRenderer } from '../ui/font-renderer.js';
 import { GRID_CONSTANTS } from '../utils/constants.js';
 import { EditorState } from './EditorState.js';
 
+// Command Imports
+import { CompositeCommand } from './commands/CompositeCommand.js';
+import { PaintCommand } from './commands/PaintCommand.js';
+import { PlaceObjectCommand } from './commands/PlaceObjectCommand.js';
+import { DeleteObjectCommand } from './commands/DeleteObjectCommand.js';
+import { MoveObjectCommand } from './commands/MoveObjectCommand.js';
+import { UpdatePropertyCommand } from './commands/UpdatePropertyCommand.js';
+import { ResizeCommand } from './commands/ResizeCommand.js';
+
+
 const round = (val) => Math.round(val * 100) / 100;
 
 class EditorApp {
@@ -357,7 +367,7 @@ class EditorApp {
             const finalValue = typeof value === 'number' ? round(value) : value;
             if (oldValue !== finalValue) {
                 this.objectManager.updateObjectProp(id, prop, finalValue);
-                this.history.push({ type: 'update_prop', id, prop, from: oldValue, to: finalValue });
+                this.history.push(new UpdatePropertyCommand(this.objectManager, id, prop, oldValue, finalValue));
             } else {
                  this.objectManager.updateObjectProp(id, prop, finalValue);
             }
@@ -366,9 +376,9 @@ class EditorApp {
 
     _onPaintStart() {
         if (this.state.currentTool.type === 'eraser') {
-            this.currentPaintAction = { type: 'erase', tileChanges: [], deletedObjects: [] };
+            this.currentPaintAction = { tileChanges: [], deletedObjects: [] };
         } else {
-            this.currentPaintAction = { type: 'paint', changes: [] };
+            this.currentPaintAction = { changes: [] };
         }
     }
 
@@ -415,12 +425,26 @@ class EditorApp {
 
     _onPaintEnd() {
         if (!this.currentPaintAction) return;
-        const hasTileChanges = (this.currentPaintAction.changes && this.currentPaintAction.changes.length > 0) ||
-                               (this.currentPaintAction.tileChanges && this.currentPaintAction.tileChanges.length > 0);
-        const hasObjectChanges = this.currentPaintAction.deletedObjects && this.currentPaintAction.deletedObjects.length > 0;
+        
+        const compositeCommand = new CompositeCommand();
 
-        if (hasTileChanges || hasObjectChanges) {
-            this.history.push(this.currentPaintAction);
+        if (this.state.currentTool.type === 'eraser') {
+            if (this.currentPaintAction.tileChanges.length > 0) {
+                compositeCommand.add(new PaintCommand(this.grid, this.currentPaintAction.tileChanges));
+            }
+            if (this.currentPaintAction.deletedObjects.length > 0) {
+                this.currentPaintAction.deletedObjects.forEach(obj => {
+                    compositeCommand.add(new DeleteObjectCommand(this.objectManager, obj));
+                });
+            }
+        } else {
+            if (this.currentPaintAction.changes.length > 0) {
+                compositeCommand.add(new PaintCommand(this.grid, this.currentPaintAction.changes));
+            }
+        }
+
+        if (compositeCommand.commands.length > 0) {
+            this.history.push(compositeCommand);
         }
         this.currentPaintAction = null;
     }
@@ -428,9 +452,7 @@ class EditorApp {
     _onObjectPlace(pixelX, pixelY) {
         const type = this.state.currentTool.id;
         const { newObject, replacedSpawn } = this.objectManager.addObject(type, pixelX, pixelY);
-        const action = { type: 'place_object', obj: newObject };
-        if (replacedSpawn) { action.replaced = replacedSpawn; }
-        this.history.push(action);
+        this.history.push(new PlaceObjectCommand(this.objectManager, newObject, replacedSpawn));
         this.selectObject(newObject);
     }
 
@@ -441,7 +463,7 @@ class EditorApp {
             alert('The Player Spawn cannot be deleted. To move it, simply left-click and drag it to a new position.');
             return;
         }
-        this.history.push({ type: 'delete_object', obj: objectToDelete });
+        this.history.push(new DeleteObjectCommand(this.objectManager, objectToDelete));
         if (this.state.selectedObject && this.state.selectedObject.id === id) { this.deselectObject(); }
         this.objectManager.deleteObject(id);
     }
@@ -480,11 +502,7 @@ class EditorApp {
         const initial = this.objectDragStartPosition;
 
         if (initial && (initial.x !== finalX || initial.y !== finalY)) {
-            this.history.push({
-                type: 'move_object', id,
-                from: { x: initial.x, y: initial.y },
-                to: { x: finalX, y: finalY }
-            });
+            this.history.push(new MoveObjectCommand(this.objectManager, id, { x: initial.x, y: initial.y }, { x: finalX, y: finalY }));
         }
 
         this.objectDragStartPosition = null;
@@ -533,6 +551,8 @@ class EditorApp {
         const oldTileData = [...this.grid.tileData];
         const oldObjects = JSON.parse(JSON.stringify(this.objectManager.getAllObjects()));
 
+        const beforeState = { width: oldWidth, height: oldHeight, tileData: oldTileData, objects: oldObjects };
+
         const dx = newWidth - oldWidth;
         const dy = newHeight - oldHeight;
         let offsetX = 0;
@@ -560,14 +580,14 @@ class EditorApp {
         });
         this.objectManager.render();
 
-        const newTileData = [...this.grid.tileData];
-        const newObjects = JSON.parse(JSON.stringify(this.objectManager.getAllObjects()));
+        const afterState = {
+            width: newWidth,
+            height: newHeight,
+            tileData: [...this.grid.tileData],
+            objects: JSON.parse(JSON.stringify(this.objectManager.getAllObjects()))
+        };
 
-        this.history.push({
-            type: 'resize',
-            before: { width: oldWidth, height: oldHeight, tileData: oldTileData, objects: oldObjects },
-            after: { width: newWidth, height: newHeight, tileData: newTileData, objects: newObjects }
-        });
+        this.history.push(new ResizeCommand(this.grid, this.objectManager, beforeState, afterState));
     }
 
 
@@ -649,80 +669,16 @@ class EditorApp {
     }
 
     _onUndo() {
-        const action = this.history.undo();
-        if (action) this._executeAction(action, 'undo');
+        this.history.undo();
     }
 
     _onRedo() {
-        const action = this.history.redo();
-        if (action) this._executeAction(action, 'redo');
+        this.history.redo();
     }
 
     _executeAction(action, direction) {
-        const isUndo = direction === 'undo';
-        switch (action.type) {
-            case 'paint':
-                action.changes.forEach(c => this.grid.paintCell(c.index, isUndo ? c.from : c.to));
-                break;
-            case 'erase':
-                action.tileChanges.forEach(c => this.grid.paintCell(c.index, isUndo ? c.from : c.to));
-                action.deletedObjects.forEach(obj => {
-                    if (isUndo) {
-                        this.objectManager.objects.push(obj);
-                    } else {
-                        this.objectManager.deleteObject(obj.id);
-                    }
-                });
-                this.objectManager.render();
-                break;
-            case 'place_object':
-                if (isUndo) {
-                    this.objectManager.deleteObject(action.obj.id);
-                    if (action.replaced) this.objectManager.objects.push(action.replaced[0]);
-                } else {
-                    if (action.replaced) this.objectManager.deleteObject(action.replaced[0].id);
-                    this.objectManager.objects.push(action.obj);
-                }
-                this.objectManager.render();
-                break;
-            case 'delete_object':
-                if (isUndo) this.objectManager.objects.push(action.obj);
-                else this.objectManager.deleteObject(action.obj.id);
-                this.objectManager.render();
-                break;
-            case 'move_object':
-                const movedObj = this.objectManager.getObject(action.id);
-                if (movedObj) {
-                    const pos = isUndo ? action.from : action.to;
-                    movedObj.x = pos.x; movedObj.y = pos.y;
-                    this.objectManager._updateGroundedEnemyBehavior(movedObj);
-                    this.objectManager.render();
-                    if (this.state.selectedObject?.id === action.id) this.propertiesPanel.displayObject(movedObj);
-                }
-                break;
-            case 'update_prop':
-                const propObj = this.objectManager.getObject(action.id);
-                if (propObj) {
-                    propObj[action.prop] = isUndo ? action.from : action.to;
-                    this.objectManager.render();
-                    if (this.state.selectedObject?.id === action.id) this.propertiesPanel.displayObject(propObj);
-                }
-                break;
-            case 'resize': {
-                const stateToRestore = isUndo ? action.before : action.after;
-                this.grid.width = stateToRestore.width;
-                this.grid.height = stateToRestore.height;
-                this.grid.tileData = [...stateToRestore.tileData];
-                this.grid.generate();
-
-                this.objectManager.clear();
-                this.objectManager.objects = JSON.parse(JSON.stringify(stateToRestore.objects));
-                this.objectManager.render();
-
-                this.deselectObject();
-                break;
-            }
-        }
+        // This method is now obsolete and will be removed.
+        // The new HistoryManager handles this directly.
     }
 
 
@@ -800,7 +756,7 @@ class EditorApp {
             const y = startY + tile.y * TILE_SIZE;
             const tileId = parseInt(tile.id, 10);
             const isSpecial = tileId > SPECIAL_TILE_ID_OFFSET;
-            const sourceImage = isSpecial ? this.specialTilesetImage : this.tilesetImage;
+            const sourceImage = isSpecial ? this.palette.specialTileset.image : this.palette.mainTileset.image;
             const sourceConfig = isSpecial ? TILESET_CONFIG_SPECIAL : TILESET_CONFIG;
             const localId = (isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId) - 1;
             const sx = (localId % sourceConfig.columns) * sourceConfig.tileWidth;
@@ -926,7 +882,7 @@ class EditorApp {
                 }
             }
             if (paintChanges.length > 0) {
-                this.history.push({ type: 'paint', changes: paintChanges });
+                this.history.push(new PaintCommand(this.grid, paintChanges));
             }
 
             clipboardData.objects.forEach(objData => {
@@ -956,7 +912,8 @@ class EditorApp {
         const startX = gridX - Math.floor(this.state.clipboard.width / 2);
         const startY = gridY - Math.floor(this.state.clipboard.height / 2);
         const paintChanges = [];
-        const placedObjects = [];
+
+        const compositeCommand = new CompositeCommand();
 
         this.state.clipboard.tiles.forEach(tile => {
             const newX = startX + tile.x;
@@ -969,20 +926,25 @@ class EditorApp {
             }
         });
 
+        if (paintChanges.length > 0) {
+            compositeCommand.add(new PaintCommand(this.grid, paintChanges));
+        }
+
         this.state.clipboard.objects.forEach(objData => {
             const newX = startX + objData.x;
             const newY = startY + objData.y;
             if (newX >= 0 && newX < this.grid.width && newY >= 0 && newY < this.grid.height) {
                 const { newObject } = this.objectManager.addObject(objData.type, newX * GRID_CONSTANTS.TILE_SIZE, newY * GRID_CONSTANTS.TILE_SIZE);
                 Object.assign(newObject, { ...objData, id: newObject.id, x: newX, y: newY });
-                placedObjects.push(newObject);
+
+                compositeCommand.add(new PlaceObjectCommand(this.objectManager, newObject));
+
             }
         });
         this.objectManager.render();
 
-
-        if (paintChanges.length > 0) {
-            this.history.push({ type: 'paint', changes: paintChanges });
+        if (compositeCommand.commands.length > 0) {
+            this.history.push(compositeCommand);
         }
     }
 }

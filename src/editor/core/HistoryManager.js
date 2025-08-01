@@ -7,27 +7,26 @@ export class HistoryManager {
         this.updateButtons();
     }
 
-    push(action) {
-        // Using structuredClone is a modern way to deep-copy objects
-        this.historyStack.push(structuredClone(action));
+    push(command) {
+        this.historyStack.push(command);
         this.redoStack = [];
         this.updateButtons();
     }
 
     undo() {
-        if (this.historyStack.length === 0) return null;
-        const action = this.historyStack.pop();
-        this.redoStack.push(structuredClone(action));
+        if (this.historyStack.length === 0) return;
+        const command = this.historyStack.pop();
+        command.undo();
+        this.redoStack.push(command);
         this.updateButtons();
-        return action; // Return the action for the orchestrator to execute
     }
 
     redo() {
-        if (this.redoStack.length === 0) return null;
-        const action = this.redoStack.pop();
-        this.historyStack.push(structuredClone(action));
+        if (this.redoStack.length === 0) return;
+        const command = this.redoStack.pop();
+        command.execute();
+        this.historyStack.push(command);
         this.updateButtons();
-        return action; // Return the action for the orchestrator to execute
     }
 
     clear() {
