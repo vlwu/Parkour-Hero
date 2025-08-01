@@ -77,14 +77,34 @@ const properties = {
     default: { type: 'empty', solid: false }
 };
 
-for (let i = 1; i <= 12; i++) {
-    properties[SPECIAL_TILE_ID_OFFSET + i] = { type: 'sand', solid: true, interaction: 'sand' };
+// --- CORRECTED SPECIAL TILE LOGIC ---
+// The special tileset is organized into 3x3 blocks for each material type
+// within a grid that has 12 columns. This logic correctly assigns properties
+// based on this 2D layout.
+const specialColumns = TILESET_CONFIG_SPECIAL.columns;
+
+// Sand: 3x3 block starting at column 0
+for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+        const tileId = (row * specialColumns) + col + 1;
+        properties[SPECIAL_TILE_ID_OFFSET + tileId] = { type: 'sand', solid: true, interaction: 'sand' };
+    }
 }
-for (let i = 13; i <= 24; i++) {
-    properties[SPECIAL_TILE_ID_OFFSET + i] = { type: 'mud', solid: true, interaction: 'mud' };
+
+// Mud: 3x3 block starting at column 4
+for (let row = 0; row < 3; row++) {
+    for (let col = 4; col < 7; col++) {
+        const tileId = (row * specialColumns) + col + 1;
+        properties[SPECIAL_TILE_ID_OFFSET + tileId] = { type: 'mud', solid: true, interaction: 'mud' };
+    }
 }
-for (let i = 25; i <= 36; i++) {
-    properties[SPECIAL_TILE_ID_OFFSET + i] = { type: 'ice', solid: true, interaction: 'ice' };
+
+// Ice: 3x3 block starting at column 8
+for (let row = 0; row < 3; row++) {
+    for (let col = 8; col < 11; col++) {
+        const tileId = (row * specialColumns) + col + 1;
+        properties[SPECIAL_TILE_ID_OFFSET + tileId] = { type: 'ice', solid: true, interaction: 'ice' };
+    }
 }
 
 export const TILE_PROPERTIES = properties;
