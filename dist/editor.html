@@ -5,16 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2D Platformer Level Editor</title>
     <link rel="icon" type="image/png" href="./assets/Traps/Sand Mud Ice/Sand Particle.png">
-  <script type="module" crossorigin src="./assets/editor-8R3ejtgL.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/font-renderer-BW1cSGDP.js">
-  <link rel="stylesheet" crossorigin href="./assets/editor-DctJQ1CJ.css">
+  <script type="module" crossorigin src="./assets/editor-l-tjOc-j.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/font-renderer-CDR4Oxr_.js">
+  <link rel="stylesheet" crossorigin href="./assets/editor-CF3UktN-.css">
 </head>
 <body>
     <div id="editor-wrapper">
         <div id="left-panel">
-            <h2>Terrain Palette</h2>
-            <div id="terrain-palette">
-
+            <h2>Tools</h2>
+            <div id="tools-palette">
+                 <button class="tool-button" id="select-tool-btn" title="Select Tool (V)">✓</button>
+                 <button class="tool-button" id="erase-tool-btn" title="Eraser Tool (E)">✗</button>
+            </div>
+            <h2>Tileset</h2>
+            <div class="tileset-palette-container">
+                <canvas id="tileset-canvas"></canvas>
+            </div>
+            <h2>Special Tiles</h2>
+             <div class="tileset-palette-container">
+                <canvas id="special-tileset-canvas"></canvas>
             </div>
             <h2>Items Palette</h2>
             <div id="items-palette">
@@ -51,6 +60,11 @@
                     <button id="zoomOutBtn" title="Zoom Out">-</button>
                     <button id="zoomInBtn" title="Zoom In">+</button>
                 </div>
+                 <div class="tool-group" id="selection-actions" style="display: none;">
+                    <button id="copySelectionBtn" title="Copy (Ctrl+C)">Copy</button>
+                    <button id="cutSelectionBtn" title="Cut (Ctrl+X)">Cut</button>
+                    <button id="deleteSelectionBtn" title="Delete (Del)" class="danger-action">Delete</button>
+                </div>
                 <div class="tool-group">
                     <button id="undoBtn" title="Undo (Ctrl+Z)" disabled>Undo</button>
                     <button id="redoBtn" title="Redo (Ctrl+Y)" disabled>Redo</button>
@@ -68,7 +82,7 @@
             </div>
             <div id="grid-parent">
                 <div id="grid-container">
-
+                    <!-- The grid and objects will be drawn on this canvas -->
                 </div>
             </div>
         </div>
@@ -80,9 +94,9 @@
             </div>
              <div id="instructions">
                 <h3>Instructions</h3>
-                <p><strong>Left-Click:</strong> Paint tiles or place objects.</p>
+                <p><strong>Left-Click:</strong> Use selected tool (Paint, Erase, Select).</p>
                 <p><strong>Drag Object:</strong> Left-click and drag to reposition.</p>
-                <p><strong>Right-Click:</strong> Erase tiles or objects.</p>
+                <p><strong>Right-Click:</strong> Deselect tool or cancel action.</p>
                 <p><strong>Undo/Redo:</strong> Use buttons or Ctrl+Z / Ctrl+Y.</p>
             </div>
         </div>
