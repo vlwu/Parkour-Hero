@@ -19,42 +19,42 @@ import { KeyboardManager } from './core/KeyboardManager.js';
 import { GRID_CONSTANTS } from '../utils/constants.js';
 import { UpdatePropertyCommand } from './commands/UpdatePropertyCommand.js';
 
-/**
- * @typedef {object} EditorAppContext
- * @property {EditorState} state
- * @property {Grid} grid
- * @property {ObjectManager} objectManager
- * @property {HistoryManager} history
- * @property {Palette} palette
- * @property {PropertiesPanel} propertiesPanel
- * @property {object} assets
- * @property {FontRenderer} fontRenderer
- * @property {SelectionManager} selectionManager
- * @property {ClipboardManager} clipboardManager
- * @property {ToolManager} toolManager
- * @property {GridInputHandler} inputHandler
- * @property {UIManager} uiManager
- * @property {PreviewManager} previewManager
- * @property {KeyboardManager} keyboardManager
- * @property {EditorApp} app
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const round = (val) => Math.round(val * 100) / 100;
 
 class EditorApp {
     constructor() {
-        /** @type {EditorAppContext} */
+
         this.context = {
             state: new EditorState(),
             grid: new Grid(28, 15),
-            objectManager: new ObjectManager(this.grid),
+            objectManager: new ObjectManager(),
             history: new HistoryManager(DOM.undoBtn, DOM.redoBtn),
             assets: null,
             fontRenderer: null,
             app: this,
         };
 
-        // Instantiate and attach all managers to the context
+
         this.context.palette = new Palette(this._onPaletteSelection.bind(this));
         this.context.propertiesPanel = new PropertiesPanel(this._onPropertyUpdate.bind(this));
         this.context.selectionManager = new SelectionManager(this.context);
@@ -64,7 +64,7 @@ class EditorApp {
         this.context.previewManager = new PreviewManager(this.context);
         this.context.keyboardManager = new KeyboardManager(this.context);
         this.context.inputHandler = new GridInputHandler(this.context);
-        
+
         this.editingLevelIndex = null;
         this.lastTimestamp = 0;
         this.objectPropChange = { isChanging: false, oldValue: 0 };
@@ -74,7 +74,7 @@ class EditorApp {
         this.context.grid.generate();
         this.context.uiManager.init();
         this.context.keyboardManager.init();
-        this.context.inputHandler.init(); // Initialize the input handler AFTER the grid is generated
+        this.context.inputHandler.init();
 
         Toolbar.setup({
             onNew: () => this.resetEditor(28, 15),
@@ -92,13 +92,13 @@ class EditorApp {
             onCutSelection: () => this.context.clipboardManager.handleSelectionAction('cut'),
             onDeleteSelection: () => this.context.clipboardManager.handleSelectionAction('delete'),
         });
-        
+
         window.addEventListener('resize', () => this.context.grid.autoFitScale());
-        
+
         this._onPaletteSelection({ type: 'tile', id: '1' });
         await this._loadGameAssets();
         this._checkForEditMode();
-        
+
         requestAnimationFrame(this._animationLoop);
     }
 
@@ -122,21 +122,21 @@ class EditorApp {
             if (loadingOverlay.parentElement) loadingOverlay.remove();
         }
     }
-    
+
     _onPaletteSelection(selection) {
         const { state, uiManager, selectionManager, propertiesPanel, toolManager, inputHandler } = this.context;
         uiManager.deselectObject();
         selectionManager.clearSelection();
         state.pastePreview = null;
         state.clipboard = null;
-    
+
         let toolName = selection.type;
         if (selection.type === 'tile') toolName = 'paint';
         else if (selection.type === 'object' || selection.type === 'enemy') toolName = 'place';
-    
+
         state.currentTool = { type: toolName, id: selection.id };
         toolManager.setActiveTool(toolName);
-    
+
         if (selection.type === 'tool') {
             propertiesPanel.displayToolProperties(selection.id, { eraserSize: state.eraserSize });
             inputHandler.setCursor(selection.id === 'select' ? 'crosshair' : 'none');
@@ -145,7 +145,7 @@ class EditorApp {
             inputHandler.setCursor('crosshair');
         }
     }
-    
+
     _onPropertyUpdate(id, prop, value, type) {
         if (id === null) {
             if (prop === 'eraserSize') { this.context.state.eraserSize = value; }
@@ -177,7 +177,7 @@ class EditorApp {
             }
         }
     }
-    
+
     _onObjectDrag(id, newX, newY) {
         const obj = this.context.objectManager.getObject(id);
         if (!obj) return;
@@ -197,10 +197,10 @@ class EditorApp {
 
         const { grid, state, selectionManager, clipboardManager } = this.context;
         grid.overlayCtx.clearRect(0, 0, grid.overlayCanvas.width, grid.overlayCanvas.height);
-        
+
         selectionManager.update(deltaTime);
         selectionManager.draw();
-        
+
         if (state.currentTool.type === 'eraser' && state.pastePreview) {
             this._drawEraserCursor();
         }
@@ -209,7 +209,7 @@ class EditorApp {
         }
         requestAnimationFrame(this._animationLoop);
     }
-    
+
     _drawEraserCursor() {
         const { state, grid } = this.context;
         const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
@@ -222,11 +222,19 @@ class EditorApp {
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, size, size);
     }
-    
+
     resetEditor(width, height) {
         this.context.grid.resize(width, height);
         this.context.objectManager.clear();
         this.context.history.clear();
+        this.context.uiManager.deselectObject();
+    }
+
+    selectObject(id) {
+        this.context.uiManager.selectObject(id);
+    }
+
+    deselectObject() {
         this.context.uiManager.deselectObject();
     }
 

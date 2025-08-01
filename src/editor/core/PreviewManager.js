@@ -5,7 +5,7 @@ import { DOM } from '../ui/DOM.js';
 
 export class PreviewManager {
     constructor(context) {
-        /** @type {import('../EditorApp.js').EditorAppContext} */
+
         this.context = context;
         this.engine = null;
     }
@@ -16,7 +16,7 @@ export class PreviewManager {
             return;
         }
 
-        const { startPos, finalEntities } = this.context.objectManager.getObjectsForExport();
+        const { startPos, finalEntities } = this.context.objectManager.getObjectsForExport(this.context.grid);
         const levelData = {
             name: `Preview: ${DOM.levelNameInput.value}`,
             gridWidth: this.context.grid.width,
@@ -35,7 +35,7 @@ export class PreviewManager {
 
         gameCanvas.width = 1920; gameCanvas.height = 1080;
         particleCanvas.width = 1920; particleCanvas.height = 1080;
-        
+
         const resizePreview = () => {
             const aspectRatio = 16 / 9;
             const windowRatio = window.innerWidth / window.innerHeight;

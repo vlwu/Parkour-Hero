@@ -29,7 +29,7 @@ export class LevelExporter {
     }
 
     static export(grid, objectManager, levelName, background) {
-        const { startPos, finalEntities } = objectManager.getObjectsForExport();
+        const { startPos, finalEntities } = objectManager.getObjectsForExport(grid);
 
         const rleTileData = this._encodeTileDataToRLE(grid.getTileDataForExport(), grid.width, grid.height);
 
@@ -39,7 +39,7 @@ export class LevelExporter {
             gridHeight: grid.height,
             background: background,
             startPosition: startPos,
-            tileData: rleTileData, // Using the new RLE format
+            tileData: rleTileData, 
             entities: finalEntities,
         };
 
