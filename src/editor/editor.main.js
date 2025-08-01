@@ -540,7 +540,6 @@ class EditorController {
 
         const dx = newWidth - oldWidth;
         const dy = newHeight - oldHeight;
-
         let offsetX = 0;
         let offsetY = 0;
 
@@ -551,7 +550,7 @@ class EditorController {
 
         this.grid.resize(newWidth, newHeight, oldTileData, anchor);
 
-        const newObjects = [];
+        const newObjectsList = [];
         this.objectManager.clear();
         oldObjects.forEach(obj => {
             const newX = obj.x + offsetX;
@@ -561,11 +560,21 @@ class EditorController {
                 obj.x = newX;
                 obj.y = newY;
                 this.objectManager.objects.push(obj);
-                newObjects.push(obj);
+                newObjectsList.push(obj);
             }
         });
         this.objectManager.render();
+
+        const newTileData = [...this.grid.tileData];
+        const newObjects = JSON.parse(JSON.stringify(this.objectManager.getAllObjects()));
+
+        this.history.push({
+            type: 'resize',
+            before: { width: oldWidth, height: oldHeight, tileData: oldTileData, objects: oldObjects },
+            after: { width: newWidth, height: newHeight, tileData: newTileData, objects: newObjects }
+        });
     }
+
 
     _onFileLoad(e) {
         const files = e.target.files;
@@ -704,8 +713,23 @@ class EditorController {
                     if (this.selectedObject?.id === action.id) this.propertiesPanel.displayObject(propObj);
                 }
                 break;
+            case 'resize': {
+                const stateToRestore = isUndo ? action.before : action.after;
+                this.grid.width = stateToRestore.width;
+                this.grid.height = stateToRestore.height;
+                this.grid.tileData = [...stateToRestore.tileData];
+                this.grid.generate();
+
+                this.objectManager.clear();
+                this.objectManager.objects = JSON.parse(JSON.stringify(stateToRestore.objects));
+                this.objectManager.render();
+
+                this.deselectObject();
+                break;
+            }
         }
     }
+
 
     selectObject(obj) {
         if (!obj) return;

@@ -58,15 +58,27 @@ export class GridInputHandler {
 
         if (e.button === 0) {
             const tool = this.callbacks.getCurrentTool();
+
+            if (objectTarget) {
+                const id = parseInt(objectTarget.dataset.id, 10);
+                if (tool === 'eraser') {
+                    this.isErasing = true;
+                    this.callbacks.onPaintStart();
+                    this.callbacks.onEraseObject(id);
+                } else if (tool === 'select') {
+                    this.callbacks.onObjectSelect(id);
+                    this._startDrag(e, objectTarget);
+                } else {
+                    this._startDrag(e, objectTarget);
+                }
+                return;
+            }
+
             switch (tool) {
                 case 'paint':
-                    if (objectTarget) {
-                        this._startDrag(e, objectTarget);
-                    } else {
-                        this.isPainting = true;
-                        this.callbacks.onPaintStart();
-                        this.callbacks.onPaint(gridX, gridY);
-                    }
+                    this.isPainting = true;
+                    this.callbacks.onPaintStart();
+                    this.callbacks.onPaint(gridX, gridY);
                     break;
                 case 'place':
                     this.callbacks.onObjectPlace(pixelX, pixelY);
@@ -74,28 +86,16 @@ export class GridInputHandler {
                 case 'eraser':
                     this.isErasing = true;
                     this.callbacks.onPaintStart();
-                    if (objectTarget) {
-                        const id = parseInt(objectTarget.dataset.id, 10);
-                        this.callbacks.onEraseObject(id);
-                    } else {
-                        this.callbacks.onErase(gridX, gridY);
-                    }
+                    this.callbacks.onErase(gridX, gridY);
                     break;
                 case 'select':
-                    if (objectTarget) {
-                        const id = parseInt(objectTarget.dataset.id);
-                        this.callbacks.onObjectSelect(id);
-                    } else {
-                        this.isSelecting = true;
-                        this.selectionStartCoords = { x: gridX, y: gridY };
-                        this.callbacks.onSelectionChange(this.selectionStartCoords, this.selectionStartCoords);
-                    }
+                    this.isSelecting = true;
+                    this.selectionStartCoords = { x: gridX, y: gridY };
+                    this.callbacks.onSelectionChange(this.selectionStartCoords, this.selectionStartCoords);
                     break;
                 case 'paste':
                     this.callbacks.onPaste(gridX, gridY);
                     break;
-                default:
-                    if (objectTarget) this._startDrag(e, objectTarget);
             }
         }
     }
