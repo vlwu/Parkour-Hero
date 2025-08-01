@@ -7,34 +7,88 @@ export class Grid {
         this.width = width;
         this.height = height;
         this.zoomLevel = 1;
+        this.tileData = new Array(width * height).fill(0);
 
         this.tilesetImage = new Image();
         this.tilesetImage.src = TILESET_CONFIG.image;
-
         this.specialTilesetImage = new Image();
         this.specialTilesetImage.src = TILESET_CONFIG_SPECIAL.image;
+
+        this.gridLinesCanvas = document.createElement('canvas');
+        this.tileCanvas = document.createElement('canvas');
+        this.gridLinesCtx = this.gridLinesCanvas.getContext('2d');
+        this.tileCtx = this.tileCanvas.getContext('2d');
+        this.tileCtx.imageSmoothingEnabled = false;
+
+        this.tilesetImage.onload = () => this.drawAllTiles();
+        this.specialTilesetImage.onload = () => this.drawAllTiles();
     }
 
     generate() {
         DOM.gridContainer.innerHTML = '';
-        DOM.gridContainer.style.gridTemplateColumns = `repeat(${this.width}, ${GRID_CONSTANTS.TILE_SIZE}px)`;
         DOM.gridContainer.style.width = `${this.width * GRID_CONSTANTS.TILE_SIZE}px`;
         DOM.gridContainer.style.height = `${this.height * GRID_CONSTANTS.TILE_SIZE}px`;
 
-        for (let i = 0; i < this.width * this.height; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'grid-cell';
-            cell.dataset.tileId = '0';
-            cell.dataset.index = i;
-            DOM.gridContainer.appendChild(cell);
-        }
+        this.gridLinesCanvas.width = this.width * GRID_CONSTANTS.TILE_SIZE;
+        this.gridLinesCanvas.height = this.height * GRID_CONSTANTS.TILE_SIZE;
+        this.tileCanvas.width = this.width * GRID_CONSTANTS.TILE_SIZE;
+        this.tileCanvas.height = this.height * GRID_CONSTANTS.TILE_SIZE;
+
+        DOM.gridContainer.appendChild(this.tileCanvas);
+        DOM.gridContainer.appendChild(this.gridLinesCanvas);
+
+        this.drawGridLines();
+        this.drawAllTiles();
         this.autoFitScale();
     }
 
-    resize(newWidth, newHeight) {
+    resize(newWidth, newHeight, oldTileData = [], anchor = 'top-left') {
+        const oldWidth = this.width;
+        const oldHeight = this.height;
         this.width = newWidth;
         this.height = newHeight;
+
+        const newTileDataArray = new Array(newWidth * newHeight).fill(0);
+        const dx = newWidth - oldWidth;
+        const dy = newHeight - oldHeight;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (anchor.includes('right')) offsetX = -dx;
+        else if (anchor.includes('center')) offsetX = -Math.floor(dx / 2);
+        if (anchor.includes('bottom')) offsetY = -dy;
+        else if (anchor.includes('middle')) offsetY = -Math.floor(dy / 2);
+
+        for (let y = 0; y < oldHeight; y++) {
+            for (let x = 0; x < oldWidth; x++) {
+                const newX = x + offsetX;
+                const newY = y + offsetY;
+                if (newX >= 0 && newX < newWidth && newY >= 0 && newY < newHeight) {
+                    newTileDataArray[newY * newWidth + newX] = oldTileData[y * oldWidth + x];
+                }
+            }
+        }
+        this.tileData = newTileDataArray;
         this.generate();
+    }
+
+    drawGridLines() {
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        this.gridLinesCtx.clearRect(0, 0, this.gridLinesCanvas.width, this.gridLinesCanvas.height);
+        this.gridLinesCtx.strokeStyle = 'rgba(149, 165, 166, 0.1)';
+        this.gridLinesCtx.lineWidth = 1;
+        for (let x = 0; x <= this.width; x++) {
+            this.gridLinesCtx.beginPath();
+            this.gridLinesCtx.moveTo(x * TILE_SIZE, 0);
+            this.gridLinesCtx.lineTo(x * TILE_SIZE, this.height * TILE_SIZE);
+            this.gridLinesCtx.stroke();
+        }
+        for (let y = 0; y <= this.height; y++) {
+            this.gridLinesCtx.beginPath();
+            this.gridLinesCtx.moveTo(0, y * TILE_SIZE);
+            this.gridLinesCtx.lineTo(this.width * TILE_SIZE, y * TILE_SIZE);
+            this.gridLinesCtx.stroke();
+        }
     }
 
     autoFitScale() {
@@ -63,23 +117,16 @@ export class Grid {
     }
 
     paintCell(index, tileIdStr) {
-        const cell = DOM.gridContainer.children[index];
-        if (!cell) return;
-
         const tileId = parseInt(tileIdStr, 10);
-        cell.dataset.tileId = tileIdStr;
+        this.tileData[index] = tileId;
+        this.drawTileAtIndex(index);
+    }
 
-        let canvas = cell.querySelector('canvas');
-        if (!canvas) {
-            canvas = document.createElement('canvas');
-            canvas.width = GRID_CONSTANTS.TILE_SIZE;
-            canvas.height = GRID_CONSTANTS.TILE_SIZE;
-            cell.innerHTML = '';
-            cell.appendChild(canvas);
-        }
-        const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = false;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawTileAtIndex(index) {
+        const tileId = this.tileData[index];
+        const x = (index % this.width) * GRID_CONSTANTS.TILE_SIZE;
+        const y = Math.floor(index / this.width) * GRID_CONSTANTS.TILE_SIZE;
+        this.tileCtx.clearRect(x, y, GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE);
 
         if (tileId > 0) {
             const isSpecial = tileId > SPECIAL_TILE_ID_OFFSET;
@@ -87,21 +134,28 @@ export class Grid {
             const sourceConfig = isSpecial ? TILESET_CONFIG_SPECIAL : TILESET_CONFIG;
             const localId = (isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId) - 1;
 
-            if (!sourceImage.complete) return;
+            if (!sourceImage.complete || sourceImage.naturalWidth === 0) return;
 
             const sx = (localId % sourceConfig.columns) * sourceConfig.tileWidth;
             const sy = Math.floor(localId / sourceConfig.columns) * sourceConfig.tileHeight;
 
-            ctx.drawImage(
+            this.tileCtx.drawImage(
                 sourceImage,
                 sx, sy, sourceConfig.tileWidth, sourceConfig.tileHeight,
-                0, 0, GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE
+                x, y, GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE
             );
         }
     }
 
+    drawAllTiles() {
+        this.tileCtx.clearRect(0, 0, this.tileCanvas.width, this.tileCanvas.height);
+        for (let i = 0; i < this.tileData.length; i++) {
+            this.drawTileAtIndex(i);
+        }
+    }
+
     getTileId(index) {
-        return DOM.gridContainer.children[index]?.dataset.tileId || '0';
+        return this.tileData[index]?.toString() || '0';
     }
 
     isTileSolid(gridX, gridY) {
@@ -118,8 +172,7 @@ export class Grid {
 
     getTileDataForExport() {
         const tileData = [];
-        const cells = DOM.gridContainer.children;
-        for (let i = 0; i < cells.length; i++) {
+        for (let i = 0; i < this.tileData.length; i++) {
             const tileId = this.getTileId(i);
             if (tileId !== '0') {
                 const x = i % this.width;

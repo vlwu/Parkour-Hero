@@ -370,11 +370,14 @@ export class ObjectManager {
     }
 
     _applySnapping(obj) {
-        const groundEnemies = Object.keys(ENEMY_DEFINITIONS).filter(key => key !== 'bluebird' && key !== 'fatbird' && key !== 'radish' && key !== 'bee');
+        const groundEnemies = Object.keys(ENEMY_DEFINITIONS).filter(key => !['bluebird', 'fatbird', 'radish', 'bee', 'bat'].includes(key));
         const groundSnappable = ['trophy', 'checkpoint', 'trampoline', 'spike', 'fire_trap', ...groundEnemies];
+        const ceilingSnappable = ['bat'];
 
         if (groundSnappable.includes(obj.type)) {
             this._snapToGround(obj);
+        } else if (ceilingSnappable.includes(obj.type)) {
+            this._snapToCeiling(obj);
         } else if (obj.type === 'fan') {
             this._snapFanToEdge(obj);
         }
@@ -410,6 +413,21 @@ export class ObjectManager {
             if (this.grid.isTileSolid(gridX, checkY)) {
                 const platformTopY_pixels = checkY * TILE_SIZE;
                 const newCenterY_pixels = platformTopY_pixels - (obj.height / 2);
+                obj.y = newCenterY_pixels / TILE_SIZE;
+                return;
+            }
+        }
+    }
+
+    _snapToCeiling(obj) {
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const objTopY_grid = obj.y - (obj.height / 2) / TILE_SIZE;
+        const gridX = Math.floor(obj.x);
+        for (let yOffset = 0; yOffset < 3; yOffset++) {
+            const checkY = Math.floor(objTopY_grid) - yOffset;
+            if (this.grid.isTileSolid(gridX, checkY)) {
+                const platformBottomY_pixels = (checkY + 1) * TILE_SIZE;
+                const newCenterY_pixels = platformBottomY_pixels + (obj.height / 2);
                 obj.y = newCenterY_pixels / TILE_SIZE;
                 return;
             }

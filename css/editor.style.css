@@ -151,27 +151,17 @@ body {
 }
 
 #grid-container {
-    display: grid;
     position: relative;
     transform-origin: top left;
     box-shadow: 0 5px 15px rgba(0,0,0,0.4);
     background-color: #2c3e50;
+    cursor: crosshair;
 }
 
-.grid-cell {
-    width: 16px;
-    height: 16px;
-    box-sizing: border-box;
-    background-color: transparent;
-    outline: 1px solid rgba(149, 165, 166, 0.1);
-}
-
-.grid-cell:hover {
-    background-color: rgba(52, 152, 219, 0.2);
-}
-
-.grid-cell canvas {
-    display: block;
+#grid-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;

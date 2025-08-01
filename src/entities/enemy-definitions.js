@@ -226,4 +226,28 @@ export const ENEMY_DEFINITIONS = {
             }
         }
     },
+
+    bat: {
+        width: 46,
+        height: 30,
+        spriteKey: 'bat',
+        animations: {
+            idle: { frameCount: 12, speed: 0.1 },
+            ceiling_out: { frameCount: 7, speed: 0.1 },
+            flying: { frameCount: 7, speed: 0.1 },
+            ceiling_in: { frameCount: 7, speed: 0.1 },
+            hit: { frameCount: 5, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: 250,
+            contactDamage: 1000,
+        },
+        ai: {
+            type: 'bat',
+            aggroRadius: 150,
+            deaggroRadius: 300,
+            flyingSpeed: 20,
+        }
+    },
 };

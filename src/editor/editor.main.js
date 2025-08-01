@@ -437,7 +437,7 @@ class EditorController {
     _performResize(newWidth, newHeight, anchor) {
         const oldWidth = this.grid.width;
         const oldHeight = this.grid.height;
-        const oldTileData = this.grid.getTileDataForExport();
+        const oldTileData = [...this.grid.tileData];
         const oldObjects = JSON.parse(JSON.stringify(this.objectManager.getAllObjects()));
 
         const dx = newWidth - oldWidth;
@@ -447,31 +447,19 @@ class EditorController {
         let offsetY = 0;
 
         if (anchor.includes('right')) offsetX = -dx;
-        else if (anchor.includes('center')) offsetX = -dx / 2;
-
+        else if (anchor.includes('center')) offsetX = -Math.floor(dx / 2);
         if (anchor.includes('bottom')) offsetY = -dy;
-        else if (anchor.includes('middle')) offsetY = -dy / 2;
+        else if (anchor.includes('middle')) offsetY = -Math.floor(dy / 2);
 
-        this.grid.resize(newWidth, newHeight);
-
-        const newTileData = [];
-        oldTileData.forEach(tile => {
-            const newX = tile.x + offsetX;
-            const newY = tile.y + offsetY;
-            if (newX >= 0 && newX < newWidth && newY >= 0 && newY < newHeight) {
-                const index = newY * newWidth + newX;
-                this.grid.paintCell(index, tile.id);
-                newTileData.push({ x: newX, y: newY, id: tile.id });
-            }
-        });
+        this.grid.resize(newWidth, newHeight, oldTileData, anchor);
 
         const newObjects = [];
         this.objectManager.clear();
         oldObjects.forEach(obj => {
             const newX = obj.x + offsetX;
             const newY = obj.y + offsetY;
-
-            if (newX >= 0 && newX < newWidth && newY >= 0 && newY < newHeight) {
+            
+            if (newX >= 0 && (newX * 16) < (newWidth * 16) && newY >= 0 && (newY * 16) < (newHeight * 16)) {
                 obj.x = newX;
                 obj.y = newY;
                 this.objectManager.objects.push(obj);
@@ -484,9 +472,9 @@ class EditorController {
     _onFileLoad(e) {
         const files = e.target.files;
         if (!files || files.length === 0) {
-            return; // No file selected
+            return;
         }
-        const file = files[0]; // Use the first selected file
+        const file = files[0];
 
         LevelImporter.load(file, (data) => {
             this.resetEditor(data.gridWidth, data.gridHeight);
