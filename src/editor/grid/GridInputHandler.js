@@ -2,22 +2,22 @@ import { GRID_CONSTANTS } from '../../utils/constants.js';
 
 export class GridInputHandler {
     constructor(context) {
-        /** @type {import('../EditorApp.js').EditorAppContext} */
+
         this.context = context;
-        this.gridContainer = null; // Will be assigned in init()
+        this.gridContainer = null;
         this.grid = context.grid;
-        
+
         this.lastHoveredIndex = -1;
 
-        // Bind methods once
+
         this._handleMouseDown = this._handleMouseDown.bind(this);
         this._handleMouseMove = this._handleMouseMove.bind(this);
         this._handleMouseUp = this._handleMouseUp.bind(this);
         this._handleContextMenu = this._handleContextMenu.bind(this);
     }
-    
+
     init() {
-        // Now it's safe to get the container, as grid.generate() has been called.
+
         this.gridContainer = this.grid.tileCanvas.parentElement;
         this._addEventListeners();
     }
@@ -46,6 +46,13 @@ export class GridInputHandler {
     }
 
     _handleMouseDown(e) {
+        const objectTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dynamic-object');
+        if (objectTarget && e.button === 0) {
+            if (this.context.state.currentTool.type !== 'select' && this.context.state.currentTool.type !== 'eraser') {
+                this.context.palette.selectTool('select');
+            }
+        }
+
         const coords = this._getGridCoordsFromEvent(e);
         this.context.toolManager.onMouseDown(e, coords);
     }
