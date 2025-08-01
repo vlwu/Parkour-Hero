@@ -1,10 +1,11 @@
 import { GRID_CONSTANTS } from '../../utils/constants.js';
 
 export class GridInputHandler {
-    constructor(gridContainer, grid, toolManager) {
+    constructor(gridContainer, grid, toolManager, uiManager) {
         this.gridContainer = gridContainer;
         this.grid = grid;
-        this.toolManager = toolManager; // Now takes a ToolManager
+        this.toolManager = toolManager;
+        this.uiManager = uiManager; // Added UIManager reference
 
         this.lastHoveredIndex = -1;
 
@@ -25,8 +26,7 @@ export class GridInputHandler {
 
     _handleContextMenu(e) {
         e.preventDefault();
-        // This could also be a tool manager event if desired
-        this.toolManager.context.app._onRightClick();
+        this.uiManager._onRightClick();
     }
 
     _getGridCoordsFromEvent(e) {
@@ -47,9 +47,9 @@ export class GridInputHandler {
 
     _handleMouseMove(e) {
         const coords = this._getGridCoordsFromEvent(e);
-
         this.toolManager.onMouseMove(e, coords);
 
+        // Hover logic is separate from tool logic
         if (coords.index !== this.lastHoveredIndex) {
             this.toolManager.onHover(coords);
             this.lastHoveredIndex = coords.index;
