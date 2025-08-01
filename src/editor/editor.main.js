@@ -76,7 +76,7 @@ class EditorApp {
 
         window.addEventListener('resize', () => this.context.grid.autoFitScale());
 
-        this._onPaletteSelection({ type: 'tile', id: '1' });
+        this._onPaletteSelection(this.context.palette.getSelection());
         await this._loadGameAssets();
         this._checkForEditMode();
 
@@ -120,14 +120,19 @@ class EditorApp {
             toolName = selection.id;
         }
 
-        state.currentTool = { type: toolName, id: selection.id };
+        state.currentTool = {
+            type: toolName,
+            id: selection.id,
+            selection: selection.selection
+        };
         toolManager.setActiveTool(toolName);
 
         if (selection.type === 'tool') {
             propertiesPanel.displayToolProperties(selection.id, { eraserSize: state.eraserSize });
             inputHandler.setCursor(selection.id === 'select' ? 'crosshair' : 'none');
         } else {
-            propertiesPanel.showItemDescription(selection.type, selection.id);
+            const descriptionId = selection.type === 'tile' ? selection.selection.ids[0] : selection.id;
+            propertiesPanel.showItemDescription(selection.type, descriptionId);
             inputHandler.setCursor('crosshair');
         }
     }

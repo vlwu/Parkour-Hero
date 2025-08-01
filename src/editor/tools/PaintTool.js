@@ -30,15 +30,32 @@ export class PaintTool extends Tool {
     }
 
     _paint(gridX, gridY) {
-        const tileId = this.state.currentTool.id;
-        const index = gridY * this.grid.width + gridX;
-        
-        if (index < 0 || index >= this.grid.tileData.length) return;
+        const tool = this.state.currentTool;
 
-        const oldId = this.grid.getTileId(index);
-        if (oldId !== tileId && !this.currentPaintAction.some(c => c.index === index)) {
-            this.currentPaintAction.push({ index, from: oldId, to: tileId });
-            this.grid.paintCell(index, tileId);
+        if (tool.type !== 'paint' || !tool.selection) {
+            return;
+        }
+
+        const selection = tool.selection;
+        for (let y = 0; y < selection.height; y++) {
+            for (let x = 0; x < selection.width; x++) {
+                const destX = gridX + x;
+                const destY = gridY + y;
+                const index = destY * this.grid.width + destX;
+
+                if (destX < 0 || destX >= this.grid.width || destY < 0 || destY >= this.grid.height) {
+                    continue;
+                }
+
+                const tileId = selection.ids[y * selection.width + x];
+                if (tileId === '0') continue;
+
+                const oldId = this.grid.getTileId(index);
+                if (oldId !== tileId && !this.currentPaintAction.some(c => c.index === index)) {
+                    this.currentPaintAction.push({ index, from: oldId, to: tileId });
+                    this.grid.paintCell(index, tileId);
+                }
+            }
         }
     }
 }
