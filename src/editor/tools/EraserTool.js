@@ -2,12 +2,21 @@ import { Tool } from './Tool.js';
 import { PaintCommand } from '../commands/PaintCommand.js';
 import { DeleteObjectCommand } from '../commands/DeleteObjectCommand.js';
 import { CompositeCommand } from '../commands/CompositeCommand.js';
+import { GRID_CONSTANTS } from '../../utils/constants.js';
 
 export class EraserTool extends Tool {
     constructor(context) {
         super(context);
         this.isErasing = false;
         this.currentEraseAction = null;
+    }
+
+    activate() {
+        this.context.inputHandler.setCursor('none');
+    }
+
+    deactivate() {
+        this.state.pastePreview = null; // Use pastePreview as a generic tool preview state
     }
 
     onMouseDown(e, coords) {
@@ -42,6 +51,10 @@ export class EraserTool extends Tool {
             this.history.push(composite);
         }
         this.currentEraseAction = null;
+    }
+    
+    onHover({ gridX, gridY }) {
+        this.state.pastePreview = { gridX, gridY }; // Use pastePreview for cursor position
     }
 
     _erase(e, { gridX, gridY }) {

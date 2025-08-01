@@ -9,6 +9,9 @@ export class PlaceObjectTool extends Tool {
         const { newObject, replacedSpawn } = this.objectManager.addObject(type, pixelX, pixelY);
         
         this.history.push(new PlaceObjectCommand(this.objectManager, newObject, replacedSpawn));
-        this.context.selectObject(newObject.id);
+        
+        // Select the object and switch to the select tool for immediate manipulation
+        this.context.app.selectObject(newObject.id);
+        this.context.palette.selectTool('select');
     }
 }

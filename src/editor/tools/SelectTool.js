@@ -10,11 +10,14 @@ export class SelectTool extends Tool {
         this.isDragging = false;
         this.isSelecting = false;
         this.draggedObjectId = null;
-        this.dragInitialX = 0;
-        this.dragInitialY = 0;
+        this.objectDragStartPosition = null;
         this.dragStartX = 0;
         this.dragStartY = 0;
         this.selectionStartCoords = null;
+    }
+
+    activate() {
+        this.context.inputHandler.setCursor('crosshair');
     }
 
     onMouseDown(e, { gridX, gridY }) {
@@ -24,13 +27,13 @@ export class SelectTool extends Tool {
 
         if (objectTarget) {
             const id = parseInt(objectTarget.dataset.id, 10);
-            this.context.selectObject(id);
+            this.context.app.selectObject(id);
             this._startDrag(e, objectTarget);
         } else {
-            this.context.deselectObject();
+            this.context.app.deselectObject();
             this.isSelecting = true;
             this.selectionStartCoords = { x: gridX, y: gridY };
-            this.context.onSelectionChange(this.selectionStartCoords, this.selectionStartCoords);
+            this.context.selectionManager.onSelectionChange(this.selectionStartCoords, this.selectionStartCoords);
         }
     }
 
@@ -39,11 +42,11 @@ export class SelectTool extends Tool {
             const scale = this.grid.zoomLevel;
             const dx = (e.clientX - this.dragStartX) / (GRID_CONSTANTS.TILE_SIZE * scale);
             const dy = (e.clientY - this.dragStartY) / (GRID_CONSTANTS.TILE_SIZE * scale);
-            const newX = this.dragInitialX + dx;
-            const newY = this.dragInitialY + dy;
-            this.context.onObjectDrag(this.draggedObjectId, newX, newY);
+            const newX = this.objectDragStartPosition.x + dx;
+            const newY = this.objectDragStartPosition.y + dy;
+            this.context.app._onObjectDrag(this.draggedObjectId, newX, newY);
         } else if (this.isSelecting) {
-            this.context.onSelectionChange(this.selectionStartCoords, { x: gridX, y: gridY });
+            this.context.selectionManager.onSelectionChange(this.selectionStartCoords, { x: gridX, y: gridY });
         }
     }
 
@@ -53,11 +56,22 @@ export class SelectTool extends Tool {
             this._endDrag();
         }
         if (this.isSelecting) {
-            this.context.onSelectionEnd();
+            this.context.selectionManager.onSelectionEnd();
         }
         this.isDragging = false;
         this.isSelecting = false;
         this.draggedObjectId = null;
+    }
+    
+    onHover(e, { gridX, gridY }) {
+        const hoveredObject = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dynamic-object');
+        const selection = this.context.state.selection;
+        
+        if (hoveredObject || (selection && gridX >= selection.x && gridX < selection.x + selection.width && gridY >= selection.y && gridY < selection.y + selection.height)) {
+            this.context.inputHandler.setCursor('move');
+        } else {
+            this.context.inputHandler.setCursor('crosshair');
+        }
     }
 
     _startDrag(e, objectTarget) {
@@ -70,8 +84,7 @@ export class SelectTool extends Tool {
         
         this.dragStartX = e.clientX;
         this.dragStartY = e.clientY;
-        this.dragInitialX = obj.x;
-        this.dragInitialY = obj.y;
+        this.objectDragStartPosition = { x: obj.x, y: obj.y };
         
         objectTarget.classList.add('dragging');
     }
@@ -86,9 +99,9 @@ export class SelectTool extends Tool {
 
         const finalX = round(obj.x);
         const finalY = round(obj.y);
-        const initial = { x: this.dragInitialX, y: this.dragInitialY };
+        const initial = this.objectDragStartPosition;
 
-        if (initial.x !== finalX || initial.y !== finalY) {
+        if (initial && (initial.x !== finalX || initial.y !== finalY)) {
             this.history.push(new MoveObjectCommand(this.objectManager, id, initial, { x: finalX, y: finalY }));
         }
 

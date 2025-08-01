@@ -74,6 +74,7 @@ class EditorApp {
         this.context.grid.generate();
         this.context.uiManager.init();
         this.context.keyboardManager.init();
+        this.context.inputHandler.init(); // Initialize the input handler AFTER the grid is generated
 
         Toolbar.setup({
             onNew: () => this.resetEditor(28, 15),
@@ -118,7 +119,7 @@ class EditorApp {
             loadingOverlay.textContent = 'Error loading assets. Preview disabled.';
             setTimeout(() => loadingOverlay.remove(), 3000);
         } finally {
-            if (loadingOverlay) loadingOverlay.remove();
+            if (loadingOverlay.parentElement) loadingOverlay.remove();
         }
     }
     
@@ -194,15 +195,32 @@ class EditorApp {
         const deltaTime = (timestamp - this.lastTimestamp) / 1000;
         this.lastTimestamp = timestamp;
 
-        this.context.grid.overlayCtx.clearRect(0, 0, this.context.grid.overlayCanvas.width, this.context.grid.overlayCanvas.height);
-        this.context.selectionManager.update(deltaTime);
-        this.context.selectionManager.draw();
+        const { grid, state, selectionManager, clipboardManager } = this.context;
+        grid.overlayCtx.clearRect(0, 0, grid.overlayCanvas.width, grid.overlayCanvas.height);
         
-        if (this.context.state.currentTool.type === 'paste' && this.context.state.pastePreview) {
-            this.context.clipboardManager.drawPastePreview();
+        selectionManager.update(deltaTime);
+        selectionManager.draw();
+        
+        if (state.currentTool.type === 'eraser' && state.pastePreview) {
+            this._drawEraserCursor();
         }
-        
+        if (state.currentTool.type === 'paste' && state.pastePreview) {
+            clipboardManager.drawPastePreview();
+        }
         requestAnimationFrame(this._animationLoop);
+    }
+    
+    _drawEraserCursor() {
+        const { state, grid } = this.context;
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const ctx = grid.overlayCtx;
+        const size = state.eraserSize * TILE_SIZE;
+        const brushRadius = Math.floor(state.eraserSize / 2);
+        const x = (state.pastePreview.gridX - brushRadius) * TILE_SIZE;
+        const y = (state.pastePreview.gridY - brushRadius) * TILE_SIZE;
+        ctx.strokeStyle = 'rgba(231, 76, 60, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, size, size);
     }
     
     resetEditor(width, height) {

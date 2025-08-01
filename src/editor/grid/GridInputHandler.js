@@ -1,20 +1,24 @@
 import { GRID_CONSTANTS } from '../../utils/constants.js';
-import { DOM } from '../ui/DOM.js';
 
 export class GridInputHandler {
     constructor(context) {
         /** @type {import('../EditorApp.js').EditorAppContext} */
         this.context = context;
-        this.gridContainer = DOM.gridContainer;
+        this.gridContainer = null; // Will be assigned in init()
         this.grid = context.grid;
-
+        
         this.lastHoveredIndex = -1;
 
+        // Bind methods once
         this._handleMouseDown = this._handleMouseDown.bind(this);
         this._handleMouseMove = this._handleMouseMove.bind(this);
         this._handleMouseUp = this._handleMouseUp.bind(this);
         this._handleContextMenu = this._handleContextMenu.bind(this);
-
+    }
+    
+    init() {
+        // Now it's safe to get the container, as grid.generate() has been called.
+        this.gridContainer = this.grid.tileCanvas.parentElement;
         this._addEventListeners();
     }
 
@@ -50,34 +54,9 @@ export class GridInputHandler {
         const coords = this._getGridCoordsFromEvent(e);
         this.context.toolManager.onMouseMove(e, coords);
 
-        // Hover logic is separate from tool logic
         if (coords.index !== this.lastHoveredIndex) {
-            // This could also be a tool manager event if desired
-            this._onHover(coords);
+            this.context.toolManager.onHover(e, coords);
             this.lastHoveredIndex = coords.index;
-        }
-    }
-    
-    _onHover({ gridX, gridY }) {
-        const { state, inputHandler } = this.context;
-        if(state.currentTool.type === 'eraser' || state.currentTool.type === 'paste') {
-            const pixelX = gridX * GRID_CONSTANTS.TILE_SIZE + GRID_CONSTANTS.TILE_SIZE / 2;
-            const pixelY = gridY * GRID_CONSTANTS.TILE_SIZE + GRID_CONSTANTS.TILE_SIZE / 2;
-            state.pastePreview = { pixelX, pixelY, gridX, gridY };
-        } else {
-            state.pastePreview = null;
-        }
-
-        const selection = state.selection;
-        if (selection && gridX >= selection.x && gridX < selection.x + selection.width &&
-            gridY >= selection.y && gridY < selection.y + selection.height) {
-            inputHandler.setCursor('move');
-        } else if (state.currentTool.type === 'select') {
-            inputHandler.setCursor('crosshair');
-        } else if (state.currentTool.type === 'eraser') {
-            inputHandler.setCursor('none');
-        } else {
-            inputHandler.setCursor('crosshair');
         }
     }
 
