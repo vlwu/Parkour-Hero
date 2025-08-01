@@ -10,52 +10,6 @@ import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from './enemy-definitions.js';
 
 
-const staticPlatformDefinitions = {
-    'wood_third_h': { spriteConfig: { srcX: 192, srcY: 0, width: 48, height: 16 }, collisionBox: { width: 48, height: 16 }, oneway: false, surfaceType: 'wood' },
-    'wood_third_v': { spriteConfig: { srcX: 240, srcY: 0, width: 16, height: 48 }, collisionBox: { width: 16, height: 48 }, oneway: false, surfaceType: 'wood' },
-    'wood_ninth_sq': { spriteConfig: { srcX: 192, srcY: 16, width: 16, height: 16 }, collisionBox: { width: 16, height: 16 }, oneway: false, surfaceType: 'wood' },
-    'wood_four_ninths_sq': { spriteConfig: { srcX: 208, srcY: 16, width: 32, height: 32 }, collisionBox: { width: 32, height: 32 }, oneway: false, surfaceType: 'wood' },
-    'stone_third_h': { spriteConfig: { srcX: 192, srcY: 64, width: 48, height: 16 }, collisionBox: { width: 48, height: 16 }, oneway: false, surfaceType: 'stone' },
-    'stone_third_v': { spriteConfig: { srcX: 240, srcY: 64, width: 16, height: 48 }, collisionBox: { width: 16, height: 48 }, oneway: false, surfaceType: 'stone' },
-    'stone_ninth_sq': { spriteConfig: { srcX: 192, srcY: 80, width: 16, height: 16 }, collisionBox: { width: 16, height: 16 }, oneway: false, surfaceType: 'stone' },
-    'stone_four_ninths_sq': { spriteConfig: { srcX: 208, srcY: 80, width: 32, height: 32 }, collisionBox: { width: 32, height: 32 }, oneway: false, surfaceType: 'stone' },
-    'gold_third_h': { spriteConfig: { srcX: 272, srcY: 128, width: 48, height: 16 }, collisionBox: { width: 48, height: 16 }, oneway: false, surfaceType: 'stone' },
-    'gold_third_v': { spriteConfig: { srcX: 320, srcY: 128, width: 16, height: 48 }, collisionBox: { width: 16, height: 48 }, oneway: false, surfaceType: 'stone' },
-    'gold_ninth_sq': { spriteConfig: { srcX: 272, srcY: 144, width: 16, height: 16 }, collisionBox: { width: 16, height: 16 }, oneway: false, surfaceType: 'stone' },
-    'gold_four_ninths_sq': { spriteConfig: { srcX: 288, srcY: 144, width: 32, height: 32 }, collisionBox: { width: 32, height: 32 }, oneway: false, surfaceType: 'stone' },
-    'orange_dirt_third_h': { spriteConfig: { srcX: 192, srcY: 128, width: 48, height: 16 }, collisionBox: { width: 48, height: 16 }, oneway: false, surfaceType: 'orange_dirt' },
-    'orange_dirt_third_v': { spriteConfig: { srcX: 240, srcY: 128, width: 16, height: 48 }, collisionBox: { width: 16, height: 48 }, oneway: false, surfaceType: 'orange_dirt' },
-    'orange_dirt_ninth_sq': { spriteConfig: { srcX: 192, srcY: 144, width: 16, height: 16 }, collisionBox: { width: 16, height: 16 }, oneway: false, surfaceType: 'orange_dirt' },
-    'orange_dirt_four_ninths_sq': { spriteConfig: { srcX: 208, srcY: 144, width: 32, height: 32 }, collisionBox: { width: 32, height: 32 }, oneway: false, surfaceType: 'orange_dirt' },
-};
-
-class StaticPlatform {
-    constructor(x, y, config) {
-        const def = staticPlatformDefinitions[config.type];
-        this.x = x;
-        this.y = y;
-        this.width = def.collisionBox.width;
-        this.height = def.collisionBox.height;
-        this.type = config.type;
-        this.spriteConfig = def.spriteConfig;
-        this.surfaceType = def.surfaceType;
-        this.solid = true;
-        this.oneway = def.oneway;
-    }
-    get hitbox() { return { x: this.x - this.width / 2, y: this.y - this.height / 2, width: this.width, height: this.height }; }
-    update() {}
-    render(ctx, assets, camera) {
-        const sprite = assets['block'];
-        if (!sprite) return;
-        const drawX = this.x - this.width / 2;
-        const drawY = this.y - this.height / 2;
-        if (!camera.isVisible(drawX, drawY, this.width, this.height)) return;
-        ctx.drawImage(sprite, this.spriteConfig.srcX, this.spriteConfig.srcY, this.spriteConfig.width, this.spriteConfig.height, drawX, drawY, this.width, this.height);
-    }
-    reset() {}
-    onCollision() {}
-}
-
 const trapFactory = {
   fire_trap: Traps.FireTrap,
   spike: Traps.Spikes,
@@ -69,11 +23,6 @@ const trapFactory = {
   saw: Traps.Saw,
   slime_puddle: Traps.SlimePuddle,
 };
-
-Object.keys(staticPlatformDefinitions).forEach(type => {
-    trapFactory[type] = StaticPlatform;
-});
-
 
 export class Level {
   constructor(levelConfig, entityManager) {
@@ -125,11 +74,50 @@ export class Level {
     const allEntities = [
         ...(levelConfig.entities || [])
     ];
+    const fractionalPlatformTypes = {
+        'wood_third_h': { w: 3, h: 1, ids: [13, 14, 15] },
+        'wood_third_v': { w: 1, h: 3, ids: [16, 38, 60] },
+        'wood_ninth_sq': { w: 1, h: 1, ids: [35] },
+        'wood_four_ninths_sq': { w: 2, h: 2, ids: [36, 37, 58, 59] },
+        'stone_third_h': { w: 3, h: 1, ids: [101, 102, 103] },
+        'stone_third_v': { w: 1, h: 3, ids: [104, 126, 148] },
+        'stone_ninth_sq': { w: 1, h: 1, ids: [123] },
+        'stone_four_ninths_sq': { w: 2, h: 2, ids: [124, 125, 146, 147] },
+        'gold_third_h': { w: 3, h: 1, ids: [194, 195, 196] },
+        'gold_third_v': { w: 1, h: 3, ids: [197, 219, 241] },
+        'gold_ninth_sq': { w: 1, h: 1, ids: [216] },
+        'gold_four_ninths_sq': { w: 2, h: 2, ids: [217, 218, 239, 240] },
+        'orange_dirt_third_h': { w: 3, h: 1, ids: [189, 190, 191] },
+        'orange_dirt_third_v': { w: 1, h: 3, ids: [192, 214, 236] },
+        'orange_dirt_ninth_sq': { w: 1, h: 1, ids: [211] },
+        'orange_dirt_four_ninths_sq': { w: 2, h: 2, ids: [212, 213, 234, 235] }
+    };
 
     allEntities.forEach(entityData => {
         const type = entityData[0];
         const worldX = entityData[1] * GRID_CONSTANTS.TILE_SIZE;
         const worldY = entityData[2] * GRID_CONSTANTS.TILE_SIZE;
+
+        if (fractionalPlatformTypes[type]) {
+            const platform = fractionalPlatformTypes[type];
+            const platformPixelWidth = platform.w * GRID_CONSTANTS.TILE_SIZE;
+            const platformPixelHeight = platform.h * GRID_CONSTANTS.TILE_SIZE;
+
+            const startGridX = Math.round((worldX - platformPixelWidth / 2) / GRID_CONSTANTS.TILE_SIZE);
+            const startGridY = Math.round((worldY - platformPixelHeight / 2) / GRID_CONSTANTS.TILE_SIZE);
+
+            for (let y = 0; y < platform.h; y++) {
+                for (let x = 0; x < platform.w; x++) {
+                    const tileX = startGridX + x;
+                    const tileY = startGridY + y;
+                    if (tileX >= 0 && tileX < this.gridWidth && tileY >= 0 && tileY < this.gridHeight) {
+                        const tileIndexInPlatform = y * platform.w + x;
+                        this.tiles[tileY][tileX] = platform.ids[tileIndexInPlatform];
+                    }
+                }
+            }
+            return;
+        }
 
         const config = { type };
 
