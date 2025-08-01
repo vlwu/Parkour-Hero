@@ -184,6 +184,33 @@ body {
     image-rendering: crisp-edges;
 }
 
+#tools-palette {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tool-button {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 1.5em;
+    background-color: #4a627a;
+    border: 2px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tool-button:hover {
+    background-color: #5c7a99;
+}
+
+.tool-button.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-color);
+}
+
 #items-palette, #traps-palette, #enemies-palette {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));

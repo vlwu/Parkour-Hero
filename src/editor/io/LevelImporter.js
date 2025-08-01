@@ -1,7 +1,8 @@
 export class LevelImporter {
     static _decodeRLEToTileData(rleString, width, height) {
-        if (!rleString) return [];
         const tileData = [];
+        if (!rleString) return tileData;
+
         const parts = rleString.split(',');
         let i = 0;
         for (const part of parts) {
@@ -26,14 +27,7 @@ export class LevelImporter {
         reader.onload = (event) => {
             try {
                 const levelData = JSON.parse(event.target.result);
-
-                if (levelData.gridWidth && typeof levelData.tileData === 'string') {
-
-                    levelData.tileData = this._decodeRLEToTileData(levelData.tileData, levelData.gridWidth, levelData.gridHeight);
-                    callback(levelData);
-                } else {
-                    alert('Invalid level format. The level file must use the new RLE string format for "tileData".');
-                }
+                callback(levelData);
             } catch (err) {
                 alert('Error parsing JSON file: ' + err.message);
             }
