@@ -7,6 +7,7 @@ import { FlyingSlamAI } from './FlyingSlamAI.js';
 import { RadishAI } from './RadishAI.js';
 import { BeeAI } from './BeeAI.js';
 import { BatAI } from './BatAI.js';
+import { GhostAI } from './GhostAI.js';
 
 const aiBehaviorMap = {
     'patrol': PatrolAI,
@@ -18,17 +19,9 @@ const aiBehaviorMap = {
     'radish': RadishAI,
     'bee': BeeAI,
     'bat': BatAI,
+    'ghost': GhostAI,
 };
 
-/**
- * Creates an instance of an AI behavior strategy based on the provided type.
- * @param {string} type - The type of AI behavior to create (e.g., 'patrol').
- * @param {number} entityId - The ID of the enemy entity.
- * @param {object} entityManager - The EntityManager instance.
- * @param {object} level - The current level object.
- * @param {number|null} playerEntityId - The player's entity ID.
- * @returns {BaseAI|null} An instance of the requested AI behavior class or null if not found.
- */
 export function createAIBehavior(type, entityId, entityManager, level, playerEntityId) {
     const BehaviorClass = aiBehaviorMap[type];
     if (BehaviorClass) {

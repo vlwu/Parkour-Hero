@@ -56,12 +56,12 @@ export class EnemySystem {
             } else if (enemy.type === 'radish' && !enemy.isDead) {
                 if (enemy.radishState === 'flying') {
                     enemy.radishState = 'falling';
-                    vel.vy = 150; // Set initial downward velocity
-                    killable.stompable = false; // Cant be stomped again until grounded
+                    vel.vy = 150;
+                    killable.stompable = false;
                     enemy.immunityTimer = 0.5;
                     const pos = entityManager.getComponent(enemyId, PositionComponent);
 
-                    // Create two leaf particles
+
                     eventBus.publish('createParticles', { x: pos.x + collision.width / 2, y: pos.y, type: 'radish_leaf', leafIndex: 0 });
                     eventBus.publish('createParticles', { x: pos.x + collision.width / 2, y: pos.y, type: 'radish_leaf', leafIndex: 1 });
 
@@ -141,6 +141,15 @@ export class EnemySystem {
                 }
             }
 
+            if (enemy.type === 'ghost' && enemy.ai.particleDropInterval && Math.abs(vel.vx) > 0 && enemy.ghostState === 'visible') {
+                enemy.particleDropTimer -= dt;
+                if (enemy.particleDropTimer <= 0) {
+                    enemy.particleDropTimer = enemy.ai.particleDropInterval + (Math.random() * 0.1);
+                    const particlePos = { x: pos.x + col.width / 2, y: pos.y + col.height };
+                    eventBus.publish('createParticles', { ...particlePos, type: 'ghost_particles' });
+                }
+            }
+
             this._updateAnimation(dt, id, entityManager);
         }
     }
@@ -173,7 +182,7 @@ export class EnemySystem {
             renderable.animationTimer -= animDef.speed;
             renderable.animationFrame++;
             if (renderable.animationFrame >= animDef.frameCount) {
-                const nonLoopingStates = ['spikes_out', 'spikes_in', 'shell_wall_hit', 'hit'];
+                const nonLoopingStates = ['spikes_out', 'spikes_in', 'shell_wall_hit', 'hit', 'appear', 'disappear'];
                 if (nonLoopingStates.includes(renderable.animationState)) {
                     renderable.animationFrame = animDef.frameCount - 1;
                 } else {

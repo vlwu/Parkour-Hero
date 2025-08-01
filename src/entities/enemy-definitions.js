@@ -247,7 +247,32 @@ export const ENEMY_DEFINITIONS = {
             type: 'bat',
             aggroRadius: 150,
             deaggroRadius: 300,
-            flyingSpeed: 30,
+            flyingSpeed: 20,
+        }
+    },
+
+    ghost: {
+        width: 44,
+        height: 30,
+        spriteKey: 'ghost',
+        animations: {
+            idle: { frameCount: 10, speed: 0.1 },
+            hit: { frameCount: 5, speed: 0.1 },
+            appear: { frameCount: 4, speed: 0.1 },
+            disappear: { frameCount: 4, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: 300,
+            contactDamage: 1000,
+        },
+        ai: {
+            type: 'ghost',
+            patrolSpeed: 40,
+            idleTime: 0.5,
+            visibleDuration: 2.0,
+            invisibleDuration: 2.0,
+            particleDropInterval: 0.5,
         }
     },
 };
