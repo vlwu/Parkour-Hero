@@ -160,7 +160,6 @@ export class PlayerStateSystem {
 
         if (ctrl.isInMud) {
             if (input.jumpPressedThisFrame) {
-                ctrl.isInMud = false;
                 vel.vy = -ctrl.jumpForce;
                 ctrl.jumpCount = 1;
                 eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });

@@ -91,7 +91,7 @@ export class MovementSystem {
     }
 
     _applyVerticalMovement(dt, vel, col, ctrl, state) {
-        if (ctrl.isInMud) {
+        if (ctrl.isInMud && vel.vy >= 0) {
             vel.vy = 0;
             return;
         }

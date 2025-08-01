@@ -77,10 +77,6 @@ const properties = {
     default: { type: 'empty', solid: false }
 };
 
-// --- CORRECTED SPECIAL TILE LOGIC ---
-// The special tileset is organized into 3x3 blocks for each material type
-// within a grid that has 12 columns. This logic correctly assigns properties
-// based on this 2D layout.
 const specialColumns = TILESET_CONFIG_SPECIAL.columns;
 
 // Sand: 3x3 block starting at column 0
