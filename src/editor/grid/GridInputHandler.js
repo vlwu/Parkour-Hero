@@ -56,12 +56,13 @@ export class GridInputHandler {
         const { pixelX, pixelY, gridX, gridY } = this._getGridCoordsFromEvent(e);
         const objectTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dynamic-object');
 
-        if (e.button === 0) {
+        if (e.button === 0) { // Left click
             const tool = this.callbacks.getCurrentTool();
             switch (tool) {
                 case 'paint':
-                    if (objectTarget) this._startDrag(e, objectTarget);
-                    else {
+                    if (objectTarget) {
+                        this._startDrag(e, objectTarget);
+                    } else {
                         this.isPainting = true;
                         this.callbacks.onPaintStart();
                         this.callbacks.onPaint(gridX, gridY);
@@ -72,13 +73,23 @@ export class GridInputHandler {
                     break;
                 case 'eraser':
                     this.isErasing = true;
-                    this.callbacks.onPaintStart();
-                    this.callbacks.onErase(gridX, gridY);
+                    this.callbacks.onPaintStart(); // Unified start for undo
+                    if (objectTarget) {
+                        const id = parseInt(objectTarget.dataset.id, 10);
+                        this.callbacks.onEraseObject(id);
+                    } else {
+                        this.callbacks.onErase(gridX, gridY);
+                    }
                     break;
                 case 'select':
-                    this.isSelecting = true;
-                    this.selectionStartCoords = { x: gridX, y: gridY };
-                    this.callbacks.onSelectionChange(this.selectionStartCoords, this.selectionStartCoords);
+                    if (objectTarget) {
+                        const id = parseInt(objectTarget.dataset.id);
+                        this.callbacks.onObjectSelect(id);
+                    } else {
+                        this.isSelecting = true;
+                        this.selectionStartCoords = { x: gridX, y: gridY };
+                        this.callbacks.onSelectionChange(this.selectionStartCoords, this.selectionStartCoords);
+                    }
                     break;
                 case 'paste':
                     this.callbacks.onPaste(gridX, gridY);
@@ -112,10 +123,18 @@ export class GridInputHandler {
             const newX = this.dragInitialX + dx;
             const newY = this.dragInitialY + dy;
             this.callbacks.onObjectDrag(this.draggedObjectId, newX, newY);
-        } else if (this.isPainting || this.isErasing) {
+        } else if (this.isPainting) {
             if (gridX < 0 || gridX >= this.grid.width || gridY < 0 || gridY >= this.grid.height) return;
-            if (this.isErasing) this.callbacks.onErase(gridX, gridY);
-            else this.callbacks.onPaint(gridX, gridY);
+            this.callbacks.onPaint(gridX, gridY);
+        } else if (this.isErasing) {
+            const objectTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dynamic-object');
+            if (objectTarget) {
+                const id = parseInt(objectTarget.dataset.id, 10);
+                this.callbacks.onEraseObject(id);
+            } else {
+                if (gridX < 0 || gridX >= this.grid.width || gridY < 0 || gridY >= this.grid.height) return;
+                this.callbacks.onErase(gridX, gridY);
+            }
         } else if (this.isSelecting) {
             this.callbacks.onSelectionChange(this.selectionStartCoords, { x: gridX, y: gridY });
         } else {

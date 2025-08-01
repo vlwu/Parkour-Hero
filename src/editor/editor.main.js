@@ -48,6 +48,8 @@ class EditorController {
             onPaintEnd: this._onPaintEnd.bind(this),
             onObjectPlace: this._onObjectPlace.bind(this),
             onObjectDelete: this._onObjectDelete.bind(this),
+            onObjectSelect: this._onObjectSelect.bind(this),
+            onEraseObject: this._onEraseObject.bind(this),
             onObjectDragStart: this._onObjectDragStart.bind(this),
             onObjectDrag: this._onObjectDrag.bind(this),
             onObjectDragEnd: this._onObjectDragEnd.bind(this),
@@ -308,7 +310,7 @@ class EditorController {
         this._clearSelection();
         this.pastePreview = null;
         this.clipboard = null;
-    
+
         if (selection.type === 'tool') {
             this.currentTool = { type: selection.id };
             this.propertiesPanel.displayToolProperties(selection.id, { eraserSize: this.eraserSize });
@@ -358,7 +360,11 @@ class EditorController {
     }
 
     _onPaintStart() {
-        this.currentPaintAction = { type: 'paint', changes: [] };
+        if (this.currentTool.type === 'eraser') {
+            this.currentPaintAction = { type: 'erase', tileChanges: [], deletedObjects: [] };
+        } else {
+            this.currentPaintAction = { type: 'paint', changes: [] };
+        }
     }
 
     _onPaint(gridX, gridY) {
@@ -374,7 +380,7 @@ class EditorController {
     }
 
     _onErase(gridX, gridY) {
-        if (!this.currentPaintAction) this.currentPaintAction = { type: 'paint', changes: [] };
+        if (!this.currentPaintAction || this.currentTool.type !== 'eraser') return;
 
         const brushRadius = Math.floor(this.eraserSize / 2);
         for (let y = -brushRadius; y <= brushRadius; y++) {
@@ -384,8 +390,8 @@ class EditorController {
                 if (currentX >= 0 && currentX < this.grid.width && currentY >= 0 && currentY < this.grid.height) {
                     const index = currentY * this.grid.width + currentX;
                     const oldId = this.grid.getTileId(index);
-                    if (oldId !== '0' && !this.currentPaintAction.changes.some(c => c.index === index)) {
-                        this.currentPaintAction.changes.push({ index, from: oldId, to: '0' });
+                    if (oldId !== '0' && !this.currentPaintAction.tileChanges.some(c => c.index === index)) {
+                        this.currentPaintAction.tileChanges.push({ index, from: oldId, to: '0' });
                         this.grid.paintCell(index, '0');
                     }
                 }
@@ -393,9 +399,22 @@ class EditorController {
         }
     }
 
+    _onEraseObject(id) {
+        if (!this.currentPaintAction || this.currentTool.type !== 'eraser') return;
+        const objectToDelete = this.objectManager.getObject(id);
+        if (objectToDelete && objectToDelete.type !== 'player_spawn' && !this.currentPaintAction.deletedObjects.some(o => o.id === id)) {
+            this.currentPaintAction.deletedObjects.push(JSON.parse(JSON.stringify(objectToDelete)));
+            this.objectManager.deleteObject(id);
+        }
+    }
 
     _onPaintEnd() {
-        if (this.currentPaintAction && this.currentPaintAction.changes.length > 0) {
+        if (!this.currentPaintAction) return;
+        const hasTileChanges = (this.currentPaintAction.changes && this.currentPaintAction.changes.length > 0) ||
+                               (this.currentPaintAction.tileChanges && this.currentPaintAction.tileChanges.length > 0);
+        const hasObjectChanges = this.currentPaintAction.deletedObjects && this.currentPaintAction.deletedObjects.length > 0;
+
+        if (hasTileChanges || hasObjectChanges) {
             this.history.push(this.currentPaintAction);
         }
         this.currentPaintAction = null;
@@ -420,6 +439,11 @@ class EditorController {
         this.history.push({ type: 'delete_object', obj: objectToDelete });
         if (this.selectedObject && this.selectedObject.id === id) { this.deselectObject(); }
         this.objectManager.deleteObject(id);
+    }
+
+    _onObjectSelect(id) {
+        const obj = this.objectManager.getObject(id);
+        this.selectObject(obj);
     }
 
     _onObjectDragStart(id) {
@@ -515,7 +539,7 @@ class EditorController {
         oldObjects.forEach(obj => {
             const newX = obj.x + offsetX;
             const newY = obj.y + offsetY;
-            
+
             if (newX >= 0 && (newX * 16) < (newWidth * 16) && newY >= 0 && (newY * 16) < (newHeight * 16)) {
                 obj.x = newX;
                 obj.y = newY;
@@ -532,17 +556,17 @@ class EditorController {
             return;
         }
         const file = files[0];
-    
+
         LevelImporter.load(file, (data) => {
             if (!data.gridWidth || !data.gridHeight || !data.tileData) {
                 alert('Invalid level file format.');
                 return;
             }
-    
+
             this.resetEditor(data.gridWidth, data.gridHeight);
             DOM.levelNameInput.value = data.name;
             DOM.backgroundInput.value = data.background || 'background_blue';
-    
+
             if (typeof data.tileData === 'string') {
                 const decodedTileData = LevelImporter._decodeRLEToTileData(data.tileData, data.gridWidth, data.gridHeight);
                 this.grid.tileData = new Array(this.grid.width * this.grid.height).fill(0);
@@ -552,7 +576,7 @@ class EditorController {
                 });
                 this.grid.drawAllTiles();
             }
-    
+
             this.objectManager.load(data);
             this.history.clear();
         });
@@ -617,20 +641,34 @@ class EditorController {
         const isUndo = direction === 'undo';
         switch (action.type) {
             case 'paint':
-                action.changes.forEach(c => this.grid.paintCell(c.index, isUndo ? c.from : c.to)); break;
+                action.changes.forEach(c => this.grid.paintCell(c.index, isUndo ? c.from : c.to));
+                break;
+            case 'erase':
+                action.tileChanges.forEach(c => this.grid.paintCell(c.index, isUndo ? c.from : c.to));
+                action.deletedObjects.forEach(obj => {
+                    if (isUndo) {
+                        this.objectManager.objects.push(obj);
+                    } else {
+                        this.objectManager.deleteObject(obj.id);
+                    }
+                });
+                this.objectManager.render();
+                break;
             case 'place_object':
                 if (isUndo) {
                     this.objectManager.deleteObject(action.obj.id);
-                    if(action.replaced) this.objectManager.objects.push(action.replaced);
+                    if (action.replaced) this.objectManager.objects.push(action.replaced[0]);
                 } else {
-                    if(action.replaced) this.objectManager.deleteObject(action.replaced.id);
+                    if (action.replaced) this.objectManager.deleteObject(action.replaced[0].id);
                     this.objectManager.objects.push(action.obj);
                 }
-                this.objectManager.render(); break;
+                this.objectManager.render();
+                break;
             case 'delete_object':
                 if (isUndo) this.objectManager.objects.push(action.obj);
                 else this.objectManager.deleteObject(action.obj.id);
-                this.objectManager.render(); break;
+                this.objectManager.render();
+                break;
             case 'move_object':
                 const movedObj = this.objectManager.getObject(action.id);
                 if (movedObj) {
@@ -906,7 +944,7 @@ class EditorController {
         });
         this.objectManager.render();
 
-        // For now, let's just push paint changes to history
+
         if (paintChanges.length > 0) {
             this.history.push({ type: 'paint', changes: paintChanges });
         }
