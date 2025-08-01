@@ -454,9 +454,16 @@ class EditorController {
     }
 
     _onObjectDrag(id, newX, newY) {
-        this.objectManager.updateObjectProp(id, 'x', newX);
-        this.objectManager.updateObjectProp(id, 'y', newY);
-        this.propertiesPanel.displayObject(this.objectManager.getObject(id));
+        const obj = this.objectManager.getObject(id);
+        if (!obj) return;
+        obj.x = newX;
+        obj.y = newY;
+        const el = DOM.gridContainer.querySelector(`.dynamic-object[data-id='${id}']`);
+        if (el) {
+            el.style.left = `${obj.x * GRID_CONSTANTS.TILE_SIZE - (obj.width / 2)}px`;
+            el.style.top = `${obj.y * GRID_CONSTANTS.TILE_SIZE - (obj.height / 2)}px`;
+        }
+        this.propertiesPanel.displayObject(obj);
     }
 
     _onObjectDragEnd(id) {
@@ -541,7 +548,7 @@ class EditorController {
             const newX = obj.x + offsetX;
             const newY = obj.y + offsetY;
 
-            if (newX >= 0 && (newX * 16) < (newWidth * 16) && newY >= 0 && (newY * 16) < (newHeight * 16)) {
+            if (newX >= 0 && (newX * GRID_CONSTANTS.TILE_SIZE) < (newWidth * GRID_CONSTANTS.TILE_SIZE) && newY >= 0 && (newY * GRID_CONSTANTS.TILE_SIZE) < (newHeight * GRID_CONSTANTS.TILE_SIZE)) {
                 obj.x = newX;
                 obj.y = newY;
                 this.objectManager.objects.push(obj);
@@ -938,7 +945,7 @@ class EditorController {
             const newX = startX + objData.x;
             const newY = startY + objData.y;
             if (newX >= 0 && newX < this.grid.width && newY >= 0 && newY < this.grid.height) {
-                const { newObject } = this.objectManager.addObject(objData.type, newX * 16, newY * 16);
+                const { newObject } = this.objectManager.addObject(objData.type, newX * GRID_CONSTANTS.TILE_SIZE, newY * GRID_CONSTANTS.TILE_SIZE);
                 Object.assign(newObject, { ...objData, id: newObject.id, x: newX, y: newY });
                 placedObjects.push(newObject);
             }
