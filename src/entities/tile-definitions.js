@@ -14,7 +14,7 @@ export const TILESET_CONFIG_SPECIAL = {
 
 export const SPECIAL_TILE_ID_OFFSET = 1000;
 
-export const TILE_PROPERTIES = {
+const properties = {
 
     0: { type: 'empty', solid: false },
     1: { type: 'stone', solid: true }, 2: { type: 'stone', solid: true }, 3: { type: 'stone', solid: true },
@@ -74,20 +74,20 @@ export const TILE_PROPERTIES = {
     261: { type: 'orange_dirt', solid: true, collisionBox: { width: 16, height: 48 } },
     262: { type: 'orange_dirt', solid: true, collisionBox: { width: 32, height: 32 } },
 
-
-    [SPECIAL_TILE_ID_OFFSET + 1]: { type: 'sand', solid: true, interaction: 'sand' },
-    [SPECIAL_TILE_ID_OFFSET + 2]: { type: 'sand', solid: true, interaction: 'sand' },
-    [SPECIAL_TILE_ID_OFFSET + 3]: { type: 'sand', solid: true, interaction: 'sand' },
-    [SPECIAL_TILE_ID_OFFSET + 5]: { type: 'mud', solid: true, interaction: 'mud' },
-    [SPECIAL_TILE_ID_OFFSET + 6]: { type: 'mud', solid: true, interaction: 'mud' },
-    [SPECIAL_TILE_ID_OFFSET + 7]: { type: 'mud', solid: true, interaction: 'mud' },
-    [SPECIAL_TILE_ID_OFFSET + 9]: { type: 'ice', solid: true, interaction: 'ice' },
-    [SPECIAL_TILE_ID_OFFSET + 10]: { type: 'ice', solid: true, interaction: 'ice' },
-    [SPECIAL_TILE_ID_OFFSET + 11]: { type: 'ice', solid: true, interaction: 'ice' },
-
-
     default: { type: 'empty', solid: false }
 };
+
+for (let i = 1; i <= 12; i++) {
+    properties[SPECIAL_TILE_ID_OFFSET + i] = { type: 'sand', solid: true, interaction: 'sand' };
+}
+for (let i = 13; i <= 24; i++) {
+    properties[SPECIAL_TILE_ID_OFFSET + i] = { type: 'mud', solid: true, interaction: 'mud' };
+}
+for (let i = 25; i <= 36; i++) {
+    properties[SPECIAL_TILE_ID_OFFSET + i] = { type: 'ice', solid: true, interaction: 'ice' };
+}
+
+export const TILE_PROPERTIES = properties;
 
 export function getTileProperties(tileId) {
     return TILE_PROPERTIES[tileId] || TILE_PROPERTIES.default;
