@@ -14,6 +14,7 @@ import { assetManager } from '../managers/asset-manager.js';
 import { FontRenderer } from '../ui/font-renderer.js';
 import { GRID_CONSTANTS } from '../utils/constants.js';
 import { EditorState } from './EditorState.js';
+import { ToolManager } from './tools/ToolManager.js';
 
 // Command Imports
 import { CompositeCommand } from './commands/CompositeCommand.js';
@@ -24,52 +25,42 @@ import { MoveObjectCommand } from './commands/MoveObjectCommand.js';
 import { UpdatePropertyCommand } from './commands/UpdatePropertyCommand.js';
 import { ResizeCommand } from './commands/ResizeCommand.js';
 
-
 const round = (val) => Math.round(val * 100) / 100;
 
 class EditorApp {
     constructor() {
-        this.state = new EditorState();
-        this.grid = new Grid(28, 15);
-        this.objectManager = new ObjectManager(this.grid);
-        this.history = new HistoryManager(DOM.undoBtn, DOM.redoBtn);
+        /** @type {EditorAppContext} */
+        this.context = {
+            state: new EditorState(),
+            grid: new Grid(28, 15),
+            objectManager: new ObjectManager(this.grid),
+            history: new HistoryManager(DOM.undoBtn, DOM.redoBtn),
+            palette: null,
+            propertiesPanel: null,
+            assets: null,
+            fontRenderer: null,
+            selectObject: (id) => this.selectObject(id),
+            deselectObject: () => this.deselectObject(),
+            onSelectionChange: (start, current) => this._onSelectionChange(start, current),
+            onSelectionEnd: () => this._onSelectionEnd(),
+            onObjectDrag: (id, newX, newY) => this._onObjectDrag(id, newX, newY),
+            app: this,
+        };
 
-        this.objectDragStartPosition = null;
-        this.currentPaintAction = null;
-        this.objectPropChange = { isChanging: false, oldValue: 0 };
+        this.context.palette = new Palette(this._onPaletteSelection.bind(this));
+        this.context.propertiesPanel = new PropertiesPanel(this._onPropertyUpdate.bind(this));
+        
+        this.toolManager = new ToolManager(this.context);
+        this.inputHandler = new GridInputHandler(DOM.gridContainer, this.context.grid, this.toolManager);
+
         this.editingLevelIndex = null;
-        this.assets = null;
-        this.fontRenderer = null;
         this.engine = null;
         this.marchingAntsOffset = 0;
-
-        this.palette = new Palette(this._onPaletteSelection.bind(this));
-        this.propertiesPanel = new PropertiesPanel(this._onPropertyUpdate.bind(this));
-
-        this.inputHandler = new GridInputHandler(DOM.gridContainer, this.grid, {
-            getCurrentTool: () => this.state.currentTool.type,
-            onPaintStart: this._onPaintStart.bind(this),
-            onPaint: this._onPaint.bind(this),
-            onErase: this._onErase.bind(this),
-            onPaintEnd: this._onPaintEnd.bind(this),
-            onObjectPlace: this._onObjectPlace.bind(this),
-            onObjectDelete: this._onObjectDelete.bind(this),
-            onObjectSelect: this._onObjectSelect.bind(this),
-            onEraseObject: this._onEraseObject.bind(this),
-            onObjectDragStart: this._onObjectDragStart.bind(this),
-            onObjectDrag: this._onObjectDrag.bind(this),
-            onObjectDragEnd: this._onObjectDragEnd.bind(this),
-            onSelectionChange: this._onSelectionChange.bind(this),
-            onSelectionEnd: this._onSelectionEnd.bind(this),
-            onHover: this._onHover.bind(this),
-            onPaste: this._onPaste.bind(this),
-            onRightClick: this._onRightClick.bind(this),
-        });
     }
 
     init() {
-        this.grid.generate();
-        this.palette.populate();
+        this.context.grid.generate();
+        this.context.palette.populate();
         Toolbar.setup({
             onNew: () => this.resetEditor(28, 15),
             onResize: this._onResize.bind(this),
@@ -78,15 +69,15 @@ class EditorApp {
             onTestLevel: this._onTestLevel.bind(this),
             onUndo: this._onUndo.bind(this),
             onRedo: this._onRedo.bind(this),
-            onZoomIn: () => this.grid.zoom(0.1),
-            onZoomOut: () => this.grid.zoom(-0.1),
+            onZoomIn: () => this.context.grid.zoom(0.1),
+            onZoomOut: () => this.context.grid.zoom(-0.1),
             onCreateLevel: this._onCreateLevel.bind(this),
             onBack: this._onBack.bind(this),
             onCopySelection: () => this._handleSelectionAction('copy'),
             onCutSelection: () => this._handleSelectionAction('cut'),
             onDeleteSelection: () => this._handleSelectionAction('delete'),
         });
-        window.addEventListener('resize', () => this.grid.autoFitScale());
+        window.addEventListener('resize', () => this.context.grid.autoFitScale());
         window.addEventListener('keydown', (e) => {
             if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') {
                 return;
@@ -99,10 +90,10 @@ class EditorApp {
             if (e.key === 'Delete') { this._handleSelectionAction('delete'); }
             if (e.key === 'Escape') { this._onRightClick(); }
             if (!e.ctrlKey && e.key.toLowerCase() === 'e') {
-                this.palette.selectTool('eraser');
+                this.context.palette.selectTool('eraser');
             }
             if (!e.ctrlKey && e.key.toLowerCase() === 'v') {
-                this.palette.selectTool('select');
+                this.context.palette.selectTool('select');
             }
         });
         this._onPaletteSelection({ type: 'tile', id: '1' });
@@ -127,15 +118,15 @@ class EditorApp {
 
                 if (levelData.tileData) {
                     const decodedTileData = LevelImporter._decodeRLEToTileData(levelData.tileData, levelData.gridWidth, levelData.gridHeight);
-                    this.grid.tileData = new Array(this.grid.width * this.grid.height).fill(0);
+                    this.context.grid.tileData = new Array(this.context.grid.width * this.context.grid.height).fill(0);
                     decodedTileData.forEach(tile => {
-                        const index = tile.y * this.grid.width + tile.x;
-                        this.grid.tileData[index] = parseInt(tile.id, 10);
+                        const index = tile.y * this.context.grid.width + tile.x;
+                        this.context.grid.tileData[index] = parseInt(tile.id, 10);
                     });
-                    this.grid.drawAllTiles();
+                    this.context.grid.drawAllTiles();
                 }
-                this.objectManager.load(levelData);
-                this.history.clear();
+                this.context.objectManager.load(levelData);
+                this.context.history.clear();
 
                 DOM.createLevelBtn.textContent = 'Save Changes';
                 document.title = `Editing: ${levelData.name}`;
@@ -161,9 +152,9 @@ class EditorApp {
 
             await assetManager.loadCoreAssets();
             await assetManager.loadGameplayAssets();
-            this.assets = assetManager.assets;
+            this.context.assets = assetManager.assets;
 
-            this.fontRenderer = new FontRenderer(this.assets.font_spritesheet);
+            this.context.fontRenderer = new FontRenderer(this.context.assets.font_spritesheet);
             console.log("Editor: Game assets loaded successfully.");
             DOM.testLevelBtn.disabled = false;
         } catch (error) {
@@ -177,19 +168,19 @@ class EditorApp {
     }
 
     _onTestLevel() {
-        if (!this.assets || !this.fontRenderer) {
+        if (!this.context.assets || !this.context.fontRenderer) {
             alert("Game assets are not loaded yet. Please wait.");
             return;
         }
 
-        const { startPos, finalEntities } = this.objectManager.getObjectsForExport();
+        const { startPos, finalEntities } = this.context.objectManager.getObjectsForExport();
         const levelData = {
             name: `Preview: ${DOM.levelNameInput.value}`,
-            gridWidth: this.grid.width,
-            gridHeight: this.grid.height,
+            gridWidth: this.context.grid.width,
+            gridHeight: this.context.grid.height,
             background: DOM.backgroundInput.value,
             startPosition: startPos,
-            tileData: LevelExporter._encodeTileDataToRLE(this.grid.getTileDataForExport(), this.grid.width, this.grid.height),
+            tileData: LevelExporter._encodeTileDataToRLE(this.context.grid.getTileDataForExport(), this.context.grid.width, this.context.grid.height),
             entities: finalEntities,
         };
 
@@ -237,7 +228,7 @@ class EditorApp {
         const gl = particleCanvas.getContext('webgl2', { alpha: true });
         ctx.imageSmoothingEnabled = false;
 
-        this.engine = new Engine(gl, uiRoot, ctx, this.assets, {}, this.fontRenderer, assetManager);
+        this.engine = new Engine(gl, uiRoot, ctx, this.context.assets, {}, this.context.fontRenderer, assetManager);
         this.engine.renderer.previewMode = true;
         this.engine.soundManager.setEnabled(false);
         this.engine.loadLevelFromData(levelData);
@@ -314,9 +305,9 @@ class EditorApp {
     }
 
     resetEditor(width, height) {
-        this.grid.resize(width, height);
-        this.objectManager.clear();
-        this.history.clear();
+        this.context.grid.resize(width, height);
+        this.context.objectManager.clear();
+        this.context.history.clear();
         this.deselectObject();
     }
 
@@ -325,18 +316,22 @@ class EditorApp {
         this._clearSelection();
         this.state.pastePreview = null;
         this.state.clipboard = null;
-
+    
+        let toolName = selection.type;
+        if (selection.type === 'tile') {
+            toolName = 'paint';
+        } else if (selection.type === 'object' || selection.type === 'enemy') {
+            toolName = 'place';
+        }
+    
+        this.state.currentTool = { type: toolName, id: selection.id };
+        this.toolManager.setActiveTool(toolName);
+    
         if (selection.type === 'tool') {
-            this.state.currentTool = { type: selection.id };
-            this.propertiesPanel.displayToolProperties(selection.id, { eraserSize: this.state.eraserSize });
+            this.context.propertiesPanel.displayToolProperties(selection.id, { eraserSize: this.state.eraserSize });
             this.inputHandler.setCursor(selection.id === 'select' ? 'crosshair' : 'none');
-        } else if (selection.type === 'tile') {
-            this.state.currentTool = { type: 'paint', id: selection.id };
-            this.propertiesPanel.showItemDescription('tile', selection.id);
-            this.inputHandler.setCursor('crosshair');
         } else {
-            this.state.currentTool = { type: 'place', id: selection.id };
-            this.propertiesPanel.showItemDescription(selection.type, selection.id);
+            this.context.propertiesPanel.showItemDescription(selection.type, selection.id);
             this.inputHandler.setCursor('crosshair');
         }
     }
@@ -347,7 +342,7 @@ class EditorApp {
             return;
         }
 
-        const obj = this.objectManager.getObject(id);
+        const obj = this.context.objectManager.getObject(id);
         if (!obj) return;
 
         if (type === 'live') {
@@ -355,7 +350,7 @@ class EditorApp {
                 this.objectPropChange.isChanging = true;
                 this.objectPropChange.oldValue = obj[prop];
             }
-            this.objectManager.updateObjectProp(id, prop, value);
+            this.context.objectManager.updateObjectProp(id, prop, value);
         } else if (type === 'final') {
             let oldValue;
             if (this.objectPropChange.isChanging) {
@@ -366,121 +361,16 @@ class EditorApp {
             }
             const finalValue = typeof value === 'number' ? round(value) : value;
             if (oldValue !== finalValue) {
-                this.objectManager.updateObjectProp(id, prop, finalValue);
-                this.history.push(new UpdatePropertyCommand(this.objectManager, id, prop, oldValue, finalValue));
+                this.context.objectManager.updateObjectProp(id, prop, finalValue);
+                this.history.push(new UpdatePropertyCommand(this.context.objectManager, id, prop, oldValue, finalValue));
             } else {
-                 this.objectManager.updateObjectProp(id, prop, finalValue);
+                 this.context.objectManager.updateObjectProp(id, prop, finalValue);
             }
         }
     }
-
-    _onPaintStart() {
-        if (this.state.currentTool.type === 'eraser') {
-            this.currentPaintAction = { tileChanges: [], deletedObjects: [] };
-        } else {
-            this.currentPaintAction = { changes: [] };
-        }
-    }
-
-    _onPaint(gridX, gridY) {
-        if (!this.currentPaintAction || this.state.currentTool.type !== 'paint') return;
-        const tileId = this.state.currentTool.id;
-        const index = gridY * this.grid.width + gridX;
-
-        const oldId = this.grid.getTileId(index);
-        if (oldId !== tileId && !this.currentPaintAction.changes.some(c => c.index === index)) {
-            this.currentPaintAction.changes.push({ index, from: oldId, to: tileId });
-            this.grid.paintCell(index, tileId);
-        }
-    }
-
-    _onErase(gridX, gridY) {
-        if (!this.currentPaintAction || this.state.currentTool.type !== 'eraser') return;
-
-        const brushRadius = Math.floor(this.state.eraserSize / 2);
-        for (let y = -brushRadius; y <= brushRadius; y++) {
-            for (let x = -brushRadius; x <= brushRadius; x++) {
-                const currentX = gridX + x;
-                const currentY = gridY + y;
-                if (currentX >= 0 && currentX < this.grid.width && currentY >= 0 && currentY < this.grid.height) {
-                    const index = currentY * this.grid.width + currentX;
-                    const oldId = this.grid.getTileId(index);
-                    if (oldId !== '0' && !this.currentPaintAction.tileChanges.some(c => c.index === index)) {
-                        this.currentPaintAction.tileChanges.push({ index, from: oldId, to: '0' });
-                        this.grid.paintCell(index, '0');
-                    }
-                }
-            }
-        }
-    }
-
-    _onEraseObject(id) {
-        if (!this.currentPaintAction || this.state.currentTool.type !== 'eraser') return;
-        const objectToDelete = this.objectManager.getObject(id);
-        if (objectToDelete && objectToDelete.type !== 'player_spawn' && !this.currentPaintAction.deletedObjects.some(o => o.id === id)) {
-            this.currentPaintAction.deletedObjects.push(JSON.parse(JSON.stringify(objectToDelete)));
-            this.objectManager.deleteObject(id);
-        }
-    }
-
-    _onPaintEnd() {
-        if (!this.currentPaintAction) return;
-        
-        const compositeCommand = new CompositeCommand();
-
-        if (this.state.currentTool.type === 'eraser') {
-            if (this.currentPaintAction.tileChanges.length > 0) {
-                compositeCommand.add(new PaintCommand(this.grid, this.currentPaintAction.tileChanges));
-            }
-            if (this.currentPaintAction.deletedObjects.length > 0) {
-                this.currentPaintAction.deletedObjects.forEach(obj => {
-                    compositeCommand.add(new DeleteObjectCommand(this.objectManager, obj));
-                });
-            }
-        } else {
-            if (this.currentPaintAction.changes.length > 0) {
-                compositeCommand.add(new PaintCommand(this.grid, this.currentPaintAction.changes));
-            }
-        }
-
-        if (compositeCommand.commands.length > 0) {
-            this.history.push(compositeCommand);
-        }
-        this.currentPaintAction = null;
-    }
-
-    _onObjectPlace(pixelX, pixelY) {
-        const type = this.state.currentTool.id;
-        const { newObject, replacedSpawn } = this.objectManager.addObject(type, pixelX, pixelY);
-        this.history.push(new PlaceObjectCommand(this.objectManager, newObject, replacedSpawn));
-        this.selectObject(newObject);
-    }
-
-    _onObjectDelete(id) {
-        const objectToDelete = this.objectManager.getObject(id);
-        if (!objectToDelete) return;
-        if (objectToDelete.type === 'player_spawn') {
-            alert('The Player Spawn cannot be deleted. To move it, simply left-click and drag it to a new position.');
-            return;
-        }
-        this.history.push(new DeleteObjectCommand(this.objectManager, objectToDelete));
-        if (this.state.selectedObject && this.state.selectedObject.id === id) { this.deselectObject(); }
-        this.objectManager.deleteObject(id);
-    }
-
-    _onObjectSelect(id) {
-        const obj = this.objectManager.getObject(id);
-        this.selectObject(obj);
-    }
-
-    _onObjectDragStart(id) {
-        const obj = this.objectManager.getObject(id);
-        this.selectObject(obj);
-        return { x: obj.x, y: obj.y };
-    }
-
+    
     _onObjectDrag(id, newX, newY) {
-        const obj = this.objectManager.getObject(id);
+        const obj = this.context.objectManager.getObject(id);
         if (!obj) return;
         obj.x = newX;
         obj.y = newY;
@@ -489,32 +379,12 @@ class EditorApp {
             el.style.left = `${obj.x * GRID_CONSTANTS.TILE_SIZE - (obj.width / 2)}px`;
             el.style.top = `${obj.y * GRID_CONSTANTS.TILE_SIZE - (obj.height / 2)}px`;
         }
-        this.propertiesPanel.displayObject(obj);
-    }
-
-    _onObjectDragEnd(id) {
-        const obj = this.objectManager.getObject(id);
-        this.objectManager._applySnapping(obj);
-        this.objectManager._updateGroundedEnemyBehavior(obj);
-
-        const finalX = round(obj.x);
-        const finalY = round(obj.y);
-        const initial = this.objectDragStartPosition;
-
-        if (initial && (initial.x !== finalX || initial.y !== finalY)) {
-            this.history.push(new MoveObjectCommand(this.objectManager, id, { x: initial.x, y: initial.y }, { x: finalX, y: finalY }));
-        }
-
-        this.objectDragStartPosition = null;
-
-        obj.x = finalX; obj.y = finalY;
-        this.objectManager.render();
-        this.propertiesPanel.displayObject(obj);
+        this.context.propertiesPanel.displayObject(obj);
     }
 
     _onResize() {
-        DOM.newWidthInput.value = this.grid.width;
-        DOM.newHeightInput.value = this.grid.height;
+        DOM.newWidthInput.value = this.context.grid.width;
+        DOM.newHeightInput.value = this.context.grid.height;
         DOM.resizeModalOverlay.style.display = 'flex';
     }
 
@@ -546,10 +416,10 @@ class EditorApp {
     }
 
     _performResize(newWidth, newHeight, anchor) {
-        const oldWidth = this.grid.width;
-        const oldHeight = this.grid.height;
-        const oldTileData = [...this.grid.tileData];
-        const oldObjects = JSON.parse(JSON.stringify(this.objectManager.getAllObjects()));
+        const oldWidth = this.context.grid.width;
+        const oldHeight = this.context.grid.height;
+        const oldTileData = [...this.context.grid.tileData];
+        const oldObjects = JSON.parse(JSON.stringify(this.context.objectManager.getAllObjects()));
 
         const beforeState = { width: oldWidth, height: oldHeight, tileData: oldTileData, objects: oldObjects };
 
@@ -563,10 +433,9 @@ class EditorApp {
         if (anchor.includes('bottom')) offsetY = -dy;
         else if (anchor.includes('middle')) offsetY = -Math.floor(dy / 2);
 
-        this.grid.resize(newWidth, newHeight, oldTileData, anchor);
+        this.context.grid.resize(newWidth, newHeight, oldTileData, anchor);
 
-        const newObjectsList = [];
-        this.objectManager.clear();
+        this.context.objectManager.clear();
         oldObjects.forEach(obj => {
             const newX = obj.x + offsetX;
             const newY = obj.y + offsetY;
@@ -574,20 +443,19 @@ class EditorApp {
             if (newX >= 0 && (newX * GRID_CONSTANTS.TILE_SIZE) < (newWidth * GRID_CONSTANTS.TILE_SIZE) && newY >= 0 && (newY * GRID_CONSTANTS.TILE_SIZE) < (newHeight * GRID_CONSTANTS.TILE_SIZE)) {
                 obj.x = newX;
                 obj.y = newY;
-                this.objectManager.objects.push(obj);
-                newObjectsList.push(obj);
+                this.context.objectManager.objects.push(obj);
             }
         });
-        this.objectManager.render();
+        this.context.objectManager.render();
 
         const afterState = {
             width: newWidth,
             height: newHeight,
-            tileData: [...this.grid.tileData],
-            objects: JSON.parse(JSON.stringify(this.objectManager.getAllObjects()))
+            tileData: [...this.context.grid.tileData],
+            objects: JSON.parse(JSON.stringify(this.context.objectManager.getAllObjects()))
         };
 
-        this.history.push(new ResizeCommand(this.grid, this.objectManager, beforeState, afterState));
+        this.history.push(new ResizeCommand(this.context.grid, this.context.objectManager, beforeState, afterState));
     }
 
 
@@ -610,21 +478,21 @@ class EditorApp {
 
             if (typeof data.tileData === 'string') {
                 const decodedTileData = LevelImporter._decodeRLEToTileData(data.tileData, data.gridWidth, data.gridHeight);
-                this.grid.tileData = new Array(this.grid.width * this.grid.height).fill(0);
+                this.context.grid.tileData = new Array(this.context.grid.width * this.context.grid.height).fill(0);
                 decodedTileData.forEach(tile => {
-                    const index = tile.y * this.grid.width + tile.x;
-                    this.grid.tileData[index] = parseInt(tile.id, 10);
+                    const index = tile.y * this.context.grid.width + tile.x;
+                    this.context.grid.tileData[index] = parseInt(tile.id, 10);
                 });
-                this.grid.drawAllTiles();
+                this.context.grid.drawAllTiles();
             }
 
-            this.objectManager.load(data);
-            this.history.clear();
+            this.context.objectManager.load(data);
+            this.context.history.clear();
         });
     }
 
     _onExport() {
-        LevelExporter.export(this.grid, this.objectManager, DOM.levelNameInput.value, DOM.backgroundInput.value);
+        LevelExporter.export(this.context.grid, this.context.objectManager, DOM.levelNameInput.value, DOM.backgroundInput.value);
     }
 
     _onBack() {
@@ -632,14 +500,14 @@ class EditorApp {
     }
 
     _onCreateLevel() {
-        const { startPos, finalEntities } = this.objectManager.getObjectsForExport();
+        const { startPos, finalEntities } = this.context.objectManager.getObjectsForExport();
         const levelData = {
             name: DOM.levelNameInput.value || 'My DIY Level',
-            gridWidth: this.grid.width,
-            gridHeight: this.grid.height,
+            gridWidth: this.context.grid.width,
+            gridHeight: this.context.grid.height,
             background: DOM.backgroundInput.value,
             startPosition: startPos,
-            tileData: LevelExporter._encodeTileDataToRLE(this.grid.getTileDataForExport(), this.grid.width, this.grid.height),
+            tileData: LevelExporter._encodeTileDataToRLE(this.context.grid.getTileDataForExport(), this.context.grid.width, this.context.grid.height),
             entities: finalEntities,
         };
 
@@ -669,25 +537,19 @@ class EditorApp {
     }
 
     _onUndo() {
-        this.history.undo();
+        this.context.history.undo();
     }
 
     _onRedo() {
-        this.history.redo();
+        this.context.history.redo();
     }
 
-    _executeAction(action, direction) {
-        // This method is now obsolete and will be removed.
-        // The new HistoryManager handles this directly.
-    }
-
-
-    selectObject(obj) {
+    selectObject(id) {
+        const obj = this.context.objectManager.getObject(id);
         if (!obj) return;
         this.deselectObject();
         this.state.selectedObject = obj;
-        this.objectDragStartPosition = { x: obj.x, y: obj.y };
-        this.propertiesPanel.displayObject(obj);
+        this.context.propertiesPanel.displayObject(obj);
         DOM.gridContainer.querySelector(`.dynamic-object[data-id='${obj.id}']`)?.classList.add('selected');
     }
 
@@ -695,12 +557,12 @@ class EditorApp {
         if (!this.state.selectedObject) return;
         DOM.gridContainer.querySelector(`.dynamic-object[data-id='${this.state.selectedObject.id}']`)?.classList.remove('selected');
         this.state.selectedObject = null;
-        this.propertiesPanel.clear();
+        this.context.propertiesPanel.clear();
     }
 
     _animationLoop = () => {
         this.marchingAntsOffset = (this.marchingAntsOffset + 0.5) % 10;
-        this.grid.overlayCtx.clearRect(0, 0, this.grid.overlayCanvas.width, this.grid.overlayCanvas.height);
+        this.context.grid.overlayCtx.clearRect(0, 0, this.context.grid.overlayCanvas.width, this.context.grid.overlayCanvas.height);
 
         if (this.state.selection) {
             this._drawSelection();
@@ -716,7 +578,7 @@ class EditorApp {
 
     _drawSelection() {
         const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
-        const ctx = this.grid.overlayCtx;
+        const ctx = this.context.grid.overlayCtx;
         const x = this.state.selection.x * TILE_SIZE;
         const y = this.state.selection.y * TILE_SIZE;
         const width = this.state.selection.width * TILE_SIZE;
@@ -734,7 +596,7 @@ class EditorApp {
 
     _drawEraserCursor() {
         const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
-        const ctx = this.grid.overlayCtx;
+        const ctx = this.context.grid.overlayCtx;
         const size = this.state.eraserSize * TILE_SIZE;
         const brushRadius = Math.floor(this.state.eraserSize / 2);
         const x = (this.state.pastePreview.gridX - brushRadius) * TILE_SIZE;
@@ -746,7 +608,7 @@ class EditorApp {
 
     _drawPastePreview() {
         const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
-        const ctx = this.grid.overlayCtx;
+        const ctx = this.context.grid.overlayCtx;
         ctx.globalAlpha = 0.6;
         const startX = (this.state.pastePreview.gridX - Math.floor(this.state.clipboard.width / 2)) * TILE_SIZE;
         const startY = (this.state.pastePreview.gridY - Math.floor(this.state.clipboard.height / 2)) * TILE_SIZE;
@@ -756,7 +618,7 @@ class EditorApp {
             const y = startY + tile.y * TILE_SIZE;
             const tileId = parseInt(tile.id, 10);
             const isSpecial = tileId > SPECIAL_TILE_ID_OFFSET;
-            const sourceImage = isSpecial ? this.palette.specialTileset.image : this.palette.mainTileset.image;
+            const sourceImage = isSpecial ? this.context.palette.specialTileset.image : this.context.palette.mainTileset.image;
             const sourceConfig = isSpecial ? TILESET_CONFIG_SPECIAL : TILESET_CONFIG;
             const localId = (isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId) - 1;
             const sx = (localId % sourceConfig.columns) * sourceConfig.tileWidth;
@@ -795,7 +657,7 @@ class EditorApp {
                     obj.x = original.x + dx;
                     obj.y = original.y + dy;
                 });
-                this.objectManager.render();
+                this.context.objectManager.render();
             }
 
         } else {
@@ -820,11 +682,11 @@ class EditorApp {
             this._clearSelection();
             this.state.pastePreview = null;
             this.state.clipboard = null;
-            this.palette.selectTool('select');
+            this.context.palette.selectTool('select');
         } else {
             this.state.currentTool = { type: 'none' };
-            this.palette.updateSelectionVisuals();
-            this.propertiesPanel.clear();
+            this.context.palette.updateSelectionVisuals();
+            this.context.propertiesPanel.clear();
             this.inputHandler.setCursor('default');
         }
     }
@@ -842,14 +704,14 @@ class EditorApp {
 
         for (let y = 0; y < sel.height; y++) {
             for (let x = 0; x < sel.width; x++) {
-                const index = (sel.y + y) * this.grid.width + (sel.x + x);
-                const tileId = this.grid.getTileId(index);
+                const index = (sel.y + y) * this.context.grid.width + (sel.x + x);
+                const tileId = this.context.grid.getTileId(index);
                 if (tileId !== '0') {
                     clipboardData.tiles.push({ x, y, id: tileId });
                 }
             }
         }
-        clipboardData.objects = this.objectManager.getAllObjects()
+        clipboardData.objects = this.context.objectManager.getAllObjects()
             .filter(obj => {
                 const objGridX = obj.x;
                 const objGridY = obj.y;
@@ -873,20 +735,20 @@ class EditorApp {
             const paintChanges = [];
             for (let y = 0; y < sel.height; y++) {
                 for (let x = 0; x < sel.width; x++) {
-                    const index = (sel.y + y) * this.grid.width + (sel.x + x);
-                    const oldId = this.grid.getTileId(index);
+                    const index = (sel.y + y) * this.context.grid.width + (sel.x + x);
+                    const oldId = this.context.grid.getTileId(index);
                     if (oldId !== '0') {
                         paintChanges.push({ index, from: oldId, to: '0' });
-                        this.grid.paintCell(index, '0');
+                        this.context.grid.paintCell(index, '0');
                     }
                 }
             }
             if (paintChanges.length > 0) {
-                this.history.push(new PaintCommand(this.grid, paintChanges));
+                this.history.push(new PaintCommand(this.context.grid, paintChanges));
             }
 
             clipboardData.objects.forEach(objData => {
-                const originalObj = this.objectManager.getObject(objData.id);
+                const originalObj = this.context.objectManager.getObject(objData.id);
                 if (originalObj) {
                     this._onObjectDelete(originalObj.id);
                 }
@@ -902,50 +764,9 @@ class EditorApp {
     _preparePaste() {
         if (!this.state.clipboard) return;
         this.state.currentTool = { type: 'paste' };
+        this.toolManager.setActiveTool('paste');
         this.inputHandler.setCursor('none');
         this._clearSelection();
-    }
-
-    _onPaste(gridX, gridY) {
-        if (!this.state.clipboard) return;
-
-        const startX = gridX - Math.floor(this.state.clipboard.width / 2);
-        const startY = gridY - Math.floor(this.state.clipboard.height / 2);
-        const paintChanges = [];
-
-        const compositeCommand = new CompositeCommand();
-
-        this.state.clipboard.tiles.forEach(tile => {
-            const newX = startX + tile.x;
-            const newY = startY + tile.y;
-            if (newX >= 0 && newX < this.grid.width && newY >= 0 && newY < this.grid.height) {
-                const index = newY * this.grid.width + newX;
-                const oldId = this.grid.getTileId(index);
-                paintChanges.push({ index, from: oldId, to: tile.id });
-                this.grid.paintCell(index, tile.id);
-            }
-        });
-
-        if (paintChanges.length > 0) {
-            compositeCommand.add(new PaintCommand(this.grid, paintChanges));
-        }
-
-        this.state.clipboard.objects.forEach(objData => {
-            const newX = startX + objData.x;
-            const newY = startY + objData.y;
-            if (newX >= 0 && newX < this.grid.width && newY >= 0 && newY < this.grid.height) {
-                const { newObject } = this.objectManager.addObject(objData.type, newX * GRID_CONSTANTS.TILE_SIZE, newY * GRID_CONSTANTS.TILE_SIZE);
-                Object.assign(newObject, { ...objData, id: newObject.id, x: newX, y: newY });
-
-                compositeCommand.add(new PlaceObjectCommand(this.objectManager, newObject));
-
-            }
-        });
-        this.objectManager.render();
-
-        if (compositeCommand.commands.length > 0) {
-            this.history.push(compositeCommand);
-        }
     }
 }
 

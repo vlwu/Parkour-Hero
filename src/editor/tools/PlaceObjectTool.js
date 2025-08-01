@@ -1,0 +1,14 @@
+import { Tool } from './Tool.js';
+import { PlaceObjectCommand } from '../commands/PlaceObjectCommand.js';
+
+export class PlaceObjectTool extends Tool {
+    onMouseDown(e, { pixelX, pixelY }) {
+        if (e.button !== 0) return;
+
+        const type = this.state.currentTool.id;
+        const { newObject, replacedSpawn } = this.objectManager.addObject(type, pixelX, pixelY);
+        
+        this.history.push(new PlaceObjectCommand(this.objectManager, newObject, replacedSpawn));
+        this.context.selectObject(newObject.id);
+    }
+}
