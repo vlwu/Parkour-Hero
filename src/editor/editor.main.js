@@ -112,8 +112,13 @@ class EditorApp {
         state.clipboard = null;
 
         let toolName = selection.type;
-        if (selection.type === 'tile') toolName = 'paint';
-        else if (selection.type === 'object' || selection.type === 'enemy') toolName = 'place';
+        if (selection.type === 'tile') {
+            toolName = 'paint';
+        } else if (selection.type === 'object' || selection.type === 'enemy') {
+            toolName = 'place';
+        } else if (selection.type === 'tool') {
+            toolName = selection.id;
+        }
 
         state.currentTool = { type: toolName, id: selection.id };
         toolManager.setActiveTool(toolName);

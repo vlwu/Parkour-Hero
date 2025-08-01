@@ -27,6 +27,7 @@ export class EraserTool extends Tool {
     }
 
     onMouseMove(e, coords) {
+        this.onHover(e, coords); // Update cursor preview
         if (!this.isErasing) return;
         this._erase(e, coords);
     }
