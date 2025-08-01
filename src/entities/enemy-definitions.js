@@ -247,7 +247,7 @@ export const ENEMY_DEFINITIONS = {
             type: 'bat',
             aggroRadius: 150,
             deaggroRadius: 300,
-            flyingSpeed: 20,
+            flyingSpeed: 30,
         }
     },
 };
