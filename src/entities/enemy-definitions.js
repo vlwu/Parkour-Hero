@@ -163,7 +163,7 @@ export const ENEMY_DEFINITIONS = {
             gravity: 120,
             flapForce: -140,
             tetherStrength: 5,
-            slamSpeed: 350,
+            slamSpeed: 275,
             retractSpeed: 100,
             groundedDuration: 1.0,
         }
@@ -180,7 +180,7 @@ export const ENEMY_DEFINITIONS = {
         animations: {
             idle1: { frameCount: 6, speed: 0.1 },
             idle2: { frameCount: 9, speed: 0.1 },
-            run: { frameCount: 12, speed: 0.08 },
+            run: { frameCount: 12, speed: 0.1 },
             hit: { frameCount: 5, speed: 0.1 }
         },
         killable: {
@@ -247,7 +247,7 @@ export const ENEMY_DEFINITIONS = {
             type: 'bat',
             aggroRadius: 150,
             deaggroRadius: 300,
-            flyingSpeed: 20,
+            flyingSpeed: 35,
         }
     },
 
