@@ -56,7 +56,7 @@ export class GridInputHandler {
         const { pixelX, pixelY, gridX, gridY } = this._getGridCoordsFromEvent(e);
         const objectTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dynamic-object');
 
-        if (e.button === 0) { // Left click
+        if (e.button === 0) {
             const tool = this.callbacks.getCurrentTool();
             switch (tool) {
                 case 'paint':
@@ -73,7 +73,7 @@ export class GridInputHandler {
                     break;
                 case 'eraser':
                     this.isErasing = true;
-                    this.callbacks.onPaintStart(); // Unified start for undo
+                    this.callbacks.onPaintStart();
                     if (objectTarget) {
                         const id = parseInt(objectTarget.dataset.id, 10);
                         this.callbacks.onEraseObject(id);
@@ -127,6 +127,7 @@ export class GridInputHandler {
             if (gridX < 0 || gridX >= this.grid.width || gridY < 0 || gridY >= this.grid.height) return;
             this.callbacks.onPaint(gridX, gridY);
         } else if (this.isErasing) {
+            this.callbacks.onHover(gridX, gridY);
             const objectTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dynamic-object');
             if (objectTarget) {
                 const id = parseInt(objectTarget.dataset.id, 10);

@@ -83,6 +83,9 @@ class EditorController {
         });
         window.addEventListener('resize', () => this.grid.autoFitScale());
         window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') {
+                return;
+            }
             if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); this._onUndo(); }
             if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); this._onRedo(); }
             if (e.ctrlKey && e.key.toLowerCase() === 'c') { this._handleSelectionAction('copy'); }
@@ -90,6 +93,12 @@ class EditorController {
             if (e.ctrlKey && e.key.toLowerCase() === 'v') { this._preparePaste(); }
             if (e.key === 'Delete') { this._handleSelectionAction('delete'); }
             if (e.key === 'Escape') { this._onRightClick(); }
+            if (!e.ctrlKey && e.key.toLowerCase() === 'e') {
+                this.palette.selectTool('eraser');
+            }
+            if (!e.ctrlKey && e.key.toLowerCase() === 'v') {
+                this.palette.selectTool('select');
+            }
         });
         this._onPaletteSelection({ type: 'tile', id: '1' });
         this._loadGameAssets();
