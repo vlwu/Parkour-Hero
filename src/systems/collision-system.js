@@ -180,7 +180,6 @@ export class CollisionSystem {
             const potentialCollidersH = this.spatialGrid.query(queryBoxH);
 
             for (const collider of potentialCollidersH) {
-                if (playerCtrl && collider.surfaceType === 'mud') continue;
                 if (collider.type === 'entity' && collider.entityId === entityId) continue;
 
                 if (this._isRectColliding(entityRect, collider)) {
@@ -242,7 +241,6 @@ export class CollisionSystem {
             const validGroundColliders = [];
 
             for (const collider of potentialCollidersV) {
-                if (playerCtrl && collider.surfaceType === 'mud') continue;
                 if (collider.type === 'entity' && collider.entityId === entityId) continue;
                 if (!this._isRectColliding(entityRect, collider)) continue;
 
