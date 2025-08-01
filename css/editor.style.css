@@ -158,6 +158,10 @@ body {
     cursor: crosshair;
 }
 
+#grid-container.move-cursor {
+    cursor: move;
+}
+
 #grid-container canvas {
     position: absolute;
     top: 0;
@@ -270,6 +274,10 @@ body {
     border-style: solid;
     border-color: var(--danger-color);
     box-shadow: 0 0 10px var(--danger-color);
+}
+
+.dynamic-object.selection-move {
+    cursor: move;
 }
 
 

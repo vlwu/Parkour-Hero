@@ -24,6 +24,17 @@ export const DOM = {
     zoomOutBtn: null,
     loadFileInput: null,
 
+    // New Tool Palette
+    toolsPalette: null,
+    selectToolBtn: null,
+    eraseToolBtn: null,
+
+    // New Selection Actions
+    selectionActions: null,
+    copySelectionBtn: null,
+    cutSelectionBtn: null,
+    deleteSelectionBtn: null,
+
     resizeModalOverlay: null,
     newWidthInput: null,
     newHeightInput: null,
@@ -56,6 +67,14 @@ export const DOM = {
         this.zoomInBtn = document.getElementById('zoomInBtn');
         this.zoomOutBtn = document.getElementById('zoomOutBtn');
         this.loadFileInput = document.getElementById('loadFile');
+
+        this.toolsPalette = document.getElementById('tools-palette');
+        this.selectToolBtn = document.getElementById('select-tool-btn');
+        this.eraseToolBtn = document.getElementById('erase-tool-btn');
+        this.selectionActions = document.getElementById('selection-actions');
+        this.copySelectionBtn = document.getElementById('copySelectionBtn');
+        this.cutSelectionBtn = document.getElementById('cutSelectionBtn');
+        this.deleteSelectionBtn = document.getElementById('deleteSelectionBtn');
 
         this.resizeModalOverlay = document.getElementById('resize-modal-overlay');
         this.newWidthInput = document.getElementById('newWidthInput');

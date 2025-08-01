@@ -54,6 +54,10 @@ export class Palette {
             DOM.enemiesPalette.appendChild(item);
         }
 
+        DOM.selectToolBtn.addEventListener('click', () => this.selectTool('select'));
+        DOM.eraseToolBtn.addEventListener('click', () => this.selectTool('eraser'));
+
+
         this.updateSelectionVisuals();
     }
 
@@ -80,7 +84,7 @@ export class Palette {
 
             this.selectedPaletteItem = { type: 'tile', id: tileId.toString() };
             this.updateSelectionVisuals();
-            this.onSelectionChange(this.selectedPaletteItem);
+            this.onSelectionChange({ type: 'paint', id: this.selectedPaletteItem.id });
         });
     }
 
@@ -98,9 +102,15 @@ export class Palette {
         item.addEventListener('click', () => {
             this.selectedPaletteItem = { type, id };
             this.updateSelectionVisuals();
-            this.onSelectionChange(this.selectedPaletteItem);
+            this.onSelectionChange({ type: 'place', id: this.selectedPaletteItem.id });
         });
         return item;
+    }
+
+    selectTool(toolName) {
+        this.selectedPaletteItem = { type: 'tool', id: toolName };
+        this.updateSelectionVisuals();
+        this.onSelectionChange(this.selectedPaletteItem);
     }
 
     updateSelectionVisuals() {
@@ -111,6 +121,7 @@ export class Palette {
             }
         });
 
+        // Highlight selected tile
         if (this.selectedPaletteItem.type === 'tile') {
             const selectedId = parseInt(this.selectedPaletteItem.id, 10);
             const targetTileset = selectedId > SPECIAL_TILE_ID_OFFSET ? this.specialTileset : this.mainTileset;
@@ -124,10 +135,18 @@ export class Palette {
             targetTileset.ctx.strokeRect(tileX + 1, tileY + 1, targetTileset.config.tileWidth - 2, targetTileset.config.tileHeight - 2);
         }
 
+        // Highlight selected object/enemy
         document.querySelectorAll('.palette-item').forEach(el => {
             const isSelected = el.dataset.type === this.selectedPaletteItem.type && el.dataset.id === this.selectedPaletteItem.id;
             el.classList.toggle('selected', isSelected);
         });
+
+        // Highlight selected tool
+        document.querySelectorAll('.tool-button').forEach(el => el.classList.remove('selected'));
+        if (this.selectedPaletteItem.type === 'tool') {
+            const btn = document.getElementById(`${this.selectedPaletteItem.id}-tool-btn`);
+            if (btn) btn.classList.add('selected');
+        }
     }
 
     getSelection() {

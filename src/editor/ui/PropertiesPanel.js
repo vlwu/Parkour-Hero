@@ -21,6 +21,19 @@ export class PropertiesPanel {
         DOM.propertiesPanel.innerHTML = `<h3 class="properties-title">${title}</h3><p class="properties-description">${description || 'No description available.'}</p>`;
     }
 
+    displayToolProperties(tool, currentSettings) {
+        let propertiesHTML = `<h3 class="properties-title">${tool.charAt(0).toUpperCase() + tool.slice(1)} Tool</h3>`;
+        if (tool === 'eraser') {
+            const sizes = [1, 2, 3, 4, 8];
+            const options = sizes.map(s => `<option value="${s}" ${s === currentSettings.eraserSize ? 'selected' : ''}>${s}x${s}</option>`);
+            propertiesHTML += `<label for="prop-eraserSize">Brush Size:</label><select id="prop-eraserSize">${options.join('')}</select>`;
+        } else if (tool === 'select') {
+            propertiesHTML += `<p class="properties-description">Click and drag to select an area. Use the toolbar or keyboard shortcuts (Ctrl+C, Ctrl+X, Del) to manage the selection.</p>`;
+        }
+        DOM.propertiesPanel.innerHTML = propertiesHTML;
+        this._attachToolEventListeners(tool);
+    }
+
     displayObject(obj) {
         let propertiesHTML = `<h3 class="properties-title">${obj.type.replace(/_/g, ' ')} (ID: ${obj.id})</h3>`;
 
@@ -101,6 +114,17 @@ export class PropertiesPanel {
         if (obj.type === 'bluebird') { attach('patrolDistance'); attach('horizontalSpeed'); attach('verticalAmplitude'); }
         if (obj.type === 'radish') { attach('patrolBoxSize'); }
     }
+    _attachToolEventListeners(tool) {
+        if (tool === 'eraser') {
+            const eraserSizeSelect = document.getElementById('prop-eraserSize');
+            if (eraserSizeSelect) {
+                eraserSizeSelect.addEventListener('change', (e) => {
+                    this.onPropertyUpdate(null, 'eraserSize', parseInt(e.target.value, 10), 'final');
+                });
+            }
+        }
+    }
+
 
     _handleInput(id, prop, element) {
         const value = parseFloat(element.value);

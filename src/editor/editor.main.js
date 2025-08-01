@@ -17,41 +17,45 @@ const round = (val) => Math.round(val * 100) / 100;
 
 class EditorController {
     constructor() {
-
         this.grid = new Grid(28, 15);
         this.objectManager = new ObjectManager(this.grid);
         this.history = new HistoryManager(DOM.undoBtn, DOM.redoBtn);
 
-
         this.selectedObject = null;
         this.objectDragStartPosition = null;
         this.currentPaintAction = null;
-        this.objectPropChange = {
-            isChanging: false,
-            oldValue: 0
-        };
+        this.objectPropChange = { isChanging: false, oldValue: 0 };
         this.editingLevelIndex = null;
-
         this.assets = null;
         this.fontRenderer = null;
         this.engine = null;
 
+        this.currentTool = { type: 'paint', id: '1' };
+        this.eraserSize = 1;
+        this.selection = null;
+        this.clipboard = null;
+        this.pastePreview = null;
+        this.marchingAntsOffset = 0;
 
         this.palette = new Palette(this._onPaletteSelection.bind(this));
         this.propertiesPanel = new PropertiesPanel(this._onPropertyUpdate.bind(this));
 
-
         this.inputHandler = new GridInputHandler(DOM.gridContainer, this.grid, {
-            isTileSelected: () => this.palette.getSelection().type === 'tile',
+            getCurrentTool: () => this.currentTool.type,
             onPaintStart: this._onPaintStart.bind(this),
             onPaint: this._onPaint.bind(this),
-            onErase: (index) => this._onPaint(index, '0'),
+            onErase: this._onErase.bind(this),
             onPaintEnd: this._onPaintEnd.bind(this),
             onObjectPlace: this._onObjectPlace.bind(this),
             onObjectDelete: this._onObjectDelete.bind(this),
             onObjectDragStart: this._onObjectDragStart.bind(this),
             onObjectDrag: this._onObjectDrag.bind(this),
             onObjectDragEnd: this._onObjectDragEnd.bind(this),
+            onSelectionChange: this._onSelectionChange.bind(this),
+            onSelectionEnd: this._onSelectionEnd.bind(this),
+            onHover: this._onHover.bind(this),
+            onPaste: this._onPaste.bind(this),
+            onRightClick: this._onRightClick.bind(this),
         });
     }
 
@@ -70,16 +74,25 @@ class EditorController {
             onZoomOut: () => this.grid.zoom(-0.1),
             onCreateLevel: this._onCreateLevel.bind(this),
             onBack: this._onBack.bind(this),
+            onCopySelection: () => this._handleSelectionAction('copy'),
+            onCutSelection: () => this._handleSelectionAction('cut'),
+            onDeleteSelection: () => this._handleSelectionAction('delete'),
         });
         window.addEventListener('resize', () => this.grid.autoFitScale());
         window.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); this._onUndo(); }
             if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); this._onRedo(); }
+            if (e.ctrlKey && e.key.toLowerCase() === 'c') { this._handleSelectionAction('copy'); }
+            if (e.ctrlKey && e.key.toLowerCase() === 'x') { this._handleSelectionAction('cut'); }
+            if (e.ctrlKey && e.key.toLowerCase() === 'v') { this._preparePaste(); }
+            if (e.key === 'Delete') { this._handleSelectionAction('delete'); }
+            if (e.key === 'Escape') { this._onRightClick(); }
         });
-        this._onPaletteSelection(this.palette.getSelection());
+        this._onPaletteSelection({ type: 'tile', id: '1' });
         this._loadGameAssets();
         this._setupResizeModalListeners();
         this._checkForEditMode();
+        this._animationLoop();
     }
 
     _checkForEditMode() {
@@ -97,12 +110,12 @@ class EditorController {
 
                 if (levelData.tileData) {
                     const decodedTileData = LevelImporter._decodeRLEToTileData(levelData.tileData, levelData.gridWidth, levelData.gridHeight);
+                    this.grid.tileData = new Array(this.grid.width * this.grid.height).fill(0);
                     decodedTileData.forEach(tile => {
                         const index = tile.y * this.grid.width + tile.x;
-                        this.grid.paintCell(index, tile.id);
+                        this.grid.tileData[index] = parseInt(tile.id, 10);
                     });
-
-                    levelData.tileData = decodedTileData;
+                    this.grid.drawAllTiles();
                 }
                 this.objectManager.load(levelData);
                 this.history.clear();
@@ -119,6 +132,7 @@ class EditorController {
             }
         }
     }
+
 
     async _loadGameAssets() {
         const loadingOverlay = document.createElement('div');
@@ -291,10 +305,31 @@ class EditorController {
 
     _onPaletteSelection(selection) {
         this.deselectObject();
-        this.propertiesPanel.showItemDescription(selection.type, selection.id);
+        this._clearSelection();
+        this.pastePreview = null;
+        this.clipboard = null;
+    
+        if (selection.type === 'tool') {
+            this.currentTool = { type: selection.id };
+            this.propertiesPanel.displayToolProperties(selection.id, { eraserSize: this.eraserSize });
+            this.inputHandler.setCursor(selection.id === 'select' ? 'crosshair' : 'none');
+        } else if (selection.type === 'tile') {
+            this.currentTool = { type: 'paint', id: selection.id };
+            this.propertiesPanel.showItemDescription('tile', selection.id);
+            this.inputHandler.setCursor('crosshair');
+        } else {
+            this.currentTool = { type: 'place', id: selection.id };
+            this.propertiesPanel.showItemDescription(selection.type, selection.id);
+            this.inputHandler.setCursor('crosshair');
+        }
     }
 
     _onPropertyUpdate(id, prop, value, type) {
+        if (id === null) {
+            if (prop === 'eraserSize') { this.eraserSize = value; }
+            return;
+        }
+
         const obj = this.objectManager.getObject(id);
         if (!obj) return;
 
@@ -326,15 +361,38 @@ class EditorController {
         this.currentPaintAction = { type: 'paint', changes: [] };
     }
 
-    _onPaint(index, tileId = null) {
-        if (!this.currentPaintAction) return;
-        tileId = tileId ?? this.palette.getSelection().id;
+    _onPaint(gridX, gridY) {
+        if (!this.currentPaintAction || this.currentTool.type !== 'paint') return;
+        const tileId = this.currentTool.id;
+        const index = gridY * this.grid.width + gridX;
+
         const oldId = this.grid.getTileId(index);
         if (oldId !== tileId && !this.currentPaintAction.changes.some(c => c.index === index)) {
             this.currentPaintAction.changes.push({ index, from: oldId, to: tileId });
             this.grid.paintCell(index, tileId);
         }
     }
+
+    _onErase(gridX, gridY) {
+        if (!this.currentPaintAction) this.currentPaintAction = { type: 'paint', changes: [] };
+
+        const brushRadius = Math.floor(this.eraserSize / 2);
+        for (let y = -brushRadius; y <= brushRadius; y++) {
+            for (let x = -brushRadius; x <= brushRadius; x++) {
+                const currentX = gridX + x;
+                const currentY = gridY + y;
+                if (currentX >= 0 && currentX < this.grid.width && currentY >= 0 && currentY < this.grid.height) {
+                    const index = currentY * this.grid.width + currentX;
+                    const oldId = this.grid.getTileId(index);
+                    if (oldId !== '0' && !this.currentPaintAction.changes.some(c => c.index === index)) {
+                        this.currentPaintAction.changes.push({ index, from: oldId, to: '0' });
+                        this.grid.paintCell(index, '0');
+                    }
+                }
+            }
+        }
+    }
+
 
     _onPaintEnd() {
         if (this.currentPaintAction && this.currentPaintAction.changes.length > 0) {
@@ -344,8 +402,7 @@ class EditorController {
     }
 
     _onObjectPlace(pixelX, pixelY) {
-        const selection = this.palette.getSelection();
-        const type = selection.id;
+        const type = this.currentTool.id;
         const { newObject, replacedSpawn } = this.objectManager.addObject(type, pixelX, pixelY);
         const action = { type: 'place_object', obj: newObject };
         if (replacedSpawn) { action.replaced = replacedSpawn; }
@@ -475,18 +532,27 @@ class EditorController {
             return;
         }
         const file = files[0];
-
+    
         LevelImporter.load(file, (data) => {
+            if (!data.gridWidth || !data.gridHeight || !data.tileData) {
+                alert('Invalid level file format.');
+                return;
+            }
+    
             this.resetEditor(data.gridWidth, data.gridHeight);
             DOM.levelNameInput.value = data.name;
             DOM.backgroundInput.value = data.background || 'background_blue';
-
-            if (data.tileData) {
-                data.tileData.forEach(tile => {
+    
+            if (typeof data.tileData === 'string') {
+                const decodedTileData = LevelImporter._decodeRLEToTileData(data.tileData, data.gridWidth, data.gridHeight);
+                this.grid.tileData = new Array(this.grid.width * this.grid.height).fill(0);
+                decodedTileData.forEach(tile => {
                     const index = tile.y * this.grid.width + tile.x;
-                    this.grid.paintCell(index, tile.id);
+                    this.grid.tileData[index] = parseInt(tile.id, 10);
                 });
+                this.grid.drawAllTiles();
             }
+    
             this.objectManager.load(data);
             this.history.clear();
         });
@@ -600,6 +666,250 @@ class EditorController {
         DOM.gridContainer.querySelector(`.dynamic-object[data-id='${this.selectedObject.id}']`)?.classList.remove('selected');
         this.selectedObject = null;
         this.propertiesPanel.clear();
+    }
+
+    _animationLoop = () => {
+        this.marchingAntsOffset = (this.marchingAntsOffset + 0.5) % 10;
+        this.grid.overlayCtx.clearRect(0, 0, this.grid.overlayCanvas.width, this.grid.overlayCanvas.height);
+
+        if (this.selection) {
+            this._drawSelection();
+        }
+        if (this.currentTool.type === 'eraser' && this.pastePreview) {
+            this._drawEraserCursor();
+        }
+        if (this.currentTool.type === 'paste' && this.pastePreview) {
+            this._drawPastePreview();
+        }
+        requestAnimationFrame(this._animationLoop);
+    }
+
+    _drawSelection() {
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const ctx = this.grid.overlayCtx;
+        const x = this.selection.x * TILE_SIZE;
+        const y = this.selection.y * TILE_SIZE;
+        const width = this.selection.width * TILE_SIZE;
+        const height = this.selection.height * TILE_SIZE;
+
+        ctx.fillStyle = 'rgba(52, 152, 219, 0.2)';
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.lineDashOffset = -this.marchingAntsOffset;
+        ctx.strokeRect(x, y, width, height);
+        ctx.setLineDash([]);
+    }
+
+    _drawEraserCursor() {
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const ctx = this.grid.overlayCtx;
+        const size = this.eraserSize * TILE_SIZE;
+        const brushRadius = Math.floor(this.eraserSize / 2);
+        const x = (this.pastePreview.gridX - brushRadius) * TILE_SIZE;
+        const y = (this.pastePreview.gridY - brushRadius) * TILE_SIZE;
+        ctx.strokeStyle = 'rgba(231, 76, 60, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, size, size);
+    }
+
+    _drawPastePreview() {
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const ctx = this.grid.overlayCtx;
+        ctx.globalAlpha = 0.6;
+        const startX = (this.pastePreview.gridX - Math.floor(this.clipboard.width / 2)) * TILE_SIZE;
+        const startY = (this.pastePreview.gridY - Math.floor(this.clipboard.height / 2)) * TILE_SIZE;
+
+        for (const tile of this.clipboard.tiles) {
+            const x = startX + tile.x * TILE_SIZE;
+            const y = startY + tile.y * TILE_SIZE;
+            const tileId = parseInt(tile.id, 10);
+            const isSpecial = tileId > SPECIAL_TILE_ID_OFFSET;
+            const sourceImage = isSpecial ? this.specialTilesetImage : this.tilesetImage;
+            const sourceConfig = isSpecial ? TILESET_CONFIG_SPECIAL : TILESET_CONFIG;
+            const localId = (isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId) - 1;
+            const sx = (localId % sourceConfig.columns) * sourceConfig.tileWidth;
+            const sy = Math.floor(localId / sourceConfig.columns) * sourceConfig.tileHeight;
+            ctx.drawImage(sourceImage, sx, sy, sourceConfig.tileWidth, sourceConfig.tileHeight, x, y, TILE_SIZE, TILE_SIZE);
+        }
+        ctx.globalAlpha = 1.0;
+    }
+
+    _onSelectionChange(start, current) {
+        const x1 = Math.min(start.x, current.x);
+        const y1 = Math.min(start.y, current.y);
+        const x2 = Math.max(start.x, current.x);
+        const y2 = Math.max(start.y, current.y);
+        this.selection = { x: x1, y: y1, width: x2 - x1 + 1, height: y2 - y1 + 1 };
+        DOM.selectionActions.style.display = 'flex';
+    }
+
+    _onSelectionEnd() {}
+    _clearSelection() {
+        this.selection = null;
+        DOM.selectionActions.style.display = 'none';
+    }
+
+    _onHover(gridX, gridY) {
+        if(this.currentTool.type === 'eraser' || this.currentTool.type === 'paste') {
+            const pixelX = gridX * GRID_CONSTANTS.TILE_SIZE + GRID_CONSTANTS.TILE_SIZE / 2;
+            const pixelY = gridY * GRID_CONSTANTS.TILE_SIZE + GRID_CONSTANTS.TILE_SIZE / 2;
+            this.pastePreview = { pixelX, pixelY, gridX, gridY };
+
+            if(this.currentTool.type === 'paste' && this.clipboard.isDragging) {
+                const dx = gridX - this.clipboard.dragStart.x;
+                const dy = gridY - this.clipboard.dragStart.y;
+                this.clipboard.objects.forEach(obj => {
+                    const original = this.clipboard.originalObjects.find(o => o.id === obj.id);
+                    obj.x = original.x + dx;
+                    obj.y = original.y + dy;
+                });
+                this.objectManager.render();
+            }
+
+        } else {
+            this.pastePreview = null;
+        }
+
+        const selection = this.selection;
+        if (selection && gridX >= selection.x && gridX < selection.x + selection.width &&
+            gridY >= selection.y && gridY < selection.y + selection.height) {
+            this.inputHandler.setCursor('move');
+        } else if (this.currentTool.type === 'select') {
+            this.inputHandler.setCursor('crosshair');
+        } else if (this.currentTool.type === 'eraser') {
+            this.inputHandler.setCursor('none');
+        } else {
+            this.inputHandler.setCursor('crosshair');
+        }
+    }
+
+    _onRightClick() {
+        if (this.selection || this.currentTool.type === 'paste') {
+            this._clearSelection();
+            this.pastePreview = null;
+            this.clipboard = null;
+            this.palette.selectTool('select');
+        } else {
+            this.currentTool = { type: 'none' };
+            this.palette.updateSelectionVisuals();
+            this.propertiesPanel.clear();
+            this.inputHandler.setCursor('default');
+        }
+    }
+
+    _handleSelectionAction(action) {
+        if (!this.selection) return;
+
+        const sel = this.selection;
+        const clipboardData = {
+            width: sel.width,
+            height: sel.height,
+            tiles: [],
+            objects: []
+        };
+
+        for (let y = 0; y < sel.height; y++) {
+            for (let x = 0; x < sel.width; x++) {
+                const index = (sel.y + y) * this.grid.width + (sel.x + x);
+                const tileId = this.grid.getTileId(index);
+                if (tileId !== '0') {
+                    clipboardData.tiles.push({ x, y, id: tileId });
+                }
+            }
+        }
+        clipboardData.objects = this.objectManager.getAllObjects()
+            .filter(obj => {
+                const objGridX = obj.x;
+                const objGridY = obj.y;
+                return objGridX >= sel.x && objGridX < sel.x + sel.width &&
+                       objGridY >= sel.y && objGridY < sel.y + sel.height;
+            })
+            .map(obj => ({
+                ...JSON.parse(JSON.stringify(obj)),
+                x: obj.x - sel.x,
+                y: obj.y - sel.y
+            }));
+
+        if (action === 'copy') {
+            this.clipboard = clipboardData;
+            this._preparePaste();
+        } else if (action === 'cut' || action === 'delete') {
+            if (action === 'cut') {
+                this.clipboard = clipboardData;
+            }
+
+            const paintChanges = [];
+            for (let y = 0; y < sel.height; y++) {
+                for (let x = 0; x < sel.width; x++) {
+                    const index = (sel.y + y) * this.grid.width + (sel.x + x);
+                    const oldId = this.grid.getTileId(index);
+                    if (oldId !== '0') {
+                        paintChanges.push({ index, from: oldId, to: '0' });
+                        this.grid.paintCell(index, '0');
+                    }
+                }
+            }
+            if (paintChanges.length > 0) {
+                this.history.push({ type: 'paint', changes: paintChanges });
+            }
+
+            clipboardData.objects.forEach(objData => {
+                const originalObj = this.objectManager.getObject(objData.id);
+                if (originalObj) {
+                    this._onObjectDelete(originalObj.id);
+                }
+            });
+
+            this._clearSelection();
+            if (action === 'cut') {
+                this._preparePaste();
+            }
+        }
+    }
+
+    _preparePaste() {
+        if (!this.clipboard) return;
+        this.currentTool = { type: 'paste' };
+        this.inputHandler.setCursor('none');
+        this._clearSelection();
+    }
+
+    _onPaste(gridX, gridY) {
+        if (!this.clipboard) return;
+
+        const startX = gridX - Math.floor(this.clipboard.width / 2);
+        const startY = gridY - Math.floor(this.clipboard.height / 2);
+        const paintChanges = [];
+        const placedObjects = [];
+
+        this.clipboard.tiles.forEach(tile => {
+            const newX = startX + tile.x;
+            const newY = startY + tile.y;
+            if (newX >= 0 && newX < this.grid.width && newY >= 0 && newY < this.grid.height) {
+                const index = newY * this.grid.width + newX;
+                const oldId = this.grid.getTileId(index);
+                paintChanges.push({ index, from: oldId, to: tile.id });
+                this.grid.paintCell(index, tile.id);
+            }
+        });
+
+        this.clipboard.objects.forEach(objData => {
+            const newX = startX + objData.x;
+            const newY = startY + objData.y;
+            if (newX >= 0 && newX < this.grid.width && newY >= 0 && newY < this.grid.height) {
+                const { newObject } = this.objectManager.addObject(objData.type, newX * 16, newY * 16);
+                Object.assign(newObject, { ...objData, id: newObject.id, x: newX, y: newY });
+                placedObjects.push(newObject);
+            }
+        });
+        this.objectManager.render();
+
+        // For now, let's just push paint changes to history
+        if (paintChanges.length > 0) {
+            this.history.push({ type: 'paint', changes: paintChanges });
+        }
     }
 }
 

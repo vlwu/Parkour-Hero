@@ -9,13 +9,17 @@ export class GridInputHandler {
         this.isPainting = false;
         this.isErasing = false;
         this.isDragging = false;
-        this.isPanning = false;
+        this.isSelecting = false;
+        this.isPasting = false;
 
         this.draggedObjectId = null;
         this.dragInitialX = 0;
         this.dragInitialY = 0;
         this.dragStartX = 0;
         this.dragStartY = 0;
+
+        this.selectionStartCoords = null;
+        this.lastHoveredIndex = -1;
 
         this._handleMouseDown = this._handleMouseDown.bind(this);
         this._handleMouseMove = this._handleMouseMove.bind(this);
@@ -34,6 +38,7 @@ export class GridInputHandler {
 
     _handleContextMenu(e) {
         e.preventDefault();
+        this.callbacks.onRightClick();
     }
 
     _getGridCoordsFromEvent(e) {
@@ -48,43 +53,58 @@ export class GridInputHandler {
     }
 
     _handleMouseDown(e) {
-        const target = e.target;
-        const { pixelX, pixelY, index } = this._getGridCoordsFromEvent(e);
+        const { pixelX, pixelY, gridX, gridY } = this._getGridCoordsFromEvent(e);
         const objectTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dynamic-object');
 
-        if (objectTarget) {
-            const id = parseInt(objectTarget.dataset.id);
-            if (e.button === 0) { // Left-click drag object
-                this.isDragging = true;
-                this.draggedObjectId = id;
-                const {x, y} = this.callbacks.onObjectDragStart(id);
-
-                this.dragStartX = e.clientX;
-                this.dragStartY = e.clientY;
-                this.dragInitialX = x;
-                this.dragInitialY = y;
-                objectTarget.classList.add('dragging');
-            } else if (e.button === 2) { // Right-click delete object
-                this.callbacks.onObjectDelete(id);
-            }
-        } else { // Clicked on grid canvas
-            if (e.button === 0) { // Left-click paint or place
-                if (this.callbacks.isTileSelected()) {
-                    this.isPainting = true;
-                    this.callbacks.onPaintStart();
-                    this.callbacks.onPaint(index);
-                } else {
+        if (e.button === 0) {
+            const tool = this.callbacks.getCurrentTool();
+            switch (tool) {
+                case 'paint':
+                    if (objectTarget) this._startDrag(e, objectTarget);
+                    else {
+                        this.isPainting = true;
+                        this.callbacks.onPaintStart();
+                        this.callbacks.onPaint(gridX, gridY);
+                    }
+                    break;
+                case 'place':
                     this.callbacks.onObjectPlace(pixelX, pixelY);
-                }
-            } else if (e.button === 2) { // Right-click erase
-                this.isErasing = true;
-                this.callbacks.onPaintStart();
-                this.callbacks.onErase(index);
+                    break;
+                case 'eraser':
+                    this.isErasing = true;
+                    this.callbacks.onPaintStart();
+                    this.callbacks.onErase(gridX, gridY);
+                    break;
+                case 'select':
+                    this.isSelecting = true;
+                    this.selectionStartCoords = { x: gridX, y: gridY };
+                    this.callbacks.onSelectionChange(this.selectionStartCoords, this.selectionStartCoords);
+                    break;
+                case 'paste':
+                    this.callbacks.onPaste(gridX, gridY);
+                    break;
+                default:
+                    if (objectTarget) this._startDrag(e, objectTarget);
             }
         }
     }
 
+    _startDrag(e, objectTarget) {
+        const id = parseInt(objectTarget.dataset.id);
+        this.isDragging = true;
+        this.draggedObjectId = id;
+        const { x, y } = this.callbacks.onObjectDragStart(id);
+        this.dragStartX = e.clientX;
+        this.dragStartY = e.clientY;
+        this.dragInitialX = x;
+        this.dragInitialY = y;
+        objectTarget.classList.add('dragging');
+    }
+
+
     _handleMouseMove(e) {
+        const { pixelX, pixelY, gridX, gridY, index } = this._getGridCoordsFromEvent(e);
+
         if (this.isDragging && this.draggedObjectId !== null) {
             const scale = this.grid.zoomLevel;
             const dx = (e.clientX - this.dragStartX) / (GRID_CONSTANTS.TILE_SIZE * scale);
@@ -93,31 +113,39 @@ export class GridInputHandler {
             const newY = this.dragInitialY + dy;
             this.callbacks.onObjectDrag(this.draggedObjectId, newX, newY);
         } else if (this.isPainting || this.isErasing) {
-            const { index, gridX, gridY } = this._getGridCoordsFromEvent(e);
-             if (gridX < 0 || gridX >= this.grid.width || gridY < 0 || gridY >= this.grid.height) {
-                return;
-            }
-            if (this.isErasing) {
-                this.callbacks.onErase(index);
-            } else {
-                this.callbacks.onPaint(index);
+            if (gridX < 0 || gridX >= this.grid.width || gridY < 0 || gridY >= this.grid.height) return;
+            if (this.isErasing) this.callbacks.onErase(gridX, gridY);
+            else this.callbacks.onPaint(gridX, gridY);
+        } else if (this.isSelecting) {
+            this.callbacks.onSelectionChange(this.selectionStartCoords, { x: gridX, y: gridY });
+        } else {
+             if (index !== this.lastHoveredIndex) {
+                this.callbacks.onHover(gridX, gridY);
+                this.lastHoveredIndex = index;
             }
         }
     }
 
     _handleMouseUp(e) {
-        if (this.isPainting || this.isErasing) {
-            this.callbacks.onPaintEnd();
-        }
-
+        if (this.isPainting || this.isErasing) this.callbacks.onPaintEnd();
         if (this.isDragging && this.draggedObjectId !== null) {
             document.querySelector('.dynamic-object.dragging')?.classList.remove('dragging');
             this.callbacks.onObjectDragEnd(this.draggedObjectId);
+        }
+        if (this.isSelecting) {
+            const { gridX, gridY } = this._getGridCoordsFromEvent(e);
+            this.callbacks.onSelectionEnd({ x: gridX, y: gridY });
         }
 
         this.isPainting = false;
         this.isErasing = false;
         this.isDragging = false;
+        this.isSelecting = false;
         this.draggedObjectId = null;
+        this.selectionStartCoords = null;
+    }
+
+    setCursor(cursorStyle) {
+        this.gridContainer.style.cursor = cursorStyle;
     }
 }

@@ -16,8 +16,10 @@ export class Grid {
 
         this.gridLinesCanvas = document.createElement('canvas');
         this.tileCanvas = document.createElement('canvas');
+        this.overlayCanvas = document.createElement('canvas');
         this.gridLinesCtx = this.gridLinesCanvas.getContext('2d');
         this.tileCtx = this.tileCanvas.getContext('2d');
+        this.overlayCtx = this.overlayCanvas.getContext('2d');
         this.tileCtx.imageSmoothingEnabled = false;
 
         this.tilesetImage.onload = () => this.drawAllTiles();
@@ -33,9 +35,12 @@ export class Grid {
         this.gridLinesCanvas.height = this.height * GRID_CONSTANTS.TILE_SIZE;
         this.tileCanvas.width = this.width * GRID_CONSTANTS.TILE_SIZE;
         this.tileCanvas.height = this.height * GRID_CONSTANTS.TILE_SIZE;
+        this.overlayCanvas.width = this.width * GRID_CONSTANTS.TILE_SIZE;
+        this.overlayCanvas.height = this.height * GRID_CONSTANTS.TILE_SIZE;
 
         DOM.gridContainer.appendChild(this.tileCanvas);
         DOM.gridContainer.appendChild(this.gridLinesCanvas);
+        DOM.gridContainer.appendChild(this.overlayCanvas);
 
         this.drawGridLines();
         this.drawAllTiles();
@@ -117,6 +122,7 @@ export class Grid {
     }
 
     paintCell(index, tileIdStr) {
+        if (index < 0 || index >= this.tileData.length) return;
         const tileId = parseInt(tileIdStr, 10);
         this.tileData[index] = tileId;
         this.drawTileAtIndex(index);

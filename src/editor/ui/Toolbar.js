@@ -20,5 +20,9 @@ export class Toolbar {
             callbacks.onFileLoad(e);
             e.target.value = null;
         });
+
+        DOM.copySelectionBtn.addEventListener('click', callbacks.onCopySelection);
+        DOM.cutSelectionBtn.addEventListener('click', callbacks.onCutSelection);
+        DOM.deleteSelectionBtn.addEventListener('click', callbacks.onDeleteSelection);
     }
 }
