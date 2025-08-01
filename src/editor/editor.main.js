@@ -19,41 +19,22 @@ import { KeyboardManager } from './core/KeyboardManager.js';
 import { GRID_CONSTANTS } from '../utils/constants.js';
 import { UpdatePropertyCommand } from './commands/UpdatePropertyCommand.js';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const round = (val) => Math.round(val * 100) / 100;
 
 class EditorApp {
     constructor() {
+        const grid = new Grid(28, 15);
+        const objectManager = new ObjectManager(grid);
 
         this.context = {
             state: new EditorState(),
-            grid: new Grid(28, 15),
-            objectManager: new ObjectManager(),
+            grid: grid,
+            objectManager: objectManager,
             history: new HistoryManager(DOM.undoBtn, DOM.redoBtn),
             assets: null,
             fontRenderer: null,
             app: this,
         };
-
 
         this.context.palette = new Palette(this._onPaletteSelection.bind(this));
         this.context.propertiesPanel = new PropertiesPanel(this._onPropertyUpdate.bind(this));

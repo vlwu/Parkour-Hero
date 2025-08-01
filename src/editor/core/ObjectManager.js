@@ -6,7 +6,8 @@ import { DOM } from '../ui/DOM.js';
 const round = (val) => Math.round(val * 100) / 100;
 
 export class ObjectManager {
-    constructor() {
+    constructor(grid) {
+        this.grid = grid;
         this.objects = [];
         this.nextObjectId = 0;
     }
@@ -165,9 +166,9 @@ export class ObjectManager {
         return this.objects;
     }
 
-    getObjectsForExport(grid) {
+    getObjectsForExport() {
         const playerSpawn = this.objects.find(obj => obj.type === 'player_spawn');
-        const startPos = playerSpawn ? [round(playerSpawn.x), round(playerSpawn.y)] : [1.5, grid.height - 2.5];
+        const startPos = playerSpawn ? [round(playerSpawn.x), round(playerSpawn.y)] : [1.5, this.grid.height - 2.5];
 
         const finalEntities = [];
         this.objects.forEach(obj => {

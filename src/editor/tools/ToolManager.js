@@ -6,7 +6,7 @@ import { PasteTool } from './PasteTool.js';
 
 export class ToolManager {
     constructor(editorContext) {
-        /** @type {import('../EditorApp.js').EditorAppContext} */
+
         this.context = editorContext;
         this.tools = {
             'paint': new PaintTool(this.context),
@@ -31,7 +31,7 @@ export class ToolManager {
         } else {
             toolKey = null;
         }
-        
+
         this.activeTool = this.tools[toolKey] || null;
 
         if (this.activeTool) {
@@ -42,5 +42,5 @@ export class ToolManager {
     onMouseDown(e, coords) { this.activeTool?.onMouseDown(e, coords); }
     onMouseMove(e, coords) { this.activeTool?.onMouseMove(e, coords); }
     onMouseUp(e, coords) { this.activeTool?.onMouseUp(e, coords); }
-    onHover(coords) { this.activeTool?.onHover(coords); }
+    onHover(e, coords) { this.activeTool?.onHover(e, coords); }
 }

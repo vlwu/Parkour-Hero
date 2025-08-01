@@ -3,14 +3,14 @@ export class Tool {
         if (this.constructor === Tool) {
             throw new Error("Abstract classes can't be instantiated.");
         }
-        /** @type {import('../EditorApp.js').EditorAppContext} */
+
         this.context = editorContext;
     }
 
     onMouseDown(e, coords) {}
     onMouseMove(e, coords) {}
     onMouseUp(e, coords) {}
-    onHover(coords) {}
+    onHover(e, coords) {}
     activate() {}
     deactivate() {}
 

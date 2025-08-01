@@ -16,7 +16,7 @@ export class EraserTool extends Tool {
     }
 
     deactivate() {
-        this.state.pastePreview = null; // Use pastePreview as a generic tool preview state
+        this.state.pastePreview = null;
     }
 
     onMouseDown(e, coords) {
@@ -52,13 +52,13 @@ export class EraserTool extends Tool {
         }
         this.currentEraseAction = null;
     }
-    
-    onHover({ gridX, gridY }) {
-        this.state.pastePreview = { gridX, gridY }; // Use pastePreview for cursor position
+
+    onHover(e, { gridX, gridY }) {
+        this.state.pastePreview = { gridX, gridY };
     }
 
     _erase(e, { gridX, gridY }) {
-        // Erase tiles
+
         const brushRadius = Math.floor(this.state.eraserSize / 2);
         for (let y = -brushRadius; y <= brushRadius; y++) {
             for (let x = -brushRadius; x <= brushRadius; x++) {
@@ -74,8 +74,7 @@ export class EraserTool extends Tool {
                 }
             }
         }
-        
-        // Erase object under cursor
+
         const objectTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dynamic-object');
         if (objectTarget) {
             const id = parseInt(objectTarget.dataset.id, 10);

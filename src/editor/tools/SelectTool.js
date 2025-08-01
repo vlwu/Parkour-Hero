@@ -23,7 +23,7 @@ export class SelectTool extends Tool {
     onMouseDown(e, { gridX, gridY }) {
         if (e.button !== 0) return;
 
-        const objectTarget = e.target.closest('.dynamic-object');
+        const objectTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dynamic-object');
 
         if (objectTarget) {
             const id = parseInt(objectTarget.dataset.id, 10);
@@ -62,11 +62,11 @@ export class SelectTool extends Tool {
         this.isSelecting = false;
         this.draggedObjectId = null;
     }
-    
+
     onHover(e, { gridX, gridY }) {
         const hoveredObject = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dynamic-object');
         const selection = this.context.state.selection;
-        
+
         if (hoveredObject || (selection && gridX >= selection.x && gridX < selection.x + selection.width && gridY >= selection.y && gridY < selection.y + selection.height)) {
             this.context.inputHandler.setCursor('move');
         } else {
@@ -78,14 +78,14 @@ export class SelectTool extends Tool {
         const id = parseInt(objectTarget.dataset.id);
         this.isDragging = true;
         this.draggedObjectId = id;
-        
+
         const obj = this.objectManager.getObject(id);
         if (!obj) return;
-        
+
         this.dragStartX = e.clientX;
         this.dragStartY = e.clientY;
         this.objectDragStartPosition = { x: obj.x, y: obj.y };
-        
+
         objectTarget.classList.add('dragging');
     }
 

@@ -16,7 +16,7 @@ export class PreviewManager {
             return;
         }
 
-        const { startPos, finalEntities } = this.context.objectManager.getObjectsForExport(this.context.grid);
+        const { startPos, finalEntities } = this.context.objectManager.getObjectsForExport();
         const levelData = {
             name: `Preview: ${DOM.levelNameInput.value}`,
             gridWidth: this.context.grid.width,
