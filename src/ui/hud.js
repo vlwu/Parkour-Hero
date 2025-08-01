@@ -162,7 +162,7 @@ export class HUD {
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
       ctx.fillRect(healthBarX - 2, healthBarY - 2, healthBarWidth + 4, healthBarHeight + 4);
-      ctx.fillStyle = '#333';
+      ctx.fillStyle = 'rgba(51, 51, 51, 0.7)';
       ctx.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
 
       const healthPercentage = (health || 0) / (maxHealth || 100);
