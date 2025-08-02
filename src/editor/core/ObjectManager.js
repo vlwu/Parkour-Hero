@@ -50,7 +50,6 @@ export class ObjectManager {
                     break;
                 case 'plant':
                     obj.direction = entityData[propIndex++];
-                    obj.knockbackSpeed = entityData[propIndex++];
                     break;
                 case 'fan':
                     obj.direction = entityData[propIndex++];

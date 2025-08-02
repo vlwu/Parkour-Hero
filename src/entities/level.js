@@ -129,6 +129,8 @@ export class Level {
                 config.verticalAmplitude = entityData[propIndex++];
             } else if (type === 'radish' || type === 'bee') {
                 config.patrolBoxSize = entityData[propIndex++];
+            } else if (type === 'plant') {
+                config.direction = entityData[propIndex++];
             }
             this.initialEnemyConfigs.push({ ...config, x: entityData[1], y: entityData[2] });
             return;
