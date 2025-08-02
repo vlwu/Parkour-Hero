@@ -10,7 +10,6 @@ export class TrunkAI extends BaseAI {
         super(entityId, entityManager, level, playerEntityId);
         this.groundPatrol = new GroundPatrol(entityId, entityManager, level, playerEntityId);
 
-        this.aggroRadius = this.enemy.ai.aggroRadius || 175;
         this.attackInterval = this.enemy.ai.attackInterval || 2.0;
 
         this.attackTimer = this.attackInterval * Math.random();
@@ -50,7 +49,10 @@ export class TrunkAI extends BaseAI {
         const playerCol = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, CollisionComponent) : null;
         if (!playerCol) return false;
 
-        // 1. Check if they are on the same platform
+        if (!playerCol.isGrounded) {
+            return false;
+        }
+
         const enemyEdges = this._getPlatformEdgesForEntity(this.pos, this.col);
         const playerEdges = this._getPlatformEdgesForEntity(playerPos, playerCol);
         const onSamePlatform = enemyEdges && playerEdges && enemyEdges.left === playerEdges.left && enemyEdges.right === playerEdges.right;
@@ -59,23 +61,16 @@ export class TrunkAI extends BaseAI {
             return false;
         }
 
-        // 2. Check vertical alignment
         const playerCenterY = playerPos.y + playerCol.height / 2;
         const trunkCenterY = this.pos.y + this.col.height / 2;
         if (Math.abs(playerCenterY - trunkCenterY) > this.col.height * 1.5) {
             return false;
         }
 
-        // 3. Check horizontal distance (aggro range)
         const playerCenterX = playerPos.x + playerCol.width / 2;
         const trunkCenterX = this.pos.x + this.col.width / 2;
         const dx = playerCenterX - trunkCenterX;
-        const distance = Math.abs(dx);
-        if (distance > this.aggroRadius) {
-            return false;
-        }
 
-        // 4. Check if facing the player
         const isPlayerRight = dx > 0;
         const isFacingPlayer = (isPlayerRight && this.renderable.direction === 'right') || (!isPlayerRight && this.renderable.direction === 'left');
 
@@ -101,29 +96,13 @@ export class TrunkAI extends BaseAI {
     }
 
     _fireBullet() {
-        const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
-        if (!playerPos) return;
-        const playerCol = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, CollisionComponent) : null;
-        if (!playerCol) return;
-
         const speed = this.enemy.ai.bullet.speed;
         const bulletSpawnX = this.pos.x + this.col.width / 2;
         const bulletSpawnY = this.pos.y + 5;
 
-        const playerCenterX = playerPos.x + playerCol.width / 2;
-        const playerCenterY = playerPos.y + playerCol.height / 2;
-
-        const dx = playerCenterX - bulletSpawnX;
-        const dy = playerCenterY - bulletSpawnY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        let velX = 0, velY = 0;
-        let rotation = 0;
-        if (dist > 0) {
-            velX = (dx / dist) * speed;
-            velY = (dy / dist) * speed;
-            rotation = Math.atan2(dy, dx);
-        }
+        const velX = this.renderable.direction === 'right' ? speed : -speed;
+        const velY = 0;
+        const rotation = 0;
 
         eventBus.publish('spawnBullet', {
             x: bulletSpawnX,
