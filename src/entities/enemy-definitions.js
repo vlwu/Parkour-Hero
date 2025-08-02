@@ -273,6 +273,7 @@ export const ENEMY_DEFINITIONS = {
             visibleDuration: 2.0,
             invisibleDuration: 2.0,
             particleDropInterval: 0.5,
+            soundRadius: 200,
         }
     },
 };

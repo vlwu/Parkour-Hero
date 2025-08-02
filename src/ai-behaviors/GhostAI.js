@@ -2,6 +2,7 @@ import { BaseAI } from './BaseAI.js';
 import { GroundPatrol } from './GroundPatrol.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
+import { PositionComponent } from '../components/PositionComponent.js';
 
 export class GhostAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -13,7 +14,19 @@ export class GhostAI extends BaseAI {
         this.renderable.animationState = 'appear';
         this.renderable.animationFrame = 0;
 
+        this.soundRadius = this.enemy.ai.soundRadius || 200;
+
         this._setVulnerability(false);
+    }
+
+    _playSoundIfPlayerNear() {
+        const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
+        if (playerPos) {
+            const distance = Math.sqrt(Math.pow(playerPos.x - this.pos.x, 2) + Math.pow(playerPos.y - this.pos.y, 2));
+            if (distance < this.soundRadius) {
+                eventBus.publish('playSound', { key: 'ghost', volume: 0.5, channel: 'SFX' });
+            }
+        }
     }
 
     update(dt) {
@@ -39,7 +52,7 @@ export class GhostAI extends BaseAI {
                     this.renderable.animationState = 'disappear';
                     this.renderable.animationFrame = 0;
                     this._setVulnerability(false);
-                    eventBus.publish('playSound', { key: 'ghost', volume: 0.5, channel: 'SFX' });
+                    this._playSoundIfPlayerNear();
                 }
                 break;
 
@@ -58,7 +71,7 @@ export class GhostAI extends BaseAI {
                     this.renderable.animationState = 'appear';
                     this.renderable.animationFrame = 0;
                     this.renderable.isVisible = true;
-                    eventBus.publish('playSound', { key: 'ghost', volume: 0.5, channel: 'SFX' });
+                    this._playSoundIfPlayerNear();
                 }
                 break;
         }
