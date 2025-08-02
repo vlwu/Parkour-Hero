@@ -279,7 +279,7 @@ const gameplaySoundPaths = {
     ghost: '/assets/Sounds/Ghost.mp3',
     rhino_charge: '/assets/Sounds/Rhino Charge.mp3',
     rhino_crash: '/assets/Sounds/Rhino Crash.mp3',
-    bullet_shoot: '/assets/Sounds/Bullet Shoot,mp3',
+    bullet_shoot: '/assets/Sounds/Bullet Shoot.mp3',
 };
 
 export const coreSoundKeys = Object.keys(coreSoundPaths);
