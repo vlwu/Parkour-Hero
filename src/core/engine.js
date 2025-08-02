@@ -2,6 +2,7 @@ import { Camera } from './camera.js';
 import { SoundManager } from '../managers/sound-manager.js';
 import { HUD } from '../ui/hud.js';
 import { GameState } from '../managers/game-state.js';
+import { StorageManager } from '../managers/storage-manager.js';
 import { CollisionSystem } from '../systems/collision-system.js';
 import { Renderer } from '../systems/renderer.js';
 import { LevelManager } from '../managers/level-manager.js';
@@ -12,7 +13,7 @@ import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
-import { PLAYER_CONSTANTS, EVENTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, EVENTS, PLAYER_STATES } from '../utils/constants.js';
 import { InputSystem } from '../systems/input-system.js';
 import { GameplaySystem } from '../systems/gameplay-system.js';
 import { PlayerStateSystem } from '../systems/player-state-system.js';
@@ -222,8 +223,12 @@ export class Engine {
     this.gameState.currentSection = sectionIndex;
     this.gameState.currentLevelIndex = levelIndex;
 
-    this.gameState = this.gameState.incrementAttempts(sectionIndex, levelIndex);
-    eventBus.publish(EVENTS.GAME_STATE_UPDATED, this.gameState);
+    const newGameState = this.gameState.incrementAttempts(sectionIndex, levelIndex);
+    if (newGameState !== this.gameState) {
+        this.gameState = newGameState;
+        StorageManager.saveProgress(this.gameState);
+        eventBus.publish(EVENTS.GAME_STATE_UPDATED, this.gameState);
+    }
 
     this.currentLevel = new Level(levelData, this.entityManager);
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
@@ -437,7 +442,18 @@ export class Engine {
   updatePlayerCharacter(newCharId) {
       if (this.playerEntityId === null) return;
       const charComp = this.entityManager.getComponent(this.playerEntityId, CharacterComponent);
-      if (charComp) charComp.characterId = newCharId || this.gameState.selectedCharacter;
+      if (charComp) {
+          const newId = newCharId || this.gameState.selectedCharacter;
+          if (charComp.characterId !== newId) {
+              charComp.characterId = newId;
+              const newGameState = this.gameState.setSelectedCharacter(newId);
+              if (newGameState !== this.gameState) {
+                  this.gameState = newGameState;
+                  StorageManager.saveProgress(this.gameState);
+                  eventBus.publish(EVENTS.GAME_STATE_UPDATED, this.gameState);
+              }
+          }
+      }
   }
 
   _onCheckpointActivated(cp) {

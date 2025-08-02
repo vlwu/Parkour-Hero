@@ -1,6 +1,7 @@
-import { characterConfig } from '../entities/level-definitions.js';
+import { characterConfig, levelSections } from '../entities/level-definitions.js';
 import { eventBus } from '../utils/event-bus.js';
-import { levelSections } from '../entities/level-definitions.js';
+import { StorageManager } from './storage-manager.js';
+import { EVENTS } from '../utils/constants.js';
 
 function getLinearIndex(sectionIndex, levelIndex, levelSections) {
     let linearIndex = 0;
@@ -39,7 +40,7 @@ export class GameState {
           this.tutorialShown = initialState.tutorialShown;
       } else {
           this.showingLevelComplete = false;
-          const savedState = this.loadProgress();
+          const savedState = StorageManager.loadProgress();
           this.levelProgress = savedState.levelProgress;
           this.selectedCharacter = savedState.selectedCharacter;
           this.levelStats = savedState.levelStats;
@@ -59,59 +60,10 @@ export class GameState {
       return new GameState(clonedState);
   }
 
-  _getDefaultState() {
-    return {
-      levelProgress: { unlockedLevels: [1], completedLevels: [] },
-      selectedCharacter: 'PinkMan',
-      levelStats: {},
-      tutorialShown: false,
-    };
-  }
-
-  loadProgress() {
-      try {
-        const saved = localStorage.getItem('parkourGameState');
-        if (!saved) return this._getDefaultState();
-        const state = JSON.parse(saved);
-        if (typeof state !== 'object' || state === null) return this._getDefaultState();
-        const lp = state.levelProgress;
-        if (typeof lp !== 'object' || lp === null || !Array.isArray(lp.unlockedLevels) || !Array.isArray(lp.completedLevels)) return this._getDefaultState();
-        if (typeof state.selectedCharacter !== 'string' || !characterConfig[state.selectedCharacter]) {
-            state.selectedCharacter = 'PinkMan';
-        }
-        if (!state.levelStats || typeof state.levelStats !== 'object') {
-            state.levelStats = {};
-        }
-        if (typeof state.tutorialShown !== 'boolean') {
-            state.tutorialShown = false;
-        }
-        return state;
-      } catch (e) {
-        console.error("Failed to parse game state from localStorage. Resetting to default.", e);
-        return this._getDefaultState();
-      }
-  }
-
-  saveProgress() {
-      try {
-        const stateToSave = {
-          levelProgress: this.levelProgress,
-          selectedCharacter: this.selectedCharacter,
-          levelStats: this.levelStats,
-          tutorialShown: this.tutorialShown,
-        };
-        localStorage.setItem('parkourGameState', JSON.stringify(stateToSave));
-        console.log("Progress saved:", stateToSave);
-      } catch (e) {
-        console.error("Failed to save game state to localStorage", e);
-      }
-  }
-
   setSelectedCharacter(characterId) {
     if (characterConfig[characterId] && this.selectedCharacter !== characterId) {
       const newState = this._clone();
       newState.selectedCharacter = characterId;
-      newState.saveProgress();
       return newState;
     }
     return this;
@@ -137,7 +89,6 @@ export class GameState {
     const levelId = `${sectionIndex}-${levelIndex}`;
     if (newState.levelStats[levelId]) {
         newState.levelStats[levelId].totalAttempts += 1;
-        newState.saveProgress();
     }
     return newState;
   }
@@ -171,8 +122,7 @@ export class GameState {
       }
 
       newState.showingLevelComplete = true;
-      newState.saveProgress();
-      eventBus.publish('playSound', { key: 'level_complete', volume: 1.0, channel: 'UI' });
+      eventBus.publish(EVENTS.PLAY_SOUND, { key: 'level_complete', volume: 1.0, channel: 'UI' });
 
       return newState;
   }
@@ -198,23 +148,15 @@ export class GameState {
       return this.levelProgress.completedLevels.includes(levelId);
   }
 
-  resetProgress() {
-    try {
-      localStorage.removeItem('parkourGameState');
-      const newState = new GameState();
-      newState.saveProgress();
-      return newState;
-    } catch (e) {
-      console.error("Failed to reset game state in localStorage", e);
-      return this;
-    }
+  static resetProgress() {
+    StorageManager.resetProgress();
+    return new GameState();
   }
 
   markTutorialAsShown() {
       if (this.tutorialShown) return this;
       const newState = this._clone();
       newState.tutorialShown = true;
-      newState.saveProgress();
       return newState;
   }
 
@@ -230,7 +172,6 @@ export class GameState {
           });
       });
 
-      newState.saveProgress();
       return newState;
   }
 }
