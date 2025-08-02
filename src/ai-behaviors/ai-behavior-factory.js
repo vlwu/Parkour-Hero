@@ -8,6 +8,7 @@ import { RadishAI } from './RadishAI.js';
 import { BeeAI } from './BeeAI.js';
 import { BatAI } from './BatAI.js';
 import { GhostAI } from './GhostAI.js';
+import { RhinoAI } from './RhinoAI.js';
 
 const aiBehaviorMap = {
     'patrol': PatrolAI,
@@ -20,6 +21,7 @@ const aiBehaviorMap = {
     'bee': BeeAI,
     'bat': BatAI,
     'ghost': GhostAI,
+    'rhino': RhinoAI,
 };
 
 export function createAIBehavior(type, entityId, entityManager, level, playerEntityId) {

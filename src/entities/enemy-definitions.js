@@ -46,6 +46,39 @@ export const ENEMY_DEFINITIONS = {
         }
     },
 
+    rhino: {
+        width: 52,
+        height: 34,
+        spriteKey: 'rhino',
+        animations: {
+            idle: { frameCount: 11, speed: 0.1 },
+            run: { frameCount: 6, speed: 0.1 },
+            hit: { frameCount: 5, speed: 0.1 },
+            wall_hit: { frameCount: 4, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: 250,
+            dealsContactDamage: true,
+            contactDamage: (enemyId, entityManager) => {
+                const vel = entityManager.getComponent(enemyId, 'VelocityComponent');
+                if (vel && Math.abs(vel.vx) > 100) {
+                    return 1000;
+                }
+                return 30;
+            },
+        },
+        ai: {
+            type: 'rhino',
+            aggroRange: 750,
+            initialSpeed: 30,
+            acceleration: 80,
+            maxSpeed: 250,
+            reboundSpeed: 50,
+            stunDuration: 1.5,
+        }
+    },
+
     snail: {
         width: 38,
         height: 24,

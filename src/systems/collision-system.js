@@ -195,7 +195,14 @@ export class CollisionSystem {
                         const enemy = entityManager.getComponent(collider.entityId, EnemyComponent);
                         const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                         if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                            const damageAmount = killable ? killable.contactDamage : 1000;
+                            let damageAmount = 1000;
+                            if (killable) {
+                                if (typeof killable.contactDamage === 'function') {
+                                    damageAmount = killable.contactDamage(collider.entityId, entityManager);
+                                } else {
+                                    damageAmount = killable.contactDamage;
+                                }
+                            }
                             eventBus.publish('playerTookDamage', { amount: damageAmount, source: 'enemy_contact' });
                             return;
                         }
@@ -266,7 +273,14 @@ export class CollisionSystem {
                     }
 
                     if (!enemy.isDead && (!killable || killable.dealsContactDamage)) {
-                        const damageAmount = killable ? killable.contactDamage : 1000;
+                        let damageAmount = 1000;
+                        if (killable) {
+                            if (typeof killable.contactDamage === 'function') {
+                                damageAmount = killable.contactDamage(collider.entityId, entityManager);
+                            } else {
+                                damageAmount = killable.contactDamage;
+                            }
+                        }
                         eventBus.publish('playerTookDamage', { amount: damageAmount, source: 'enemy_contact' });
                         return;
                     }
