@@ -1,27 +1,19 @@
-import { BaseAI } from './BaseAI.js';
+import { FlyingAI } from './FlyingAI.js';
 import { eventBus } from '../utils/event-bus.js';
 import { GRID_CONSTANTS } from '../utils/constants.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { ENEMY_STATES, ANIMATION_STATES, EVENTS } from '../utils/constants.js';
 
-export class FlyingSlamAI extends BaseAI {
+export class FlyingSlamAI extends FlyingAI {
     constructor(entityId, entityManager, level, playerEntityId) {
         super(entityId, entityManager, level, playerEntityId);
-
-        this.anchorY = this.pos.y;
-        this.lastFrame = -1;
-
-        this.bobbingAmplitude = this.enemy.ai.bobbingAmplitude || 8;
-        this.gravity = this.enemy.ai.gravity || 120;
-        this.flapForce = this.enemy.ai.flapForce || -140;
-        this.tetherStrength = this.enemy.ai.tetherStrength || 5;
-        this.soundRadius = this.enemy.ai.soundRadius || 200;
 
         this.slamSpeed = this.enemy.ai.slamSpeed || 350;
         this.retractSpeed = this.enemy.ai.retractSpeed || 100;
         this.groundedDuration = this.enemy.ai.groundedDuration || 1.0;
         this.groundedTimer = 0;
+        this.flapFrames = [7, 8];
 
         this.state.currentState = ENEMY_STATES.IDLE;
         if (this.killable) {
@@ -32,7 +24,7 @@ export class FlyingSlamAI extends BaseAI {
     update(dt) {
         const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
         const playerCol = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, CollisionComponent) : null;
-        this._handleAnimationEvents(playerPos);
+        this.handleAnimationEvents();
 
         switch (this.state.currentState) {
             case ENEMY_STATES.IDLE:
@@ -53,14 +45,7 @@ export class FlyingSlamAI extends BaseAI {
     _idle(dt, playerPos, playerCol) {
         this.renderable.animationState = ANIMATION_STATES.IDLE;
         this.vel.vx = 0;
-
-        this.vel.vy += this.gravity * dt;
-        const distY = this.pos.y - this.anchorY;
-        if (Math.abs(distY) > this.bobbingAmplitude) {
-            this.vel.vy -= distY * this.tetherStrength * dt;
-        }
-        this.vel.vy = Math.max(-200, Math.min(200, this.vel.vy));
-
+        this.updateVerticalBobbing(dt);
 
         if (this._isPlayerInZone(playerPos, playerCol)) {
             this.state.currentState = ENEMY_STATES.SLAMMING;
@@ -153,24 +138,5 @@ export class FlyingSlamAI extends BaseAI {
             playerHitbox.y < actualZone.y + actualZone.height &&
             playerHitbox.y + playerHitbox.height > actualZone.y
         );
-    }
-
-    _handleAnimationEvents(playerPos) {
-        const currentFrame = this.renderable.animationFrame;
-        if (currentFrame !== this.lastFrame) {
-            if (this.state.currentState === ENEMY_STATES.IDLE && (currentFrame === 7 || currentFrame === 8)) {
-                this.vel.vy = this.flapForce;
-                const particleY = this.pos.y + this.col.height / 2;
-                eventBus.publish(EVENTS.CREATE_PARTICLES, { x: this.pos.x, y: particleY, type: 'wing_flap' });
-                eventBus.publish(EVENTS.CREATE_PARTICLES, { x: this.pos.x + this.col.width, y: particleY, type: 'wing_flap' });
-                if (playerPos) {
-                    const distance = Math.sqrt(Math.pow(playerPos.x - this.pos.x, 2) + Math.pow(playerPos.y - this.pos.y, 2));
-                    if (distance < this.soundRadius) {
-                        eventBus.publish(EVENTS.PLAY_SOUND, { key: 'wing_flap', volume: 0.3, channel: 'SFX' });
-                    }
-                }
-            }
-        }
-        this.lastFrame = currentFrame;
     }
 }
