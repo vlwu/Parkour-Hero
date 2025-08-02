@@ -237,6 +237,12 @@ const gameplayImagePaths = {
     rhino_idle: '/assets/Enemies/Rhino/Idle.png',
     rhino_run: '/assets/Enemies/Rhino/Run.png',
     rhino_wall_hit: '/assets/Enemies/Rhino/Wall Hit.png',
+    plant_hit: '/assets/Enemies/Plant/Hit.png',
+    plant_attack: '/assets/Enemies/Plant/Attack.png',
+    plant_idle: '/assets/Enemies/Plant/Idle.png',
+    plant_bullet: '/assets/Enemies/Plant/Bullet.png',
+    plant_bullet_pieces: '/assets/Enemies/Plant/Bullet Pieces.png',
+
     dust_particle: '/assets/Other/Dust Particle.png',
     ice_particle: '/assets/Traps/Sand Mud Ice/Ice Particle.png',
     sand_particle: '/assets/Traps/Sand Mud Ice/Sand Particle.png',

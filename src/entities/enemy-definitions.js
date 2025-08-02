@@ -309,4 +309,32 @@ export const ENEMY_DEFINITIONS = {
             soundRadius: 200,
         }
     },
+
+    plant: {
+        width: 44,
+        height: 42,
+        spriteKey: 'plant',
+        animations: {
+            idle: { frameCount: 11, speed: 0.1 },
+            attack: { frameCount: 8, speed: 0.1, fireFrame: 5 },
+            hit: { frameCount: 5, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: 250,
+            dealsContactDamage: true,
+            contactDamage: 1000,
+        },
+        ai: {
+            type: 'plant',
+            aggroRadius: 250,
+            attackInterval: 2.5,
+            bullet: {
+                speed: 250,
+                damage: 50,
+                width: 16,
+                height: 16,
+            }
+        }
+    },
 };

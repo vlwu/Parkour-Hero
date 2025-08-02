@@ -45,6 +45,7 @@ export class ObjectManager {
                     obj.tiltAmount = entityData[propIndex++];
                     break;
                 case 'arrow_bubble':
+                case 'plant':
                     obj.direction = entityData[propIndex++];
                     obj.knockbackSpeed = entityData[propIndex++];
                     break;
@@ -119,6 +120,9 @@ export class ObjectManager {
         if (type === 'arrow_bubble') {
             newObject.direction = 'right'; newObject.knockbackSpeed = 300;
         }
+        if (type === 'plant') {
+            newObject.direction = 'right';
+        }
         if (type === 'fan') {
             newObject.direction = 'right'; newObject.pushStrength = 250; newObject.windHeight = 120;
         }
@@ -186,6 +190,9 @@ export class ObjectManager {
                 case 'arrow_bubble':
                     entityArray.push(obj.direction, obj.knockbackSpeed);
                     break;
+                case 'plant':
+                    entityArray.push(obj.direction);
+                    break;
                 case 'fan':
                     entityArray.push(obj.direction, obj.pushStrength, obj.windHeight);
                     break;
@@ -220,7 +227,7 @@ export class ObjectManager {
             el.style.backgroundColor = getPaletteColor(obj.type);
             el.style.opacity = '0.8';
             let angle = 0;
-            if (obj.type === 'fan') {
+            if (obj.type === 'fan' || obj.type === 'plant') {
                 switch (obj.direction) {
                     case 'up': angle = 0; break; case 'right': angle = 90; break;
                     case 'down': angle = 180; break; case 'left': angle = -90; break;

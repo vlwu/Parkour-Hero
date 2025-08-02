@@ -29,6 +29,7 @@ export class BulletSystem {
             const vel = entityManager.getComponent(id, VelocityComponent);
             const col = entityManager.getComponent(id, CollisionComponent);
             const bullet = entityManager.getComponent(id, BulletComponent);
+            const renderable = entityManager.getComponent(id, RenderableComponent);
 
             if (playerPos && playerCol) {
                 if (
@@ -44,31 +45,34 @@ export class BulletSystem {
                 }
             }
 
-            if (col.isGrounded) {
-                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'bee_bullet_pieces', leafIndex: 0 });
-                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'bee_bullet_pieces', leafIndex: 1 });
+            if (col.isGrounded || col.isAgainstWall) {
+                const piecesSpriteKey = renderable.spriteKey === 'bee_bullet' ? 'bee_bullet_pieces' : 'plant_bullet_pieces';
+                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: piecesSpriteKey, leafIndex: 0 });
+                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: piecesSpriteKey, leafIndex: 1 });
                 this.collisionSystem.removeDynamicEntity(id, entityManager);
                 entityManager.destroyEntity(id);
                 continue;
             }
 
-            vel.vy += PLAYER_CONSTANTS.GRAVITY * dt * 0.5;
+            if (renderable.spriteKey === 'bee_bullet') {
+                vel.vy += PLAYER_CONSTANTS.GRAVITY * dt * 0.5;
+            }
 
-            if (pos.y > level.height) {
+            if (pos.y > level.height || pos.y < 0 || pos.x < 0 || pos.x > level.width) {
                 this.collisionSystem.removeDynamicEntity(id, entityManager);
                 entityManager.destroyEntity(id);
             }
         }
     }
 
-    _createBullet(entityManager, { x, y, config }) {
+    _createBullet(entityManager, { x, y, vx, vy, config, spriteKey = 'bee_bullet' }) {
         const bulletId = entityManager.createEntity();
 
         entityManager.addComponent(bulletId, new PositionComponent(x - config.width / 2, y));
-        entityManager.addComponent(bulletId, new VelocityComponent(0, config.speed));
+        entityManager.addComponent(bulletId, new VelocityComponent(vx || 0, vy || config.speed));
         entityManager.addComponent(bulletId, new DynamicColliderComponent());
         entityManager.addComponent(bulletId, new CollisionComponent({ type: 'hazard', width: config.width, height: config.height }));
-        entityManager.addComponent(bulletId, new RenderableComponent({ spriteKey: 'bee_bullet', width: config.width, height: config.height }));
+        entityManager.addComponent(bulletId, new RenderableComponent({ spriteKey: spriteKey, width: config.width, height: config.height }));
         entityManager.addComponent(bulletId, new BulletComponent({ damage: config.damage, speed: config.speed }));
     }
 }

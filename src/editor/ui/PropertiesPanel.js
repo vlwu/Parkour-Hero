@@ -47,7 +47,7 @@ export class PropertiesPanel {
             propertiesHTML += this._createNumberInput('period', 'Period (seconds)', obj.period || 4, 0.1);
             propertiesHTML += this._createNumberInput('tiltAmount', 'Tilt Amount', obj.tiltAmount || 0.5, 0.1);
         }
-        if (obj.type === 'arrow_bubble' || obj.type === 'fan') {
+        if (obj.type === 'arrow_bubble' || obj.type === 'fan' || obj.type === 'plant') {
             const directions = ['right', 'left', 'up', 'down'];
             propertiesHTML += this._createSelectInput('direction', 'Direction', directions, obj.direction);
         }
@@ -106,7 +106,7 @@ export class PropertiesPanel {
 
         attach('x'); attach('y');
         if (obj.type === 'spiked_ball') { attach('chainLength'); attach('swingArc'); attach('period'); attach('tiltAmount'); }
-        if (obj.type === 'arrow_bubble' || obj.type === 'fan') { attach('direction', 'select'); }
+        if (obj.type === 'arrow_bubble' || obj.type === 'fan' || obj.type === 'plant') { attach('direction', 'select'); }
         if (obj.type === 'arrow_bubble') { attach('knockbackSpeed'); }
         if (obj.type === 'fan') { attach('pushStrength'); attach('windHeight'); }
         if (obj.type === 'saw') { attach('direction', 'select'); attach('distance'); attach('speed'); }
