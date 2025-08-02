@@ -29,6 +29,7 @@ export class RhinoAI extends BaseAI {
                         this.renderable.direction = (playerData.x > this.pos.x) ? 'right' : 'left';
                         this.state.currentState = 'charging';
                         this.vel.vx = (this.renderable.direction === 'right' ? 1 : -1) * ai.initialSpeed;
+                        eventBus.publish('startSoundLoop', { key: 'rhino_charge', volume: 0.7, channel: 'SFX' });
                     }
                 }
                 break;
@@ -52,6 +53,8 @@ export class RhinoAI extends BaseAI {
                     this.renderable.animationFrame = 0;
                     this.vel.vx = -directionMultiplier * ai.reboundSpeed;
                     this.enemy.timer = ai.stunDuration;
+                    eventBus.publish('stopSoundLoop', { key: 'rhino_charge' });
+                    eventBus.publish('playSound', { key: 'rhino_crash', volume: 1.0, channel: 'SFX' });
                     eventBus.publish('cameraShakeRequested', { intensity: 10, duration: 0.2 });
                 }
                 break;

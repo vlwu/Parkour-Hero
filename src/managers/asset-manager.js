@@ -271,6 +271,8 @@ const gameplaySoundPaths = {
     spawned: '/assets/Sounds/Spawned.mp3',
     wing_flap: '/assets/Sounds/Wing Flap.mp3',
     ghost: '/assets/Sounds/Ghost.mp3',
+    rhino_charge: '/assets/Sounds/Rhino Charge.mp3',
+    rhino_crash: '/assets/Sounds/Rhino Crash.mp3',
 };
 
 export const coreSoundKeys = Object.keys(coreSoundPaths);
