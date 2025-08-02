@@ -31,7 +31,15 @@ export class BulletSystem {
             const bullet = entityManager.getComponent(id, BulletComponent);
             const renderable = entityManager.getComponent(id, RenderableComponent);
 
-            const destroyBullet = () => {
+            const destroyBullet = (playerCurrentPos) => {
+                if (playerCurrentPos) {
+                    const distance = Math.sqrt(Math.pow(playerCurrentPos.x - pos.x, 2) + Math.pow(playerCurrentPos.y - pos.y, 2));
+                    const SOUND_RADIUS = 200;
+                    if (distance < SOUND_RADIUS) {
+                        eventBus.publish('playSound', { key: 'bullet_break', volume: 0.7, channel: 'SFX' });
+                    }
+                }
+
                 if (bullet.piecesSpriteKey) {
                     eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: bullet.piecesSpriteKey, leafIndex: 0 });
                     eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: bullet.piecesSpriteKey, leafIndex: 1 });
@@ -48,13 +56,13 @@ export class BulletSystem {
                     pos.y + col.height > playerPos.y
                 ) {
                     eventBus.publish('playerTookDamage', { amount: bullet.damage, source: 'bullet' });
-                    destroyBullet();
+                    destroyBullet(playerPos);
                     continue;
                 }
             }
 
             if (col.isGrounded || col.isAgainstWall) {
-                destroyBullet();
+                destroyBullet(playerPos);
                 continue;
             }
 
@@ -63,7 +71,7 @@ export class BulletSystem {
             }
 
             if (pos.y >= level.height || pos.y <= 0 || pos.x <= 0 || pos.x + col.width >= level.width) {
-                destroyBullet();
+                destroyBullet(playerPos);
                 continue;
             }
         }
