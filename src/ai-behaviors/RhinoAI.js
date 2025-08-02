@@ -2,6 +2,7 @@ import { BaseAI } from './BaseAI.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { eventBus } from '../utils/event-bus.js';
+import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS, EVENTS } from '../utils/constants.js';
 
 export class RhinoAI extends BaseAI {
     update(dt) {
@@ -11,9 +12,9 @@ export class RhinoAI extends BaseAI {
         const playerData = playerPos && playerCol ? { ...playerPos, ...playerCol } : null;
 
         switch (this.state.currentState) {
-            case 'idle':
+            case ENEMY_STATES.IDLE:
                 this.vel.vx = 0;
-                this.renderable.animationState = 'idle';
+                this.renderable.animationState = ANIMATION_STATES.IDLE;
 
                 if (playerData) {
                     const enemyEdges = this._getPlatformEdgesForEntity(this.pos, this.col);
@@ -26,43 +27,43 @@ export class RhinoAI extends BaseAI {
                     const inRange = horizontalDistance <= ai.aggroRange;
 
                     if (onSamePlatform && onSameLevel && inRange) {
-                        this.renderable.direction = (playerData.x > this.pos.x) ? 'right' : 'left';
-                        this.state.currentState = 'charging';
-                        this.vel.vx = (this.renderable.direction === 'right' ? 1 : -1) * ai.initialSpeed;
-                        eventBus.publish('startSoundLoop', { key: 'rhino_charge', volume: 0.5, channel: 'SFX' });
+                        this.renderable.direction = (playerData.x > this.pos.x) ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
+                        this.state.currentState = ENEMY_STATES.CHARGING;
+                        this.vel.vx = (this.renderable.direction === DIRECTIONS.RIGHT ? 1 : -1) * ai.initialSpeed;
+                        eventBus.publish(EVENTS.START_SOUND_LOOP, { key: 'rhino_charge', volume: 0.5, channel: 'SFX' });
                     }
                 }
                 break;
 
-            case 'charging':
-                this.renderable.animationState = 'run';
-                const directionMultiplier = this.renderable.direction === 'right' ? 1 : -1;
-                
+            case ENEMY_STATES.CHARGING:
+                this.renderable.animationState = ANIMATION_STATES.RUN;
+                const directionMultiplier = this.renderable.direction === DIRECTIONS.RIGHT ? 1 : -1;
+
                 this.vel.vx += directionMultiplier * ai.acceleration * dt;
                 this.vel.vx = Math.max(-ai.maxSpeed, Math.min(ai.maxSpeed, this.vel.vx));
 
-                const wallProbeX = this.renderable.direction === 'right'
+                const wallProbeX = this.renderable.direction === DIRECTIONS.RIGHT
                     ? this.pos.x + this.col.width + 1
                     : this.pos.x - 1;
                 const wallProbeY = this.pos.y + this.col.height / 2;
                 const hitWall = this.level.isSolidAt(wallProbeX, wallProbeY, true);
 
                 if (hitWall) {
-                    this.state.currentState = 'stunned';
-                    this.renderable.animationState = 'wall_hit';
+                    this.state.currentState = ENEMY_STATES.STUNNED;
+                    this.renderable.animationState = ANIMATION_STATES.WALL_HIT;
                     this.renderable.animationFrame = 0;
                     this.vel.vx = -directionMultiplier * ai.reboundSpeed;
                     this.enemy.timer = ai.stunDuration;
-                    eventBus.publish('stopSoundLoop', { key: 'rhino_charge' });
-                    eventBus.publish('playSound', { key: 'rhino_crash', volume: 1.0, channel: 'SFX' });
-                    eventBus.publish('cameraShakeRequested', { intensity: 10, duration: 0.2 });
+                    eventBus.publish(EVENTS.STOP_SOUND_LOOP, { key: 'rhino_charge' });
+                    eventBus.publish(EVENTS.PLAY_SOUND, { key: 'rhino_crash', volume: 1.0, channel: 'SFX' });
+                    eventBus.publish(EVENTS.CAMERA_SHAKE_REQUESTED, { intensity: 10, duration: 0.2 });
                 }
                 break;
 
-            case 'stunned':
+            case ENEMY_STATES.STUNNED:
                 this.enemy.timer -= dt;
                 if (this.enemy.timer <= 0) {
-                    this.state.currentState = 'idle';
+                    this.state.currentState = ENEMY_STATES.IDLE;
                 }
                 break;
         }

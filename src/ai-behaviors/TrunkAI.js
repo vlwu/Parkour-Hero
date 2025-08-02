@@ -4,6 +4,7 @@ import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
+import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS, EVENTS } from '../utils/constants.js';
 
 export class TrunkAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -15,30 +16,30 @@ export class TrunkAI extends BaseAI {
 
         this.attackTimer = this.attackInterval * Math.random();
         this.hasFired = false;
-        this.state.currentState = 'patrol';
+        this.state.currentState = ENEMY_STATES.PATROL;
     }
 
     update(dt) {
-        if (this.state.currentState !== 'attacking') {
+        if (this.state.currentState !== ENEMY_STATES.ATTACKING) {
             this.groundPatrol.update(dt);
         }
 
         switch (this.state.currentState) {
-            case 'idle':
-            case 'patrol':
-            case 'idle_grounded':
-            case 'patrol_grounded':
-                this.renderable.animationState = this.state.currentState.startsWith('patrol') ? 'run' : 'idle';
+            case ENEMY_STATES.IDLE:
+            case ENEMY_STATES.PATROL:
+            case ENEMY_STATES.IDLE_GROUNDED:
+            case ENEMY_STATES.PATROL_GROUNDED:
+                this.renderable.animationState = this.state.currentState.startsWith('patrol') ? ANIMATION_STATES.RUN : ANIMATION_STATES.IDLE;
                 this.attackTimer -= dt;
                 if (this.attackTimer <= 0 && this._isPlayerInRange()) {
-                    this.state.currentState = 'attacking';
-                    this.renderable.animationState = 'attack';
+                    this.state.currentState = ENEMY_STATES.ATTACKING;
+                    this.renderable.animationState = ANIMATION_STATES.ATTACK;
                     this.renderable.animationFrame = 0;
                     this.renderable.animationTimer = 0;
                     this.hasFired = false;
                 }
                 break;
-            case 'attacking':
+            case ENEMY_STATES.ATTACKING:
                 this._updateAttacking(dt);
                 break;
         }
@@ -50,7 +51,6 @@ export class TrunkAI extends BaseAI {
         const playerCol = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, CollisionComponent) : null;
         if (!playerCol) return false;
 
-
         const enemyEdges = this._getPlatformEdgesForEntity(this.pos, this.col);
         const playerEdges = this._getPlatformEdgesForEntity(playerPos, playerCol);
         const onSamePlatform = enemyEdges && playerEdges && enemyEdges.left === playerEdges.left && enemyEdges.right === playerEdges.right;
@@ -58,7 +58,6 @@ export class TrunkAI extends BaseAI {
         if (!onSamePlatform) {
             return false;
         }
-
 
         const playerCenterY = playerPos.y + playerCol.height / 2;
         const trunkCenterY = this.pos.y + this.col.height / 2;
@@ -75,9 +74,8 @@ export class TrunkAI extends BaseAI {
             return false;
         }
 
-
         const isPlayerRight = dx > 0;
-        const isFacingPlayer = (isPlayerRight && this.renderable.direction === 'right') || (!isPlayerRight && this.renderable.direction === 'left');
+        const isFacingPlayer = (isPlayerRight && this.renderable.direction === DIRECTIONS.RIGHT) || (!isPlayerRight && this.renderable.direction === DIRECTIONS.LEFT);
 
         return isFacingPlayer;
     }
@@ -95,25 +93,24 @@ export class TrunkAI extends BaseAI {
 
         const animTimer = this.renderable.animationTimer + dt;
         if (this.renderable.animationFrame >= attackAnim.frameCount - 1 && animTimer >= attackAnim.speed) {
-            this.state.currentState = 'patrol';
+            this.state.currentState = ENEMY_STATES.PATROL;
             this.attackTimer = this.attackInterval;
         }
     }
 
     _fireBullet() {
         const speed = this.enemy.ai.bullet.speed;
-        const directionMultiplier = this.renderable.direction === 'right' ? 1 : -1;
+        const directionMultiplier = this.renderable.direction === DIRECTIONS.RIGHT ? 1 : -1;
         const bulletConfig = this.enemy.ai.bullet;
 
-        // Spawn the bullet just outside the trunk's body
         const bulletSpawnX = this.pos.x + (this.col.width / 2) + (directionMultiplier * ((this.col.width / 2) + (bulletConfig.width / 2) + 2));
         const bulletSpawnY = this.pos.y + 10;
 
         const velX = directionMultiplier * speed;
         const velY = 0;
-        const rotation = this.renderable.direction === 'right' ? Math.PI : 0;
+        const rotation = this.renderable.direction === DIRECTIONS.RIGHT ? Math.PI : 0;
 
-        eventBus.publish('spawnBullet', {
+        eventBus.publish(EVENTS.SPAWN_BULLET, {
             x: bulletSpawnX,
             y: bulletSpawnY,
             vx: velX,
@@ -123,6 +120,6 @@ export class TrunkAI extends BaseAI {
             spriteKey: 'trunk_bullet',
             piecesSpriteKey: 'trunk_bullet_pieces'
         });
-        eventBus.publish('playSound', { key: 'bullet_shoot', volume: 0.5, channel: 'SFX' });
+        eventBus.publish(EVENTS.PLAY_SOUND, { key: 'bullet_shoot', volume: 0.5, channel: 'SFX' });
     }
 }

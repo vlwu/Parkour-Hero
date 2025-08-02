@@ -1,4 +1,4 @@
-import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, PLAYER_STATES } from '../utils/constants.js';
 
 export class PlayerControlledComponent {
     constructor({
@@ -32,7 +32,6 @@ export class PlayerControlledComponent {
         this.dashSpeed = dashSpeed;
         this.dashDuration = dashDuration;
 
-
         this.jumpBufferTimer = jumpBufferTimer;
         this.coyoteTimer = coyoteTimer;
         this.dashTimer = dashTimer;
@@ -40,7 +39,6 @@ export class PlayerControlledComponent {
         this.hitStunTimer = hitStunTimer;
         this.surfaceParticleTimer = surfaceParticleTimer;
         this.jumpParticleTimer = jumpParticleTimer;
-
 
         this.jumpCount = jumpCount;
         this.isDashing = isDashing;
@@ -54,14 +52,12 @@ export class PlayerControlledComponent {
         this.vLock = vLock;
         this.inputLocked = inputLocked;
 
-
         this.deathCount = deathCount;
         this.activeSurfaceSound = activeSurfaceSound;
         this.previousGroundEntity = null;
         this.fallDistance = 0;
         this.isInMud = false;
         this.mudSinkAmount = PLAYER_CONSTANTS.HEIGHT / 5;
-
 
         this.currentState = null;
     }

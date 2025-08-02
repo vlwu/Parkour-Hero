@@ -11,21 +11,22 @@ import { GhostAI } from './GhostAI.js';
 import { RhinoAI } from './RhinoAI.js';
 import { PlantAI } from './PlantAI.js';
 import { TrunkAI } from './TrunkAI.js';
+import { AI_TYPES } from '../utils/constants.js';
 
 const aiBehaviorMap = {
-    'patrol': PatrolAI,
-    'ground_charge': GroundChargeAI,
-    'defensive_cycle': DefensiveCycleAI,
-    'snail': SnailAI,
-    'flying_patrol': FlyingPatrolAI,
-    'flying_slam': FlyingSlamAI,
-    'radish': RadishAI,
-    'bee': BeeAI,
-    'bat': BatAI,
-    'ghost': GhostAI,
-    'rhino': RhinoAI,
-    'plant': PlantAI,
-    'trunk': TrunkAI,
+    [AI_TYPES.PATROL]: PatrolAI,
+    [AI_TYPES.GROUND_CHARGE]: GroundChargeAI,
+    [AI_TYPES.DEFENSIVE_CYCLE]: DefensiveCycleAI,
+    [AI_TYPES.SNAIL]: SnailAI,
+    [AI_TYPES.FLYING_PATROL]: FlyingPatrolAI,
+    [AI_TYPES.FLYING_SLAM]: FlyingSlamAI,
+    [AI_TYPES.RADISH]: RadishAI,
+    [AI_TYPES.BEE]: BeeAI,
+    [AI_TYPES.BAT]: BatAI,
+    [AI_TYPES.GHOST]: GhostAI,
+    [AI_TYPES.RHINO]: RhinoAI,
+    [AI_TYPES.PLANT]: PlantAI,
+    [AI_TYPES.TRUNK]: TrunkAI,
 };
 
 export function createAIBehavior(type, entityId, entityManager, level, playerEntityId) {

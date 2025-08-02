@@ -3,6 +3,7 @@ import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
+import { ENEMY_STATES, ANIMATION_STATES, EVENTS, DIRECTIONS } from '../utils/constants.js';
 
 export class PlantAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -13,7 +14,7 @@ export class PlantAI extends BaseAI {
 
         this.attackTimer = this.attackInterval * Math.random();
         this.hasFired = false;
-        this.state.currentState = 'idle';
+        this.state.currentState = ENEMY_STATES.IDLE;
     }
 
     update(dt) {
@@ -21,10 +22,10 @@ export class PlantAI extends BaseAI {
         this.vel.vy = 0;
 
         switch (this.state.currentState) {
-            case 'idle':
+            case ENEMY_STATES.IDLE:
                 this._updateIdle(dt);
                 break;
-            case 'attacking':
+            case ENEMY_STATES.ATTACKING:
                 this._updateAttacking(dt);
                 break;
         }
@@ -48,21 +49,21 @@ export class PlantAI extends BaseAI {
         if (distance > this.aggroRadius) return false;
 
         switch (this.renderable.direction) {
-            case 'up': return playerCenterY < plantCenterY && Math.abs(dx) < this.col.width / 2;
-            case 'down': return playerCenterY > plantCenterY && Math.abs(dx) < this.col.width / 2;
-            case 'left': return playerCenterX < plantCenterX && Math.abs(dy) < this.col.height / 2;
-            case 'right': return playerCenterX > plantCenterX && Math.abs(dy) < this.col.height / 2;
+            case DIRECTIONS.UP: return playerCenterY < plantCenterY && Math.abs(dx) < this.col.width / 2;
+            case DIRECTIONS.DOWN: return playerCenterY > plantCenterY && Math.abs(dx) < this.col.width / 2;
+            case DIRECTIONS.LEFT: return playerCenterX < plantCenterX && Math.abs(dy) < this.col.height / 2;
+            case DIRECTIONS.RIGHT: return playerCenterX > plantCenterX && Math.abs(dy) < this.col.height / 2;
             default: return false;
         }
     }
 
     _updateIdle(dt) {
-        this.renderable.animationState = 'idle';
+        this.renderable.animationState = ANIMATION_STATES.IDLE;
 
         this.attackTimer -= dt;
         if (this.attackTimer <= 0 && this._isPlayerInRange()) {
-            this.state.currentState = 'attacking';
-            this.renderable.animationState = 'attack';
+            this.state.currentState = ENEMY_STATES.ATTACKING;
+            this.renderable.animationState = ANIMATION_STATES.ATTACK;
             this.renderable.animationFrame = 0;
             this.renderable.animationTimer = 0;
             this.hasFired = false;
@@ -80,7 +81,7 @@ export class PlantAI extends BaseAI {
 
         const animTimer = this.renderable.animationTimer + dt;
         if (this.renderable.animationFrame >= attackAnim.frameCount - 1 && animTimer >= attackAnim.speed) {
-            this.state.currentState = 'idle';
+            this.state.currentState = ENEMY_STATES.IDLE;
             this.attackTimer = this.attackInterval;
         }
     }
@@ -108,7 +109,7 @@ export class PlantAI extends BaseAI {
             velY = (dy / dist) * speed;
         }
 
-        eventBus.publish('spawnBullet', {
+        eventBus.publish(EVENTS.SPAWN_BULLET, {
             x: bulletSpawnX,
             y: bulletSpawnY,
             vx: velX,
@@ -117,6 +118,6 @@ export class PlantAI extends BaseAI {
             spriteKey: 'plant_bullet',
             piecesSpriteKey: 'plant_bullet_pieces'
         });
-        eventBus.publish('playSound', { key: 'bullet_shoot', volume: 0.5, channel: 'SFX' });
+        eventBus.publish(EVENTS.PLAY_SOUND, { key: 'bullet_shoot', volume: 0.5, channel: 'SFX' });
     }
 }

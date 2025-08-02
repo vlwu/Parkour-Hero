@@ -1,5 +1,6 @@
 import { BaseAI } from './BaseAI.js';
 import { GroundPatrol } from './GroundPatrol.js';
+import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS } from '../utils/constants.js';
 
 export class RadishAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -7,7 +8,7 @@ export class RadishAI extends BaseAI {
 
         this.patrolBoxSize = this.enemy.ai.patrolBoxSize || 150;
         this.airSpeed = this.enemy.ai.airSpeed || 50;
-        
+
         this.anchorX = this.pos.x + this.col.width / 2;
         this.anchorY = this.pos.y + this.col.height / 2;
         this.targetX = this.anchorX;
@@ -16,23 +17,23 @@ export class RadishAI extends BaseAI {
         this.groundPatrolBehavior = null;
 
         if (!this.enemy.radishState) {
-            this.enemy.radishState = 'flying';
+            this.enemy.radishState = ENEMY_STATES.FLYING;
         }
     }
 
     update(dt) {
-        if (this.enemy.radishState === 'flying') {
+        if (this.enemy.radishState === ENEMY_STATES.FLYING) {
             this._updateFlying(dt);
-        } else if (this.enemy.radishState === 'falling') {
+        } else if (this.enemy.radishState === ENEMY_STATES.FALLING) {
             this._updateFalling(dt);
-        } else if (this.enemy.radishState === 'grounded') {
+        } else if (this.enemy.radishState === ENEMY_STATES.GROUNDED) {
             this._updateGrounded(dt);
         }
     }
 
     _updateFlying(dt) {
-        this.renderable.animationState = 'idle1';
-        this.state.currentState = 'flying';
+        this.renderable.animationState = ANIMATION_STATES.IDLE1;
+        this.state.currentState = ENEMY_STATES.FLYING;
 
         this.moveTimer -= dt;
         if (this.moveTimer <= 0) {
@@ -54,20 +55,20 @@ export class RadishAI extends BaseAI {
         }
 
         if (Math.abs(this.vel.vx) > 0.1) {
-            this.renderable.direction = this.vel.vx > 0 ? 'right' : 'left';
+            this.renderable.direction = this.vel.vx > 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
         }
     }
 
     _updateFalling(dt) {
-        this.renderable.animationState = 'idle1';
-        this.state.currentState = 'falling';
+        this.renderable.animationState = ANIMATION_STATES.IDLE1;
+        this.state.currentState = ENEMY_STATES.FALLING;
         this.vel.vx = 0;
         this.vel.vy += 600 * dt;
 
         if (this.col.isGrounded) {
-            this.enemy.radishState = 'grounded';
-            this.state.currentState = 'idle_grounded';
-            this.renderable.animationState = 'idle2';
+            this.enemy.radishState = ENEMY_STATES.GROUNDED;
+            this.state.currentState = ENEMY_STATES.IDLE_GROUNDED;
+            this.renderable.animationState = ANIMATION_STATES.IDLE2;
             this.renderable.animationFrame = 0;
             this.vel.vy = 0;
             this.groundPatrolBehavior = new GroundPatrol(this.entityId, this.entityManager, this.level, this.playerEntityId);
@@ -77,7 +78,7 @@ export class RadishAI extends BaseAI {
     _updateGrounded(dt) {
         if (this.groundPatrolBehavior) {
             this.groundPatrolBehavior.update(dt);
-            this.renderable.animationState = this.state.currentState === 'patrol_grounded' ? 'run' : 'idle2';
+            this.renderable.animationState = this.state.currentState === ENEMY_STATES.PATROL_GROUNDED ? ANIMATION_STATES.RUN : ANIMATION_STATES.IDLE2;
         }
     }
 }

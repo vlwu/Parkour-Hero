@@ -1,3 +1,5 @@
+import { AI_TYPES, ENEMY_STATES } from '../utils/constants.js';
+
 export class EnemyComponent {
     constructor({
         type,
@@ -14,15 +16,15 @@ export class EnemyComponent {
             this.particleDropTimer = this.ai.particleDropInterval;
         }
 
-        if (this.type === 'snail') {
-            this.snailState = 'walking';
+        if (this.type === AI_TYPES.SNAIL) {
+            this.snailState = ENEMY_STATES.WALKING;
         }
-        if (this.type === 'ghost') {
-            this.ghostState = 'appearing';
+        if (this.type === AI_TYPES.GHOST) {
+            this.ghostState = ENEMY_STATES.APPEARING;
             this.phaseTimer = 0;
         }
 
-        if (this.type === 'turtle') {
+        if (this.type === AI_TYPES.DEFENSIVE_CYCLE) {
             this.timer = this.ai.spikesInDuration;
         }
 

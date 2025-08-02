@@ -1,5 +1,6 @@
 import { BaseAI } from './BaseAI.js';
 import { GroundPatrol } from './GroundPatrol.js';
+import { ENEMY_STATES, ANIMATION_STATES } from '../utils/constants.js';
 
 export class PatrolAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -11,9 +12,9 @@ export class PatrolAI extends BaseAI {
         this.groundPatrol.update(dt);
 
         if (this.enemy.type === 'slime') {
-            this.renderable.animationState = 'idle_run';
+            this.renderable.animationState = ANIMATION_STATES.IDLE_RUN;
         } else {
-            this.renderable.animationState = this.state.currentState === 'patrol' ? 'run' : 'idle';
+            this.renderable.animationState = this.state.currentState === ENEMY_STATES.PATROL ? ANIMATION_STATES.RUN : ANIMATION_STATES.IDLE;
         }
     }
 }

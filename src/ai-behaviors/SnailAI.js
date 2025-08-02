@@ -1,9 +1,10 @@
 import { BaseAI } from './BaseAI.js';
 import { eventBus } from '../utils/event-bus.js';
+import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS, EVENTS } from '../utils/constants.js';
 
 export class SnailAI extends BaseAI {
     update(dt) {
-        if (this.enemy.snailState === 'shell') {
+        if (this.enemy.snailState === ENEMY_STATES.SHELL) {
             this._updateShellAI(dt);
         } else {
             this._updateWalkingAI(dt);
@@ -12,21 +13,21 @@ export class SnailAI extends BaseAI {
 
     _updateWalkingAI(dt) {
         const speed = this.enemy.ai.patrolSpeed;
-        this.state.currentState = 'patrol';
-        this.renderable.animationState = 'walk';
-        this.vel.vx = this.renderable.direction === 'right' ? speed : -speed;
+        this.state.currentState = ENEMY_STATES.PATROL;
+        this.renderable.animationState = ANIMATION_STATES.WALK;
+        this.vel.vx = this.renderable.direction === DIRECTIONS.RIGHT ? speed : -speed;
 
-        const groundProbeX = this.renderable.direction === 'right' ? this.pos.x + this.col.width : this.pos.x;
+        const groundProbeX = this.renderable.direction === DIRECTIONS.RIGHT ? this.pos.x + this.col.width : this.pos.x;
         const groundProbeY = this.pos.y + this.col.height + 1;
         const isGroundSolidAhead = this.level.isSolidAt(groundProbeX, groundProbeY, true);
         const atEdge = !isGroundSolidAhead;
 
-        const wallProbeX = this.renderable.direction === 'right' ? this.pos.x + this.col.width + 1 : this.pos.x - 1;
+        const wallProbeX = this.renderable.direction === DIRECTIONS.RIGHT ? this.pos.x + this.col.width + 1 : this.pos.x - 1;
         const wallProbeY = this.pos.y + this.col.height / 2;
         const hitWall = this.level.isSolidAt(wallProbeX, wallProbeY, true);
 
         if (atEdge || hitWall) {
-            this.renderable.direction = (this.renderable.direction === 'right' ? 'left' : 'right');
+            this.renderable.direction = (this.renderable.direction === DIRECTIONS.RIGHT ? DIRECTIONS.LEFT : DIRECTIONS.RIGHT);
         }
     }
 
@@ -34,29 +35,29 @@ export class SnailAI extends BaseAI {
         const speed = this.enemy.ai.shellSpeed;
 
         switch (this.state.currentState) {
-            case 'shell_patrol':
-                this.renderable.animationState = 'shell_idle';
-                this.vel.vx = this.renderable.direction === 'right' ? speed : -speed;
+            case ENEMY_STATES.SHELL_PATROL:
+                this.renderable.animationState = ANIMATION_STATES.SHELL_IDLE;
+                this.vel.vx = this.renderable.direction === DIRECTIONS.RIGHT ? speed : -speed;
 
-                const wallProbeX = this.renderable.direction === 'right' ? this.pos.x + this.col.width + 1 : this.pos.x - 1;
+                const wallProbeX = this.renderable.direction === DIRECTIONS.RIGHT ? this.pos.x + this.col.width + 1 : this.pos.x - 1;
                 const wallProbeY = this.pos.y + this.col.height / 2;
                 const hitWall = this.level.isSolidAt(wallProbeX, wallProbeY, true);
 
                 if (hitWall) {
-                    this.renderable.direction = (this.renderable.direction === 'right' ? 'left' : 'right');
-                    this.state.currentState = 'shell_hit_wall';
-                    this.renderable.animationState = 'shell_wall_hit';
+                    this.renderable.direction = (this.renderable.direction === DIRECTIONS.RIGHT ? DIRECTIONS.LEFT : DIRECTIONS.RIGHT);
+                    this.state.currentState = ENEMY_STATES.SHELL_HIT_WALL;
+                    this.renderable.animationState = ANIMATION_STATES.SHELL_WALL_HIT;
                     this.renderable.animationFrame = 0;
                     this.enemy.timer = this.enemy.ai.wallHitStunTime || 0.2;
-                    eventBus.publish('playSound', { key: 'snail_wall_hit', volume: 0.5, channel: 'SFX' });
+                    eventBus.publish(EVENTS.PLAY_SOUND, { key: 'snail_wall_hit', volume: 0.5, channel: 'SFX' });
                 }
                 break;
 
-            case 'shell_hit_wall':
+            case ENEMY_STATES.SHELL_HIT_WALL:
                 this.vel.vx = 0;
                 this.enemy.timer -= dt;
                 if (this.enemy.timer <= 0) {
-                    this.state.currentState = 'shell_patrol';
+                    this.state.currentState = ENEMY_STATES.SHELL_PATROL;
                 }
                 break;
         }

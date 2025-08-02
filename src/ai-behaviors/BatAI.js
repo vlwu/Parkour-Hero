@@ -1,5 +1,6 @@
 import { BaseAI } from './BaseAI.js';
 import { PositionComponent } from '../components/PositionComponent.js';
+import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS } from '../utils/constants.js';
 
 export class BatAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -12,27 +13,27 @@ export class BatAI extends BaseAI {
         this.deaggroRadius = this.enemy.ai.deaggroRadius || 300;
         this.flyingSpeed = this.enemy.ai.flyingSpeed || 20;
 
-        this.state.currentState = 'idle';
-        this.renderable.animationState = 'idle';
+        this.state.currentState = ENEMY_STATES.IDLE;
+        this.renderable.animationState = ANIMATION_STATES.IDLE;
     }
 
     update(dt) {
         const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
 
         switch (this.state.currentState) {
-            case 'idle':
+            case ENEMY_STATES.IDLE:
                 this._updateIdle(playerPos);
                 break;
-            case 'activating':
+            case ENEMY_STATES.ACTIVATING:
                 this._updateActivating();
                 break;
-            case 'flying':
+            case ENEMY_STATES.FLYING:
                 this._updateFlying(dt, playerPos);
                 break;
-            case 'returning':
+            case ENEMY_STATES.RETURNING:
                 this._updateReturning(dt);
                 break;
-            case 'deactivating':
+            case ENEMY_STATES.DEACTIVATING:
                 this._updateDeactivating();
                 break;
         }
@@ -45,7 +46,7 @@ export class BatAI extends BaseAI {
         const dy = playerPos.y - this.pos.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Player must be below the bat and within aggro range
+
         return playerPos.y > this.anchorY && distance < this.aggroRadius;
     }
 
@@ -54,23 +55,23 @@ export class BatAI extends BaseAI {
         this.vel.vy = 0;
 
         if (this._isPlayerInRange(playerPos)) {
-            this.state.currentState = 'activating';
-            this.renderable.animationState = 'ceiling_out';
+            this.state.currentState = ENEMY_STATES.ACTIVATING;
+            this.renderable.animationState = ANIMATION_STATES.CEILING_OUT;
             this.renderable.animationFrame = 0;
             this.renderable.animationTimer = 0;
         }
     }
 
     _updateActivating() {
-        if (this.renderable.animationFrame >= 6) { // 7 frames, 0-indexed
-            this.state.currentState = 'flying';
-            this.renderable.animationState = 'flying';
+        if (this.renderable.animationFrame >= 6) {
+            this.state.currentState = ENEMY_STATES.FLYING;
+            this.renderable.animationState = ANIMATION_STATES.FLYING;
         }
     }
 
     _updateFlying(dt, playerPos) {
         if (!playerPos) {
-            this.state.currentState = 'returning';
+            this.state.currentState = ENEMY_STATES.RETURNING;
             return;
         }
 
@@ -79,7 +80,7 @@ export class BatAI extends BaseAI {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance > this.deaggroRadius) {
-            this.state.currentState = 'returning';
+            this.state.currentState = ENEMY_STATES.RETURNING;
             return;
         }
 
@@ -90,7 +91,7 @@ export class BatAI extends BaseAI {
             this.vel.vx = 0;
             this.vel.vy = 0;
         }
-        this.renderable.direction = this.vel.vx >= 0 ? 'right' : 'left';
+        this.renderable.direction = this.vel.vx >= 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
     }
 
     _updateReturning(dt) {
@@ -99,25 +100,25 @@ export class BatAI extends BaseAI {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance > 5) {
-            this.vel.vx = (dx / distance) * this.flyingSpeed * 2; // Return faster
+            this.vel.vx = (dx / distance) * this.flyingSpeed * 2;
             this.vel.vy = (dy / distance) * this.flyingSpeed * 2;
         } else {
             this.pos.x = this.anchorX;
             this.pos.y = this.anchorY;
             this.vel.vx = 0;
             this.vel.vy = 0;
-            this.state.currentState = 'deactivating';
-            this.renderable.animationState = 'ceiling_in';
+            this.state.currentState = ENEMY_STATES.DEACTIVATING;
+            this.renderable.animationState = ANIMATION_STATES.CEILING_IN;
             this.renderable.animationFrame = 0;
             this.renderable.animationTimer = 0;
         }
-         this.renderable.direction = this.vel.vx >= 0 ? 'right' : 'left';
+         this.renderable.direction = this.vel.vx >= 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
     }
 
     _updateDeactivating() {
         if (this.renderable.animationFrame >= 6) {
-            this.state.currentState = 'idle';
-            this.renderable.animationState = 'idle';
+            this.state.currentState = ENEMY_STATES.IDLE;
+            this.renderable.animationState = ANIMATION_STATES.IDLE;
         }
     }
 }

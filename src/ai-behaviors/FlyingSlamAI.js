@@ -3,6 +3,7 @@ import { eventBus } from '../utils/event-bus.js';
 import { GRID_CONSTANTS } from '../utils/constants.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
+import { ENEMY_STATES, ANIMATION_STATES, EVENTS } from '../utils/constants.js';
 
 export class FlyingSlamAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -22,7 +23,7 @@ export class FlyingSlamAI extends BaseAI {
         this.groundedDuration = this.enemy.ai.groundedDuration || 1.0;
         this.groundedTimer = 0;
 
-        this.state.currentState = 'idle';
+        this.state.currentState = ENEMY_STATES.IDLE;
         if (this.killable) {
             this.killable.dealsContactDamage = false;
         }
@@ -34,23 +35,23 @@ export class FlyingSlamAI extends BaseAI {
         this._handleAnimationEvents(playerPos);
 
         switch (this.state.currentState) {
-            case 'idle':
+            case ENEMY_STATES.IDLE:
                 this._idle(dt, playerPos, playerCol);
                 break;
-            case 'slamming':
+            case ENEMY_STATES.SLAMMING:
                 this._slamming(dt);
                 break;
-            case 'grounded':
+            case ENEMY_STATES.GROUNDED:
                 this._grounded(dt);
                 break;
-            case 'retracting':
+            case ENEMY_STATES.RETRACTING:
                 this._retracting(dt);
                 break;
         }
     }
 
     _idle(dt, playerPos, playerCol) {
-        this.renderable.animationState = 'idle';
+        this.renderable.animationState = ANIMATION_STATES.IDLE;
         this.vel.vx = 0;
 
         this.vel.vy += this.gravity * dt;
@@ -62,7 +63,7 @@ export class FlyingSlamAI extends BaseAI {
 
 
         if (this._isPlayerInZone(playerPos, playerCol)) {
-            this.state.currentState = 'slamming';
+            this.state.currentState = ENEMY_STATES.SLAMMING;
             if (this.killable) {
                 this.killable.dealsContactDamage = true;
             }
@@ -70,41 +71,41 @@ export class FlyingSlamAI extends BaseAI {
     }
 
     _slamming(dt) {
-        this.renderable.animationState = 'fall';
+        this.renderable.animationState = ANIMATION_STATES.FALL;
         this.vel.vy = this.slamSpeed;
 
         const groundY = this.pos.y + this.col.height + 1;
         if (this.level.isSolidAt(this.pos.x + this.col.width / 2, groundY)) {
             this.pos.y = Math.floor(groundY / GRID_CONSTANTS.TILE_SIZE) * GRID_CONSTANTS.TILE_SIZE - this.col.height;
             this.vel.vy = 0;
-            this.state.currentState = 'grounded';
+            this.state.currentState = ENEMY_STATES.GROUNDED;
             this.groundedTimer = this.groundedDuration;
 
-            eventBus.publish('cameraShakeRequested', { intensity: 12, duration: 0.25 });
-            eventBus.publish('createParticles', { x: this.pos.x + this.col.width / 2, y: this.pos.y + this.col.height, type: 'walk_dust', particleSpeed: 150 });
+            eventBus.publish(EVENTS.CAMERA_SHAKE_REQUESTED, { intensity: 12, duration: 0.25 });
+            eventBus.publish(EVENTS.CREATE_PARTICLES, { x: this.pos.x + this.col.width / 2, y: this.pos.y + this.col.height, type: 'walk_dust', particleSpeed: 150 });
         }
     }
 
     _grounded(dt) {
-        this.renderable.animationState = 'ground';
+        this.renderable.animationState = ANIMATION_STATES.GROUND;
         this.vel.vy = 0;
         if (this.killable) {
             this.killable.dealsContactDamage = false;
         }
         this.groundedTimer -= dt;
         if (this.groundedTimer <= 0) {
-            this.state.currentState = 'retracting';
+            this.state.currentState = ENEMY_STATES.RETRACTING;
         }
     }
 
     _retracting(dt) {
-        this.renderable.animationState = 'idle';
+        this.renderable.animationState = ANIMATION_STATES.IDLE;
         this.vel.vy = -this.retractSpeed;
 
         if (this.pos.y <= this.anchorY) {
             this.pos.y = this.anchorY;
             this.vel.vy = 0;
-            this.state.currentState = 'idle';
+            this.state.currentState = ENEMY_STATES.IDLE;
             if (this.killable) {
                 this.killable.dealsContactDamage = false;
             }
@@ -157,15 +158,15 @@ export class FlyingSlamAI extends BaseAI {
     _handleAnimationEvents(playerPos) {
         const currentFrame = this.renderable.animationFrame;
         if (currentFrame !== this.lastFrame) {
-            if (this.state.currentState === 'idle' && (currentFrame === 7 || currentFrame === 8)) {
+            if (this.state.currentState === ENEMY_STATES.IDLE && (currentFrame === 7 || currentFrame === 8)) {
                 this.vel.vy = this.flapForce;
                 const particleY = this.pos.y + this.col.height / 2;
-                eventBus.publish('createParticles', { x: this.pos.x, y: particleY, type: 'wing_flap' });
-                eventBus.publish('createParticles', { x: this.pos.x + this.col.width, y: particleY, type: 'wing_flap' });
+                eventBus.publish(EVENTS.CREATE_PARTICLES, { x: this.pos.x, y: particleY, type: 'wing_flap' });
+                eventBus.publish(EVENTS.CREATE_PARTICLES, { x: this.pos.x + this.col.width, y: particleY, type: 'wing_flap' });
                 if (playerPos) {
                     const distance = Math.sqrt(Math.pow(playerPos.x - this.pos.x, 2) + Math.pow(playerPos.y - this.pos.y, 2));
                     if (distance < this.soundRadius) {
-                        eventBus.publish('playSound', { key: 'wing_flap', volume: 0.3, channel: 'SFX' });
+                        eventBus.publish(EVENTS.PLAY_SOUND, { key: 'wing_flap', volume: 0.3, channel: 'SFX' });
                     }
                 }
             }

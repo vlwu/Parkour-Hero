@@ -1,15 +1,14 @@
 import { BaseAI } from './BaseAI.js';
 import { eventBus } from '../utils/event-bus.js';
 import { PositionComponent } from '../components/PositionComponent.js';
+import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS, EVENTS } from '../utils/constants.js';
 
 export class FlyingPatrolAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
         super(entityId, entityManager, level, playerEntityId);
 
-
         this.anchorX = this.pos.x + this.col.width / 2;
         this.anchorY = this.pos.y;
-
 
         this.patrolDistance = this.enemy.ai.patrolDistance || 200;
         this.horizontalSpeed = this.enemy.ai.horizontalSpeed || 60;
@@ -23,20 +22,19 @@ export class FlyingPatrolAI extends BaseAI {
         this.acceleration = this.enemy.ai.acceleration || 120;
         this.soundRadius = this.enemy.ai.soundRadius || 200;
 
-
-        this.state.currentState = 'patrolling';
+        this.state.currentState = ENEMY_STATES.PATROL;
         this.enemy.timer = 0;
         this.lastFrame = -1;
     }
 
     update(dt) {
-        this.renderable.animationState = 'flying';
+        this.renderable.animationState = ANIMATION_STATES.FLYING;
 
         const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
         this._handleAnimationEvents(playerPos);
 
         switch (this.state.currentState) {
-            case 'patrolling':
+            case ENEMY_STATES.PATROL:
                 this._patrol(dt);
                 break;
             case 'turning':
@@ -44,9 +42,7 @@ export class FlyingPatrolAI extends BaseAI {
                 break;
         }
 
-
         this.vel.vy += this.gravity * dt;
-
 
         const distY = this.pos.y - this.anchorY;
         if (Math.abs(distY) > this.verticalAmplitude) {
@@ -57,13 +53,11 @@ export class FlyingPatrolAI extends BaseAI {
     }
 
     _patrol(dt) {
-        const directionMultiplier = this.renderable.direction === 'right' ? 1 : -1;
-
+        const directionMultiplier = this.renderable.direction === DIRECTIONS.RIGHT ? 1 : -1;
 
         const leftBound = this.anchorX - this.patrolDistance / 2;
         const rightBound = this.anchorX + this.patrolDistance / 2;
         const currentXCenter = this.pos.x + this.col.width / 2;
-
 
         const slowDownDistance = 60;
         let targetSpeed = this.horizontalSpeed;
@@ -79,7 +73,6 @@ export class FlyingPatrolAI extends BaseAI {
 
         const finalTargetSpeed = targetSpeed * directionMultiplier;
 
-
         if (this.vel.vx < finalTargetSpeed && directionMultiplier > 0) {
             this.vel.vx = Math.min(finalTargetSpeed, this.vel.vx + this.acceleration * dt);
         } else if (this.vel.vx > finalTargetSpeed && directionMultiplier < 0) {
@@ -88,7 +81,6 @@ export class FlyingPatrolAI extends BaseAI {
 
             this.vel.vx = finalTargetSpeed;
         }
-
 
         if ((directionMultiplier > 0 && currentXCenter >= rightBound) || (directionMultiplier < 0 && currentXCenter <= leftBound)) {
 
@@ -102,12 +94,12 @@ export class FlyingPatrolAI extends BaseAI {
     _turn(dt) {
         this.enemy.turnTimer -= dt;
 
-        const turnDirectionMultiplier = this.renderable.direction === 'right' ? 1 : -1;
+        const turnDirectionMultiplier = this.renderable.direction === DIRECTIONS.RIGHT ? 1 : -1;
         this.vel.vx -= turnDirectionMultiplier * (this.horizontalSpeed * 0.5) * dt;
 
         if (this.enemy.turnTimer <= 0) {
-            this.renderable.direction = this.renderable.direction === 'right' ? 'left' : 'right';
-            this.state.currentState = 'patrolling';
+            this.renderable.direction = this.renderable.direction === DIRECTIONS.RIGHT ? DIRECTIONS.LEFT : DIRECTIONS.RIGHT;
+            this.state.currentState = ENEMY_STATES.PATROL;
         }
     }
 
@@ -120,7 +112,7 @@ export class FlyingPatrolAI extends BaseAI {
             const particleX = this.pos.x + this.col.width / 2;
             const particleY = this.pos.y + this.col.height;
 
-            eventBus.publish('createParticles', {
+            eventBus.publish(EVENTS.CREATE_PARTICLES, {
                 x: particleX,
                 y: particleY,
                 type: 'wing_flap',
@@ -128,7 +120,7 @@ export class FlyingPatrolAI extends BaseAI {
             if (playerPos) {
                 const distance = Math.sqrt(Math.pow(playerPos.x - this.pos.x, 2) + Math.pow(playerPos.y - this.pos.y, 2));
                 if (distance < this.soundRadius) {
-                    eventBus.publish('playSound', { key: 'wing_flap', volume: 0.3, channel: 'SFX' });
+                    eventBus.publish(EVENTS.PLAY_SOUND, { key: 'wing_flap', volume: 0.3, channel: 'SFX' });
                 }
             }
         }
