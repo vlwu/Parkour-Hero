@@ -3,6 +3,7 @@ import { Toolbar } from './ui/Toolbar.js';
 import { HistoryManager } from './core/HistoryManager.js';
 import { Grid } from './grid/Grid.js';
 import { ObjectManager } from './core/ObjectManager.js';
+import { EditorView } from './core/EditorView.js';
 import { GridInputHandler } from './grid/GridInputHandler.js';
 import { LevelImporter } from './io/LevelImporter.js';
 import { assetManager } from '../managers/asset-manager.js';
@@ -24,12 +25,14 @@ const round = (val) => Math.round(val * 100) / 100;
 class EditorApp {
     constructor() {
         const grid = new Grid(28, 15);
-        const objectManager = new ObjectManager(grid);
+        const editorView = new EditorView();
+        const objectManager = new ObjectManager(grid, editorView);
 
         this.context = {
             state: new EditorState(),
             grid: grid,
             objectManager: objectManager,
+            editorView: editorView,
             history: new HistoryManager(DOM.undoBtn, DOM.redoBtn),
             assets: null,
             fontRenderer: null,
@@ -195,7 +198,7 @@ class EditorApp {
 
         selectionManager.update(deltaTime);
         selectionManager.draw();
-        
+
         this.context.toolManager.activeTool?.drawPreview(deltaTime);
 
         if (state.currentTool.type === 'eraser' && state.pastePreview) {

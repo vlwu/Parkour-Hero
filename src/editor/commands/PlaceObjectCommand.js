@@ -12,15 +12,13 @@ export class PlaceObjectCommand extends Command {
         if (this.replacedSpawn) {
             this.objectManager.deleteObject(this.replacedSpawn[0].id);
         }
-        this.objectManager.objects.push(this.newObject);
-        this.objectManager.render();
+        this.objectManager.addObjectInstance(this.newObject);
     }
 
     undo() {
         this.objectManager.deleteObject(this.newObject.id);
         if (this.replacedSpawn) {
-            this.objectManager.objects.push(this.replacedSpawn[0]);
-            this.objectManager.render();
+            this.objectManager.addObjectInstance(this.replacedSpawn[0]);
         }
     }
 }

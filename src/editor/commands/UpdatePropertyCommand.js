@@ -11,13 +11,7 @@ export class UpdatePropertyCommand extends Command {
     }
 
     _update(value) {
-        const obj = this.objectManager.getObject(this.objectId);
-        if (obj) {
-            obj[this.prop] = value;
-            this.objectManager.render();
-            // Note: This won't update the properties panel if the object is selected.
-            // This will be addressed in a future refactoring step (UIManager).
-        }
+        this.objectManager.updateObjectProp(this.objectId, this.prop, value);
     }
 
     execute() {

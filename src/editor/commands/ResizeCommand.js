@@ -17,7 +17,7 @@ export class ResizeCommand extends Command {
 
         this.objectManager.clear();
         this.objectManager.objects = JSON.parse(JSON.stringify(state.objects));
-        this.objectManager.render();
+        this.objectManager.view.renderObjects(this.objectManager.objects);
     }
 
     execute() {

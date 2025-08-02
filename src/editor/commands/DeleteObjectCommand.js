@@ -12,8 +12,6 @@ export class DeleteObjectCommand extends Command {
     }
 
     undo() {
-        // Re-add the object. Assumes objectManager.objects is accessible.
-        this.objectManager.objects.push(this.deletedObject);
-        this.objectManager.render();
+        this.objectManager.addObjectInstance(this.deletedObject);
     }
 }

@@ -12,9 +12,8 @@ export class MoveObjectCommand extends Command {
     _move(pos) {
         const obj = this.objectManager.getObject(this.objectId);
         if (obj) {
-            obj.x = pos.x;
-            obj.y = pos.y;
-            this.objectManager.render();
+            this.objectManager.updateObjectProp(this.objectId, 'x', pos.x);
+            this.objectManager.updateObjectProp(this.objectId, 'y', pos.y);
         }
     }
 
