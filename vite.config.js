@@ -18,7 +18,6 @@ export default defineConfig({
     },
   },
   plugins: [
-
     zipPack({
       inDir: 'dist',
       outDir: 'release',
