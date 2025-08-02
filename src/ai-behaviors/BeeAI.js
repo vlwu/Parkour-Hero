@@ -75,7 +75,7 @@ export class BeeAI extends BaseAI {
         this.vel.vy = 0;
 
         const attackAnim = ENEMY_DEFINITIONS.bee.animations.attack;
-        const fireFrame = attackAnim.fireFrame || 4; 
+        const fireFrame = attackAnim.fireFrame || 4;
 
         if (this.renderable.animationFrame >= fireFrame && !this.hasFired) {
             this.hasFired = true;
@@ -84,6 +84,7 @@ export class BeeAI extends BaseAI {
                 y: this.pos.y + this.col.height,
                 config: this.enemy.ai.bullet
             });
+            eventBus.publish('playSound', { key: 'bullet_shoot', volume: 0.5, channel: 'SFX' });
         }
 
         const animTimer = this.renderable.animationTimer + dt;

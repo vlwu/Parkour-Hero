@@ -117,5 +117,6 @@ export class PlantAI extends BaseAI {
             spriteKey: 'plant_bullet',
             piecesSpriteKey: 'plant_bullet_pieces'
         });
+        eventBus.publish('playSound', { key: 'bullet_shoot', volume: 0.5, channel: 'SFX' });
     }
 }
