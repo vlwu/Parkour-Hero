@@ -2,6 +2,7 @@ import { BaseAI } from './BaseAI.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 import { PositionComponent } from '../components/PositionComponent.js';
+import { CollisionComponent } from '../components/CollisionComponent.js';
 
 export class PlantAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -32,18 +33,25 @@ export class PlantAI extends BaseAI {
     _isPlayerInRange() {
         const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
         if (!playerPos) return false;
+        const playerCol = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, CollisionComponent) : null;
+        if (!playerCol) return false;
 
-        const dx = (playerPos.x) - (this.pos.x);
-        const dy = (playerPos.y) - (this.pos.y);
+        const playerCenterX = playerPos.x + playerCol.width / 2;
+        const playerCenterY = playerPos.y + playerCol.height / 2;
+        const plantCenterX = this.pos.x + this.col.width / 2;
+        const plantCenterY = this.pos.y + this.col.height / 2;
+
+        const dx = playerCenterX - plantCenterX;
+        const dy = playerCenterY - plantCenterY;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance > this.aggroRadius) return false;
 
         switch (this.renderable.direction) {
-            case 'up': return playerPos.y < this.pos.y && Math.abs(dx) < this.col.width;
-            case 'down': return playerPos.y > this.pos.y && Math.abs(dx) < this.col.width;
-            case 'left': return playerPos.x < this.pos.x && Math.abs(dy) < this.col.height;
-            case 'right': return playerPos.x > this.pos.x && Math.abs(dy) < this.col.height;
+            case 'up': return playerCenterY < plantCenterY && Math.abs(dx) < this.col.width / 2;
+            case 'down': return playerCenterY > plantCenterY && Math.abs(dx) < this.col.width / 2;
+            case 'left': return playerCenterX < plantCenterX && Math.abs(dy) < this.col.height / 2;
+            case 'right': return playerCenterX > plantCenterX && Math.abs(dy) < this.col.height / 2;
             default: return false;
         }
     }
@@ -80,14 +88,19 @@ export class PlantAI extends BaseAI {
     _fireBullet() {
         const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
         if (!playerPos) return;
+        const playerCol = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, CollisionComponent) : null;
+        if (!playerCol) return;
 
         let velX = 0, velY = 0;
         const speed = this.enemy.ai.bullet.speed;
         const bulletSpawnX = this.pos.x + this.col.width / 2;
         const bulletSpawnY = this.pos.y + this.col.height / 2;
 
-        const dx = (playerPos.x + 16) - bulletSpawnX;
-        const dy = (playerPos.y + 16) - bulletSpawnY;
+        const playerCenterX = playerPos.x + playerCol.width / 2;
+        const playerCenterY = playerPos.y + playerCol.height / 2;
+
+        const dx = playerCenterX - bulletSpawnX;
+        const dy = playerCenterY - bulletSpawnY;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist > 0) {
