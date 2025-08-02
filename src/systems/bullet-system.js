@@ -34,9 +34,9 @@ export class BulletSystem {
             const destroyBullet = (playerCurrentPos) => {
                 if (playerCurrentPos) {
                     const distance = Math.sqrt(Math.pow(playerCurrentPos.x - pos.x, 2) + Math.pow(playerCurrentPos.y - pos.y, 2));
-                    const SOUND_RADIUS = 200;
+                    const SOUND_RADIUS = 250;
                     if (distance < SOUND_RADIUS) {
-                        eventBus.publish('playSound', { key: 'bullet_break', volume: 0.7, channel: 'SFX' });
+                        eventBus.publish('playSound', { key: 'bullet_break', volume: 0.4, channel: 'SFX' });
                     }
                 }
 
@@ -61,7 +61,7 @@ export class BulletSystem {
                 }
             }
 
-            if (col.isGrounded || col.isAgainstWall) {
+            if (col.isGrounded || col.isAgainstWall || col.hitCeiling) {
                 destroyBullet(playerPos);
                 continue;
             }

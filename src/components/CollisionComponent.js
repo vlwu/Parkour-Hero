@@ -7,6 +7,7 @@ export class CollisionComponent {
         height,
         isGrounded = false,
         isAgainstWall = false,
+        hitCeiling = false,
         groundType = null
     }) {
         this.type = type;
@@ -16,6 +17,7 @@ export class CollisionComponent {
         this.height = height;
         this.isGrounded = isGrounded;
         this.isAgainstWall = isAgainstWall;
+        this.hitCeiling = hitCeiling;
         this.groundType = groundType;
         this.groundEntity = null;
     }

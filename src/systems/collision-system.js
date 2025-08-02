@@ -234,6 +234,7 @@ export class CollisionSystem {
 
             pos.y += vel.vy * dt;
             col.isGrounded = false;
+            col.hitCeiling = false;
 
             entityRect.x = pos.x;
             entityRect.y = pos.y;
@@ -300,18 +301,19 @@ export class CollisionSystem {
                     }
                 } else {
                     if (!collider.isOneWay) {
-                        const prevPlayerTop = (pos.y - vel.vy * dt);
-                        const prevPlayerXCenter = (pos.x - vel.vx * dt) + col.width / 2;
+                        const prevBodyTop = (pos.y - vel.vy * dt);
+                        const prevBodyXCenter = (pos.x - vel.vx * dt) + col.width / 2;
                         const colliderXStart = collider.x;
                         const colliderXEnd = collider.x + collider.width;
 
-                        if (prevPlayerTop >= collider.y + collider.height &&
-                            prevPlayerXCenter > colliderXStart &&
-                            prevPlayerXCenter < colliderXEnd) {
+                        if (prevBodyTop >= collider.y + collider.height &&
+                            prevBodyXCenter > colliderXStart &&
+                            prevBodyXCenter < colliderXEnd) {
                             const PUSH_BUFFER = 0.01;
                             pos.y = collider.y + collider.height + PUSH_BUFFER;
                             vel.vy = 0;
                             entityRect.y = pos.y;
+                            col.hitCeiling = true;
                         }
                     }
                 }
