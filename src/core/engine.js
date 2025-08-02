@@ -31,6 +31,7 @@ import { Level } from '../entities/level.js';
 import { BulletSystem } from '../systems/bullet-system.js';
 import { TransitionSystem } from '../systems/transition-system.js';
 import { coreSoundKeys, gameplaySoundKeys } from '../managers/asset-manager.js';
+import { EnemyComponent } from '../components/EnemyComponent.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -350,6 +351,18 @@ export class Engine {
         renderable.animationFrame = 0;
         renderable.animationTimer = 0;
         eventBus.publish('playSound', { key: 'death_sound', volume: 0.3, channel: 'SFX' });
+
+        const enemyEntities = this.entityManager.query([EnemyComponent, StateComponent]);
+        for (const enemyId of enemyEntities) {
+            const enemy = this.entityManager.getComponent(enemyId, EnemyComponent);
+            if (enemy.type === 'rhino') {
+                const enemyState = this.entityManager.getComponent(enemyId, StateComponent);
+                if (enemyState.currentState === 'charging') {
+                    eventBus.publish('stopSoundLoop', { key: 'rhino_charge' });
+                    break;
+                }
+            }
+        }
     }
   }
 

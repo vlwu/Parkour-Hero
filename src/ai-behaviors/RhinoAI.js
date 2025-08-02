@@ -29,7 +29,7 @@ export class RhinoAI extends BaseAI {
                         this.renderable.direction = (playerData.x > this.pos.x) ? 'right' : 'left';
                         this.state.currentState = 'charging';
                         this.vel.vx = (this.renderable.direction === 'right' ? 1 : -1) * ai.initialSpeed;
-                        eventBus.publish('startSoundLoop', { key: 'rhino_charge', volume: 0.7, channel: 'SFX' });
+                        eventBus.publish('startSoundLoop', { key: 'rhino_charge', volume: 0.5, channel: 'SFX' });
                     }
                 }
                 break;

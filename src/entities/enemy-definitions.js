@@ -64,7 +64,7 @@ export const ENEMY_DEFINITIONS = {
             dealsContactDamage: true,
             contactDamage: (enemyId, entityManager) => {
                 const vel = entityManager.getComponent(enemyId, 'VelocityComponent');
-                if (vel && Math.abs(vel.vx) > 100) {
+                if (vel && Math.abs(vel.vx) > 80) {
                     return 1000;
                 }
                 return 30;
