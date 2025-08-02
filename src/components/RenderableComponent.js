@@ -1,15 +1,4 @@
 export class RenderableComponent {
-    /**
-     * @param {object} props The properties for the renderable component.
-     * @param {string} props.spriteKey The key to look up the asset sprite sheet.
-     * @param {number} props.width The width of the entity for rendering.
-     * @param {number} props.height The height of the entity for rendering.
-     * @param {string} [props.animationState='idle'] The current state of animation (e.g., 'idle', 'run').
-     * @param {number} [props.animationFrame=0] The current frame index in the animation sequence.
-     * @param {number} [props.animationTimer=0] A timer to control animation frame progression.
-     * @param {string} [props.direction='right'] The direction the entity is facing for sprite flipping.
-     * @param {boolean} [props.isVisible=true] Whether the entity should be rendered.
-     */
     constructor({
         spriteKey,
         width,
@@ -18,7 +7,8 @@ export class RenderableComponent {
         animationFrame = 0,
         animationTimer = 0,
         direction = 'right',
-        isVisible = true
+        isVisible = true,
+        rotation = 0
     }) {
         this.spriteKey = spriteKey;
         this.width = width;
@@ -28,5 +18,6 @@ export class RenderableComponent {
         this.animationTimer = animationTimer;
         this.direction = direction;
         this.isVisible = isVisible;
+        this.rotation = rotation;
     }
 }

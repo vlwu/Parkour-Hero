@@ -69,14 +69,14 @@ export class BulletSystem {
         }
     }
 
-    _createBullet(entityManager, { x, y, vx, vy, config, spriteKey = 'bee_bullet' }) {
+    _createBullet(entityManager, { x, y, vx, vy, config, spriteKey = 'bee_bullet', rotation = 0 }) {
         const bulletId = entityManager.createEntity();
 
         entityManager.addComponent(bulletId, new PositionComponent(x - config.width / 2, y));
         entityManager.addComponent(bulletId, new VelocityComponent(vx || 0, vy || config.speed));
         entityManager.addComponent(bulletId, new DynamicColliderComponent());
         entityManager.addComponent(bulletId, new CollisionComponent({ type: 'hazard', width: config.width, height: config.height }));
-        entityManager.addComponent(bulletId, new RenderableComponent({ spriteKey: spriteKey, width: config.width, height: config.height }));
+        entityManager.addComponent(bulletId, new RenderableComponent({ spriteKey: spriteKey, width: config.width, height: config.height, rotation: rotation }));
         entityManager.addComponent(bulletId, new BulletComponent({ damage: config.damage, speed: config.speed }));
     }
 }

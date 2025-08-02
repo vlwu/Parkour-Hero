@@ -346,7 +346,7 @@ export class Renderer {
             }
 
             if (spriteData) {
-                const instanceData = [renderX, renderY, renderable.width, renderable.height, spriteData.sx, spriteData.sy, spriteData.sw, spriteData.sh, spriteData.isFlipped, 1.0, 0.0];
+                const instanceData = [renderX, renderY, renderable.width, renderable.height, spriteData.sx, spriteData.sy, spriteData.sw, spriteData.sh, spriteData.isFlipped, 1.0, renderable.rotation || 0.0];
                 addToBatch(spriteData.texture, instanceData);
             }
         }
