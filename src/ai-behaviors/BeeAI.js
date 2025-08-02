@@ -84,7 +84,9 @@ export class BeeAI extends BaseAI {
             eventBus.publish('spawnBullet', {
                 x: this.pos.x + this.col.width / 2,
                 y: this.pos.y + this.col.height,
-                config: this.enemy.ai.bullet
+                config: this.enemy.ai.bullet,
+                spriteKey: 'bee_bullet',
+                piecesSpriteKey: 'bee_bullet_pieces'
             });
 
             const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;

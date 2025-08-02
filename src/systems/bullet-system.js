@@ -31,6 +31,15 @@ export class BulletSystem {
             const bullet = entityManager.getComponent(id, BulletComponent);
             const renderable = entityManager.getComponent(id, RenderableComponent);
 
+            const destroyBullet = () => {
+                if (bullet.piecesSpriteKey) {
+                    eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: bullet.piecesSpriteKey, leafIndex: 0 });
+                    eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: bullet.piecesSpriteKey, leafIndex: 1 });
+                }
+                this.collisionSystem.removeDynamicEntity(id, entityManager);
+                entityManager.destroyEntity(id);
+            };
+
             if (playerPos && playerCol) {
                 if (
                     pos.x < playerPos.x + playerCol.width &&
@@ -39,18 +48,13 @@ export class BulletSystem {
                     pos.y + col.height > playerPos.y
                 ) {
                     eventBus.publish('playerTookDamage', { amount: bullet.damage, source: 'bullet' });
-                    this.collisionSystem.removeDynamicEntity(id, entityManager);
-                    entityManager.destroyEntity(id);
+                    destroyBullet();
                     continue;
                 }
             }
 
             if (col.isGrounded || col.isAgainstWall) {
-                const piecesSpriteKey = renderable.spriteKey === 'bee_bullet' ? 'bee_bullet_pieces' : 'plant_bullet_pieces';
-                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: piecesSpriteKey, leafIndex: 0 });
-                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: piecesSpriteKey, leafIndex: 1 });
-                this.collisionSystem.removeDynamicEntity(id, entityManager);
-                entityManager.destroyEntity(id);
+                destroyBullet();
                 continue;
             }
 
@@ -59,17 +63,13 @@ export class BulletSystem {
             }
 
             if (pos.y >= level.height || pos.y <= 0 || pos.x <= 0 || pos.x + col.width >= level.width) {
-                const piecesSpriteKey = renderable.spriteKey === 'bee_bullet' ? 'bee_bullet_pieces' : 'plant_bullet_pieces';
-                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: piecesSpriteKey, leafIndex: 0 });
-                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: piecesSpriteKey, leafIndex: 1 });
-                this.collisionSystem.removeDynamicEntity(id, entityManager);
-                entityManager.destroyEntity(id);
+                destroyBullet();
                 continue;
             }
         }
     }
 
-    _createBullet(entityManager, { x, y, vx, vy, config, spriteKey = 'bee_bullet', rotation = 0 }) {
+    _createBullet(entityManager, { x, y, vx, vy, config, spriteKey = 'bee_bullet', rotation = 0, piecesSpriteKey = null }) {
         const bulletId = entityManager.createEntity();
 
         entityManager.addComponent(bulletId, new PositionComponent(x - config.width / 2, y));
@@ -77,6 +77,6 @@ export class BulletSystem {
         entityManager.addComponent(bulletId, new DynamicColliderComponent());
         entityManager.addComponent(bulletId, new CollisionComponent({ type: 'hazard', width: config.width, height: config.height }));
         entityManager.addComponent(bulletId, new RenderableComponent({ spriteKey: spriteKey, width: config.width, height: config.height, rotation: rotation }));
-        entityManager.addComponent(bulletId, new BulletComponent({ damage: config.damage, speed: config.speed }));
+        entityManager.addComponent(bulletId, new BulletComponent({ damage: config.damage, speed: config.speed, piecesSpriteKey: piecesSpriteKey }));
     }
 }

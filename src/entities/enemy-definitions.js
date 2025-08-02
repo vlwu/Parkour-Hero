@@ -342,6 +342,10 @@ export const ENEMY_DEFINITIONS = {
     trunk: {
         width: 64,
         height: 32,
+        hitbox: {
+            width: 40,
+            height: 32,
+        },
         spriteKey: 'trunk',
         animations: {
             idle: { frameCount: 18, speed: 0.1 },
