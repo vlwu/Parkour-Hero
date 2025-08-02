@@ -46,7 +46,8 @@ export const OBJECT_DESCRIPTIONS = {
     'rhino': 'A ground enemy that detects the player on the same platform. It charges, accelerating rapidly, and only stops when it hits a wall.',
     'slime': 'A hopping enemy. Snaps vertically and to the platform\'s edge (left/right based on drop location).',
     'snail': 'A slow-moving patrol enemy. Can be jumped on to create a shell projectile (not simulated in editor). Snaps to the ground.',
-    'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.'
+    'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.',
+    'trunk': 'A mobile enemy that patrols platforms and shoots projectiles when the player is nearby.'
 };
 
 export const PALETTE_ABBREVIATIONS = {
@@ -62,7 +63,7 @@ export const PALETTE_ABBREVIATIONS = {
     'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
     'saw': 'SAW',
 
-    'mushroom': 'MSH', 'chicken': 'CKN', 'rhino': 'RNO', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT', 'plant': 'PLN',
+    'mushroom': 'MSH', 'chicken': 'CKN', 'rhino': 'RNO', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT', 'plant': 'PLN', 'trunk': 'TRK',
 
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -115,6 +116,7 @@ export function getPaletteColor(type) {
         case 'bat': return '#4d3454ff';
         case 'ghost': return '#b5c1ccff';
         case 'plant': return '#2ca62c';
+        case 'trunk': return '#593d2b';
         case 'oneway_gold': case 'gold_third_h': case 'gold_third_v': case 'gold_ninth_sq': case 'gold_four_ninths_sq': return '#FFD700';
         case 'oneway_wood': return '#855E42';
         case 'oneway_stone': return '#808080';
