@@ -1,3 +1,5 @@
+const STOMP_BOUNCE_VELOCITY = 250;
+
 export const ENEMY_DEFINITIONS = {
 
     mushroom: {
@@ -11,7 +13,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 300,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             contactDamage: 1000,
         },
         ai: {
@@ -33,7 +35,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 250,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             contactDamage: 1000,
         },
         ai: {
@@ -58,7 +60,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 250,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             dealsContactDamage: true,
             contactDamage: (enemyId, entityManager) => {
                 const vel = entityManager.getComponent(enemyId, 'VelocityComponent');
@@ -93,7 +95,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 250,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             contactDamage: 1000,
         },
         ai: {
@@ -114,7 +116,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 350,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             contactDamage: 1000,
         },
         ai: {
@@ -137,7 +139,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 250,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             contactDamage: 1000,
         },
         ai: {
@@ -157,7 +159,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 300,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             contactDamage: 1000,
         },
         ai: {
@@ -186,7 +188,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 300,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             dealsContactDamage: false,
             contactDamage: 1000,
         },
@@ -218,7 +220,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 250,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             dealsContactDamage: true,
             contactDamage: 1000,
         },
@@ -242,7 +244,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 250,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             dealsContactDamage: true,
             contactDamage: 1000,
         },
@@ -273,7 +275,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 250,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             contactDamage: 1000,
         },
         ai: {
@@ -296,7 +298,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 300,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             contactDamage: 1000,
         },
         ai: {
@@ -321,7 +323,7 @@ export const ENEMY_DEFINITIONS = {
         },
         killable: {
             stompable: true,
-            stompBounceVelocity: 250,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
             dealsContactDamage: true,
             contactDamage: 1000,
         },
