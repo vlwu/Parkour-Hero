@@ -58,9 +58,13 @@ export class BulletSystem {
                 vel.vy += PLAYER_CONSTANTS.GRAVITY * dt * 0.5;
             }
 
-            if (pos.y > level.height || pos.y < 0 || pos.x < 0 || pos.x > level.width) {
+            if (pos.y >= level.height || pos.y <= 0 || pos.x <= 0 || pos.x + col.width >= level.width) {
+                const piecesSpriteKey = renderable.spriteKey === 'bee_bullet' ? 'bee_bullet_pieces' : 'plant_bullet_pieces';
+                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: piecesSpriteKey, leafIndex: 0 });
+                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: piecesSpriteKey, leafIndex: 1 });
                 this.collisionSystem.removeDynamicEntity(id, entityManager);
                 entityManager.destroyEntity(id);
+                continue;
             }
         }
     }
