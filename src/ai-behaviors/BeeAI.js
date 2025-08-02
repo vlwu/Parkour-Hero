@@ -1,6 +1,7 @@
 import { BaseAI } from './BaseAI.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
+import { PositionComponent } from '../components/PositionComponent.js';
 
 export class BeeAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -9,6 +10,7 @@ export class BeeAI extends BaseAI {
         this.patrolBoxSize = this.enemy.ai.patrolBoxSize || 150;
         this.airSpeed = this.enemy.ai.airSpeed || 50;
         this.attackInterval = this.enemy.ai.attackInterval || 2.0;
+        this.soundRadius = this.enemy.ai.soundRadius || 200;
 
         this.anchorX = this.pos.x + this.col.width / 2;
         this.anchorY = this.pos.y + this.col.height / 2;
@@ -84,7 +86,14 @@ export class BeeAI extends BaseAI {
                 y: this.pos.y + this.col.height,
                 config: this.enemy.ai.bullet
             });
-            eventBus.publish('playSound', { key: 'bullet_shoot', volume: 0.5, channel: 'SFX' });
+
+            const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
+            if (playerPos) {
+                const distance = Math.sqrt(Math.pow(playerPos.x - this.pos.x, 2) + Math.pow(playerPos.y - this.pos.y, 2));
+                if (distance < this.soundRadius) {
+                    eventBus.publish('playSound', { key: 'bullet_shoot', volume: 0.5, channel: 'SFX' });
+                }
+            }
         }
 
         const animTimer = this.renderable.animationTimer + dt;
