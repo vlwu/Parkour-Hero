@@ -344,9 +344,10 @@ export const ENEMY_DEFINITIONS = {
         height: 32,
         spriteKey: 'trunk',
         animations: {
-            idle: { frameCount: 11, speed: 0.1 },
-            attack: { frameCount: 8, speed: 0.1, fireFrame: 5 },
-            hit: { frameCount: 5, speed: 0.1 }
+            idle: { frameCount: 18, speed: 0.1 },
+            attack: { frameCount: 11, speed: 0.1, fireFrame: 8 },
+            hit: { frameCount: 5, speed: 0.1 },
+            run: { frameCount: 14, speed: 0.1 }
         },
         killable: {
             stompable: true,
