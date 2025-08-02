@@ -111,7 +111,7 @@ export class TrunkAI extends BaseAI {
 
         const velX = directionMultiplier * speed;
         const velY = 0;
-        const rotation = this.renderable.direction === 'right' ? 0 : Math.PI;
+        const rotation = this.renderable.direction === 'right' ? Math.PI : 0;
 
         eventBus.publish('spawnBullet', {
             x: bulletSpawnX,

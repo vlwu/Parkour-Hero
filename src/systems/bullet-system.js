@@ -73,7 +73,7 @@ export class BulletSystem {
         const bulletId = entityManager.createEntity();
 
         entityManager.addComponent(bulletId, new PositionComponent(x - config.width / 2, y));
-        entityManager.addComponent(bulletId, new VelocityComponent(vx || 0, vy || config.speed));
+        entityManager.addComponent(bulletId, new VelocityComponent(vx ?? 0, vy ?? config.speed));
         entityManager.addComponent(bulletId, new DynamicColliderComponent());
         entityManager.addComponent(bulletId, new CollisionComponent({ type: 'hazard', width: config.width, height: config.height }));
         entityManager.addComponent(bulletId, new RenderableComponent({ spriteKey: spriteKey, width: config.width, height: config.height, rotation: rotation }));
