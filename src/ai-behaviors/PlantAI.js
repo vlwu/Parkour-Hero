@@ -94,7 +94,7 @@ export class PlantAI extends BaseAI {
         let velX = 0, velY = 0;
         const speed = this.enemy.ai.bullet.speed;
         const bulletSpawnX = this.pos.x + this.col.width / 2;
-        const bulletSpawnY = this.pos.y + this.col.height / 2;
+        const bulletSpawnY = this.pos.y + 10;
 
         const playerCenterX = playerPos.x + playerCol.width / 2;
         const playerCenterY = playerPos.y + playerCol.height / 2;
