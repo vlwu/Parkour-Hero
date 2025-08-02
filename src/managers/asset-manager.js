@@ -242,6 +242,12 @@ const gameplayImagePaths = {
     plant_idle: '/assets/Enemies/Plant/Idle.png',
     plant_bullet: '/assets/Enemies/Plant/Bullet.png',
     plant_bullet_pieces: '/assets/Enemies/Plant/Bullet Pieces.png',
+    trunk_hit: '/assets/Enemies/Trunk/Hit.png',
+    trunk_idle: '/assets/Enemies/Trunk/Hit.png',
+    trunk_run: '/assets/Enemies/Trunk/Hit.png',
+    trunk_attack: '/assets/Enemies/Trunk/Hit.png',
+    trunk_bullet: '/assets/Enemies/Trunk/Hit.png',
+    trunk_bullet_pieces: '/assets/Enemies/Trunk/Hit.png',
 
     dust_particle: '/assets/Other/Dust Particle.png',
     ice_particle: '/assets/Traps/Sand Mud Ice/Ice Particle.png',
