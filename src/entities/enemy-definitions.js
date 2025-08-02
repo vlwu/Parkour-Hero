@@ -339,4 +339,30 @@ export const ENEMY_DEFINITIONS = {
             }
         }
     },
+    trunk: {
+        width: 64,
+        height: 32,
+        spriteKey: 'trunk',
+        animations: {
+            idle: { frameCount: 11, speed: 0.1 },
+            attack: { frameCount: 8, speed: 0.1, fireFrame: 5 },
+            hit: { frameCount: 5, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
+            dealsContactDamage: true,
+            contactDamage: 1000,
+        },
+        ai: {
+            type: 'trunk',
+            aggroRadius: 175,
+            bullet: {
+                speed: 250,
+                damage: 50,
+                width: 16,
+                height: 16,
+            }
+        }
+    }
 };
