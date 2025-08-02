@@ -12,7 +12,7 @@ import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
-import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, EVENTS } from '../utils/constants.js';
 import { InputSystem } from '../systems/input-system.js';
 import { GameplaySystem } from '../systems/gameplay-system.js';
 import { PlayerStateSystem } from '../systems/player-state-system.js';
@@ -105,25 +105,25 @@ export class Engine {
         eventBus.subscribe(eventName, boundCallback);
     };
 
-    subscribeAndTrack('requestStartGame', () => this.initiateLevelLoad(this.gameState.currentSection, this.gameState.currentLevelIndex));
-    subscribeAndTrack('requestLevelLoad', ({ sectionIndex, levelIndex }) => this.initiateLevelLoad(sectionIndex, levelIndex));
-    subscribeAndTrack('requestLevelRestart', () => this.initiateLevelLoad(this.gameState.currentSection, this.gameState.currentLevelIndex));
-    subscribeAndTrack('keybindsUpdated', this.updateKeybinds);
-    subscribeAndTrack('fruitCollected', this._onFruitCollected);
-    subscribeAndTrack('playerTookDamage', this._onPlayerTookDamage);
-    subscribeAndTrack('checkpointActivated', this._onCheckpointActivated);
-    subscribeAndTrack('playerDied', this._onPlayerDied);
-    subscribeAndTrack('characterUpdated', this.updatePlayerCharacter);
-    subscribeAndTrack('cameraShakeRequested', this._onCameraShakeRequested);
-    subscribeAndTrack('menuOpened', () => { this.pauseForMenu = true; this.pause(); });
-    subscribeAndTrack('allMenusClosed', () => { this.pauseForMenu = false; this.resume(); });
-    subscribeAndTrack('pauseGame', this.pause);
-    subscribeAndTrack('gameStateUpdated', (newState) => this.gameState = newState);
+    subscribeAndTrack(EVENTS.REQUEST_START_GAME, () => this.initiateLevelLoad(this.gameState.currentSection, this.gameState.currentLevelIndex));
+    subscribeAndTrack(EVENTS.REQUEST_LEVEL_LOAD, ({ sectionIndex, levelIndex }) => this.initiateLevelLoad(sectionIndex, levelIndex));
+    subscribeAndTrack(EVENTS.REQUEST_LEVEL_RESTART, () => this.initiateLevelLoad(this.gameState.currentSection, this.gameState.currentLevelIndex));
+    subscribeAndTrack(EVENTS.KEYBINDS_UPDATED, this.updateKeybinds);
+    subscribeAndTrack(EVENTS.FRUIT_COLLECTED, this._onFruitCollected);
+    subscribeAndTrack(EVENTS.PLAYER_TOOK_DAMAGE, this._onPlayerTookDamage);
+    subscribeAndTrack(EVENTS.CHECKPOINT_ACTIVATED, this._onCheckpointActivated);
+    subscribeAndTrack(EVENTS.PLAYER_DIED, this._onPlayerDied);
+    subscribeAndTrack(EVENTS.CHARACTER_UPDATED, this.updatePlayerCharacter);
+    subscribeAndTrack(EVENTS.CAMERA_SHAKE_REQUESTED, this._onCameraShakeRequested);
+    subscribeAndTrack(EVENTS.MENU_OPENED, () => { this.pauseForMenu = true; this.pause(); });
+    subscribeAndTrack(EVENTS.ALL_MENUS_CLOSED, () => { this.pauseForMenu = false; this.resume(); });
+    subscribeAndTrack(EVENTS.GAME_PAUSED, this.pause);
+    subscribeAndTrack(EVENTS.GAME_STATE_UPDATED, (newState) => this.gameState = newState);
   }
 
   updateKeybinds(newKeybinds) { this.keybinds = { ...newKeybinds }; }
 
-  start() { if (this.isRunning) return; this.isRunning = true; this.lastFrameTime = performance.now(); eventBus.publish('gameResumed'); this.gameLoop(); }
+  start() { if (this.isRunning) return; this.isRunning = true; this.lastFrameTime = performance.now(); eventBus.publish(EVENTS.GAME_RESUMED); this.gameLoop(); }
   stop() { this.isRunning = false; this.soundManager.stopAll(); }
 
   pause() {
@@ -132,14 +132,14 @@ export class Engine {
     this.soundManager.stopAll({ except: ['UI'] });
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     if (playerCtrl) playerCtrl.needsRespawn = false;
-    eventBus.publish('gamePaused');
+    eventBus.publish(EVENTS.GAME_PAUSED);
   }
 
   resume() {
     if (this.pauseForMenu || !this.gameHasStarted || this.gameState.showingLevelComplete || this.isTransitioning) return;
     if (this.timeScale === 1.0) return;
     this.timeScale = 1.0;
-    eventBus.publish('gameResumed');
+    eventBus.publish(EVENTS.GAME_RESUMED);
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     if (playerCtrl) playerCtrl.needsRespawn = false;
   }
@@ -177,7 +177,7 @@ export class Engine {
       const newStateData = JSON.parse(JSON.stringify(currentState));
       newStateData.showingLevelComplete = false;
       this.gameState = new GameState(newStateData);
-      eventBus.publish('gameStateUpdated', this.gameState);
+      eventBus.publish(EVENTS.GAME_STATE_UPDATED, this.gameState);
 
       this.lastCheckpoint = null;
       this.fruitsAtLastCheckpoint.clear();
@@ -223,7 +223,7 @@ export class Engine {
     this.gameState.currentLevelIndex = levelIndex;
 
     this.gameState = this.gameState.incrementAttempts(sectionIndex, levelIndex);
-    eventBus.publish('gameStateUpdated', this.gameState);
+    eventBus.publish(EVENTS.GAME_STATE_UPDATED, this.gameState);
 
     this.currentLevel = new Level(levelData, this.entityManager);
     this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
@@ -234,10 +234,10 @@ export class Engine {
 
     if (!this.gameHasStarted) {
       this.gameHasStarted = true;
-      eventBus.publish('gameStarted');
+      eventBus.publish(EVENTS.GAME_STARTED);
     }
 
-    eventBus.publish('levelLoaded', { gameState: this.gameState });
+    eventBus.publish(EVENTS.LEVEL_LOADED, { gameState: this.gameState });
   }
 
   loadLevelFromData(levelData) {
@@ -260,7 +260,7 @@ export class Engine {
       if (!this.gameHasStarted) {
           this.start();
       }
-      eventBus.publish('gameResumed');
+      eventBus.publish(EVENTS.GAME_RESUMED);
   }
 
   update(dt) {
@@ -306,7 +306,7 @@ export class Engine {
     this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus, this.camera);
 
     const playerHealth = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
-    eventBus.publish('statsUpdated', {
+    eventBus.publish(EVENTS.STATS_UPDATED, {
       levelName: this.currentLevel.name,
       collectedFruits: this.currentLevel.getFruitCount(),
       totalFruits: this.currentLevel.getTotalFruitCount(),
@@ -325,7 +325,7 @@ export class Engine {
           const pos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
           const col = this.entityManager.getComponent(this.playerEntityId, CollisionComponent);
           if (pos && col) {
-              eventBus.publish('createDamageIndicator', {
+              eventBus.publish(EVENTS.CREATE_DAMAGE_INDICATOR, {
                   amount,
                   x: pos.x + col.width / 2,
                   y: pos.y
@@ -346,11 +346,11 @@ export class Engine {
         playerCtrl.deathCount++;
         vel.vx = 0; vel.vy = 0;
         playerCtrl.isHit = true;
-        state.currentState = 'hit';
-        renderable.animationState = 'hit';
+        state.currentState = PLAYER_STATES.HIT;
+        renderable.animationState = PLAYER_STATES.HIT;
         renderable.animationFrame = 0;
         renderable.animationTimer = 0;
-        eventBus.publish('playSound', { key: 'death_sound', volume: 0.3, channel: 'SFX' });
+        eventBus.publish(EVENTS.PLAY_SOUND, { key: 'death_sound', volume: 0.3, channel: 'SFX' });
 
         const enemyEntities = this.entityManager.query([EnemyComponent, StateComponent]);
         for (const enemyId of enemyEntities) {
@@ -358,7 +358,7 @@ export class Engine {
             if (enemy.type === 'rhino') {
                 const enemyState = this.entityManager.getComponent(enemyId, StateComponent);
                 if (enemyState.currentState === 'charging') {
-                    eventBus.publish('stopSoundLoop', { key: 'rhino_charge' });
+                    eventBus.publish(EVENTS.STOP_SOUND_LOOP, { key: 'rhino_charge' });
                     break;
                 }
             }
@@ -410,8 +410,8 @@ export class Engine {
     newPlayerCtrl.activeSurfaceSound = currentSound;
     newPlayerCtrl.needsRespawn = false;
 
-    state.currentState = 'spawn';
-    renderable.animationState = 'spawn';
+    state.currentState = PLAYER_STATES.SPAWN;
+    renderable.animationState = PLAYER_STATES.SPAWN;
     renderable.animationFrame = 0;
     renderable.animationTimer = 0;
     renderable.direction = 'right';
@@ -422,12 +422,12 @@ export class Engine {
     collision.groundType = null;
 
     this.camera.shake(15, 0.5);
-    eventBus.publish('playerRespawned');
+    eventBus.publish(EVENTS.PLAYER_RESPAWNED);
   }
 
   _onFruitCollected(fruit) {
     this.currentLevel.collectFruit(fruit);
-    eventBus.publish('playSound', { key: 'collect', volume: 0.8, channel: 'SFX' });
+    eventBus.publish(EVENTS.PLAY_SOUND, { key: 'collect', volume: 0.8, channel: 'SFX' });
     const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     if (health && health.currentHealth < health.maxHealth) {
         health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 10);
@@ -443,7 +443,7 @@ export class Engine {
   _onCheckpointActivated(cp) {
       cp.state = 'activating';
       this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 };
-      eventBus.publish('playSound', { key: 'checkpoint_activated', volume: 1, channel: 'UI' });
+      eventBus.publish(EVENTS.PLAY_SOUND, { key: 'checkpoint_activated', volume: 1, channel: 'UI' });
       this.fruitsAtLastCheckpoint.clear();
       this.currentLevel.fruits.forEach((fruit, index) => { if (fruit.collected) this.fruitsAtLastCheckpoint.add(index); });
       this.currentLevel.checkpoints.forEach(otherCp => { if (otherCp !== cp && otherCp.state === 'active') { otherCp.state = 'inactive'; otherCp.frame = 0; } });
