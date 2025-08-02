@@ -87,7 +87,7 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
         width: data.width,
         height: data.height,
         animationState: initialAnimationState,
-        direction: config.startDirection || 'right',
+        direction: config.direction || 'right',
     }));
 
     return enemyEntityId;

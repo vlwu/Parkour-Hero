@@ -45,6 +45,9 @@ export class ObjectManager {
                     obj.tiltAmount = entityData[propIndex++];
                     break;
                 case 'arrow_bubble':
+                    obj.direction = entityData[propIndex++];
+                    obj.knockbackSpeed = entityData[propIndex++];
+                    break;
                 case 'plant':
                     obj.direction = entityData[propIndex++];
                     obj.knockbackSpeed = entityData[propIndex++];

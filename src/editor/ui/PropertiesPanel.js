@@ -48,7 +48,12 @@ export class PropertiesPanel {
             propertiesHTML += this._createNumberInput('tiltAmount', 'Tilt Amount', obj.tiltAmount || 0.5, 0.1);
         }
         if (obj.type === 'arrow_bubble' || obj.type === 'fan' || obj.type === 'plant') {
-            const directions = ['right', 'left', 'up', 'down'];
+            let directions;
+            if (obj.type === 'plant') {
+                directions = ['right', 'left'];
+            } else {
+                directions = ['right', 'left', 'up', 'down'];
+            }
             propertiesHTML += this._createSelectInput('direction', 'Direction', directions, obj.direction);
         }
         if (obj.type === 'arrow_bubble') {
