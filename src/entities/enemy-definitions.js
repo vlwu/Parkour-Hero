@@ -359,7 +359,6 @@ export const ENEMY_DEFINITIONS = {
             type: 'trunk',
             patrolSpeed: 45,
             idleTime: 1,
-            aggroRadius: 175,
             attackInterval: 1.5,
             bullet: {
                 speed: 250,
