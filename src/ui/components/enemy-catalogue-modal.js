@@ -7,13 +7,17 @@ import './bitmap-text.js';
 const ENEMY_DESCRIPTIONS = {
     mushroom: "A simple-minded fungus that patrols back and forth on its platform. Be careful not to run into it.",
     chicken: "This feisty fowl stays put until it spots a target on its level. Once provoked, it charges relentlessly.",
+    rhino: "A ground enemy that detects the player on the same platform. It charges, accelerating rapidly, and only stops when it hits a wall.",
     snail: "Moves slowly and predictably. A single stomp will cause it fall out of its shell. The shell then continues to bounce around.",
     slime: "Hops along platforms, leaving behind a trail of damaging goo. Time your jumps to avoid both the slime and its puddles.",
     turtle: "A defensive creature. It periodically extends sharp spikes from its shell, making it dangerous to touch. It can only be stomped when its spikes are retracted.",
     bluebird: "Flies in a horizontal pattern, bobbing gently up and down. Its flight path is consistent, making it a predictable obstacle.",
     fatbird: "Hovers in the air until a player passes directly underneath, at which point it slams down to the ground with force.",
     radish: "This vegetable starts by flying around a small area. After being stomped once, it loses its leaves and falls, then begins patrolling on the ground.",
-    bee: "Patrols a small area in the air. Periodically stops to shoot a projectile straight down. Can be a threat from above."
+    bee: "Patrols a small area in the air. Periodically stops to shoot a projectile straight down. Can be a threat from above.",
+    bat: "Hangs from ceilings and waits. When a player approaches from below, it swoops down to attack. It will return if the player moves too far away.",
+    ghost: "A spooky foe that patrols a platform, periodically turning invisible. It cannot be harmed or harm you while invisible.",
+    plant: "A stationary plant that shoots projectiles at the player when they enter its line of sight."
 };
 
 export class EnemyCatalogueModal extends LitElement {

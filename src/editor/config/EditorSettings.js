@@ -34,19 +34,19 @@ export const OBJECT_DESCRIPTIONS = {
     'orange_dirt_ninth_sq': 'A 1/9 square orange dirt block. Placeable object.',
     'orange_dirt_four_ninths_sq': 'A 4/9 square orange dirt block. Placeable object.',
 
-    'mushroom': 'Patrols on a platform. Snaps vertically and to the platform\'s edge (left/right based on drop location). Patrol distance is set automatically.',
-    'chicken': 'Charges at the player. Snaps vertically to the ground but stays at the horizontal position where it is placed.',
-    'rhino': 'A ground enemy that detects the player on the same platform. It charges, accelerating rapidly, and only stops when it hits a wall.',
-    'snail': 'A slow-moving patrol enemy. Can be jumped on to create a shell projectile (not simulated in editor). Snaps to the ground.',
-    'slime': 'A hopping enemy. Snaps vertically and to the platform\'s edge (left/right based on drop location).',
-    'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.',
-    'bluebird': 'A flying enemy that patrols back and forth along a set path, bobbing up and down. Does not snap to ground.',
-    'fatbird': 'A flying enemy that hovers in place. When a player passes underneath, it slams to the ground. Deals non-lethal damage. Does not snap to ground.',
-    'radish': 'A flying enemy that patrols in a square area. When stomped, it falls to the ground and patrols on the platform. Properties: patrolBoxSize (size of the flight area in pixels).',
-    'bee': 'A flying enemy that patrols in a square area and shoots bullets downwards. Properties: patrolBoxSize (size of the flight area in pixels).',
     'bat': 'Hangs from ceilings and waits. When a player approaches from below, it swoops down to attack. It will return if the player moves too far away. Snaps to the bottom of platforms.',
+    'bee': 'A flying enemy that patrols in a square area and shoots bullets downwards. Properties: patrolBoxSize (size of the flight area in pixels).',
+    'bluebird': 'A flying enemy that patrols back and forth along a set path, bobbing up and down. Does not snap to ground.',
+    'chicken': 'Charges at the player. Snaps vertically to the ground but stays at the horizontal position where it is placed.',
+    'fatbird': 'A flying enemy that hovers in place. When a player passes underneath, it slams to the ground. Deals non-lethal damage. Does not snap to ground.',
     'ghost': 'A spooky foe that patrols a platform, periodically turning invisible. It cannot be harmed or harm you while invisible.',
-    'plant': 'A stationary plant that shoots projectiles at the player when they enter its line of sight. Its direction can be set in the properties panel. Snaps to the ground.'
+    'mushroom': 'Patrols on a platform. Snaps vertically and to the platform\'s edge (left/right based on drop location). Patrol distance is set automatically.',
+    'plant': 'A stationary plant that shoots projectiles at the player when they enter its line of sight. Its direction can be set in the properties panel. Snaps to the ground.',
+    'radish': 'A flying enemy that patrols in a square area. When stomped, it falls to the ground and patrols on the platform. Properties: patrolBoxSize (size of the flight area in pixels).',
+    'rhino': 'A ground enemy that detects the player on the same platform. It charges, accelerating rapidly, and only stops when it hits a wall.',
+    'slime': 'A hopping enemy. Snaps vertically and to the platform\'s edge (left/right based on drop location).',
+    'snail': 'A slow-moving patrol enemy. Can be jumped on to create a shell projectile (not simulated in editor). Snaps to the ground.',
+    'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.'
 };
 
 export const PALETTE_ABBREVIATIONS = {
