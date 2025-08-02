@@ -104,11 +104,11 @@ export class ParticleSystemWebGL {
         gl.vertexAttribDivisor(2, 1);
 
         gl.enableVertexAttribArray(3);
-        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, instanceStride, 12);
+        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, instanceStride, 8);
         gl.vertexAttribDivisor(3, 1);
 
         gl.enableVertexAttribArray(4);
-        gl.vertexAttribPointer(4, 1, gl.FLOAT, false, instanceStride, 16);
+        gl.vertexAttribPointer(4, 1, gl.FLOAT, false, instanceStride, 12);
         gl.vertexAttribDivisor(4, 1);
 
         gl.enableVertexAttribArray(5);
