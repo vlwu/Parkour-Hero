@@ -36,6 +36,7 @@ export const OBJECT_DESCRIPTIONS = {
 
     'mushroom': 'Patrols on a platform. Snaps vertically and to the platform\'s edge (left/right based on drop location). Patrol distance is set automatically.',
     'chicken': 'Charges at the player. Snaps vertically to the ground but stays at the horizontal position where it is placed.',
+    'rhino': 'A ground enemy that detects the player on the same platform. It charges, accelerating rapidly, and only stops when it hits a wall.',
     'snail': 'A slow-moving patrol enemy. Can be jumped on to create a shell projectile (not simulated in editor). Snaps to the ground.',
     'slime': 'A hopping enemy. Snaps vertically and to the platform\'s edge (left/right based on drop location).',
     'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.',
@@ -60,7 +61,7 @@ export const PALETTE_ABBREVIATIONS = {
     'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
     'saw': 'SAW',
 
-    'mushroom': 'MSH', 'chicken': 'CKN', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT',
+    'mushroom': 'MSH', 'chicken': 'CKN', 'rhino': 'RNO', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT',
 
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -105,8 +106,7 @@ export function getPaletteColor(type) {
         case 'player_spawn': return '#2980b9';
         case 'trophy': return '#F39C12'; case 'checkpoint': return '#17a2b8';
         case 'mushroom': return '#e6341cff'; case 'chicken': return '#f1c40f';
-        case 'snail': return '#cc37e7ff'; case 'slime': return '#2ecc71';
-        case 'turtle': return '#1a324dff';
+        case 'rhino': return '#6a7a89'; case 'snail': return '#cc37e7ff'; case 'slime': return '#2ecc71'; case 'turtle': return '#1a324dff';
         case 'bluebird': return '#3195d8ff';
         case 'fatbird': return '#8c6046ff';
         case 'radish': return '#dbf1a7ff';

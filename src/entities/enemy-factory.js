@@ -20,7 +20,7 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     let initialState;
     if (data.ai.type === 'flying_patrol' || data.ai.type === 'radish' || data.ai.type === 'bee') {
         initialState = 'flying';
-    } else if (data.ai.type === 'ground_charge' || data.ai.type === 'defensive_cycle' || data.ai.type === 'bat') {
+    } else if (data.ai.type === 'ground_charge' || data.ai.type === 'defensive_cycle' || data.ai.type === 'bat' || data.ai.type === 'rhino') {
         initialState = 'idle';
     } else {
         initialState = 'patrol';
