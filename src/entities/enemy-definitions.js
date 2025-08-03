@@ -371,5 +371,23 @@ export const ENEMY_DEFINITIONS = {
                 height: 16,
             }
         }
+    },
+    angrypig: {
+        width: 36,
+        height: 30,
+        spriteKey: 'angrypig',
+        animations: {
+            idle: { frameCount: 9, speed: 0.1 },
+            hit1: { frameCount: 5, speed: 0.1 },
+            hit2: { frameCount: 5, speed: 0.1 },
+            run: { frameCount: 12, speed: 0.1 },
+            walk: { frameCount: 16, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
+            dealsContactDamage: true,
+            contactDamage: 1000,
+        },
     }
 };

@@ -248,6 +248,11 @@ const gameplayImagePaths = {
     trunk_attack: '/assets/Enemies/Trunk/Attack.png',
     trunk_bullet: '/assets/Enemies/Trunk/Bullet.png',
     trunk_bullet_pieces: '/assets/Enemies/Trunk/Bullet Pieces.png',
+    angrypig_hit1: '/assets/Enemies/AngryPig/Hit 1.png',
+    angrypig_hit2: '/assets/Enemies/AngryPig/Hit 2.png',
+    angrypig_idle: '/assets/Enemies/AngryPig/Idle.png',
+    angrypig_run: '/assets/Enemies/AngryPig/Run.png',
+    angrypig_walk: '/assets/Enemies/AngryPig/Walk.png',
 
     dust_particle: '/assets/Other/Dust Particle.png',
     ice_particle: '/assets/Traps/Sand Mud Ice/Ice Particle.png',
