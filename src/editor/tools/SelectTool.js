@@ -106,7 +106,7 @@ export class SelectTool extends Tool {
         const ctx = grid.overlayCtx;
         const { deltaX, deltaY } = state.selectionDragPreview;
         const snapshot = state.selectionSnapshot;
-        
+
         const startPixelX = (snapshot.startX + deltaX) * TILE_SIZE;
         const startPixelY = (snapshot.startY + deltaY) * TILE_SIZE;
 
@@ -115,7 +115,7 @@ export class SelectTool extends Tool {
         ctx.fillRect(startPixelX, startPixelY, snapshot.width * TILE_SIZE, snapshot.height * TILE_SIZE);
         ctx.strokeStyle = 'rgba(52, 152, 219, 0.8)';
         ctx.strokeRect(startPixelX, startPixelY, snapshot.width * TILE_SIZE, snapshot.height * TILE_SIZE);
-        
+
         snapshot.objects.forEach(obj => {
             const newX = (snapshot.startX + obj.relativeX + deltaX);
             const newY = (snapshot.startY + obj.relativeY + deltaY);
@@ -127,7 +127,7 @@ export class SelectTool extends Tool {
                 obj.height
             );
         });
-        
+
         ctx.globalAlpha = 1.0;
     }
 
@@ -164,7 +164,7 @@ export class SelectTool extends Tool {
 
         obj.x = finalX;
         obj.y = finalY;
-        this.objectManager.render();
+        this.objectManager.view.renderObjects(this.objectManager.getAllObjects());
         this.context.propertiesPanel.displayObject(obj);
     }
 
@@ -173,7 +173,7 @@ export class SelectTool extends Tool {
         state.isDraggingSelection = true;
         this.dragStartClientX = e.clientX;
         this.dragStartClientY = e.clientY;
-        
+
         const sel = state.selection;
         const snapshot = {
             tiles: [],
@@ -191,7 +191,7 @@ export class SelectTool extends Tool {
                 snapshot.tiles.push({ x, y, id: tileId });
             }
         }
-        
+
         snapshot.objects = objectManager.getAllObjects()
             .filter(obj => {
                 const objGridX = obj.x;
@@ -204,7 +204,7 @@ export class SelectTool extends Tool {
                 relativeX: obj.x - sel.x,
                 relativeY: obj.y - sel.y
             }));
-            
+
         state.selectionSnapshot = snapshot;
     }
 
@@ -215,7 +215,7 @@ export class SelectTool extends Tool {
         const scale = grid.zoomLevel;
         const deltaX = Math.round((e.clientX - this.dragStartClientX) / (GRID_CONSTANTS.TILE_SIZE * scale));
         const deltaY = Math.round((e.clientY - this.dragStartClientY) / (GRID_CONSTANTS.TILE_SIZE * scale));
-        
+
         state.selectionDragPreview = { deltaX, deltaY };
     }
 
@@ -256,7 +256,7 @@ export class SelectTool extends Tool {
             if(paintChanges.length > 0) {
                 composite.add(new PaintCommand(grid, paintChanges));
             }
-            
+
             snapshot.objects.forEach(obj => {
                 const newPos = {
                     x: round(snapshot.startX + obj.relativeX + deltaX),
@@ -265,7 +265,7 @@ export class SelectTool extends Tool {
                 const fromPos = { x: obj.x, y: obj.y };
                 composite.add(new MoveObjectCommand(objectManager, obj.id, fromPos, newPos));
             });
-            
+
             composite.execute();
             history.push(composite);
 
@@ -276,6 +276,6 @@ export class SelectTool extends Tool {
         state.isDraggingSelection = false;
         state.selectionSnapshot = null;
         state.selectionDragPreview = { deltaX: 0, deltaY: 0 };
-        this.context.objectManager.render();
+        this.context.objectManager.view.renderObjects(this.context.objectManager.getAllObjects());
     }
 }
