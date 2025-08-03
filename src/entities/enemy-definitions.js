@@ -404,7 +404,7 @@ export const ENEMY_DEFINITIONS = {
             hit: { frameCount: 5, speed: 0.1 },
             idle: { frameCount: 13, speed: 0.1 },
             run: { frameCount: 8, speed: 0.1 },
-            attack: { frameCount: 10, speed: 0.1 }
+            attack: { frameCount: 10, speed: 0.1, fireFrame: 7 }
         },
         killable: {
             stompable: true,
@@ -412,5 +412,13 @@ export const ENEMY_DEFINITIONS = {
             dealsContactDamage: true,
             contactDamage: 1000,
         },
+        ai: {
+            type: 'chameleon',
+            runSpeed: 90,
+            aggroRange: 350,
+            attackRange: 50,
+            attackDamage: 50,
+            attackCooldown: 0.5,
+        }
     }
 };

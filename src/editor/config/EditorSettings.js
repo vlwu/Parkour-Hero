@@ -48,7 +48,8 @@ export const OBJECT_DESCRIPTIONS = {
     'snail': 'A slow-moving patrol enemy. Can be jumped on to create a shell projectile (not simulated in editor). Snaps to the ground.',
     'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.',
     'trunk': 'A mobile enemy that patrols platforms and shoots projectiles when the player is nearby.',
-    'angrypig': 'A pig that patrols slowly. When stomped, it becomes angry and charges back and forth at high speed.'
+    'angrypig': 'A pig that patrols slowly. When stomped, it becomes angry and charges back and forth at high speed.',
+    'chameleon': 'Sits idle on a platform. When the player lands on the same platform, it chases them down and performs a quick melee attack when in range.'
 };
 
 export const PALETTE_ABBREVIATIONS = {
@@ -64,7 +65,7 @@ export const PALETTE_ABBREVIATIONS = {
     'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
     'saw': 'SAW',
 
-    'mushroom': 'MSH', 'chicken': 'CKN', 'rhino': 'RNO', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT', 'plant': 'PLN', 'trunk': 'TRK', 'angrypig': 'PIG',
+    'mushroom': 'MSH', 'chicken': 'CKN', 'rhino': 'RNO', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT', 'plant': 'PLN', 'trunk': 'TRK', 'angrypig': 'PIG', 'chameleon': 'CHM',
 
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -119,6 +120,7 @@ export function getPaletteColor(type) {
         case 'plant': return '#2ca62c';
         case 'trunk': return '#593d2b';
         case 'angrypig': return '#ee2121ff';
+        case 'chameleon': return '#327811ff';
         case 'oneway_gold': case 'gold_third_h': case 'gold_third_v': case 'gold_ninth_sq': case 'gold_four_ninths_sq': return '#FFD700';
         case 'oneway_wood': return '#855E42';
         case 'oneway_stone': return '#808080';
