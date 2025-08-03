@@ -253,6 +253,10 @@ const gameplayImagePaths = {
     angrypig_idle: '/assets/Enemies/AngryPig/Idle.png',
     angrypig_run: '/assets/Enemies/AngryPig/Run.png',
     angrypig_walk: '/assets/Enemies/AngryPig/Walk.png',
+    cham_hit: '/assets/Enemies/Chameleon/Hit.png',
+    cham_idle: '/assets/Enemies/Chameleon/Idle.png',
+    cham_run: '/assets/Enemies/Chameleon/Run.png',
+    cham_attack: '/assets/Enemies/Chameleon/Attack.png',
 
     dust_particle: '/assets/Other/Dust Particle.png',
     ice_particle: '/assets/Traps/Sand Mud Ice/Ice Particle.png',

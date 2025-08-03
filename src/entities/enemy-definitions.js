@@ -395,5 +395,22 @@ export const ENEMY_DEFINITIONS = {
             runSpeed: 150,
             idleTime: 0.5,
         }
+    },
+    chameleon: {
+        width: 84,
+        height: 38,
+        spriteKey: 'chameleon',
+        animations: {
+            hit: { frameCount: 5, speed: 0.1 },
+            idle: { frameCount: 13, speed: 0.1 },
+            run: { frameCount: 8, speed: 0.1 },
+            attack: { frameCount: 10, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
+            dealsContactDamage: true,
+            contactDamage: 1000,
+        },
     }
 };
