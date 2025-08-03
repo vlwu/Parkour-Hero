@@ -399,6 +399,10 @@ export const ENEMY_DEFINITIONS = {
     chameleon: {
         width: 84,
         height: 38,
+        hitbox: {
+            width: 32,
+            height: 38,
+        },
         spriteKey: 'chameleon',
         animations: {
             hit: { frameCount: 5, speed: 0.1 },
@@ -416,7 +420,7 @@ export const ENEMY_DEFINITIONS = {
             type: 'chameleon',
             runSpeed: 90,
             aggroRange: 350,
-            attackRange: 50,
+            attackRange: 80,
             attackDamage: 50,
             attackCooldown: 0.5,
         }
