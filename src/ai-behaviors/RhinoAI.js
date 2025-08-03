@@ -2,9 +2,32 @@ import { BaseAI } from './BaseAI.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { eventBus } from '../utils/event-bus.js';
-import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS, EVENTS } from '../utils/constants.js';
+import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS, EVENTS, GRID_CONSTANTS } from '../utils/constants.js';
 
 export class RhinoAI extends BaseAI {
+    _hasClearLineOfSight(playerData) {
+        if (!playerData) return false;
+
+        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
+        const selfCenterX = this.pos.x + this.col.width / 2;
+        const selfCenterY = this.pos.y + this.col.height / 2;
+        const playerCenterX = playerData.x + playerData.width / 2;
+
+        const step = selfCenterX < playerCenterX ? TILE_SIZE / 2 : -TILE_SIZE / 2;
+        const distance = Math.abs(playerCenterX - selfCenterX);
+        const numSteps = Math.floor(distance / Math.abs(step));
+
+        for (let i = 1; i < numSteps; i++) {
+            const checkX = selfCenterX + i * step;
+            // We ignore one-way platforms as they shouldn't block line of sight horizontally
+            if (this.level.isSolidAt(checkX, selfCenterY, true)) {
+                return false; // Path is blocked
+            }
+        }
+
+        return true; // Path is clear
+    }
+
     update(dt) {
         const ai = this.enemy.ai;
         const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
@@ -26,7 +49,7 @@ export class RhinoAI extends BaseAI {
                     const horizontalDistance = Math.abs((playerData.x + playerData.width / 2) - (this.pos.x + this.col.width / 2));
                     const inRange = horizontalDistance <= ai.aggroRange;
 
-                    if (onSamePlatform && onSameLevel && inRange) {
+                    if (onSamePlatform && onSameLevel && inRange && this._hasClearLineOfSight(playerData)) {
                         this.renderable.direction = (playerData.x > this.pos.x) ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
                         this.state.currentState = ENEMY_STATES.CHARGING;
                         this.vel.vx = (this.renderable.direction === DIRECTIONS.RIGHT ? 1 : -1) * ai.initialSpeed;
