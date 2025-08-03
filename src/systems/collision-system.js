@@ -164,6 +164,7 @@ export class CollisionSystem {
 
             pos.x += vel.vx * dt;
             col.isAgainstWall = false;
+            col.wallDirection = null;
 
             entityRect.x = pos.x;
             entityRect.y = pos.y;
@@ -220,8 +221,10 @@ export class CollisionSystem {
                     const PUSH_BUFFER = 0.01;
                     if (vel.vx > 0) {
                         pos.x = collider.x - col.width - PUSH_BUFFER;
+                        col.wallDirection = 'right';
                     } else if (vel.vx < 0) {
                         pos.x = collider.x + collider.width + PUSH_BUFFER;
+                        col.wallDirection = 'left';
                     }
                     vel.vx = 0;
                     entityRect.x = pos.x;

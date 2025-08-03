@@ -10,12 +10,17 @@ export class ClingState extends PlayerBaseState {
         const state = this.entityManager.getComponent(this.entityId, StateComponent);
         const renderable = this.entityManager.getComponent(this.entityId, RenderableComponent);
         const ctrl = this.entityManager.getComponent(this.entityId, PlayerControlledComponent);
-        
+        const col = this.entityManager.getComponent(this.entityId, CollisionComponent);
+
         state.currentState = 'cling';
         renderable.animationState = 'cling';
         renderable.animationFrame = 0;
         renderable.animationTimer = 0;
         ctrl.jumpCount = 1;
+
+        if (col.wallDirection) {
+            renderable.direction = col.wallDirection;
+        }
     }
 
     update(dt) {

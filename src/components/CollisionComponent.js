@@ -20,5 +20,6 @@ export class CollisionComponent {
         this.hitCeiling = hitCeiling;
         this.groundType = groundType;
         this.groundEntity = null;
+        this.wallDirection = null;
     }
 }

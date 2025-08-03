@@ -154,7 +154,19 @@ export class PlayerStateSystem {
         const pos = entityManager.getComponent(entityId, PositionComponent);
         const state = entityManager.getComponent(entityId, StateComponent);
 
-        if (state.currentState === 'spawn' || state.currentState === 'dash' || state.currentState === 'despawn' || state.currentState === 'hit' || ctrl.inputLocked) {
+        if (state.currentState === 'spawn' || state.currentState === 'despawn' || state.currentState === 'hit' || ctrl.inputLocked) {
+            return;
+        }
+
+        if (!ctrl.isDashing && state.currentState !== 'cling') {
+            if (input.moveLeft) {
+                renderable.direction = 'left';
+            } else if (input.moveRight) {
+                renderable.direction = 'right';
+            }
+        }
+
+        if (state.currentState === 'dash') {
             return;
         }
 
