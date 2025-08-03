@@ -113,19 +113,22 @@ export class EnemySystem {
 
                 const pos = entityManager.getComponent(enemyId, PositionComponent);
                 const col = entityManager.getComponent(enemyId, CollisionComponent);
-                
-                const spawnX = pos.x + col.width / 2;
-                const spawnY = pos.y + col.height / 2;
-                
-                const nextRockType = enemy.type === 'rock1' ? 'rock2' : 'rock3';
 
-                const rock1Id = createEnemy(entityManager, nextRockType, spawnX, spawnY);
+                const nextRockType = enemy.type === 'rock1' ? 'rock2' : 'rock3';
+                const nextRockDef = ENEMY_DEFINITIONS[nextRockType];
+                if (!nextRockDef) continue;
+                
+                const originalBottomY = pos.y + col.height;
+                const spawnY = originalBottomY - nextRockDef.height / 2;
+                const spawnX = pos.x + col.width / 2;
+
+                const rock1Id = createEnemy(entityManager, nextRockType, spawnX - nextRockDef.width / 2, spawnY);
                 if (rock1Id !== null) {
                     const rock1Renderable = entityManager.getComponent(rock1Id, RenderableComponent);
                     if (rock1Renderable) rock1Renderable.direction = DIRECTIONS.LEFT;
                 }
                 
-                const rock2Id = createEnemy(entityManager, nextRockType, spawnX, spawnY);
+                const rock2Id = createEnemy(entityManager, nextRockType, spawnX + nextRockDef.width / 2, spawnY);
                 if (rock2Id !== null) {
                     const rock2Renderable = entityManager.getComponent(rock2Id, RenderableComponent);
                     if (rock2Renderable) rock2Renderable.direction = DIRECTIONS.RIGHT;
