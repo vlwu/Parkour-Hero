@@ -423,5 +423,65 @@ export const ENEMY_DEFINITIONS = {
             attackRange: 80,
             attackDamage: 50,
         }
+    },
+    rock1: {
+        width: 38,
+        height: 34,
+        spriteKey: 'rock1',
+        animations: {
+            idle: { frameCount: 14, speed: 0.1 },
+            run: { frameCount: 14, speed: 0.1 },
+            hit: { frameCount: 1, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
+            contactDamage: 1000,
+        },
+        ai: {
+            type: 'rock',
+            patrolSpeed: 40,
+            idleTime: 0.5,
+        }
+    },
+    rock2: {
+        width: 32,
+        height: 28,
+        spriteKey: 'rock2',
+        animations: {
+            idle: { frameCount: 13, speed: 0.1 },
+            run: { frameCount: 14, speed: 0.1 },
+            hit: { frameCount: 1, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
+            contactDamage: 1000,
+        },
+        ai: {
+            type: 'rock',
+            patrolSpeed: 50,
+            idleTime: 0.5,
+        }
+    },
+    rock3: {
+        width: 22,
+        height: 18,
+        spriteKey: 'rock3',
+        animations: {
+            idle: { frameCount: 11, speed: 0.1 },
+            run: { frameCount: 14, speed: 0.1 },
+            hit: { frameCount: 5, speed: 0.1 }
+        },
+        killable: {
+            stompable: true,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
+            contactDamage: 1000,
+        },
+        ai: {
+            type: 'rock',
+            patrolSpeed: 60,
+            idleTime: 0.5,
+        }
     }
 };

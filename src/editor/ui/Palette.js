@@ -59,6 +59,7 @@ export class Palette {
         });
 
         for (const type of Object.keys(ENEMY_DEFINITIONS)) {
+            if (type === 'rock2' || type === 'rock3') continue;
             const abbreviation = PALETTE_ABBREVIATIONS[type] || '???';
             const item = this._createPaletteItem('enemy', type, type, abbreviation);
             item.style.backgroundColor = getPaletteColor(type);
@@ -86,10 +87,10 @@ export class Palette {
 
             this.isSelectingInPalette = true;
             this.activeTilesetForSelection = tileset;
-            
+
             const { tileX, tileY } = this._getCoordsFromEvent(e, tileset);
             this.selectionStartCoords = { tileX, tileY };
-            
+
             this.currentTilesetSelection = {
                 tileX: tileX,
                 tileY: tileY,
@@ -97,7 +98,7 @@ export class Palette {
                 height: 1,
             };
             this.updateSelectionVisuals();
-            
+
             document.addEventListener('mousemove', this._boundPaletteMouseMove);
             document.addEventListener('mouseup', this._boundPaletteMouseUp);
         });
@@ -113,7 +114,7 @@ export class Palette {
         const tileY = Math.floor(y / tileset.config.tileHeight);
         return { tileX, tileY };
     }
-    
+
     _onPaletteMouseMove(e) {
         if (!this.isSelectingInPalette) return;
 
@@ -155,7 +156,7 @@ export class Palette {
                     }
                 }
             }
-            
+
             this.selectedPaletteItem = {
                 type: 'tile',
                 selection: {
@@ -176,7 +177,7 @@ export class Palette {
         this.activeTilesetForSelection = null;
 
         this.updateSelectionVisuals();
-        
+
         document.removeEventListener('mousemove', this._boundPaletteMouseMove);
         document.removeEventListener('mouseup', this._boundPaletteMouseUp);
     }
@@ -215,8 +216,8 @@ export class Palette {
             }
         });
 
-        const selectionToDraw = this.isSelectingInPalette 
-            ? this.currentTilesetSelection 
+        const selectionToDraw = this.isSelectingInPalette
+            ? this.currentTilesetSelection
             : (this.selectedPaletteItem.type === 'tile' ? this.selectedPaletteItem.selection : null);
 
         if (selectionToDraw) {
@@ -224,7 +225,7 @@ export class Palette {
             const targetTileset = (this.isSelectingInPalette && this.activeTilesetForSelection)
                 ? this.activeTilesetForSelection
                 : (sel.idOffset > 1 ? this.specialTileset : this.mainTileset);
-            
+
             const tileX = (sel.x ?? sel.tileX) * targetTileset.config.tileWidth;
             const tileY = (sel.y ?? sel.tileY) * targetTileset.config.tileHeight;
             const selWidth = sel.width * targetTileset.config.tileWidth;

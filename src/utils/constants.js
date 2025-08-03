@@ -96,7 +96,8 @@ export const AI_TYPES = Object.freeze({
     PLANT: 'plant',
     TRUNK: 'trunk',
     ANGRYPIG: 'angrypig',
-    CHAMELEON: 'chameleon'
+    CHAMELEON: 'chameleon',
+    ROCK: 'rock'
 });
 
 export const PLAYER_STATES = Object.freeze({
