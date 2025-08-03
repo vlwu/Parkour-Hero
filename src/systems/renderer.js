@@ -13,6 +13,7 @@ import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { TILESET_CONFIG, TILESET_CONFIG_SPECIAL, SPECIAL_TILE_ID_OFFSET, getTileProperties } from '../entities/tile-definitions.js';
+import { CollisionComponent } from '../components/CollisionComponent.js';
 
 const MAX_SPRITES_PER_BATCH = 5000;
 const ATTRIBUTES_PER_INSTANCE = 11;
@@ -329,6 +330,14 @@ export class Renderer {
                 } else if (renderable.animationState === 'cling') {
                     const offset = renderable.direction === 'left' ? -PLAYER_CONSTANTS.CLING_OFFSET : PLAYER_CONSTANTS.CLING_OFFSET;
                     renderX += offset;
+                }
+            }
+
+            if (isEnemy) {
+                const col = entityManager.getComponent(entityId, CollisionComponent);
+                if (renderable.direction === 'left' && renderable.width > col.width) {
+                    const widthDifference = renderable.width - col.width;
+                    renderX -= widthDifference;
                 }
             }
 

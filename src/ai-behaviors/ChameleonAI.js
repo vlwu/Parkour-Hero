@@ -125,10 +125,13 @@ export class ChameleonAI extends BaseAI {
             if (playerData && this._isPlayerOnSamePlatform(playerData)) {
                 const playerCenterX = playerData.pos.x + playerData.col.width / 2;
                 const selfCenterX = this.pos.x + this.col.width / 2;
+
+                const playerIsRight = playerCenterX > selfCenterX;
+                this.renderable.direction = playerIsRight ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
+
                 const horizontalDistance = Math.abs(playerCenterX - selfCenterX);
 
                 if (horizontalDistance <= this.attackRange) {
-                    // Re-attack immediately
                     this.renderable.animationFrame = 0;
                     this.renderable.animationTimer = 0;
                     this.hasAttacked = false;
