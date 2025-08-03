@@ -403,7 +403,7 @@ export const ENEMY_DEFINITIONS = {
         animations: {
             hit: { frameCount: 5, speed: 0.1 },
             idle: { frameCount: 13, speed: 0.1 },
-            run: { frameCount: 8, speed: 0.1 },
+            run: { frameCount: 8, speed: 0.05 },
             attack: { frameCount: 10, speed: 0.1, fireFrame: 7 }
         },
         killable: {
