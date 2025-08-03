@@ -88,6 +88,16 @@ export class HUD {
         }
     }
 
+    if (level && level.trophy) {
+        const trophyMapX = mapX + level.trophy.x * scaleX;
+        const trophyMapY = mapY + level.trophy.y * scaleY;
+
+        ctx.fillStyle = '#f1c40f'; // Yellow
+        ctx.beginPath();
+        ctx.arc(trophyMapX, trophyMapY, 5, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+
     ctx.restore();
   }
 
