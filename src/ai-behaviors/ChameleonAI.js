@@ -5,7 +5,7 @@ import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS, EVENTS } from '../utils/constants.js';
 
-class ChameleonAI extends BaseAI {
+export class ChameleonAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
         super(entityId, entityManager, level, playerEntityId);
 
