@@ -14,16 +14,10 @@ export class ChameleonAI extends BaseAI {
         this.aggroRange = this.enemy.ai.aggroRange || 350;
         this.attackRange = this.enemy.ai.attackRange || 50;
         this.attackDamage = this.enemy.ai.attackDamage || 50;
-        this.attackCooldown = this.enemy.ai.attackCooldown || 1.5;
-        this.cooldownTimer = 0;
         this.hasAttacked = false;
     }
 
     update(dt) {
-        if (this.cooldownTimer > 0) {
-            this.cooldownTimer -= dt;
-        }
-
         const playerData = this._getPlayerData();
 
         switch (this.state.currentState) {
@@ -35,9 +29,6 @@ export class ChameleonAI extends BaseAI {
                 break;
             case ENEMY_STATES.ATTACKING:
                 this._updateAttacking(dt, playerData);
-                break;
-            case ENEMY_STATES.COOLDOWN:
-                this._updateCooldown(dt);
                 break;
         }
     }
@@ -65,8 +56,6 @@ export class ChameleonAI extends BaseAI {
     _updateIdle(playerData) {
         this.vel.vx = 0;
         this.renderable.animationState = ANIMATION_STATES.IDLE;
-
-        if (this.cooldownTimer > 0) return;
 
         if (this._isPlayerOnSamePlatform(playerData)) {
             const horizontalDistance = Math.abs((playerData.pos.x + playerData.col.width / 2) - (this.pos.x + this.col.width / 2));
@@ -121,7 +110,7 @@ export class ChameleonAI extends BaseAI {
                 const inRangeX = isPlayerRight
                     ? (playerCenterX > selfCenterX && playerCenterX < selfCenterX + attackReach)
                     : (playerCenterX < selfCenterX && playerCenterX > selfCenterX - attackReach);
-                
+
                 const verticalDistance = Math.abs((playerData.pos.y + playerData.col.height / 2) - (this.pos.y + this.col.height / 2));
                 const inRangeY = verticalDistance < this.col.height;
 
@@ -133,16 +122,24 @@ export class ChameleonAI extends BaseAI {
 
         const animTimer = this.renderable.animationTimer + dt;
         if (this.renderable.animationFrame >= attackAnim.frameCount - 1 && animTimer >= attackAnim.speed) {
-             this.state.currentState = ENEMY_STATES.COOLDOWN;
-             this.cooldownTimer = this.attackCooldown;
-        }
-    }
+            if (playerData && this._isPlayerOnSamePlatform(playerData)) {
+                const playerCenterX = playerData.pos.x + playerData.col.width / 2;
+                const selfCenterX = this.pos.x + this.col.width / 2;
+                const horizontalDistance = Math.abs(playerCenterX - selfCenterX);
 
-    _updateCooldown(dt) {
-        this.vel.vx = 0;
-        this.renderable.animationState = ANIMATION_STATES.IDLE;
-        if (this.cooldownTimer <= 0) {
-            this.state.currentState = ENEMY_STATES.IDLE;
+                if (horizontalDistance <= this.attackRange) {
+                    // Re-attack immediately
+                    this.renderable.animationFrame = 0;
+                    this.renderable.animationTimer = 0;
+                    this.hasAttacked = false;
+                } else if (horizontalDistance <= this.aggroRange) {
+                    this.state.currentState = 'chasing';
+                } else {
+                    this.state.currentState = ENEMY_STATES.IDLE;
+                }
+            } else {
+                this.state.currentState = ENEMY_STATES.IDLE;
+            }
         }
     }
 }

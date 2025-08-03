@@ -422,7 +422,6 @@ export const ENEMY_DEFINITIONS = {
             aggroRange: 350,
             attackRange: 80,
             attackDamage: 50,
-            attackCooldown: 0.5,
         }
     }
 };
