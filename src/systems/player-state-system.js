@@ -164,12 +164,10 @@ export class PlayerStateSystem {
                 ctrl.jumpCount = 1;
                 eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
                 this._transitionTo(entityId, new JumpState(entityId, entityManager), entityManager);
+                ctrl.isInMud = false;
             }
             return;
         }
-
-        if (input.moveLeft) renderable.direction = 'left';
-        else if (input.moveRight) renderable.direction = 'right';
 
         if (!ctrl.vLock) {
             if (input.jump) ctrl.jumpBufferTimer = PLAYER_CONSTANTS.JUMP_BUFFER_TIME;
