@@ -380,8 +380,8 @@ export const ENEMY_DEFINITIONS = {
             idle: { frameCount: 9, speed: 0.1 },
             hit1: { frameCount: 5, speed: 0.1 },
             hit2: { frameCount: 5, speed: 0.1 },
-            run: { frameCount: 12, speed: 0.1 },
-            walk: { frameCount: 16, speed: 0.1 }
+            run: { frameCount: 12, speed: 0.05 },
+            walk: { frameCount: 16, speed: 0.05 }
         },
         killable: {
             stompable: true,
@@ -392,7 +392,7 @@ export const ENEMY_DEFINITIONS = {
         ai: {
             type: 'angrypig',
             walkSpeed: 60,
-            runSpeed: 120,
+            runSpeed: 150,
             idleTime: 0.5,
         }
     }
