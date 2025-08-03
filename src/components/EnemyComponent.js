@@ -19,6 +19,9 @@ export class EnemyComponent {
         if (this.type === AI_TYPES.SNAIL) {
             this.snailState = ENEMY_STATES.WALKING;
         }
+        if (this.type === AI_TYPES.ANGRYPIG) {
+            this.angryPigState = ENEMY_STATES.WALKING;
+        }
         if (this.type === AI_TYPES.GHOST) {
             this.ghostState = ENEMY_STATES.APPEARING;
             this.phaseTimer = 0;

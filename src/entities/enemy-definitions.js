@@ -389,5 +389,11 @@ export const ENEMY_DEFINITIONS = {
             dealsContactDamage: true,
             contactDamage: 1000,
         },
+        ai: {
+            type: 'angrypig',
+            walkSpeed: 60,
+            runSpeed: 120,
+            idleTime: 0.5,
+        }
     }
 };

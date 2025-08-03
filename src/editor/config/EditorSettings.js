@@ -47,7 +47,8 @@ export const OBJECT_DESCRIPTIONS = {
     'slime': 'A hopping enemy. Snaps vertically and to the platform\'s edge (left/right based on drop location).',
     'snail': 'A slow-moving patrol enemy. Can be jumped on to create a shell projectile (not simulated in editor). Snaps to the ground.',
     'turtle': 'A defensive enemy that alternates between being vulnerable and having spikes out. Snaps to the ground.',
-    'trunk': 'A mobile enemy that patrols platforms and shoots projectiles when the player is nearby.'
+    'trunk': 'A mobile enemy that patrols platforms and shoots projectiles when the player is nearby.',
+    'angrypig': 'A pig that patrols slowly. When stomped, it becomes angry and charges back and forth at high speed.'
 };
 
 export const PALETTE_ABBREVIATIONS = {
@@ -63,7 +64,7 @@ export const PALETTE_ABBREVIATIONS = {
     'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
     'saw': 'SAW',
 
-    'mushroom': 'MSH', 'chicken': 'CKN', 'rhino': 'RNO', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT', 'plant': 'PLN', 'trunk': 'TRK',
+    'mushroom': 'MSH', 'chicken': 'CKN', 'rhino': 'RNO', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT', 'plant': 'PLN', 'trunk': 'TRK', 'angrypig': 'PIG',
 
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -107,7 +108,7 @@ export function getPaletteColor(type) {
         case 'fruit_strawberry': return '#d35400';
         case 'player_spawn': return '#2980b9';
         case 'trophy': return '#F39C12'; case 'checkpoint': return '#17a2b8';
-        case 'mushroom': return '#e6341cff'; case 'chicken': return '#f1c40f';
+        case 'mushroom': return '#ec7161ff'; case 'chicken': return '#f1c40f';
         case 'rhino': return '#6a7a89'; case 'snail': return '#cc37e7ff'; case 'slime': return '#2ecc71'; case 'turtle': return '#1a324dff';
         case 'bluebird': return '#3195d8ff';
         case 'fatbird': return '#8c6046ff';
@@ -117,6 +118,7 @@ export function getPaletteColor(type) {
         case 'ghost': return '#b5c1ccff';
         case 'plant': return '#2ca62c';
         case 'trunk': return '#593d2b';
+        case 'angrypig': return '#ee2121ff';
         case 'oneway_gold': case 'gold_third_h': case 'gold_third_v': case 'gold_ninth_sq': case 'gold_four_ninths_sq': return '#FFD700';
         case 'oneway_wood': return '#855E42';
         case 'oneway_stone': return '#808080';

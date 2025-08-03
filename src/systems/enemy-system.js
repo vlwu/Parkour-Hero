@@ -77,6 +77,27 @@ export class EnemySystem {
                     this.collisionSystem.removeDynamicEntity(enemyId, entityManager);
                     eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
                 }
+            } else if (enemy.type === 'angrypig' && !enemy.isDead) {
+                if (enemy.angryPigState === 'walking') {
+                    enemy.angryPigState = 'transitioning';
+                    state.currentState = 'hit';
+                    renderable.animationState = 'hit1';
+                    renderable.animationFrame = 0;
+                    renderable.animationTimer = 0;
+                    killable.stompable = false;
+                    enemy.immunityTimer = 0.5;
+                    eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
+                } else if (enemy.angryPigState === 'raging') {
+                    enemy.isDead = true;
+                    state.currentState = 'dying';
+                    renderable.animationState = 'hit2';
+                    renderable.animationFrame = 0;
+                    renderable.animationTimer = 0;
+                    collision.solid = false;
+                    enemy.deathTimer = 0.5;
+                    this.collisionSystem.removeDynamicEntity(enemyId, entityManager);
+                    eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
+                }
             } else if (enemy && !enemy.isDead) {
                 if (killable && !killable.stompable) {
                     eventBus.publish('playSound', { key: 'hit', volume: 0.9, channel: 'SFX' });
@@ -182,7 +203,7 @@ export class EnemySystem {
             renderable.animationTimer -= animDef.speed;
             renderable.animationFrame++;
             if (renderable.animationFrame >= animDef.frameCount) {
-                const nonLoopingStates = ['spikes_out', 'spikes_in', 'shell_wall_hit', 'hit', 'appear', 'disappear'];
+                const nonLoopingStates = ['spikes_out', 'spikes_in', 'shell_wall_hit', 'hit', 'hit1', 'hit2', 'appear', 'disappear'];
                 if (nonLoopingStates.includes(renderable.animationState)) {
                     renderable.animationFrame = animDef.frameCount - 1;
                 } else {

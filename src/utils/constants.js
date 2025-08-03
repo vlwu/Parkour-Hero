@@ -94,7 +94,8 @@ export const AI_TYPES = Object.freeze({
     GHOST: 'ghost',
     RHINO: 'rhino',
     PLANT: 'plant',
-    TRUNK: 'trunk'
+    TRUNK: 'trunk',
+    ANGRYPIG: 'angrypig'
 });
 
 export const PLAYER_STATES = Object.freeze({
@@ -123,6 +124,8 @@ export const ENEMY_STATES = Object.freeze({
     GROUNDED: 'grounded',
     SHELL: 'shell',
     WALKING: 'walking',
+    RAGING: 'raging',
+    TRANSITIONING: 'transitioning',
     SHELL_PATROL: 'shell_patrol',
     SHELL_HIT_WALL: 'shell_hit_wall',
     APPEARING: 'appearing',
@@ -141,7 +144,7 @@ export const ENEMY_STATES = Object.freeze({
     RETURNING: 'returning'
 });
 
-// Using a more generic name as these are used by both player and enemies
+
 export const ANIMATION_STATES = Object.freeze({
     IDLE: 'idle',
     IDLE1: 'idle1',
@@ -156,6 +159,8 @@ export const ANIMATION_STATES = Object.freeze({
     SPAWN: 'spawn',
     DESPAWN: 'despawn',
     HIT: 'hit',
+    HIT1: 'hit1',
+    HIT2: 'hit2',
     FLYING: 'flying',
     GROUND: 'ground',
     APPEAR: 'appear',
@@ -173,7 +178,7 @@ export const ANIMATION_STATES = Object.freeze({
 });
 
 export const EVENTS = Object.freeze({
-    // Game Flow
+
     REQUEST_START_GAME: 'requestStartGame',
     REQUEST_LEVEL_LOAD: 'requestLevelLoad',
     REQUEST_NEXT_LEVEL: 'requestNextLevel',
@@ -185,26 +190,22 @@ export const EVENTS = Object.freeze({
     GAME_RESUMED: 'gameResumed',
     LEVEL_COMPLETE: 'levelComplete',
 
-    // Player Actions
     PLAYER_DIED: 'playerDied',
     PLAYER_TOOK_DAMAGE: 'playerTookDamage',
     PLAYER_KNOCKBACK: 'playerKnockback',
     PLAYER_LANDED_HARD: 'playerLandedHard',
     PLAYER_RESPAWNED: 'playerRespawned',
 
-    // Gameplay Interactions
     FRUIT_COLLECTED: 'fruitCollected',
     CHECKPOINT_ACTIVATED: 'checkpointActivated',
     COLLISION_EVENT: 'collisionEvent',
     ENEMY_STOMPED: 'enemyStomped',
 
-    // Spawning
     SPAWN_BULLET: 'spawnBullet',
     CREATE_PARTICLES: 'createParticles',
     CREATE_DAMAGE_INDICATOR: 'createDamageIndicator',
     CREATE_SLIME_PUDDLE: 'createSlimePuddle',
 
-    // System & Settings
     CAMERA_SHAKE_REQUESTED: 'cameraShakeRequested',
     KEYBINDS_UPDATED: 'keybindsUpdated',
     GAME_STATE_UPDATED: 'gameStateUpdated',
@@ -212,7 +213,6 @@ export const EVENTS = Object.freeze({
     ASSETS_LOADED: 'assetsLoaded',
     DELETE_DIY_LEVEL: 'deleteDIYLevel',
 
-    // Sound
     PLAY_SOUND: 'playSound',
     START_SOUND_LOOP: 'startSoundLoop',
     STOP_SOUND_LOOP: 'stopSoundLoop',
@@ -220,7 +220,6 @@ export const EVENTS = Object.freeze({
     TOGGLE_SOUND: 'toggleSound',
     SET_SOUND_VOLUME: 'setSoundVolume',
 
-    // UI
     UI_BUTTON_CLICKED: 'ui_button_clicked',
     STATS_UPDATED: 'statsUpdated',
     MENU_OPENED: 'menuOpened',
