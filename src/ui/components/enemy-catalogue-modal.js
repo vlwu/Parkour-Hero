@@ -17,7 +17,11 @@ const ENEMY_DESCRIPTIONS = {
     bee: "Patrols a small area in the air. Periodically stops to shoot a projectile straight down. Can be a threat from above.",
     bat: "Hangs from ceilings and waits. When a player approaches from below, it swoops down to attack. It will return if the player moves too far away.",
     ghost: "A spooky foe that patrols a platform, periodically turning invisible. It cannot be harmed or harm you while invisible.",
-    plant: "A stationary plant that shoots projectiles at the player when they enter its line of sight."
+    plant: "A stationary plant that shoots projectiles at the player when they enter its line of sight.",
+    trunk: "A mobile enemy that patrols platforms and shoots projectiles when the player is nearby.",
+    angrypig: "A pig that patrols slowly. When stomped, it becomes angry and charges back and forth at high speed.",
+    chameleon: "Sits idle on a platform. When the player lands on the same platform, it chases them down and performs a quick attack when in range.",
+    rock1: "A large rock that patrols a platform. When stomped, it splits into two smaller Rock2s. Each Rock2 splits into two tiny Rock3s when stomped. Rock3s are destroyed when stomped."
 };
 
 export class EnemyCatalogueModal extends LitElement {
