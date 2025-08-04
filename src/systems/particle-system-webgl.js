@@ -153,6 +153,7 @@ export class ParticleSystemWebGL {
             mud_splash: { count: 12, baseSpeed: 200, spriteKey: 'mud_particle', life: 0.8, gravity: 400 },
             ice: { count: 3, baseSpeed: 80, spriteKey: 'ice_particle', life: 0.6, gravity: 250 },
             walk_dust: { count: 1, baseSpeed: 15, spriteKey: 'dust_particle', life: 0.4, gravity: 80 },
+            enemy_walk_dust: { count: 2, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.5, gravity: 40 },
             jump_trail: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.3, gravity: 20 },
             fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
             enemy_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
@@ -210,7 +211,7 @@ export class ParticleSystemWebGL {
             p.vx = Math.cos(angle) * speed;
             p.vy = Math.sin(angle) * speed;
             p.life = config.life + Math.random() * 0.3;
-            p.size = config.size || (type === 'slime_puddle' ? 16 : 6 + Math.random() * 4);
+            p.size = config.size || (type === 'slime_puddle' ? 16 : (type === 'enemy_walk_dust' ? 8 + Math.random() * 4 : 6 + Math.random() * 4));
             p.alpha = 1.0;
             p.spriteKey = config.spriteKey;
             p.gravity = config.gravity;

@@ -21,6 +21,7 @@ export const ENEMY_DEFINITIONS = {
             aggroRange: 0,
             patrolSpeed: 40,
             idleTime: 0.5,
+            particleDropInterval: 0.4,
         }
     },
 
@@ -103,6 +104,7 @@ export const ENEMY_DEFINITIONS = {
             patrolSpeed: 20,
             shellSpeed: 150,
             wallHitStunTime: 0.2,
+            particleDropInterval: 0.45,
         }
     },
 
@@ -230,6 +232,7 @@ export const ENEMY_DEFINITIONS = {
             airSpeed: 40,
             groundSpeed: 30,
             idleTime: 1.0,
+            particleDropInterval: 0.3,
         }
     },
 
@@ -364,6 +367,7 @@ export const ENEMY_DEFINITIONS = {
             patrolSpeed: 45,
             idleTime: 1,
             attackInterval: 1.5,
+            particleDropInterval: 0.3,
             bullet: {
                 speed: 250,
                 damage: 50,
@@ -394,6 +398,7 @@ export const ENEMY_DEFINITIONS = {
             walkSpeed: 60,
             runSpeed: 150,
             idleTime: 0.5,
+            particleDropInterval: 0.3,
         }
     },
     chameleon: {
@@ -442,6 +447,7 @@ export const ENEMY_DEFINITIONS = {
             type: 'rock',
             patrolSpeed: 40,
             idleTime: 0.5,
+            particleDropInterval: 0.35,
         }
     },
     rock2: {
@@ -462,6 +468,7 @@ export const ENEMY_DEFINITIONS = {
             type: 'rock',
             patrolSpeed: 50,
             idleTime: 0.5,
+            particleDropInterval: 0.3,
         }
     },
     rock3: {
@@ -482,6 +489,7 @@ export const ENEMY_DEFINITIONS = {
             type: 'rock',
             patrolSpeed: 60,
             idleTime: 0.5,
+            particleDropInterval: 0.25,
         }
     }
 };

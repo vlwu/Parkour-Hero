@@ -209,6 +209,25 @@ export class EnemySystem {
                 }
             }
 
+            const shouldEmitDust = (
+                (enemy.type === 'mushroom' || enemy.type.startsWith('rock') || enemy.type === 'trunk' || enemy.type === 'snail' || enemy.type === 'radish' || enemy.type === 'angrypig') &&
+                col.isGrounded && Math.abs(vel.vx) > 0 &&
+                (enemy.type !== 'snail' || enemy.snailState === 'walking') &&
+                (enemy.type !== 'radish' || enemy.radishState === 'grounded') &&
+                (enemy.type !== 'angrypig' || enemy.angryPigState === 'walking')
+            );
+
+            if (shouldEmitDust && enemy.ai.particleDropInterval) {
+                enemy.particleDropTimer -= dt;
+                if (enemy.particleDropTimer <= 0) {
+                    enemy.particleDropTimer = enemy.ai.particleDropInterval + (Math.random() * 0.1);
+                    const renderable = entityManager.getComponent(id, RenderableComponent);
+                    const spawnOffset = renderable.direction === 'right' ? col.width / 4 : (col.width * 3) / 4;
+                    const particlePos = { x: pos.x + spawnOffset, y: pos.y + col.height };
+                    eventBus.publish('createParticles', { ...particlePos, type: 'enemy_walk_dust', direction: renderable.direction });
+                }
+            }
+
             this._updateAnimation(dt, id, entityManager);
         }
     }
