@@ -204,7 +204,7 @@ export class EnemySystem {
                     enemy.particleDropTimer = enemy.ai.particleDropInterval + (Math.random() * 0.1);
                     const renderable = entityManager.getComponent(id, RenderableComponent);
                     const spawnOffset = renderable.direction === 'right' ? 0 : col.width;
-                    const particlePos = { x: pos.x + spawnOffset, y: pos.y + col.height / 2 };
+                    const particlePos = { x: pos.x + spawnOffset, y: pos.y + col.height };
                     eventBus.publish('createParticles', { ...particlePos, type: 'ghost_particles', direction: renderable.direction });
                 }
             }

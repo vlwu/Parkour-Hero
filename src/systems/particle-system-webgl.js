@@ -157,7 +157,7 @@ export class ParticleSystemWebGL {
             fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
             enemy_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
             slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 4.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
-            ghost_particles: { count: 1, baseSpeed: 20, spriteKey: 'ghost_particles', life: 0.5, gravity: -50, animation: { frameCount: 4, frameSpeed: 0.1 } },
+            ghost_particles: { count: 1, baseSpeed: 20, spriteKey: 'ghost_particles', life: 2.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.1 } },
             snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
             wing_flap: { count: 1, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30 },
             radish_leaf: { count: 1, baseSpeed: 120, spriteKey: 'radish_leaves', life: 0.8, gravity: 200, size: 16 },
@@ -209,7 +209,7 @@ export class ParticleSystemWebGL {
             p.vx = Math.cos(angle) * speed;
             p.vy = Math.sin(angle) * speed;
             p.life = config.life + Math.random() * 0.3;
-            p.size = config.size || (type === 'slime_puddle' ? 16 : 5 + Math.random() * 4);
+            p.size = config.size || (type === 'slime_puddle' ? 16 : 10 + Math.random() * 8);
             p.alpha = 1.0;
             p.spriteKey = config.spriteKey;
             p.gravity = config.gravity;
