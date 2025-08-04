@@ -190,7 +190,8 @@ export class ParticleSystemWebGL {
             }
             else if (type === 'enemy_death' || type === 'radish_leaf' || type === 'bee_bullet_pieces' || type === 'plant_bullet_pieces') angle = Math.random() * Math.PI * 2;
             else if (type === 'dash') angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
-            else if (type === 'double_jump' || type === 'mud_splash') angle = -(Math.PI / 2) + (Math.random() - 0.5) * (Math.PI * 0.8);
+            else if (type === 'double_jump') angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI * 0.8);
+            else if (type === 'mud_splash') angle = -(Math.PI / 2) + (Math.random() - 0.5) * (Math.PI * 0.8);
             else if (type === 'jump_trail') { angle = (Math.random() * Math.PI * 2); speed *= (Math.random() * 0.5); }
             else if (type === 'fan_push') {
                 let baseAngle = 0;
