@@ -307,7 +307,7 @@ export const ENEMY_DEFINITIONS = {
             idleTime: 0.5,
             visibleDuration: 2.0,
             invisibleDuration: 2.0,
-            particleDropInterval: 0.5,
+            particleDropInterval: 0.2,
             soundRadius: 200,
         }
     },

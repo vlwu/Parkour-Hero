@@ -117,7 +117,7 @@ export class EnemySystem {
                 const nextRockType = enemy.type === 'rock1' ? 'rock2' : 'rock3';
                 const nextRockDef = ENEMY_DEFINITIONS[nextRockType];
                 if (!nextRockDef) continue;
-                
+
                 const originalBottomY = pos.y + col.height;
                 const spawnY = originalBottomY - nextRockDef.height / 2;
                 const spawnX = pos.x + col.width / 2;
@@ -127,7 +127,7 @@ export class EnemySystem {
                     const rock1Renderable = entityManager.getComponent(rock1Id, RenderableComponent);
                     if (rock1Renderable) rock1Renderable.direction = DIRECTIONS.LEFT;
                 }
-                
+
                 const rock2Id = createEnemy(entityManager, nextRockType, spawnX + nextRockDef.width / 2, spawnY);
                 if (rock2Id !== null) {
                     const rock2Renderable = entityManager.getComponent(rock2Id, RenderableComponent);
@@ -202,8 +202,10 @@ export class EnemySystem {
                 enemy.particleDropTimer -= dt;
                 if (enemy.particleDropTimer <= 0) {
                     enemy.particleDropTimer = enemy.ai.particleDropInterval + (Math.random() * 0.1);
-                    const particlePos = { x: pos.x + col.width / 2, y: pos.y + col.height };
-                    eventBus.publish('createParticles', { ...particlePos, type: 'ghost_particles' });
+                    const renderable = entityManager.getComponent(id, RenderableComponent);
+                    const spawnOffset = renderable.direction === 'right' ? 0 : col.width;
+                    const particlePos = { x: pos.x + spawnOffset, y: pos.y + col.height / 2 };
+                    eventBus.publish('createParticles', { ...particlePos, type: 'ghost_particles', direction: renderable.direction });
                 }
             }
 

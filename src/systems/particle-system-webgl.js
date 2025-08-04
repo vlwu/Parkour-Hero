@@ -136,7 +136,7 @@ export class ParticleSystemWebGL {
     }
 
     syncTextures() {
-        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles', 'snail_die', 'radish_leaves', 'bee_bullet_pieces', 'plant_bullet_pieces'];
+        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles', 'snail_die', 'radish_leaves', 'bee_bullet_pieces', 'plant_bullet_pieces', 'ghost_particles'];
         for (const key of textureKeys) {
             if (this.assets[key] && !this.textures[key]) {
                 this.textures[key] = this._createTexture(this.assets[key]);
@@ -157,6 +157,7 @@ export class ParticleSystemWebGL {
             fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
             enemy_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
             slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 4.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
+            ghost_particles: { count: 1, baseSpeed: 20, spriteKey: 'ghost_particles', life: 0.5, gravity: -50, animation: { frameCount: 4, frameSpeed: 0.1 } },
             snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
             wing_flap: { count: 1, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30 },
             radish_leaf: { count: 1, baseSpeed: 120, spriteKey: 'radish_leaves', life: 0.8, gravity: 200, size: 16 },
@@ -179,6 +180,10 @@ export class ParticleSystemWebGL {
             if (type === 'ice') {
                 const baseAngle = direction === 'right' ? -(3 * Math.PI / 4) : -(Math.PI / 4);
                 angle = baseAngle + (Math.random() - 0.5) * (Math.PI / 5);
+            }
+            else if (type === 'ghost_particles') {
+                angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 4);
+                speed *= 0.5;
             }
             else if (type === 'wing_flap') {
                 angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
