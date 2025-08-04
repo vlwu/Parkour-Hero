@@ -158,6 +158,16 @@ export class PlayerStateSystem {
             return;
         }
 
+        if (ctrl.isInMud) {
+            if (input.jumpPressedThisFrame) {
+                vel.vy = -ctrl.jumpForce;
+                ctrl.jumpCount = 1;
+                eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
+                this._transitionTo(entityId, new JumpState(entityId, entityManager), entityManager);
+            }
+            return;
+        }
+
         if (!ctrl.isDashing && state.currentState !== 'cling') {
             if (input.moveLeft) {
                 renderable.direction = 'left';
@@ -167,17 +177,6 @@ export class PlayerStateSystem {
         }
 
         if (state.currentState === 'dash') {
-            return;
-        }
-
-        if (ctrl.isInMud) {
-            if (input.jumpPressedThisFrame) {
-                vel.vy = -ctrl.jumpForce;
-                ctrl.jumpCount = 1;
-                eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
-                this._transitionTo(entityId, new JumpState(entityId, entityManager), entityManager);
-                ctrl.isInMud = false;
-            }
             return;
         }
 
