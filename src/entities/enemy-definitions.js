@@ -495,6 +495,10 @@ export const ENEMY_DEFINITIONS = {
     skull: {
         width: 52,
         height: 54,
+        hitbox: {
+            width: 42,
+            height: 44,
+        },
         spriteKey: 'skull',
         animations: {
             idle1: { frameCount: 8, speed: 0.1 },
