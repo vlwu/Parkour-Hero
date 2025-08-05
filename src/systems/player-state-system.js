@@ -58,6 +58,11 @@ export class PlayerStateSystem {
 
         for (const entityId of entities) {
             const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+            const vel = entityManager.getComponent(entityId, VelocityComponent);
+
+            if (ctrl.jumpedFromMud && vel.vy > 0) {
+                ctrl.jumpedFromMud = false;
+            }
 
             if (!ctrl.currentState) {
                 this._transitionTo(entityId, new SpawnState(entityId, entityManager), entityManager);
@@ -159,14 +164,22 @@ export class PlayerStateSystem {
         }
 
         if (ctrl.isInMud) {
+            input.moveLeft = false;
+            input.moveRight = false;
             if (input.jumpPressedThisFrame) {
                 vel.vy = -ctrl.jumpForce;
                 ctrl.jumpCount = 1;
                 ctrl.isInMud = false;
+                ctrl.jumpedFromMud = true;
                 eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
                 this._transitionTo(entityId, new JumpState(entityId, entityManager), entityManager);
             }
             return;
+        }
+
+        if (ctrl.jumpedFromMud) {
+            input.moveLeft = false;
+            input.moveRight = false;
         }
 
         if (!ctrl.isDashing && state.currentState !== 'cling') {

@@ -25,7 +25,8 @@ export class PlayerControlledComponent {
         jumpParticleTimer = 0,
         hLock = false,
         vLock = false,
-        inputLocked = false
+        inputLocked = false,
+        jumpedFromMud = false
     } = {}) {
         this.speed = speed;
         this.jumpForce = jumpForce;
@@ -58,6 +59,7 @@ export class PlayerControlledComponent {
         this.fallDistance = 0;
         this.isInMud = false;
         this.mudSinkAmount = PLAYER_CONSTANTS.HEIGHT / 5;
+        this.jumpedFromMud = jumpedFromMud;
 
         this.currentState = null;
     }
