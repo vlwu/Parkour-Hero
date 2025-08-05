@@ -42,21 +42,28 @@ export class SkullAI extends BaseAI {
         const nextX = this.pos.x + this.vel.vx * dt;
         const nextY = this.pos.y + this.vel.vy * dt;
 
-        let bounced = false;
+        let bouncedX = false;
+        let bouncedY = false;
 
-
+        // Wall probe
         const wallProbeX = this.vel.vx > 0 ? nextX + this.col.width : nextX;
         if (this.level.isSolidAt(wallProbeX, this.pos.y + this.col.height / 2, true)) {
-            this.vel.vx *= -1;
-            bounced = true;
+            bouncedX = true;
         }
 
-
+        // Ground probe
         const groundProbeY = this.vel.vy > 0 ? nextY + this.col.height : nextY;
         if (this.level.isSolidAt(this.pos.x + this.col.width / 2, groundProbeY, true)) {
-            this.vel.vy *= -1;
-            bounced = true;
+            bouncedY = true;
         }
+        
+        // Corner probe to handle cases where single probes might fail
+        if (!bouncedX && !bouncedY && this.level.isSolidAt(wallProbeX, groundProbeY, true)) {
+            bouncedX = true;
+            bouncedY = true;
+        }
+
+        const bounced = bouncedX || bouncedY;
 
         if (bounced) {
             if (this.enemy.skullState === ENEMY_STATES.IDLE1) {
@@ -67,8 +74,17 @@ export class SkullAI extends BaseAI {
             this.renderable.animationState = this.state.currentState;
             this.renderable.animationFrame = 0;
             this.renderable.animationTimer = 0;
-            this.vel.vx = Math.sign(this.vel.vx) * this.bounceSpeed;
-            this.vel.vy = Math.sign(this.vel.vy) * this.bounceSpeed;
+
+            // Invert velocity based on which surface was hit
+            if (bouncedX) this.vel.vx *= -1;
+            if (bouncedY) this.vel.vy *= -1;
+
+            // Add some randomness to the bounce angle to prevent getting stuck in loops
+            let angle = Math.atan2(this.vel.vy, this.vel.vx);
+            angle += (Math.random() - 0.5) * 0.5; // Randomize by approx. +/- 14 degrees
+            
+            this.vel.vx = Math.cos(angle) * this.bounceSpeed;
+            this.vel.vy = Math.sin(angle) * this.bounceSpeed;
         }
     }
 
