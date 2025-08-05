@@ -1,7 +1,9 @@
 import { BaseAI } from './BaseAI.js';
 import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
-import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS } from '../utils/constants.js';
+import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS, EVENTS } from '../utils/constants.js';
 import { KillableComponent } from '../components/KillableComponent.js';
+import { eventBus } from '../utils/event-bus.js';
+import { PositionComponent } from '../components/PositionComponent.js';
 
 export class SkullAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -13,6 +15,17 @@ export class SkullAI extends BaseAI {
         this.vel.vx = this.bounceSpeed * (Math.random() > 0.5 ? 1 : -1);
         this.vel.vy = this.bounceSpeed * (Math.random() > 0.5 ? 1 : -1);
         this._updateVulnerability();
+        this.soundRadius = this.enemy.ai.soundRadius || 200;
+    }
+
+    _playSoundIfPlayerNear(soundKey) {
+        const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
+        if (playerPos) {
+            const distance = Math.sqrt(Math.pow(playerPos.x - this.pos.x, 2) + Math.pow(playerPos.y - this.pos.y, 2));
+            if (distance < this.soundRadius) {
+                eventBus.publish(EVENTS.PLAY_SOUND, { key: soundKey, volume: 0.8, channel: 'SFX' });
+            }
+        }
     }
 
     update(dt) {
@@ -45,19 +58,19 @@ export class SkullAI extends BaseAI {
         let bouncedX = false;
         let bouncedY = false;
 
-        // Wall probe
+
         const wallProbeX = this.vel.vx > 0 ? nextX + this.col.width : nextX;
         if (this.level.isSolidAt(wallProbeX, this.pos.y + this.col.height / 2, true)) {
             bouncedX = true;
         }
 
-        // Ground probe
+
         const groundProbeY = this.vel.vy > 0 ? nextY + this.col.height : nextY;
         if (this.level.isSolidAt(this.pos.x + this.col.width / 2, groundProbeY, true)) {
             bouncedY = true;
         }
-        
-        // Corner probe to handle cases where single probes might fail
+
+
         if (!bouncedX && !bouncedY && this.level.isSolidAt(wallProbeX, groundProbeY, true)) {
             bouncedX = true;
             bouncedY = true;
@@ -70,19 +83,20 @@ export class SkullAI extends BaseAI {
                 this.state.currentState = 'hit_wall_2';
             } else {
                 this.state.currentState = 'hit_wall_1';
+                this._playSoundIfPlayerNear('skull_ignite');
             }
             this.renderable.animationState = this.state.currentState;
             this.renderable.animationFrame = 0;
             this.renderable.animationTimer = 0;
 
-            // Invert velocity based on which surface was hit
+
             if (bouncedX) this.vel.vx *= -1;
             if (bouncedY) this.vel.vy *= -1;
 
-            // Add some randomness to the bounce angle to prevent getting stuck in loops
+
             let angle = Math.atan2(this.vel.vy, this.vel.vx);
-            angle += (Math.random() - 0.5) * 0.5; // Randomize by approx. +/- 14 degrees
-            
+            angle += (Math.random() - 0.5) * 0.5;
+
             this.vel.vx = Math.cos(angle) * this.bounceSpeed;
             this.vel.vy = Math.sin(angle) * this.bounceSpeed;
         }

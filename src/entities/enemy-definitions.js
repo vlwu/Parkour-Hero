@@ -512,6 +512,7 @@ export const ENEMY_DEFINITIONS = {
         ai: {
             type: 'skull',
             bounceSpeed: 50,
+            soundRadius: 200,
         }
     }
 };
