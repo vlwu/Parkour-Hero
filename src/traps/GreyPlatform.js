@@ -64,8 +64,12 @@ export class GreyPlatform extends Trap {
 
         if (this.playerOn) {
             this.state = 'moving';
-        } else {
-            this.state = 'idle';
+        } else if (this.state === 'moving') {
+             this.timer += dt;
+             if (this.timer >= this.period) {
+                this.timer = 0;
+                this.state = 'idle';
+             }
         }
 
         if (this.state === 'moving' && this.period > 0) {

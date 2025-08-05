@@ -22,7 +22,7 @@ export class MovementSystem {
             const pos = entityManager.getComponent(entityId, PositionComponent);
             const state = entityManager.getComponent(entityId, StateComponent);
 
-            if (ctrl.isSpawning || ctrl.isDespawning) {
+            if (ctrl.isSpawning || ctrl.isDespawning || ctrl.needsRespawn) {
                 vel.vx = 0;
                 vel.vy = 0;
                 continue;
@@ -95,9 +95,15 @@ export class MovementSystem {
             vel.vy = 0;
             return;
         }
-        if (!col.isGrounded && !ctrl.isDashing && !ctrl.isSpawning) {
+
+        const onMovingPlatform = col.isGrounded && col.groundEntity && (col.groundEntity.type === 'brown_platform' || col.groundEntity.type === 'grey_platform');
+
+        if (onMovingPlatform) {
+            vel.vy = 0;
+        } else if (!col.isGrounded && !ctrl.isDashing && !ctrl.isSpawning) {
             vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
         }
+
 
         if (state && state.currentState === 'cling') {
             vel.vy = Math.min(vel.vy, 30);

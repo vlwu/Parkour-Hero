@@ -284,6 +284,7 @@ export class Engine {
     }
 
     this.camera.update(this.entityManager, this.playerEntityId, dt);
+    this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus, this.camera);
 
     const context = {
         entityManager: this.entityManager,
@@ -307,8 +308,6 @@ export class Engine {
     if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.timeScale > 0) {
       this._respawnPlayer();
     }
-
-    this.currentLevel.update(dt, this.entityManager, this.playerEntityId, eventBus, this.camera);
 
     const playerHealth = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     eventBus.publish(EVENTS.STATS_UPDATED, {
