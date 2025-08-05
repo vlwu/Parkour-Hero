@@ -99,7 +99,9 @@ export class MovementSystem {
         const onMovingPlatform = col.isGrounded && col.groundEntity && (col.groundEntity.type === 'brown_platform' || col.groundEntity.type === 'grey_platform');
 
         if (onMovingPlatform) {
-            vel.vy = 0;
+            if (vel.vy > 0) {
+                vel.vy = 0;
+            }
         } else if (!col.isGrounded && !ctrl.isDashing && !ctrl.isSpawning) {
             vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
         }
