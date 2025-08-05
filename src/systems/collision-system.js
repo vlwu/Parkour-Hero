@@ -48,7 +48,7 @@ export class CollisionSystem {
         }
 
         level.traps.forEach(trap => {
-            const isStatic = !trap.update.toString().includes('// DYNAMIC');
+            const isStatic = !trap.isDynamic;
             if (trap.solid && isStatic) {
                 const gridObject = {
                     ...(trap.hitbox),
@@ -95,7 +95,7 @@ export class CollisionSystem {
 
 
         level.traps.forEach(trap => {
-            const isStatic = !trap.update.toString().includes('// DYNAMIC');
+            const isStatic = !trap.isDynamic;
             if (!isStatic) {
                 const oldCells = this.trapGridCells.get(trap.id);
 

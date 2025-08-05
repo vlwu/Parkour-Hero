@@ -3,8 +3,9 @@ import { Trap } from './templates/Trap.js';
 export class FallingPlatform extends Trap {
     constructor(x, y, config) {
         super(x, y, { ...config, width: 32, height: 10 });
-        // DYNAMIC: This trap moves and must be updated and drawn dynamically.
+
         this.solid = true;
+        this.isDynamic = true;
         this.initialX = x;
         this.initialY = y;
         this.state = 'idle';
@@ -41,7 +42,7 @@ export class FallingPlatform extends Trap {
     getMovementDelta() { return { dx: 0, dy: this.y - this.prevY }; }
 
     update(dt, playerData, eventBus) {
-        // DYNAMIC
+
         this.prevY = this.y;
 
         if (this.state === 'idle' || this.state === 'active') {

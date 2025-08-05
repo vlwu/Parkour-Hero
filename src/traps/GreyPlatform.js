@@ -7,6 +7,7 @@ export class GreyPlatform extends Trap {
         this.type = 'grey_platform';
         this.solid = true;
         this.oneway = true;
+        this.isDynamic = true;
 
         this.anchorX = x;
         this.anchorY = y;

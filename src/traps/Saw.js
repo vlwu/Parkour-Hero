@@ -4,8 +4,9 @@ import { TRAP_CONSTANTS } from '../utils/constants.js';
 export class Saw extends Trap {
     constructor(x, y, config) {
         super(x, y, { ...config, width: 38, height: 38 });
-        // DYNAMIC: This trap moves and must be updated and drawn dynamically.
+
         this.type = 'saw';
+        this.isDynamic = true;
         this.anchorX = x;
         this.anchorY = y;
         this.sawX = x;
@@ -36,7 +37,7 @@ export class Saw extends Trap {
     }
 
     update(dt) {
-        // DYNAMIC
+
         this.animation.frameTimer += dt;
         if (this.animation.frameTimer >= this.animation.frameSpeed) {
             this.animation.frameTimer = 0;

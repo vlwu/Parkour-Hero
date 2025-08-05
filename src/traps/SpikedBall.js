@@ -4,7 +4,8 @@ import { TRAP_CONSTANTS } from '../utils/constants.js';
 export class SpikedBall extends Trap {
     constructor(x, y, config) {
         super(x, y, { ...config, width: 28, height: 28 });
-        // DYNAMIC: This trap moves and must be updated and drawn dynamically.
+
+        this.isDynamic = true;
         this.chainLength = config.chainLength || 100;
         this.swingArc = config.swingArc || 90;
         this.period = config.period || 4;
@@ -29,7 +30,7 @@ export class SpikedBall extends Trap {
     }
 
     update(dt) {
-        // DYNAMIC
+
         this.swingTimer += dt;
         const currentAngle = this.maxAngle * Math.sin((this.swingTimer / this.period) * 2 * Math.PI);
         const angularVelocity = this.maxAngle * Math.cos((this.swingTimer / this.period) * 2 * Math.PI);
