@@ -37,7 +37,7 @@ export class GreyPlatform extends Trap {
     get hitbox() {
         return {
             x: this.platformX - this.width / 2,
-            y: this.platformY - this.height / 2,
+            y: this.platformY,
             width: this.width,
             height: this.height,
         };
