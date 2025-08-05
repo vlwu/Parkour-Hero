@@ -162,6 +162,7 @@ export class PlayerStateSystem {
             if (input.jumpPressedThisFrame) {
                 vel.vy = -ctrl.jumpForce;
                 ctrl.jumpCount = 1;
+                ctrl.isInMud = false;
                 eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
                 this._transitionTo(entityId, new JumpState(entityId, entityManager), entityManager);
             }
