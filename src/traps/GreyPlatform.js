@@ -25,6 +25,8 @@ export class GreyPlatform extends Trap {
 
         this.state = 'idle';
         this.playerOn = false;
+        this.playerOffGracePeriod = 0.1;
+        this.playerOffTimer = 0;
 
         this.animation = {
             frameCount: 8,
@@ -52,7 +54,17 @@ export class GreyPlatform extends Trap {
         this.prevX = this.platformX;
         this.prevY = this.platformY;
 
-        this.playerOn = (groundEntity === this);
+        const isPlayerCurrentlyOn = (groundEntity === this);
+
+        if (isPlayerCurrentlyOn) {
+            this.playerOn = true;
+            this.playerOffTimer = this.playerOffGracePeriod;
+        } else {
+            this.playerOffTimer -= dt;
+            if (this.playerOffTimer <= 0) {
+                this.playerOn = false;
+            }
+        }
 
         switch (this.state) {
             case 'idle':
@@ -61,10 +73,14 @@ export class GreyPlatform extends Trap {
                 }
                 break;
             case 'moving_up':
-                this.platformY -= this.speed * dt;
-                if (this.platformY <= this.topY) {
-                    this.platformY = this.topY;
-                    this.state = 'at_top';
+                if (!this.playerOn) {
+                    this.state = 'moving_down';
+                } else {
+                    this.platformY -= this.speed * dt;
+                    if (this.platformY <= this.topY) {
+                        this.platformY = this.topY;
+                        this.state = 'at_top';
+                    }
                 }
                 break;
             case 'at_top':
@@ -81,7 +97,9 @@ export class GreyPlatform extends Trap {
                 break;
         }
 
-        if (this.playerOn) {
+        const shouldAnimate = this.state === 'moving_up' || this.state === 'moving_down' || (this.state === 'at_top' && this.playerOn);
+
+        if (shouldAnimate) {
             this.animation.frameTimer += dt;
             if (this.animation.frameTimer >= this.animation.frameSpeed) {
                 this.animation.frameTimer = 0;
@@ -109,12 +127,13 @@ export class GreyPlatform extends Trap {
             }
         }
 
-        const platformSpriteKey = this.playerOn ? 'platform_grey_on' : 'platform_grey_off';
+        const shouldAnimate = this.state === 'moving_up' || this.state === 'moving_down' || (this.state === 'at_top' && this.playerOn);
+        const platformSpriteKey = shouldAnimate ? 'platform_grey_on' : 'platform_grey_off';
         const platformSprite = assets[platformSpriteKey];
         const platformTexture = textures[platformSpriteKey];
         if (platformSprite && platformTexture) {
-            const frameCount = this.playerOn ? this.animation.frameCount : 1;
-            const frame = this.playerOn ? this.animation.currentFrame : 0;
+            const frameCount = shouldAnimate ? this.animation.frameCount : 1;
+            const frame = shouldAnimate ? this.animation.currentFrame : 0;
             const frameWidth = platformSprite.width / frameCount;
             const srcX = frame * frameWidth;
             const instanceData = [
@@ -136,5 +155,6 @@ export class GreyPlatform extends Trap {
         this.prevX = this.anchorX;
         this.prevY = this.bottomY;
         this.playerOn = false;
+        this.playerOffTimer = 0;
     }
 }

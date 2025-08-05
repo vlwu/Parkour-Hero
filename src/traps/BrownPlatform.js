@@ -62,15 +62,13 @@ export class BrownPlatform extends Trap {
             const offset = (progress * this.distance) / 2;
             this.platformX = this.anchorX + offset;
 
-            if (this.playerOn) {
-                this.animation.frameTimer += dt;
-                if (this.animation.frameTimer >= this.animation.frameSpeed) {
-                    this.animation.frameTimer = 0;
-                    this.animation.currentFrame = (this.animation.currentFrame + 1) % this.animation.frameCount;
-                }
-            } else {
-                 this.animation.currentFrame = 0;
+            this.animation.frameTimer += dt;
+            if (this.animation.frameTimer >= this.animation.frameSpeed) {
+                this.animation.frameTimer = 0;
+                this.animation.currentFrame = (this.animation.currentFrame + 1) % this.animation.frameCount;
             }
+        } else {
+             this.animation.currentFrame = 0;
         }
     }
 
@@ -91,12 +89,13 @@ export class BrownPlatform extends Trap {
             }
         }
 
-        const platformSpriteKey = this.playerOn ? 'platform_brown_on' : 'platform_brown_off';
+        const isMoving = this.state === 'moving';
+        const platformSpriteKey = isMoving ? 'platform_brown_on' : 'platform_brown_off';
         const platformSprite = assets[platformSpriteKey];
         const platformTexture = textures[platformSpriteKey];
         if (platformSprite && platformTexture) {
-            const frameCount = this.playerOn ? this.animation.frameCount : 1;
-            const frame = this.playerOn ? this.animation.currentFrame : 0;
+            const frameCount = isMoving ? this.animation.frameCount : 1;
+            const frame = isMoving ? this.animation.currentFrame : 0;
             const frameWidth = platformSprite.width / frameCount;
             const srcX = frame * frameWidth;
             const instanceData = [
