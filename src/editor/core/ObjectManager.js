@@ -25,9 +25,9 @@ export class ObjectManager {
         ];
 
         allEntities.forEach(entityData => {
-            const type = entityData[0];
-            const x = entityData[1];
-            const y = entityData[2];
+            const type = entityData;
+            const x = entityData;
+            const y = entityData;
             const { width, height } = this._getObjectDimensions(type);
 
             const obj = { type, x, y, id: this.nextObjectId++, width, height };
@@ -76,8 +76,8 @@ export class ObjectManager {
         if (levelData.startPosition) {
             let startX, startY;
             if (Array.isArray(levelData.startPosition)) {
-                startX = levelData.startPosition[0];
-                startY = levelData.startPosition[1];
+                startX = levelData.startPosition;
+                startY = levelData.startPosition;
             } else if (typeof levelData.startPosition === 'object' && levelData.startPosition !== null) {
                 startX = levelData.startPosition.x;
                 startY = levelData.startPosition.y;
@@ -223,7 +223,7 @@ export class ObjectManager {
     }
 
     _applySnapping(obj) {
-        const groundEnemies = Object.keys(ENEMY_DEFINITIONS).filter(key => !['bluebird', 'fatbird', 'radish', 'bee', 'bat'].includes(key));
+        const groundEnemies = Object.keys(ENEMY_DEFINITIONS).filter(key => !['bluebird', 'fatbird', 'radish', 'bee', 'bat', 'skull'].includes(key));
         const groundSnappable = ['trophy', 'checkpoint', 'trampoline', 'spike', 'fire_trap', ...groundEnemies];
         const ceilingSnappable = ['bat'];
 
