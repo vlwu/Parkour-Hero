@@ -74,11 +74,11 @@ export const ENEMY_DEFINITIONS = {
         ai: {
             type: 'rhino',
             aggroRange: 750,
-            initialSpeed: 30,
+            initialSpeed: 80,
             acceleration: 80,
-            maxSpeed: 250,
+            maxSpeed: 500,
             reboundSpeed: 50,
-            stunDuration: 1.5,
+            stunDuration: 1.2,
         }
     },
 
