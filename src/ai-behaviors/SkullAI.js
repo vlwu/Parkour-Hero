@@ -106,7 +106,7 @@ export class SkullAI extends BaseAI {
         const killable = this.entityManager.getComponent(this.entityId, KillableComponent);
         if (!killable) return;
 
-        if (this.enemy.skullState === ENEMY_STATES.IDLE1) {
+        if (this.enemy.skullState === ENEMY_STATES.IDLE2) {
             killable.stompable = true;
             killable.dealsContactDamage = false;
         } else {
