@@ -20,8 +20,15 @@ export class BrownPlatform extends Trap {
         this.period = this.distance > 0 && this.speed > 0 ? (this.distance / this.speed) * 2 : 0;
         this.timer = 0;
 
-        this.state = 'idle'; // idle, moving
+        this.state = 'idle';
         this.playerOn = false;
+
+        this.animation = {
+            frameCount: 8,
+            frameSpeed: 0.1,
+            frameTimer: 0,
+            currentFrame: 0
+        };
     }
 
     get hitbox() {
@@ -37,7 +44,7 @@ export class BrownPlatform extends Trap {
         return { dx: this.platformX - this.prevX, dy: this.platformY - this.prevY };
     }
 
-    // DYNAMIC
+
     update(dt, playerData) {
         this.prevX = this.platformX;
         this.prevY = this.platformY;
@@ -56,15 +63,7 @@ export class BrownPlatform extends Trap {
         }
 
         if (this.playerOn) {
-            if (this.state === 'idle') {
-                this.state = 'moving';
-                const currentOffset = this.platformX - this.anchorX;
-                const progressRatio = (currentOffset / (this.distance / 2));
-                if (Math.abs(progressRatio) <= 1) {
-                    const angle = Math.asin(progressRatio);
-                    this.timer = (angle / (2 * Math.PI)) * this.period;
-                }
-            }
+            this.state = 'moving';
         } else {
             this.state = 'idle';
         }
@@ -74,6 +73,12 @@ export class BrownPlatform extends Trap {
             const progress = Math.sin((this.timer / this.period) * 2 * Math.PI);
             const offset = (progress * this.distance) / 2;
             this.platformX = this.anchorX + offset;
+            
+            this.animation.frameTimer += dt;
+            if (this.animation.frameTimer >= this.animation.frameSpeed) {
+                this.animation.frameTimer = 0;
+                this.animation.currentFrame = (this.animation.currentFrame + 1) % this.animation.frameCount;
+            }
         }
     }
 
@@ -94,15 +99,19 @@ export class BrownPlatform extends Trap {
             }
         }
 
-        const platformSpriteKey = this.state === 'moving' ? 'platform_brown_on' : 'platform_brown_off';
+        const platformSpriteKey = this.playerOn ? 'platform_brown_on' : 'platform_brown_off';
         const platformSprite = assets[platformSpriteKey];
         const platformTexture = textures[platformSpriteKey];
         if (platformSprite && platformTexture) {
+            const frameCount = this.playerOn ? this.animation.frameCount : 1;
+            const frame = this.playerOn ? this.animation.currentFrame : 0;
+            const frameWidth = platformSprite.width / frameCount;
+            const srcX = frame * frameWidth;
             const instanceData = [
                 this.platformX - this.width / 2, this.platformY - this.height / 2,
                 this.width, this.height,
-                0, 0,
-                platformSprite.width, platformSprite.height,
+                srcX, 0,
+                frameWidth, platformSprite.height,
                 0.0
             ];
             results.push({ texture: platformTexture, instanceData });
