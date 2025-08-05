@@ -499,8 +499,8 @@ export const ENEMY_DEFINITIONS = {
         animations: {
             idle1: { frameCount: 8, speed: 0.1 },
             idle2: { frameCount: 8, speed: 0.1 },
-            hit_wall_1: { frameCount: 6, speed: 0.1 },
-            hit_wall_2: { frameCount: 6, speed: 0.1 },
+            hit_wall_1: { frameCount: 7, speed: 0.1 },
+            hit_wall_2: { frameCount: 7, speed: 0.1 },
             hit: { frameCount: 5, speed: 0.1 }
         },
         killable: {
@@ -511,7 +511,7 @@ export const ENEMY_DEFINITIONS = {
         },
         ai: {
             type: 'skull',
-            bounceSpeed: 120,
+            bounceSpeed: 50,
         }
     }
 };

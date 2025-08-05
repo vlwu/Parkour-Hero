@@ -38,14 +38,14 @@ export class SkullAI extends BaseAI {
 
         let bounced = false;
 
-        // Horizontal collision
+
         const wallProbeX = this.vel.vx > 0 ? nextX + this.col.width : nextX;
         if (this.level.isSolidAt(wallProbeX, this.pos.y + this.col.height / 2, true)) {
             this.vel.vx *= -1;
             bounced = true;
         }
 
-        // Vertical collision
+
         const groundProbeY = this.vel.vy > 0 ? nextY + this.col.height : nextY;
         if (this.level.isSolidAt(this.pos.x + this.col.width / 2, groundProbeY, true)) {
             this.vel.vy *= -1;
@@ -53,10 +53,10 @@ export class SkullAI extends BaseAI {
         }
 
         if (bounced) {
-            if (this.enemy.skullState === ENEMY_STATES.IDLE2) {
-                this.state.currentState = 'hit_wall_1';
-            } else {
+            if (this.enemy.skullState === ENEMY_STATES.IDLE1) {
                 this.state.currentState = 'hit_wall_2';
+            } else {
+                this.state.currentState = 'hit_wall_1';
             }
             this.renderable.animationState = this.state.currentState;
             this.renderable.animationFrame = 0;
@@ -73,7 +73,7 @@ export class SkullAI extends BaseAI {
         if (this.enemy.skullState === ENEMY_STATES.IDLE1) {
             killable.stompable = true;
             killable.dealsContactDamage = false;
-        } else { // IDLE2
+        } else {
             killable.stompable = false;
             killable.dealsContactDamage = true;
         }
