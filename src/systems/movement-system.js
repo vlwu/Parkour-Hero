@@ -28,11 +28,16 @@ export class MovementSystem {
                 continue;
             };
 
+            if (ctrl) {
+                ctrl.previousGroundEntity = col.groundEntity;
+            }
+
             this._applyHorizontalMovement(dt, input, vel, col, ctrl);
             this._applyVerticalMovement(dt, vel, col, ctrl, state);
             this._applyStickyPlatformMovement(pos, col);
             this._updateSurfaceEffects(dt, pos, vel, col, ctrl, entityId, entityManager);
 
+            col.groundEntity = null;
 
             if (!col.isGrounded) {
                 if (vel.vy > 0) {
