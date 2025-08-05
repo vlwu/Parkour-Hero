@@ -29,6 +29,10 @@ export class EnemySystem {
             const killable = entityManager.getComponent(enemyId, KillableComponent);
             const vel = entityManager.getComponent(enemyId, VelocityComponent);
 
+            if (enemy.type === 'rhino' && state.currentState === 'charging') {
+                eventBus.publish('stopSoundLoop', { key: 'rhino_charge' });
+            }
+
             if (enemy.type === 'snail' && !enemy.isDead) {
                 if (enemy.snailState === 'walking') {
                     enemy.snailState = 'shell';

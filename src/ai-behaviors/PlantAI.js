@@ -87,26 +87,37 @@ export class PlantAI extends BaseAI {
     }
 
     _fireBullet() {
-        const playerPos = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, PositionComponent) : null;
-        if (!playerPos) return;
-        const playerCol = this.playerEntityId !== null ? this.entityManager.getComponent(this.playerEntityId, CollisionComponent) : null;
-        if (!playerCol) return;
-
-        let velX = 0, velY = 0;
         const speed = this.enemy.ai.bullet.speed;
-        const bulletSpawnX = this.pos.x + this.col.width / 2;
-        const bulletSpawnY = this.pos.y + 10;
+        const bulletConfig = this.enemy.ai.bullet;
+        let velX = 0, velY = 0;
 
-        const playerCenterX = playerPos.x + playerCol.width / 2;
-        const playerCenterY = playerPos.y + playerCol.height / 2;
+        const plantCenterX = this.pos.x + this.col.width / 2;
+        const plantCenterY = this.pos.y + this.col.height / 2;
 
-        const dx = playerCenterX - bulletSpawnX;
-        const dy = playerCenterY - bulletSpawnY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        let bulletSpawnX, bulletSpawnY;
 
-        if (dist > 0) {
-            velX = (dx / dist) * speed;
-            velY = (dy / dist) * speed;
+        switch (this.renderable.direction) {
+            case DIRECTIONS.UP:
+                velY = -speed;
+                bulletSpawnX = plantCenterX;
+                bulletSpawnY = this.pos.y - bulletConfig.height;
+                break;
+            case DIRECTIONS.DOWN:
+                velY = speed;
+                bulletSpawnX = plantCenterX;
+                bulletSpawnY = this.pos.y + this.col.height;
+                break;
+            case DIRECTIONS.LEFT:
+                velX = -speed;
+                bulletSpawnX = this.pos.x;
+                bulletSpawnY = plantCenterY - bulletConfig.height / 2;
+                break;
+            case DIRECTIONS.RIGHT:
+            default:
+                velX = speed;
+                bulletSpawnX = this.pos.x + this.col.width;
+                bulletSpawnY = plantCenterY - bulletConfig.height / 2;
+                break;
         }
 
         eventBus.publish(EVENTS.SPAWN_BULLET, {

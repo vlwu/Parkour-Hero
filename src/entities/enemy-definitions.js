@@ -333,7 +333,7 @@ export const ENEMY_DEFINITIONS = {
         ai: {
             type: 'plant',
             aggroRadius: 250,
-            attackInterval: 2.5,
+            attackInterval: 0.3,
             bullet: {
                 speed: 250,
                 damage: 50,

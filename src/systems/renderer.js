@@ -335,9 +335,8 @@ export class Renderer {
 
             if (isEnemy) {
                 const col = entityManager.getComponent(entityId, CollisionComponent);
-                if (renderable.direction === 'left' && renderable.width > col.width) {
-                    const widthDifference = renderable.width - col.width;
-                    renderX -= widthDifference;
+                if (renderable.width > col.width) {
+                    renderX -= (renderable.width - col.width) / 2;
                 }
             }
 
@@ -455,7 +454,7 @@ export class Renderer {
     const frameCount = enemyDef.animations[renderable.animationState]?.frameCount || 1;
     const frameWidth = sprite.width / frameCount;
     const srcX = (renderable.animationFrame % frameCount) * frameWidth;
-    
+
     let isFlipped;
     if (renderable.spriteKey === 'skull') {
       isFlipped = renderable.direction === 'left' ? 1.0 : 0.0;
