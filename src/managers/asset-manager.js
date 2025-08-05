@@ -185,6 +185,11 @@ const gameplayImagePaths = {
     sand_mud_ice: '/assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
     trampoline_idle: '/assets/Traps/Trampoline/Idle.png',
     trampoline_jump: '/assets/Traps/Trampoline/Jump.png',
+    platform_brown_off: '/assets/Traps/Platforms/Brown Off.png',
+    platform_brown_on: '/assets/Traps/Platforms/Brown On.png',
+    platform_grey_off: '/assets/Traps/Platforms/Grey Off.png',
+    platform_grey_on: '/assets/Traps/Platforms/Grey On.png',
+    platform_chain: '/assets/Traps/Platforms/Chain.png',
 
     mushroom_hit: '/assets/Enemies/Mushroom/Hit.png',
     mushroom_idle: '/assets/Enemies/Mushroom/Idle.png',
