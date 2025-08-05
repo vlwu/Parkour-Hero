@@ -125,6 +125,15 @@ export class MovementSystem {
             const delta = col.groundEntity.getMovementDelta();
             pos.x += delta.dx;
             pos.y += delta.dy;
+            
+            // Ensure player stays on top of moving platforms
+            if (delta.dy < 0) { // Platform moving up
+                const platformTop = col.groundEntity.hitbox.y;
+                const playerBottom = pos.y + col.height;
+                if (playerBottom > platformTop) {
+                    pos.y = platformTop - col.height;
+                }
+            }
         }
     }
 

@@ -337,6 +337,28 @@ export class CollisionSystem {
                 const highestGround = validGroundColliders.reduce((prev, current) => (prev.y < current.y ? prev : current));
                 this._landOnSurface(pos, vel, col, highestGround.y, highestGround.surfaceType, highestGround.instance, entityId, entityManager);
                 entityRect.y = pos.y;
+            } else if (col.isGrounded && col.groundEntity && typeof col.groundEntity.getMovementDelta === 'function') {
+                // Handle moving platforms - ensure player stays on top when platform moves up
+                const delta = col.groundEntity.getMovementDelta();
+                if (delta.dy < 0) { // Platform is moving up
+                    const platformTop = col.groundEntity.hitbox.y;
+                    const playerBottom = pos.y + col.height;
+                    if (playerBottom > platformTop) {
+                        pos.y = platformTop - col.height;
+                        entityRect.y = pos.y;
+                    }
+                }
+            } else if (col.isGrounded && col.groundEntity && col.groundEntity.isDynamic) {
+                // Additional check for dynamic platforms that might not have getMovementDelta
+                const platformTop = col.groundEntity.hitbox.y;
+                const playerBottom = pos.y + col.height;
+                const tolerance = 5; // Tolerance for floating point precision
+                
+                if (Math.abs(playerBottom - platformTop) <= tolerance) {
+                    // Ensure player stays on top of the platform
+                    pos.y = platformTop - col.height;
+                    entityRect.y = pos.y;
+                }
             }
 
             if (!col.isGrounded && vel.vy >= 0) {
@@ -357,6 +379,49 @@ export class CollisionSystem {
                         col.groundEntity = ground.instance;
                         break;
                     }
+                }
+                
+                // Additional check for moving platforms that might not be detected by the ground probe
+                if (!col.isGrounded) {
+                    for (const trap of level.traps) {
+                        if (trap.isDynamic && trap.solid && typeof trap.hitbox === 'object') {
+                            const platformTop = trap.hitbox.y;
+                            const playerBottom = pos.y + col.height;
+                            const tolerance = 5;
+                            
+                            if (Math.abs(playerBottom - platformTop) <= tolerance && 
+                                pos.x < trap.hitbox.x + trap.hitbox.width &&
+                                pos.x + col.width > trap.hitbox.x) {
+                                col.isGrounded = true;
+                                col.groundType = trap.surfaceType || 'platform';
+                                col.groundEntity = trap;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else if (col.isGrounded && col.groundEntity && typeof col.groundEntity.getMovementDelta === 'function') {
+                // Additional check for moving platforms to ensure player stays grounded
+                const delta = col.groundEntity.getMovementDelta();
+                if (delta.dy !== 0) { // Platform is moving
+                    const platformTop = col.groundEntity.hitbox.y;
+                    const playerBottom = pos.y + col.height;
+                    const tolerance = 2; // Small tolerance for floating point precision
+                    
+                    if (Math.abs(playerBottom - platformTop) <= tolerance) {
+                        // Player is on the platform, ensure they stay on top
+                        pos.y = platformTop - col.height;
+                    }
+                }
+            } else if (col.isGrounded && col.groundEntity && col.groundEntity.isDynamic) {
+                // Additional check for dynamic platforms
+                const platformTop = col.groundEntity.hitbox.y;
+                const playerBottom = pos.y + col.height;
+                const tolerance = 5; // Tolerance for floating point precision
+                
+                if (Math.abs(playerBottom - platformTop) <= tolerance) {
+                    // Player is on the platform, ensure they stay on top
+                    pos.y = platformTop - col.height;
                 }
             }
 
