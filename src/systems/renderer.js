@@ -336,7 +336,14 @@ export class Renderer {
             if (isEnemy) {
                 const col = entityManager.getComponent(entityId, CollisionComponent);
                 if (renderable.width > col.width) {
-                    renderX -= (renderable.width - col.width) / 2;
+                    const enemy = entityManager.getComponent(entityId, EnemyComponent);
+                    if (enemy.type === 'chameleon') {
+                        if (renderable.direction === 'left') {
+                            renderX -= (renderable.width - col.width);
+                        }
+                    } else {
+                        renderX -= (renderable.width - col.width) / 2;
+                    }
                 }
             }
 
