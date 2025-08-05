@@ -97,7 +97,8 @@ export const AI_TYPES = Object.freeze({
     TRUNK: 'trunk',
     ANGRYPIG: 'angrypig',
     CHAMELEON: 'chameleon',
-    ROCK: 'rock'
+    ROCK: 'rock',
+    SKULL: 'skull'
 });
 
 export const PLAYER_STATES = Object.freeze({
@@ -115,6 +116,8 @@ export const PLAYER_STATES = Object.freeze({
 
 export const ENEMY_STATES = Object.freeze({
     IDLE: 'idle',
+    IDLE1: 'idle1',
+    IDLE2: 'idle2',
     IDLE_GROUNDED: 'idle_grounded',
     PATROL: 'patrol',
     PATROL_GROUNDED: 'patrol_grounded',
@@ -176,7 +179,9 @@ export const ANIMATION_STATES = Object.freeze({
     CEILING_IN: 'ceiling_in',
     CEILING_OUT: 'ceiling_out',
     ATTACK: 'attack',
-    WALL_HIT: 'wall_hit'
+    WALL_HIT: 'wall_hit',
+    'hit_wall_1': 'hit_wall_1',
+    'hit_wall_2': 'hit_wall_2',
 });
 
 export const EVENTS = Object.freeze({

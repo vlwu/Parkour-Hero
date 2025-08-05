@@ -20,7 +20,7 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     let initialState;
     if (data.ai.type === 'flying_patrol' || data.ai.type === 'radish' || data.ai.type === 'bee') {
         initialState = 'flying';
-    } else if (data.ai.type === 'ground_charge' || data.ai.type === 'defensive_cycle' || data.ai.type === 'bat' || data.ai.type === 'rhino') {
+    } else if (data.ai.type === 'ground_charge' || data.ai.type === 'defensive_cycle' || data.ai.type === 'bat' || data.ai.type === 'rhino' || data.ai.type === 'skull') {
         initialState = 'idle';
     } else {
         initialState = 'patrol';
@@ -64,6 +64,9 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
                 initialAnimationState = 'idle_run';
                 break;
             case 'turtle':
+                initialAnimationState = 'idle2';
+                break;
+            case 'skull':
                 initialAnimationState = 'idle2';
                 break;
             default:

@@ -26,6 +26,9 @@ export class EnemyComponent {
             this.ghostState = ENEMY_STATES.APPEARING;
             this.phaseTimer = 0;
         }
+        if (this.type === AI_TYPES.SKULL) {
+            this.skullState = ENEMY_STATES.IDLE2;
+        }
 
         if (this.type === AI_TYPES.DEFENSIVE_CYCLE) {
             this.timer = this.ai.spikesInDuration;

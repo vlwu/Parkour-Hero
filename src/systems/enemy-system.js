@@ -260,7 +260,7 @@ export class EnemySystem {
             renderable.animationTimer -= animDef.speed;
             renderable.animationFrame++;
             if (renderable.animationFrame >= animDef.frameCount) {
-                const nonLoopingStates = ['spikes_out', 'spikes_in', 'shell_wall_hit', 'hit', 'hit1', 'hit2', 'appear', 'disappear'];
+                const nonLoopingStates = ['spikes_out', 'spikes_in', 'shell_wall_hit', 'hit', 'hit1', 'hit2', 'appear', 'disappear', 'hit_wall_1', 'hit_wall_2'];
                 if (nonLoopingStates.includes(renderable.animationState)) {
                     renderable.animationFrame = animDef.frameCount - 1;
                 } else {

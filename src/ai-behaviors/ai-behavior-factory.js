@@ -14,6 +14,7 @@ import { TrunkAI } from './TrunkAI.js';
 import { AngryPigAI } from './AngryPigAI.js';
 import { ChameleonAI } from './ChameleonAI.js';
 import { RockAI } from './RockAI.js';
+import { SkullAI } from './SkullAI.js';
 import { AI_TYPES } from '../utils/constants.js';
 
 const aiBehaviorMap = {
@@ -33,6 +34,7 @@ const aiBehaviorMap = {
     [AI_TYPES.ANGRYPIG]: AngryPigAI,
     [AI_TYPES.CHAMELEON]: ChameleonAI,
     [AI_TYPES.ROCK]: RockAI,
+    [AI_TYPES.SKULL]: SkullAI,
 };
 
 export function createAIBehavior(type, entityId, entityManager, level, playerEntityId) {

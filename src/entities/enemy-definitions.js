@@ -491,5 +491,27 @@ export const ENEMY_DEFINITIONS = {
             idleTime: 0.5,
             particleDropInterval: 0.25,
         }
+    },
+    skull: {
+        width: 52,
+        height: 54,
+        spriteKey: 'skull',
+        animations: {
+            idle1: { frameCount: 8, speed: 0.1 },
+            idle2: { frameCount: 8, speed: 0.1 },
+            hit_wall_1: { frameCount: 6, speed: 0.1 },
+            hit_wall_2: { frameCount: 6, speed: 0.1 },
+            hit: { frameCount: 5, speed: 0.1 }
+        },
+        killable: {
+            stompable: false,
+            stompBounceVelocity: STOMP_BOUNCE_VELOCITY,
+            dealsContactDamage: true,
+            contactDamage: 1000,
+        },
+        ai: {
+            type: 'skull',
+            bounceSpeed: 120,
+        }
     }
 };

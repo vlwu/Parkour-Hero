@@ -50,7 +50,8 @@ export const OBJECT_DESCRIPTIONS = {
     'trunk': 'A mobile enemy that patrols platforms and shoots projectiles when the player is nearby.',
     'angrypig': 'A pig that patrols slowly. When stomped, it becomes angry and charges back and forth at high speed.',
     'chameleon': 'Sits idle on a platform. When the player lands on the same platform, it chases them down and performs a quick melee attack when in range.',
-    'rock1': 'A large rock that patrols a platform. When stomped, it splits into two smaller Rock2s. Each Rock2 splits into two tiny Rock3s when stomped. Rock3s are destroyed when stomped.'
+    'rock1': 'A large rock that patrols a platform. When stomped, it splits into two smaller Rock2s. Each Rock2 splits into two tiny Rock3s when stomped. Rock3s are destroyed when stomped.',
+    'skull': 'A dangerous enemy that bounces around the screen. It alternates between a vulnerable state (blue glow) and an invulnerable state (red glow) each time it hits a surface. Be careful!'
 };
 
 export const PALETTE_ABBREVIATIONS = {
@@ -66,7 +67,7 @@ export const PALETTE_ABBREVIATIONS = {
     'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
     'saw': 'SAW',
 
-    'mushroom': 'MSH', 'chicken': 'CKN', 'rhino': 'RNO', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT', 'plant': 'PLN', 'trunk': 'TRK', 'angrypig': 'PIG', 'chameleon': 'CHM', 'rock1': 'RK1', 'rock2': 'RK2', 'rock3': 'RK3',
+    'mushroom': 'MSH', 'chicken': 'CKN', 'rhino': 'RNO', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT', 'plant': 'PLN', 'trunk': 'TRK', 'angrypig': 'PIG', 'chameleon': 'CHM', 'rock1': 'RK1', 'rock2': 'RK2', 'rock3': 'RK3', 'skull': 'SKL',
 
     'empty': 'ERS', 'dirt': 'DRT', 'stone': 'STN', 'wood': 'WOD',
     'green_block': 'GRN', 'orange_dirt': 'ODT', 'pink_dirt': 'PDT',
@@ -125,6 +126,7 @@ export function getPaletteColor(type) {
         case 'rock1': return '#78909c';
         case 'rock2': return '#90a4ae';
         case 'rock3': return '#b0bec5';
+        case 'skull': return '#e8e8e8ff';
         case 'oneway_gold': case 'gold_third_h': case 'gold_third_v': case 'gold_ninth_sq': case 'gold_four_ninths_sq': return '#FFD700';
         case 'oneway_wood': return '#855E42';
         case 'oneway_stone': return '#808080';
