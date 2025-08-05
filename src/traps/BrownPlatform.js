@@ -54,8 +54,6 @@ export class BrownPlatform extends Trap {
 
         if (this.playerOn) {
             this.state = 'moving';
-        } else {
-            this.state = 'idle';
         }
 
         if (this.state === 'moving' && this.period > 0) {
@@ -64,10 +62,14 @@ export class BrownPlatform extends Trap {
             const offset = (progress * this.distance) / 2;
             this.platformX = this.anchorX + offset;
 
-            this.animation.frameTimer += dt;
-            if (this.animation.frameTimer >= this.animation.frameSpeed) {
-                this.animation.frameTimer = 0;
-                this.animation.currentFrame = (this.animation.currentFrame + 1) % this.animation.frameCount;
+            if (this.playerOn) {
+                this.animation.frameTimer += dt;
+                if (this.animation.frameTimer >= this.animation.frameSpeed) {
+                    this.animation.frameTimer = 0;
+                    this.animation.currentFrame = (this.animation.currentFrame + 1) % this.animation.frameCount;
+                }
+            } else {
+                 this.animation.currentFrame = 0;
             }
         }
     }
