@@ -315,9 +315,10 @@ export class Level {
       const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
       const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
       const playerData = playerPos && playerCol ? { ...playerPos, width: playerCol.width, height: playerCol.height } : null;
+      const groundEntity = playerCol ? playerCol.groundEntity : null;
 
       for (const trap of this.traps) {
-          trap.update(dt, playerData, eventBus, this);
+          trap.update(dt, playerData, eventBus, this, groundEntity);
       }
 
       const remainingTraps = [];

@@ -45,31 +45,16 @@ export class GreyPlatform extends Trap {
     }
 
 
-    update(dt, playerData) { // DYNAMIC
+    update(dt, playerData, eventBus, level, groundEntity) {
         this.prevX = this.platformX;
         this.prevY = this.platformY;
 
-        this.playerOn = false;
-        if (playerData) {
-            const playerBottom = playerData.y + playerData.height;
-            const platformTop = this.hitbox.y;
-            if (
-                playerData.x < this.hitbox.x + this.hitbox.width &&
-                playerData.x + playerData.width > this.hitbox.x &&
-                Math.abs(playerBottom - platformTop) < 5
-            ) {
-                this.playerOn = true;
-            }
-        }
+        this.playerOn = (groundEntity === this);
 
         if (this.playerOn) {
             this.state = 'moving';
-        } else if (this.state === 'moving') {
-             this.timer += dt;
-             if (this.timer >= this.period) {
-                this.timer = 0;
-                this.state = 'idle';
-             }
+        } else {
+            this.state = 'idle';
         }
 
         if (this.state === 'moving' && this.period > 0) {
@@ -121,10 +106,6 @@ export class GreyPlatform extends Trap {
             results.push({ texture: platformTexture, instanceData });
         }
         return results;
-    }
-
-    onLanded() {
-        this.playerOn = true;
     }
 
     reset() {
