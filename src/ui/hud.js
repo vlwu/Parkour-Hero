@@ -74,6 +74,19 @@ export class HUD {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.fillRect(viewRectX, viewRectY, viewRectWidth, viewRectHeight);
 
+    if (level && level.fruits) {
+      ctx.fillStyle = '#2b5cb7ff'; // A reddish color for fruits
+      for (const fruit of level.fruits) {
+        if (!fruit.collected) {
+          const fruitMapX = mapX + fruit.x * scaleX;
+          const fruitMapY = mapY + fruit.y * scaleY;
+          ctx.beginPath();
+          ctx.arc(fruitMapX, fruitMapY, 2, 0, 2 * Math.PI); // Smaller radius (2)
+          ctx.fill();
+        }
+      }
+    }
+
     if (entityManager && playerEntityId !== null) {
         const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
         const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
@@ -92,7 +105,7 @@ export class HUD {
         const trophyMapX = mapX + level.trophy.x * scaleX;
         const trophyMapY = mapY + level.trophy.y * scaleY;
 
-        ctx.fillStyle = '#f1c40f'; // Yellow
+        ctx.fillStyle = '#f1c40f';
         ctx.beginPath();
         ctx.arc(trophyMapX, trophyMapY, 5, 0, 2 * Math.PI);
         ctx.fill();
