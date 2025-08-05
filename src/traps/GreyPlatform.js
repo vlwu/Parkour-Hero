@@ -11,15 +11,17 @@ export class GreyPlatform extends Trap {
 
         this.anchorX = x;
         this.anchorY = y;
-        this.platformX = x;
-        this.platformY = y;
-        this.prevX = x;
-        this.prevY = y;
 
         this.distance = config.distance || 100;
         this.speed = config.speed || 50;
-        this.period = this.distance > 0 && this.speed > 0 ? (this.distance / this.speed) * 2 : 0;
-        this.timer = 0;
+
+        this.topY = this.anchorY - this.distance / 2;
+        this.bottomY = this.anchorY + this.distance / 2;
+
+        this.platformX = x;
+        this.platformY = this.bottomY;
+        this.prevX = x;
+        this.prevY = this.bottomY;
 
         this.state = 'idle';
         this.playerOn = false;
@@ -52,25 +54,41 @@ export class GreyPlatform extends Trap {
 
         this.playerOn = (groundEntity === this);
 
-        if (this.playerOn) {
-            this.state = 'moving';
+        switch (this.state) {
+            case 'idle':
+                if (this.playerOn) {
+                    this.state = 'moving_up';
+                }
+                break;
+            case 'moving_up':
+                this.platformY -= this.speed * dt;
+                if (this.platformY <= this.topY) {
+                    this.platformY = this.topY;
+                    this.state = 'at_top';
+                }
+                break;
+            case 'at_top':
+                if (!this.playerOn) {
+                    this.state = 'moving_down';
+                }
+                break;
+            case 'moving_down':
+                this.platformY += this.speed * dt;
+                if (this.platformY >= this.bottomY) {
+                    this.platformY = this.bottomY;
+                    this.state = 'idle';
+                }
+                break;
         }
 
-        if (this.state === 'moving' && this.period > 0) {
-            this.timer += dt;
-            const progress = Math.sin((this.timer / this.period) * 2 * Math.PI);
-            const offset = (progress * this.distance) / 2;
-            this.platformY = this.anchorY + offset;
-
-            if (this.playerOn) {
-                this.animation.frameTimer += dt;
-                if (this.animation.frameTimer >= this.animation.frameSpeed) {
-                    this.animation.frameTimer = 0;
-                    this.animation.currentFrame = (this.animation.currentFrame + 1) % this.animation.frameCount;
-                }
-            } else {
-                 this.animation.currentFrame = 0;
+        if (this.playerOn) {
+            this.animation.frameTimer += dt;
+            if (this.animation.frameTimer >= this.animation.frameSpeed) {
+                this.animation.frameTimer = 0;
+                this.animation.currentFrame = (this.animation.currentFrame + 1) % this.animation.frameCount;
             }
+        } else {
+             this.animation.currentFrame = 0;
         }
     }
 
@@ -113,11 +131,10 @@ export class GreyPlatform extends Trap {
 
     reset() {
         this.state = 'idle';
-        this.timer = 0;
         this.platformX = this.anchorX;
-        this.platformY = this.anchorY;
+        this.platformY = this.bottomY;
         this.prevX = this.anchorX;
-        this.prevY = this.anchorY;
+        this.prevY = this.bottomY;
         this.playerOn = false;
     }
 }

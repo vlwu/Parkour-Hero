@@ -297,10 +297,21 @@ export class CollisionSystem {
 
                 if (vel.vy >= 0) {
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
-                    if (prevBodyBottom <= collider.y + 2) {
-                        if (!collider.isOneWay || prevBodyBottom <= collider.y) {
-                           validGroundColliders.push(collider);
+                    const wasOnThisPlatform = playerCtrl && playerCtrl.previousGroundEntity === collider.instance;
+
+                    let canLand = false;
+                    if (wasOnThisPlatform) {
+                        canLand = true;
+                    } else {
+                        if (prevBodyBottom <= collider.y + 2) {
+                            if (!collider.isOneWay || prevBodyBottom <= collider.y) {
+                                canLand = true;
+                            }
                         }
+                    }
+
+                    if (canLand) {
+                        validGroundColliders.push(collider);
                     }
                 } else {
                     if (!collider.isOneWay) {
