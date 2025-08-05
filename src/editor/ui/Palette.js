@@ -49,7 +49,7 @@ export class Palette {
         });
 
         const trapTypes = [
-            'spike', 'fire_trap', 'trampoline', 'spiked_ball', 'arrow_bubble', 'fan', 'falling_platform', 'rock_head', 'spike_head', 'saw',
+            'spike', 'fire_trap', 'trampoline', 'spiked_ball', 'arrow_bubble', 'fan', 'falling_platform', 'rock_head', 'spike_head', 'saw', 'brown_platform', 'grey_platform',
         ];
         trapTypes.forEach(type => {
             const abbreviation = PALETTE_ABBREVIATIONS[type] || '???';

@@ -13,6 +13,8 @@ export const OBJECT_DESCRIPTIONS = {
     'arrow_bubble': 'Pops on contact and pushes the player toward the indicated direction. Does not snap to surfaces. Direction can be changed in its properties. Properties: knockbackSpeed (how fast the player is pushed).',
     'fan': 'Periodically creates a column of wind. Must be attached to a solid platform. Direction is auto-set but can be changed. Properties: pushStrength (how fast the player is pushed), and windHeight (length of the wind column in pixels).',
     'falling_platform': 'A platform that shakes and falls after being stood on for a second. Does not snap to ground.',
+    'brown_platform': 'A brown platform that moves horizontally when the player stands on it. Properties: distance (path length in pixels), speed (pixels per second).',
+    'grey_platform': 'A grey platform that moves vertically when the player stands on it. Properties: distance (path length in pixels), speed (pixels per second).',
     'rock_head': 'A stone guardian that hovers in the air. When a player passes underneath, it slams to the ground, killing them instantly.',
     'spike_head': 'A spiked guardian that hovers in the air. When a player passes underneath, it slams to the ground, killing them instantly.',
     'saw': 'A circular saw that moves back and forth along a path. Properties: direction (horizontal/vertical), distance (path length in pixels), speed (pixels per second).',
@@ -65,7 +67,7 @@ export const PALETTE_ABBREVIATIONS = {
     'trampoline': 'TRP', 'spike': 'SPK', 'fire_trap': 'FIR',
     'spiked_ball': 'BAL', 'arrow_bubble': 'ARR', 'fan': 'FAN',
     'falling_platform': 'FAL', 'rock_head': 'RCK', 'spike_head': 'SHD',
-    'saw': 'SAW',
+    'saw': 'SAW', 'brown_platform': 'BR-P', 'grey_platform': 'GR-P',
 
     'mushroom': 'MSH', 'chicken': 'CKN', 'rhino': 'RNO', 'snail': 'SNL', 'slime': 'SLM', 'turtle': 'TRT', 'bluebird': 'BRD', 'fatbird': 'FBD', 'radish': 'RAD', 'bee': 'BEE', 'bat': 'BAT', 'ghost': 'GHT', 'plant': 'PLN', 'trunk': 'TRK', 'angrypig': 'PIG', 'chameleon': 'CHM', 'rock1': 'RK1', 'rock2': 'RK2', 'rock3': 'RK3', 'skull': 'SKL',
 
@@ -98,6 +100,8 @@ export function getPaletteColor(type) {
         case 'arrow_bubble': return '#3498db';
         case 'fan': return '#95a5a6';
         case 'falling_platform': return '#496988ff';
+        case 'brown_platform': return '#A0522D';
+        case 'grey_platform': return '#6c7d7cff';
         case 'rock_head': return '#484848ff';
         case 'spike_head': return '#1e1e1eff';
         case 'saw': return '#54e6f1ff';

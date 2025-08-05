@@ -22,6 +22,8 @@ const trapFactory = {
   spike_head: Traps.SpikeHead,
   saw: Traps.Saw,
   slime_puddle: Traps.SlimePuddle,
+  brown_platform: Traps.BrownPlatform,
+  grey_platform: Traps.GreyPlatform,
 };
 
 export class Level {
@@ -157,6 +159,8 @@ export class Level {
                 config.windHeight = entityData[propIndex++];
                 break;
             case 'saw':
+            case 'brown_platform':
+            case 'grey_platform':
                 config.direction = entityData[propIndex++];
                 config.distance = entityData[propIndex++];
                 config.speed = entityData[propIndex++];

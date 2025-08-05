@@ -63,9 +63,11 @@ export class PropertiesPanel {
             propertiesHTML += this._createNumberInput('pushStrength', 'Push Strength', obj.pushStrength || 250, 5);
             propertiesHTML += this._createNumberInput('windHeight', 'Wind Height (pixels)', obj.windHeight || 120, 5);
         }
-        if (obj.type === 'saw') {
-            const directions = ['horizontal', 'vertical'];
-            propertiesHTML += this._createSelectInput('direction', 'Direction', directions, obj.direction);
+        if (obj.type === 'saw' || obj.type === 'brown_platform' || obj.type === 'grey_platform') {
+            if (obj.type === 'saw') {
+                const directions = ['horizontal', 'vertical'];
+                propertiesHTML += this._createSelectInput('direction', 'Direction', directions, obj.direction);
+            }
             propertiesHTML += this._createNumberInput('distance', 'Path Distance (pixels)', obj.distance || 150, 5);
             propertiesHTML += this._createNumberInput('speed', 'Speed (px/sec)', obj.speed || 50, 5);
         }
@@ -114,7 +116,13 @@ export class PropertiesPanel {
         if (obj.type === 'arrow_bubble' || obj.type === 'fan' || obj.type === 'plant') { attach('direction', 'select'); }
         if (obj.type === 'arrow_bubble') { attach('knockbackSpeed'); }
         if (obj.type === 'fan') { attach('pushStrength'); attach('windHeight'); }
-        if (obj.type === 'saw') { attach('direction', 'select'); attach('distance'); attach('speed'); }
+        if (obj.type === 'saw' || obj.type === 'brown_platform' || obj.type === 'grey_platform') {
+            if (obj.type === 'saw') {
+                attach('direction', 'select');
+            }
+            attach('distance');
+            attach('speed');
+        }
         if (obj.type === 'fire_trap') { attach('chainLength'); }
         if (obj.type === 'bluebird') { attach('patrolDistance'); attach('horizontalSpeed'); attach('verticalAmplitude'); }
         if (obj.type === 'radish') { attach('patrolBoxSize'); }

@@ -5,7 +5,7 @@ import { DOM } from '../ui/DOM.js';
 
 export class EditorView {
     constructor() {
-        // No dependencies needed in constructor, uses DOM singleton
+
     }
 
     renderObjects(objects) {
@@ -64,7 +64,7 @@ export class EditorView {
                 }
             }
 
-            if (obj.type === 'saw') {
+            if (obj.type === 'saw' || obj.type === 'brown_platform' || obj.type === 'grey_platform') {
                 const line = document.createElement('div');
                 line.className = 'trap-path-visual';
                 line.style.position = 'absolute';
@@ -73,9 +73,13 @@ export class EditorView {
                 line.style.zIndex = '-1';
 
                 const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
-                const distance = obj.distance || 150;
+                const distance = obj.distance || 100;
 
-                if (obj.direction === 'horizontal') {
+                let direction = obj.direction;
+                if (obj.type === 'brown_platform') direction = 'horizontal';
+                if (obj.type === 'grey_platform') direction = 'vertical';
+
+                if (direction === 'horizontal') {
                     line.style.left = `${obj.x * TILE_SIZE - distance / 2}px`;
                     line.style.top = `${obj.y * TILE_SIZE - 1}px`;
                     line.style.width = `${distance}px`;

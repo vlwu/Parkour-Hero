@@ -9,3 +9,5 @@ export * from './RockHead.js';
 export * from './SpikeHead.js';
 export * from './Saw.js';
 export * from './SlimePuddle.js';
+export * from './BrownPlatform.js';
+export * from './GreyPlatform.js';

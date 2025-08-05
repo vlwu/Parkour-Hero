@@ -56,6 +56,8 @@ export class ObjectManager {
                     obj.windHeight = entityData[propIndex++];
                     break;
                 case 'saw':
+                case 'brown_platform':
+                case 'grey_platform':
                     obj.direction = entityData[propIndex++];
                     obj.distance = entityData[propIndex++];
                     obj.speed = entityData[propIndex++];
@@ -129,6 +131,10 @@ export class ObjectManager {
         }
         if (type === 'saw') {
             newObject.direction = 'horizontal'; newObject.distance = 150; newObject.speed = 50;
+        }
+        if (type === 'brown_platform' || type === 'grey_platform') {
+            newObject.distance = 100;
+            newObject.speed = 50;
         }
         if (type === 'bluebird') {
             newObject.patrolDistance = 200;
@@ -206,6 +212,8 @@ export class ObjectManager {
                     entityArray.push(obj.direction, obj.pushStrength, obj.windHeight);
                     break;
                 case 'saw':
+                case 'brown_platform':
+                case 'grey_platform':
                     entityArray.push(obj.direction, obj.distance, obj.speed);
                     break;
                 case 'bluebird':
@@ -320,6 +328,7 @@ export class ObjectManager {
             case 'spike': return { width: 16, height: 16 }; case 'fire_trap': return { width: 16, height: 16 };
             case 'spiked_ball': return { width: 28, height: 28 }; case 'arrow_bubble': return { width: 18, height: 18 };
             case 'fan': return { width: 24, height: 8 }; case 'falling_platform': return { width: 32, height: 10 };
+            case 'brown_platform': return { width: 32, height: 8 }; case 'grey_platform': return { width: 32, height: 8 };
             case 'rock_head': return { width: 42, height: 42 }; case 'spike_head': return { width: 54, height: 52 };
             case 'saw': return { width: 38, height: 38 };
             default: return { width: 28, height: 28 };
