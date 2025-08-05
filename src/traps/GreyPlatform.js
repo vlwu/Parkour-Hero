@@ -45,7 +45,7 @@ export class GreyPlatform extends Trap {
     }
 
 
-    update(dt, playerData) {
+    update(dt, playerData) { // DYNAMIC
         this.prevX = this.platformX;
         this.prevY = this.platformY;
 

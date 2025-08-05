@@ -45,7 +45,7 @@ export class BrownPlatform extends Trap {
     }
 
 
-    update(dt, playerData) {
+    update(dt, playerData) { // DYNAMIC
         this.prevX = this.platformX;
         this.prevY = this.platformY;
 
@@ -73,7 +73,7 @@ export class BrownPlatform extends Trap {
             const progress = Math.sin((this.timer / this.period) * 2 * Math.PI);
             const offset = (progress * this.distance) / 2;
             this.platformX = this.anchorX + offset;
-            
+
             this.animation.frameTimer += dt;
             if (this.animation.frameTimer >= this.animation.frameSpeed) {
                 this.animation.frameTimer = 0;
