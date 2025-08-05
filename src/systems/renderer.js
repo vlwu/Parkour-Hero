@@ -455,7 +455,7 @@ export class Renderer {
     const frameCount = enemyDef.animations[renderable.animationState]?.frameCount || 1;
     const frameWidth = sprite.width / frameCount;
     const srcX = (renderable.animationFrame % frameCount) * frameWidth;
-    const isFlipped = renderable.direction === 'right' ? 1.0 : 0.0;
+    const isFlipped = renderable.direction === 'left' ? 1.0 : 0.0;
 
     return { texture, sx: srcX, sy: 0, sw: frameWidth, sh: sprite.height, isFlipped };
   }

@@ -33,6 +33,12 @@ export class SkullAI extends BaseAI {
 
         this.renderable.animationState = this.state.currentState;
 
+        if (this.vel.vx > 0) {
+            this.renderable.direction = DIRECTIONS.RIGHT;
+        } else if (this.vel.vx < 0) {
+            this.renderable.direction = DIRECTIONS.LEFT;
+        }
+
         const nextX = this.pos.x + this.vel.vx * dt;
         const nextY = this.pos.y + this.vel.vy * dt;
 
