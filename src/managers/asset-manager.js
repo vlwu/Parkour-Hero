@@ -266,6 +266,13 @@ const gameplayImagePaths = {
     rock3_hit: '/assets/Enemies/Rocks/Rock3 Hit.png',
     rock3_idle: '/assets/Enemies/Rocks/Rock3 Idle.png',
     rock3_run: '/assets/Enemies/Rocks/Rock3 Run.png',
+    skull_hit: '/assets/Enemies/Skull/Hit.png',
+    skull_wall_hit1: '/assets/Enemies/Skull/Hit Wall 1.png',
+    skull_wall_hit2: '/assets/Enemies/Skull/Hit Wall 2.png',
+    skull_idle1: '/assets/Enemies/Skull/Idle 1.png',
+    skull_idle2: '/assets/Enemies/Skull/Idle 2.png',
+    skull_orange_particle: '/assets/Enemies/Skull/Orange Particle.png',
+    skull_red_particle: '/assets/Enemies/Skull/Red Particle.png',
 
     dust_particle: '/assets/Other/Dust Particle.png',
     ice_particle: '/assets/Traps/Sand Mud Ice/Ice Particle.png',
