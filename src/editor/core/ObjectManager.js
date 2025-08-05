@@ -289,7 +289,7 @@ export class ObjectManager {
 
     _updateGroundedEnemyBehavior(enemyObj) {
 
-        const fullSnapTypes = ['mushroom', 'slime'];
+        const fullSnapTypes = [];
         if (!fullSnapTypes.includes(enemyObj.type)) return;
 
         const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
