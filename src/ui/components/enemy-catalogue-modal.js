@@ -21,7 +21,10 @@ const ENEMY_DESCRIPTIONS = {
     trunk: "A mobile enemy that patrols platforms and shoots projectiles when the player is nearby.",
     angrypig: "A pig that patrols slowly. When stomped, it becomes angry and charges back and forth at high speed.",
     chameleon: "Sits idle on a platform. When the player lands on the same platform, it chases them down and performs a quick attack when in range.",
-    rock1: "A large rock that patrols a platform. When stomped, it splits into two smaller Rock2s. Each Rock2 splits into two tiny Rock3s when stomped. Rock3s are destroyed when stomped."
+    rock1: "A large rock that patrols a platform. When stomped, it splits into two smaller Rock2s.",
+    rock2: "A medium-sized rock that patrols a platform. When stomped, it splits into two tiny Rock3s.",
+    rock3: "The smallest rock, created when a Rock2 is stomped. It is destroyed when stomped.",
+    skull: "A dangerous enemy that bounces around the screen. It alternates between a vulnerable state (no fire) and an invulnerable state (red glow) each time it hits a surface. Be careful!"
 };
 
 export class EnemyCatalogueModal extends LitElement {
