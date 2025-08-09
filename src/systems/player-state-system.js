@@ -277,7 +277,6 @@ export class PlayerStateSystem {
                     eventBus.publish('playSound', { key: 'spawned', volume: 0.8, channel: 'SFX' });
                 }
                 if (stateName === 'despawn') {
-                    ctrl.isDespawning = false;
                     ctrl.despawnAnimationFinished = true;
                 }
             }
