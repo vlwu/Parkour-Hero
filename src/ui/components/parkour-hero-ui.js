@@ -103,7 +103,7 @@ export class ParkourHeroUI extends LitElement {
     super();
     this.activeModal = 'main-menu';
     this.gameHasStarted = false;
-    this.keybinds = { moveLeft: 'a', moveRight: 'd', jump: 'w', dash: ' ' };
+    this.keybinds = { moveLeft: 'a', moveRight: 'd', jump: ' ', dash: 'e' };
     this.soundSettings = { soundEnabled: true, soundVolume: 0.5 };
     this.currentStats = {};
     this.gameState = new GameState();

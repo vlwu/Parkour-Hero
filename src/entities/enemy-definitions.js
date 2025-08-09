@@ -28,6 +28,10 @@ export const ENEMY_DEFINITIONS = {
     chicken: {
         width: 32,
         height: 34,
+        hitbox: {
+            width: 25,
+            height: 34,
+        },
         spriteKey: 'chicken',
         animations: {
             idle: { frameCount: 13, speed: 0.1 },
@@ -111,6 +115,10 @@ export const ENEMY_DEFINITIONS = {
     slime: {
         width: 44,
         height: 30,
+        hitbox: {
+            width: 36,
+            height: 30,
+        },
         spriteKey: 'slime',
         animations: {
             idle_run: { frameCount: 10, speed: 0.1 },
@@ -131,6 +139,10 @@ export const ENEMY_DEFINITIONS = {
     turtle: {
         width: 44,
         height: 26,
+        hitbox: {
+            width: 30,
+            height: 20,
+        },
         spriteKey: 'turtle',
         animations: {
             idle1: { frameCount: 14, speed: 0.1 },
@@ -318,6 +330,10 @@ export const ENEMY_DEFINITIONS = {
     plant: {
         width: 44,
         height: 42,
+        hitbox: {
+            width: 37,
+            height: 42,
+        },
         spriteKey: 'plant',
         animations: {
             idle: { frameCount: 11, speed: 0.1 },

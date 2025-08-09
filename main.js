@@ -76,8 +76,8 @@ resizeCanvas();
 let keybinds = {
   moveLeft: 'a',
   moveRight: 'd',
-  jump: 'w',
-  dash: ' ',
+  jump: ' ',
+  dash: 'e',
 };
 
 let engine;
@@ -101,7 +101,6 @@ assetManager.loadCoreAssets().then(async (assets) => {
         engine.start();
     });
 
-    // Pre-load gameplay assets after the main menu is ready
     await assetManager.loadGameplayAssets();
     engine.renderer.syncTextures();
     engine.particleSystem.syncTextures();
