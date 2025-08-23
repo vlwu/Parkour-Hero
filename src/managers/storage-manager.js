@@ -10,6 +10,21 @@ export class StorageManager {
         };
     }
 
+    static _getDefaultSettings() {
+        return {
+            sound: {
+                enabled: true,
+                volume: 0.5,
+            },
+            keybinds: {
+                moveLeft: 'a',
+                moveRight: 'd',
+                jump: ' ',
+                dash: 'e',
+            }
+        };
+    }
+
     static loadProgress() {
         try {
             const saved = localStorage.getItem('parkourGameState');
@@ -62,6 +77,32 @@ export class StorageManager {
             console.log("Game progress has been reset.");
         } catch (e) {
             console.error("Failed to reset game state in localStorage", e);
+        }
+    }
+
+    static loadSettings() {
+        try {
+            const saved = localStorage.getItem('parkourUserSettings');
+            if (!saved) return this._getDefaultSettings();
+            const savedSettings = JSON.parse(saved);
+
+            const defaultSettings = this._getDefaultSettings();
+            // Merge to ensure new settings are added if not present in saved data
+            return {
+                sound: { ...defaultSettings.sound, ...savedSettings.sound },
+                keybinds: { ...defaultSettings.keybinds, ...savedSettings.keybinds },
+            };
+        } catch (e) {
+            console.error("Failed to parse user settings from localStorage. Using defaults.", e);
+            return this._getDefaultSettings();
+        }
+    }
+
+    static saveSettings(settings) {
+        try {
+            localStorage.setItem('parkourUserSettings', JSON.stringify(settings));
+        } catch (e) {
+            console.error("Failed to save user settings to localStorage", e);
         }
     }
 }

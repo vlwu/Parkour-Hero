@@ -3,6 +3,7 @@ import { assetManager, gameplaySoundKeys } from './src/managers/asset-manager.js
 import { eventBus } from './src/utils/event-bus.js';
 import { FontRenderer } from './src/ui/font-renderer.js';
 import './src/ui/ui-main.js';
+import { StorageManager } from './src/managers/storage-manager.js';
 
 const gameCanvas = document.getElementById('gameCanvas');
 const uiCanvas = document.getElementById('uiCanvas');
@@ -73,12 +74,8 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-let keybinds = {
-  moveLeft: 'a',
-  moveRight: 'd',
-  jump: ' ',
-  dash: 'e',
-};
+const settings = StorageManager.loadSettings();
+let keybinds = settings.keybinds;
 
 let engine;
 

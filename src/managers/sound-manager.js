@@ -1,4 +1,5 @@
 import { eventBus } from '../utils/event-bus.js';
+import { StorageManager } from './storage-manager.js';
 
 export class SoundManager {
   constructor() {
@@ -46,11 +47,19 @@ export class SoundManager {
   }
 
   loadSettings() {
-    this.settings.enabled = true;
-    this.settings.volume = 0.5;
+    const settings = StorageManager.loadSettings();
+    this.settings.enabled = settings.sound.enabled;
+    this.settings.volume = settings.sound.volume;
   }
 
-  saveSettings() {}
+  saveSettings() {
+      const currentSettings = StorageManager.loadSettings();
+      currentSettings.sound = {
+          enabled: this.settings.enabled,
+          volume: this.settings.volume,
+      };
+      StorageManager.saveSettings(currentSettings);
+  }
 
   addSounds(assets, soundKeys) {
     soundKeys.forEach(key => {
@@ -62,7 +71,7 @@ export class SoundManager {
         };
         for (let i = 0; i < this.poolSize; i++) {
             const clone = this.sounds[key].cloneNode(true);
-            clone.load(); // Preload the audio data for the clone
+            clone.load();
             this.soundPool[key].pool.push(clone);
         }
       }
@@ -85,12 +94,12 @@ export class SoundManager {
       return;
     }
 
-    // Use a round-robin strategy to select the next audio element
+
     const audio = poolData.pool[poolData.next];
     poolData.next = (poolData.next + 1) % this.poolSize;
 
     audio.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
-    audio.currentTime = 0; // This allows for rapid re-triggering of the same sound effect
+    audio.currentTime = 0;
 
     this.channels[channel].add(audio);
 
@@ -186,7 +195,7 @@ export class SoundManager {
           console.error("Failed to resume AudioContext:", e);
       }
     }
-    
+
     this.audioUnlocked = this.audioContext.state === 'running';
   }
 

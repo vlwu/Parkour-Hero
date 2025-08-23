@@ -226,7 +226,6 @@ export class Engine {
     const newGameState = this.gameState.incrementAttempts(sectionIndex, levelIndex);
     if (newGameState !== this.gameState) {
         this.gameState = newGameState;
-        StorageManager.saveProgress(this.gameState);
         eventBus.publish(EVENTS.GAME_STATE_UPDATED, this.gameState);
     }
 
@@ -448,7 +447,6 @@ export class Engine {
               const newGameState = this.gameState.setSelectedCharacter(newId);
               if (newGameState !== this.gameState) {
                   this.gameState = newGameState;
-                  StorageManager.saveProgress(this.gameState);
                   eventBus.publish(EVENTS.GAME_STATE_UPDATED, this.gameState);
               }
           }
