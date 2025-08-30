@@ -325,16 +325,22 @@ export class Renderer {
 
             if (isPlayer) {
                 const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+                let offsetX, offsetY;
+
+                if (playerCtrl.isSpawning || playerCtrl.isDespawning) {
+                    // Center the large spawn/despawn animation on the hitbox
+                    offsetX = (col.width - renderable.width) / 2;
+                    offsetY = (col.height - renderable.height) / 2;
+                } else {
+                    // Align the bottom-center of the sprite with the bottom-center of the hitbox
+                    offsetX = (col.width - renderable.width) / 2;
+                    offsetY = (col.height - renderable.height);
+                }
                 
-                const offsetX = (col.width - renderable.width) / 2;
-                const offsetY = (col.height - renderable.height);
                 renderX += offsetX;
                 renderY += offsetY;
                 
-                if (playerCtrl.isSpawning || playerCtrl.isDespawning) {
-                    renderX -= (renderable.width - col.width) / 2;
-                    renderY -= (renderable.height - col.height) / 2;
-                } else if (renderable.animationState === 'cling') {
+                if (renderable.animationState === 'cling') {
                     const clingOffset = renderable.direction === 'left' ? -PLAYER_CONSTANTS.CLING_OFFSET : PLAYER_CONSTANTS.CLING_OFFSET;
                     renderX += clingOffset;
                 }
