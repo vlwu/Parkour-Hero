@@ -1,10 +1,17 @@
 export const PLAYER_CONSTANTS = {
 
-  WIDTH: 32,
-  HEIGHT: 32,
+  // Visual representation of the player.
+  SPRITE_WIDTH: 32,
+  SPRITE_HEIGHT: 32,
+
+  // Hitbox for collision detection. Adjust these values for gameplay feel.
+  WIDTH: 26,
+  HEIGHT: 26,
+
+  // Larger visual size for spawn/despawn animations.
   SPAWN_WIDTH: 96,
   SPAWN_HEIGHT: 96,
-  CLING_OFFSET: 7,
+  CLING_OFFSET: 5,
 
 
   MOVE_SPEED: 200,

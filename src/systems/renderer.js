@@ -309,7 +309,7 @@ export class Renderer {
             batches.get(key).instances.push(...instanceData);
         };
 
-        const entities = entityManager.query([PositionComponent, RenderableComponent]);
+        const entities = entityManager.query([PositionComponent, RenderableComponent, CollisionComponent]);
         for (const entityId of entities) {
             const renderable = entityManager.getComponent(entityId, RenderableComponent);
             if (!renderable.isVisible || (this.previewMode && entityManager.hasComponent(entityId, PlayerControlledComponent))) continue;
@@ -318,23 +318,29 @@ export class Renderer {
             const prevPos = entityManager.getComponent(entityId, PreviousPositionComponent);
             let renderX = prevPos ? prevPos.x + (pos.x - prevPos.x) * alpha : pos.x;
             let renderY = prevPos ? prevPos.y + (pos.y - prevPos.y) * alpha : pos.y;
+            const col = entityManager.getComponent(entityId, CollisionComponent);
 
             const isPlayer = entityManager.hasComponent(entityId, CharacterComponent);
             const isEnemy = entityManager.hasComponent(entityId, EnemyComponent);
 
             if (isPlayer) {
                 const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+                
+                const offsetX = (col.width - renderable.width) / 2;
+                const offsetY = (col.height - renderable.height);
+                renderX += offsetX;
+                renderY += offsetY;
+                
                 if (playerCtrl.isSpawning || playerCtrl.isDespawning) {
-                    renderX -= (renderable.width - PLAYER_CONSTANTS.WIDTH) / 2;
-                    renderY -= (renderable.height - PLAYER_CONSTANTS.HEIGHT) / 2;
+                    renderX -= (renderable.width - col.width) / 2;
+                    renderY -= (renderable.height - col.height) / 2;
                 } else if (renderable.animationState === 'cling') {
-                    const offset = renderable.direction === 'left' ? -PLAYER_CONSTANTS.CLING_OFFSET : PLAYER_CONSTANTS.CLING_OFFSET;
-                    renderX += offset;
+                    const clingOffset = renderable.direction === 'left' ? -PLAYER_CONSTANTS.CLING_OFFSET : PLAYER_CONSTANTS.CLING_OFFSET;
+                    renderX += clingOffset;
                 }
             }
 
             if (isEnemy) {
-                const col = entityManager.getComponent(entityId, CollisionComponent);
                 if (renderable.width > col.width) {
                     const enemy = entityManager.getComponent(entityId, EnemyComponent);
                     if (enemy.type === 'chameleon') {

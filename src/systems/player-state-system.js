@@ -272,8 +272,8 @@ export class PlayerStateSystem {
                 if (stateName === 'spawn') {
                     ctrl.isSpawning = false;
                     ctrl.spawnComplete = true;
-                    renderable.width = PLAYER_CONSTANTS.WIDTH;
-                    renderable.height = PLAYER_CONSTANTS.HEIGHT;
+                    renderable.width = PLAYER_CONSTANTS.SPRITE_WIDTH;
+                    renderable.height = PLAYER_CONSTANTS.SPRITE_HEIGHT;
                     eventBus.publish('playSound', { key: 'spawned', volume: 0.8, channel: 'SFX' });
                 }
                 if (stateName === 'despawn') {

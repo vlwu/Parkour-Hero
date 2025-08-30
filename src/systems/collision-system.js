@@ -338,9 +338,9 @@ export class CollisionSystem {
                 this._landOnSurface(pos, vel, col, highestGround.y, highestGround.surfaceType, highestGround.instance, entityId, entityManager);
                 entityRect.y = pos.y;
             } else if (col.isGrounded && col.groundEntity && typeof col.groundEntity.getMovementDelta === 'function') {
-                // Handle moving platforms - ensure player stays on top when platform moves up
+
                 const delta = col.groundEntity.getMovementDelta();
-                if (delta.dy < 0) { // Platform is moving up
+                if (delta.dy < 0) {
                     const platformTop = col.groundEntity.hitbox.y;
                     const playerBottom = pos.y + col.height;
                     if (playerBottom > platformTop) {
@@ -349,13 +349,13 @@ export class CollisionSystem {
                     }
                 }
             } else if (col.isGrounded && col.groundEntity && col.groundEntity.isDynamic) {
-                // Additional check for dynamic platforms that might not have getMovementDelta
+
                 const platformTop = col.groundEntity.hitbox.y;
                 const playerBottom = pos.y + col.height;
-                const tolerance = 5; // Tolerance for floating point precision
-                
+                const tolerance = 5;
+
                 if (Math.abs(playerBottom - platformTop) <= tolerance) {
-                    // Ensure player stays on top of the platform
+
                     pos.y = platformTop - col.height;
                     entityRect.y = pos.y;
                 }
@@ -380,16 +380,16 @@ export class CollisionSystem {
                         break;
                     }
                 }
-                
-                // Additional check for moving platforms that might not be detected by the ground probe
+
+
                 if (!col.isGrounded) {
                     for (const trap of level.traps) {
                         if (trap.isDynamic && trap.solid && typeof trap.hitbox === 'object') {
                             const platformTop = trap.hitbox.y;
                             const playerBottom = pos.y + col.height;
                             const tolerance = 5;
-                            
-                            if (Math.abs(playerBottom - platformTop) <= tolerance && 
+
+                            if (Math.abs(playerBottom - platformTop) <= tolerance &&
                                 pos.x < trap.hitbox.x + trap.hitbox.width &&
                                 pos.x + col.width > trap.hitbox.x) {
                                 col.isGrounded = true;
@@ -401,26 +401,26 @@ export class CollisionSystem {
                     }
                 }
             } else if (col.isGrounded && col.groundEntity && typeof col.groundEntity.getMovementDelta === 'function') {
-                // Additional check for moving platforms to ensure player stays grounded
+
                 const delta = col.groundEntity.getMovementDelta();
-                if (delta.dy !== 0) { // Platform is moving
+                if (delta.dy !== 0) {
                     const platformTop = col.groundEntity.hitbox.y;
                     const playerBottom = pos.y + col.height;
-                    const tolerance = 2; // Small tolerance for floating point precision
-                    
+                    const tolerance = 2;
+
                     if (Math.abs(playerBottom - platformTop) <= tolerance) {
-                        // Player is on the platform, ensure they stay on top
+
                         pos.y = platformTop - col.height;
                     }
                 }
             } else if (col.isGrounded && col.groundEntity && col.groundEntity.isDynamic) {
-                // Additional check for dynamic platforms
+
                 const platformTop = col.groundEntity.hitbox.y;
                 const playerBottom = pos.y + col.height;
-                const tolerance = 5; // Tolerance for floating point precision
-                
+                const tolerance = 5;
+
                 if (Math.abs(playerBottom - platformTop) <= tolerance) {
-                    // Player is on the platform, ensure they stay on top
+
                     pos.y = platformTop - col.height;
                 }
             }
@@ -444,23 +444,32 @@ export class CollisionSystem {
         }
     }
 
-    _handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager) {
+_handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager) {
         const vel = entityManager.getComponent(entityId, VelocityComponent);
-        const checkRect = { x: pos.x, y: pos.y, width: col.width, height: col.height + 1 };
-        const potentialColliders = this.spatialGrid.query(checkRect);
-        let touchingMud = false;
+    
+        // Use multiple probe points along the player's base for accuracy
+        const PROBE_POINTS = 5;
+        let mudPoints = 0;
         let highestMudY = -Infinity;
-
-        for (const collider of potentialColliders) {
-            if (collider.surfaceType === 'mud' && this._isRectColliding(checkRect, collider)) {
-                touchingMud = true;
-                if (collider.y > highestMudY) {
-                    highestMudY = collider.y;
+    
+        for (let i = 0; i < PROBE_POINTS; i++) {
+            const probeX = pos.x + (col.width / (PROBE_POINTS - 1)) * i;
+            const probeY = pos.y + col.height + 1; // Check just below the player
+            const tileProps = level.getTilePropertiesAt(probeX, probeY);
+    
+            if (tileProps && tileProps.interaction === 'mud') {
+                mudPoints++;
+                const tileGridY = Math.floor(probeY / GRID_CONSTANTS.TILE_SIZE);
+                const tileTopY = tileGridY * GRID_CONSTANTS.TILE_SIZE;
+                if (tileTopY > highestMudY) {
+                    highestMudY = tileTopY;
                 }
             }
         }
-
-        if (touchingMud) {
+    
+        const isSubstantiallyOnMud = (mudPoints / PROBE_POINTS) >= 0.8;
+    
+        if (isSubstantiallyOnMud) {
             if (vel.vy >= 0) {
                 if (!playerCtrl.isInMud) {
                     playerCtrl.isInMud = true;
@@ -502,7 +511,7 @@ export class CollisionSystem {
         const landingVelocity = vel.vy;
         const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
 
-        if (playerCtrl && landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY && playerCtrl.fallDistance > PLAYER_CONSTANTS.HEIGHT && surfaceType !== 'mud') {
+        if (playerCtrl && landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY && playerCtrl.fallDistance > PLAYER_CONSTANTS.SPRITE_HEIGHT && surfaceType !== 'mud') {
             eventBus.publish('playerLandedHard', { entityId, landingVelocity });
         }
 
