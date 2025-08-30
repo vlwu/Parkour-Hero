@@ -60,7 +60,7 @@ export class PlayerStateSystem {
             const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
             const vel = entityManager.getComponent(entityId, VelocityComponent);
 
-            if (ctrl.jumpedFromMud && vel.vy > 0) {
+            if (ctrl.jumpedFromMud && !ctrl.isInMud) {
                 ctrl.jumpedFromMud = false;
             }
 

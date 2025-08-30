@@ -23,6 +23,21 @@ export class SoundManager {
 
     this.loadSettings();
     this._setupEventSubscriptions();
+    this._initializeAudioContext();
+  }
+
+  _initializeAudioContext() {
+    if (this.audioContext) return;
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            this.audioContext = new AudioContext();
+        } else {
+            console.warn("AudioContext not supported.");
+        }
+    } catch (e) {
+        console.error("Failed to create early AudioContext:", e);
+    }
   }
 
   _setupEventSubscriptions() {
@@ -172,20 +187,9 @@ export class SoundManager {
 
   async unlockAudio() {
     if (!this.audioContext) {
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          this.audioContext = new AudioContext();
-        } else {
-            console.warn("AudioContext not supported.");
-            this.audioUnlocked = false;
-            return;
-        }
-      } catch (e) {
-        console.error("Failed to create AudioContext:", e);
-        this.audioUnlocked = false;
-        return;
-      }
+      console.warn("AudioContext not available. Sound will be disabled.");
+      this.audioUnlocked = false;
+      return;
     }
 
     if (this.audioContext.state === 'suspended') {
@@ -208,7 +212,7 @@ export class SoundManager {
         });
     }
     this.saveSettings();
-    eventBus.publish('soundSettingsChanged', { soundEnabled: this.settings.enabled, soundVolume: this.settings.volume });
+    eventBus.publish('soundSettingsChanged', { enabled: this.settings.enabled, volume: this.settings.volume });
   }
 
   setEnabled(enabled) {
@@ -217,7 +221,7 @@ export class SoundManager {
       this.stopAll();
     }
     this.saveSettings();
-    eventBus.publish('soundSettingsChanged', { soundEnabled: this.settings.enabled, soundVolume: this.settings.volume });
+    eventBus.publish('soundSettingsChanged', { enabled: this.settings.enabled, volume: this.settings.volume });
   }
 
   toggleSound() {

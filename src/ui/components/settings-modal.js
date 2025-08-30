@@ -30,7 +30,7 @@ export class SettingsMenu extends LitElement {
       transition: transform 0.2s ease-in-out;
     }
     .close-button:hover { transform: scale(1.1); }
-    
+
     .title-container {
         display: flex;
         justify-content: center;
@@ -47,18 +47,18 @@ export class SettingsMenu extends LitElement {
     .settings-section { margin-bottom: 30px; padding: 20px; background-color: #444; border-radius: 8px; border: 1px solid #555; }
     .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background-color: #555; border-radius: 6px; }
     .setting-item .label-container { flex-grow: 1; text-align: left; }
-    
-    .toggle-button { 
+
+    .toggle-button {
         border: 2px solid #777; padding: 8px 16px; border-radius: 6px; cursor: pointer;
         min-width: 70px; transition: all 0.2s ease-in-out;
         display: flex; justify-content: center; align-items: center;
     }
     .toggle-button.sound-enabled { background-color: #4CAF50; border-color: #45a049; }
     .toggle-button.sound-disabled { background-color: #f44336; border-color: #d32f2f; }
-    
+
     .volume-control { display: flex; align-items: center; gap: 10px; }
-    
-    .action-button { 
+
+    .action-button {
         background-color: #007bff; color: #fff; border: none; padding: 10px 20px;
         border-radius: 6px; cursor: pointer;
         display: flex; justify-content: center; align-items: center;
@@ -106,7 +106,7 @@ export class SettingsMenu extends LitElement {
       <div class="modal-overlay" @click=${this._dispatchClose}>
         <div class="modal-content" @click=${e => e.stopPropagation()}>
           <button class="close-button" @click=${this._dispatchClose}></button>
-          
+
           <div class="title-container">
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Game Settings" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
           </div>
@@ -115,13 +115,13 @@ export class SettingsMenu extends LitElement {
             <div class="section-title-container">
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="Sound Settings" scale="2.2"></bitmap-text>
             </div>
-            
+
             <div class="setting-item">
               <div class="label-container">
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="Sound:" scale="1.8"></bitmap-text>
               </div>
-              <button @click=${this._toggleSound} class="toggle-button ${this.soundSettings.soundEnabled ? 'sound-enabled' : 'sound-disabled'}">
-                <bitmap-text .fontRenderer=${this.fontRenderer} text=${this.soundSettings.soundEnabled ? 'ON' : 'OFF'} scale="1.8"></bitmap-text>
+              <button @click=${this._toggleSound} class="toggle-button ${this.soundSettings.enabled ? 'sound-enabled' : 'sound-disabled'}">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text=${this.soundSettings.enabled ? 'ON' : 'OFF'} scale="1.8"></bitmap-text>
               </button>
             </div>
             <div class="setting-item">
@@ -129,12 +129,12 @@ export class SettingsMenu extends LitElement {
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="Global Volume:" scale="1.8"></bitmap-text>
               </div>
               <div class="volume-control">
-                <input type="range" min="0" max="1" step="0.1" .value=${this.soundSettings.soundVolume} @input=${this._setVolume} />
-                <bitmap-text .fontRenderer=${this.fontRenderer} text=${`${Math.round(this.soundSettings.soundVolume * 100)}%`} scale="1.8"></bitmap-text>
+                <input type="range" min="0" max="1" step="0.1" .value=${this.soundSettings.volume} @input=${this._setVolume} />
+                <bitmap-text .fontRenderer=${this.fontRenderer} text=${`${Math.round(this.soundSettings.volume * 100)}%`} scale="1.8"></bitmap-text>
               </div>
             </div>
              <div class="setting-item">
-                <button @click=${this._testSound} class="action-button" ?disabled=${!this.soundSettings.soundEnabled}>
+                <button @click=${this._testSound} class="action-button" ?disabled=${!this.soundSettings.enabled}>
                     <bitmap-text .fontRenderer=${this.fontRenderer} text="Test Sound" scale="1.8"></bitmap-text>
                 </button>
              </div>
