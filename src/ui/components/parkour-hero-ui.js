@@ -92,6 +92,7 @@ export class ParkourHeroUI extends LitElement {
     gameHasStarted: { type: Boolean, state: true },
     keybinds: { type: Object, state: true },
     soundSettings: { type: Object, state: true },
+    gameplaySettings: { type: Object, state: true },
     currentStats: { type: Object, state: true },
     gameState: { type: Object, state: true },
     assets: { type: Object, state: true },
@@ -108,6 +109,7 @@ export class ParkourHeroUI extends LitElement {
     const settings = StorageManager.loadSettings();
     this.keybinds = settings.keybinds;
     this.soundSettings = settings.sound;
+    this.gameplaySettings = settings.gameplay;
 
     this.currentStats = {};
     this.gameState = new GameState();
@@ -126,6 +128,7 @@ export class ParkourHeroUI extends LitElement {
     super.connectedCallback();
     eventBus.subscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.subscribe('keybindsUpdated', this._handleKeybindsUpdate);
+    eventBus.subscribe('setMinimapSize', this._handleMinimapSizeUpdate);
     eventBus.subscribe('ui_button_clicked', this._handleUIButtonClick);
     eventBus.subscribe('statsUpdated', this._handleStatsUpdate);
     eventBus.subscribe('action_escape_pressed', this._handleEscapePress);
@@ -143,6 +146,7 @@ export class ParkourHeroUI extends LitElement {
     super.disconnectedCallback();
     eventBus.unsubscribe('soundSettingsChanged', this._handleSoundUpdate);
     eventBus.unsubscribe('keybindsUpdated', this._handleKeybindsUpdate);
+    eventBus.unsubscribe('setMinimapSize', this._handleMinimapSizeUpdate);
     eventBus.unsubscribe('ui_button_clicked', this._handleUIButtonClick);
     eventBus.unsubscribe('statsUpdated', this._handleStatsUpdate);
     eventBus.unsubscribe('action_escape_pressed', this._handleEscapePress);
@@ -174,6 +178,13 @@ export class ParkourHeroUI extends LitElement {
 
   _handleSoundUpdate = (settings) => { this.soundSettings = { ...settings }; };
   _handleKeybindsUpdate = (keybinds) => { this.keybinds = { ...keybinds }; };
+  _handleMinimapSizeUpdate = ({ size }) => {
+    this.gameplaySettings = { ...this.gameplaySettings, minimapSize: size };
+    const currentSettings = StorageManager.loadSettings();
+    currentSettings.gameplay = this.gameplaySettings;
+    StorageManager.saveSettings(currentSettings);
+    eventBus.publish('gameplaySettingsChanged', this.gameplaySettings);
+  };
   _handleStatsUpdate = (stats) => { this.currentStats = { ...stats }; };
 
   _handleUIButtonClick = ({ buttonId }) => {
@@ -352,7 +363,7 @@ export class ParkourHeroUI extends LitElement {
                     ></tutorial-modal>`;
       case 'settings':
         return html`<settings-menu
-                      .keybinds=${this.keybinds} .soundSettings=${this.soundSettings} .fontRenderer=${this.fontRenderer}
+                      .keybinds=${this.keybinds} .soundSettings=${this.soundSettings} .gameplaySettings=${this.gameplaySettings} .fontRenderer=${this.fontRenderer}
                       @close-modal=${this._closeModal} @keybind-changed=${this._handleKeybindChange}
                     ></settings-menu>`;
       case 'pause':

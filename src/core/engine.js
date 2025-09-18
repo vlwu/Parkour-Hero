@@ -37,7 +37,7 @@ import { EnemyComponent } from '../components/EnemyComponent.js';
 const FIXED_DT = 1 / 60;
 
 export class Engine {
-  constructor(gl, uiCanvas, ctx, assets, initialKeybinds, fontRenderer, assetManager) {
+  constructor(gl, uiCanvas, ctx, assets, initialKeybinds, fontRenderer, assetManager, gameplaySettings) {
     this.gl = gl;
     this.canvas = gl.canvas;
     this.uiCanvas = uiCanvas;
@@ -47,6 +47,7 @@ export class Engine {
     this.lastFrameTime = 0;
     this.accumulator = 0;
     this.keybinds = initialKeybinds;
+    this.gameplaySettings = gameplaySettings;
     this.isRunning = false;
     this.gameHasStarted = false;
     this.pauseForMenu = false;
@@ -59,7 +60,7 @@ export class Engine {
     this.playerEntityId = null;
 
     this.camera = new Camera(this.canvas.width, this.canvas.height);
-    this.hud = new HUD(this.ctx, fontRenderer);
+    this.hud = new HUD(this.ctx, fontRenderer, this.gameplaySettings);
     this.soundManager = new SoundManager();
     this.soundManager.addSounds(assets, coreSoundKeys);
     this.renderer = new Renderer(this.gl, this.canvas, this.assets);
@@ -123,6 +124,13 @@ export class Engine {
   }
 
   updateKeybinds(newKeybinds) { this.keybinds = { ...newKeybinds }; }
+
+  updateGameplaySettings(newSettings) {
+      this.gameplaySettings = newSettings;
+      if (this.hud) {
+          this.hud.updateSettings(this.gameplaySettings);
+      }
+  }
 
   start() { if (this.isRunning) return; this.isRunning = true; this.lastFrameTime = performance.now(); eventBus.publish(EVENTS.GAME_RESUMED); this.gameLoop(); }
   stop() { this.isRunning = false; this.soundManager.stopAll(); }

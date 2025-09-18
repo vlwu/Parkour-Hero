@@ -74,6 +74,7 @@ export class SettingsMenu extends LitElement {
   static properties = {
     keybinds: { type: Object },
     soundSettings: { type: Object },
+    gameplaySettings: { type: Object },
     fontRenderer: { type: Object },
   };
 
@@ -92,12 +93,17 @@ export class SettingsMenu extends LitElement {
     eventBus.publish('setSoundVolume', { volume });
   }
 
+  _setMinimapSize(e) {
+    const size = parseFloat(e.target.value);
+    eventBus.publish('setMinimapSize', { size });
+  }
+
   _testSound() {
     eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'UI' });
   }
 
   render() {
-    if (!this.keybinds || !this.soundSettings || !this.fontRenderer) {
+    if (!this.keybinds || !this.soundSettings || !this.fontRenderer || !this.gameplaySettings) {
       return html``;
     }
     const keybindActions = Object.keys(this.keybinds);
@@ -138,6 +144,21 @@ export class SettingsMenu extends LitElement {
                     <bitmap-text .fontRenderer=${this.fontRenderer} text="Test Sound" scale="1.8"></bitmap-text>
                 </button>
              </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="section-title-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Gameplay Settings" scale="2.2"></bitmap-text>
+            </div>
+            <div class="setting-item">
+              <div class="label-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Minimap Size:" scale="1.8"></bitmap-text>
+              </div>
+              <div class="volume-control">
+                <input type="range" min="0.5" max="1.5" step="0.25" .value=${this.gameplaySettings.minimapSize} @input=${this._setMinimapSize} />
+                <bitmap-text .fontRenderer=${this.fontRenderer} text=${`${Math.round(this.gameplaySettings.minimapSize * 100)}%`} scale="1.8"></bitmap-text>
+              </div>
+            </div>
           </div>
 
           <div class="settings-section">

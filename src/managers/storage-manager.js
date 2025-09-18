@@ -21,6 +21,9 @@ export class StorageManager {
                 moveRight: 'd',
                 jump: ' ',
                 dash: 'e',
+            },
+            gameplay: {
+                minimapSize: 1.0,
             }
         };
     }
@@ -87,10 +90,11 @@ export class StorageManager {
             const savedSettings = JSON.parse(saved);
 
             const defaultSettings = this._getDefaultSettings();
-            // Merge to ensure new settings are added if not present in saved data
+
             return {
                 sound: { ...defaultSettings.sound, ...savedSettings.sound },
                 keybinds: { ...defaultSettings.keybinds, ...savedSettings.keybinds },
+                gameplay: { ...defaultSettings.gameplay, ...savedSettings.gameplay },
             };
         } catch (e) {
             console.error("Failed to parse user settings from localStorage. Using defaults.", e);

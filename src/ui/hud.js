@@ -3,11 +3,12 @@ import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 
 export class HUD {
-  constructor(ctx, fontRenderer) {
+  constructor(ctx, fontRenderer, gameplaySettings) {
     this.ctx = ctx;
     this.canvas = ctx.canvas;
     this.fontRenderer = fontRenderer;
     this.isVisible = true;
+    this.settings = gameplaySettings;
     this.stats = {
       levelName: 'Loading...',
       collectedFruits: 0,
@@ -31,6 +32,10 @@ export class HUD {
     this.isVisible = visible;
   }
 
+  updateSettings(newSettings) {
+      this.settings = newSettings;
+  }
+
   updateStats(newStats) {
     this.stats = { ...this.stats, ...newStats };
   }
@@ -38,7 +43,7 @@ export class HUD {
   drawMinimap(ctx, camera, level, entityManager, playerEntityId) {
     if (!level) return;
 
-    const MAP_MAX_SIZE = 300;
+    const MAP_MAX_SIZE = 300 * this.settings.minimapSize;
     const MAP_MARGIN = 20;
 
     const levelAspectRatio = level.width / level.height;
@@ -75,13 +80,13 @@ export class HUD {
     ctx.fillRect(viewRectX, viewRectY, viewRectWidth, viewRectHeight);
 
     if (level && level.fruits) {
-      ctx.fillStyle = '#2b5cb7ff'; // A reddish color for fruits
+      ctx.fillStyle = '#2b5cb7ff';
       for (const fruit of level.fruits) {
         if (!fruit.collected) {
           const fruitMapX = mapX + fruit.x * scaleX;
           const fruitMapY = mapY + fruit.y * scaleY;
           ctx.beginPath();
-          ctx.arc(fruitMapX, fruitMapY, 2, 0, 2 * Math.PI); // Smaller radius (2)
+          ctx.arc(fruitMapX, fruitMapY, 3, 0, 2 * Math.PI);
           ctx.fill();
         }
       }

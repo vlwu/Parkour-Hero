@@ -314,7 +314,9 @@ export class CollisionSystem {
                         validGroundColliders.push(collider);
                     }
                 } else {
-                    if (!collider.isOneWay) {
+                    const tileAboveIsSolid = collider.isOneWay && level.isSolidAt(collider.x + collider.width / 2, collider.y - 1, true);
+
+                    if (!collider.isOneWay || tileAboveIsSolid) {
                         const prevBodyTop = (pos.y - vel.vy * dt);
                         const prevBodyXCenter = (pos.x - vel.vx * dt) + col.width / 2;
                         const colliderXStart = collider.x;
@@ -446,17 +448,17 @@ export class CollisionSystem {
 
 _handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager) {
         const vel = entityManager.getComponent(entityId, VelocityComponent);
-    
-        // Use multiple probe points along the player's base for accuracy
+
+
         const PROBE_POINTS = 5;
         let mudPoints = 0;
         let highestMudY = -Infinity;
-    
+
         for (let i = 0; i < PROBE_POINTS; i++) {
             const probeX = pos.x + (col.width / (PROBE_POINTS - 1)) * i;
-            const probeY = pos.y + col.height + 1; // Check just below the player
+            const probeY = pos.y + col.height + 1;
             const tileProps = level.getTilePropertiesAt(probeX, probeY);
-    
+
             if (tileProps && tileProps.interaction === 'mud') {
                 mudPoints++;
                 const tileGridY = Math.floor(probeY / GRID_CONSTANTS.TILE_SIZE);
@@ -466,9 +468,9 @@ _handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager) {
                 }
             }
         }
-    
+
         const isSubstantiallyOnMud = (mudPoints / PROBE_POINTS) >= 0.8;
-    
+
         if (isSubstantiallyOnMud) {
             if (vel.vy >= 0) {
                 if (!playerCtrl.isInMud) {

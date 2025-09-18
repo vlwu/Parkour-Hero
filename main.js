@@ -76,6 +76,7 @@ resizeCanvas();
 
 const settings = StorageManager.loadSettings();
 let keybinds = settings.keybinds;
+let gameplaySettings = settings.gameplay;
 
 let engine;
 
@@ -85,7 +86,7 @@ assetManager.loadCoreAssets().then(async (assets) => {
   try {
     const fontRenderer = new FontRenderer(assets.font_spritesheet);
 
-    engine = new Engine(gl, uiCanvas, ctx, assets, keybinds, fontRenderer, assetManager);
+    engine = new Engine(gl, uiCanvas, ctx, assets, keybinds, fontRenderer, assetManager, gameplaySettings);
 
     eventBus.publish('assetsLoaded', assets);
 
@@ -96,6 +97,12 @@ assetManager.loadCoreAssets().then(async (assets) => {
 
     eventBus.subscribe('requestStartGame', () => {
         engine.start();
+    });
+
+    eventBus.subscribe('gameplaySettingsChanged', (newSettings) => {
+        if (engine) {
+            engine.updateGameplaySettings(newSettings);
+        }
     });
 
     await assetManager.loadGameplayAssets();
