@@ -11,6 +11,7 @@ import './level-complete-modal.js';
 import './stats-modal.js';
 import './tutorial-modal.js';
 import './enemy-catalogue-modal.js';
+import './character-unlock-modal.js';
 import './bitmap-text.js';
 
 export class ParkourHeroUI extends LitElement {
@@ -99,6 +100,7 @@ export class ParkourHeroUI extends LitElement {
     fontRenderer: { type: Object },
     levelCompleteStats: { type: Object, state: true },
     previewMode: { type: Boolean },
+    newlyUnlockedCharacterId: { type: String, state: true },
   };
 
   constructor() {
@@ -117,6 +119,7 @@ export class ParkourHeroUI extends LitElement {
     this.fontRenderer = null;
     this.levelCompleteStats = null;
     this.previewMode = false;
+    this.newlyUnlockedCharacterId = null;
 
     if (window.location.hash === '#levels') {
       this.activeModal = 'levels';
@@ -136,6 +139,8 @@ export class ParkourHeroUI extends LitElement {
     eventBus.subscribe('gameStateUpdated', this._handleGameStateUpdate);
     eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets);
     eventBus.subscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
+    eventBus.subscribe('characterUnlocked', (charId) => this.newlyUnlockedCharacterId = charId);
+    
     if (this.previewMode) {
         this.gameHasStarted = true;
         this.activeModal = null;
@@ -154,6 +159,7 @@ export class ParkourHeroUI extends LitElement {
     eventBus.unsubscribe('gameStateUpdated', this._handleGameStateUpdate);
     eventBus.unsubscribe('assetsLoaded', (assets) => this.assets = assets);
     eventBus.unsubscribe('levelComplete', (stats) => this.levelCompleteStats = stats);
+    eventBus.unsubscribe('characterUnlocked', (charId) => this.newlyUnlockedCharacterId = charId);
   }
 
   _handleGameStateUpdate = (gameState) => {
@@ -164,6 +170,7 @@ export class ParkourHeroUI extends LitElement {
   _handleLevelLoad = ({ gameState }) => {
       this.gameState = gameState;
       this.levelCompleteStats = null;
+      this.newlyUnlockedCharacterId = null; // Clear unlock on new level load
       if (!this.gameHasStarted) {
           this.gameHasStarted = true;
       }
@@ -205,6 +212,7 @@ export class ParkourHeroUI extends LitElement {
 
   _handleEscapePress = () => {
     if (this.levelCompleteStats) return;
+    if (this.newlyUnlockedCharacterId) return; // Don't close unlock modal with escape easily? Or handle it.
     if (this.activeModal) { this._closeModal(); }
     else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
   };
@@ -234,6 +242,13 @@ export class ParkourHeroUI extends LitElement {
         }
         eventBus.publish('allMenusClosed');
     }
+  }
+  
+  _closeUnlockModal = () => {
+      this.newlyUnlockedCharacterId = null;
+      // If we are on the level complete screen, we might want to stay paused.
+      // But typically unlock happens at end of level.
+      // If level complete screen is shown, we just close this overlay.
   }
 
   _openModalFromMenu(modalName) {
@@ -279,6 +294,19 @@ export class ParkourHeroUI extends LitElement {
   }
 
   render() {
+    // Priority: Unlock Modal > Level Complete > Menus
+    
+    if (this.newlyUnlockedCharacterId) {
+        return html`
+            <character-unlock-modal
+                .characterId=${this.newlyUnlockedCharacterId}
+                .assets=${this.assets}
+                .fontRenderer=${this.fontRenderer}
+                @close-modal=${this._closeUnlockModal}
+            ></character-unlock-modal>
+        `;
+    }
+
     if (this.levelCompleteStats) {
       return html`
         <level-complete-modal

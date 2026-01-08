@@ -1,4 +1,4 @@
-import { PLAYER_CONSTANTS, PLAYER_STATES } from '../utils/constants.js';
+import { PLAYER_CONSTANTS } from '../utils/constants.js';
 
 export class PlayerControlledComponent {
     constructor({
@@ -6,60 +6,54 @@ export class PlayerControlledComponent {
         jumpForce = PLAYER_CONSTANTS.JUMP_FORCE,
         dashSpeed = PLAYER_CONSTANTS.DASH_SPEED,
         dashDuration = PLAYER_CONSTANTS.DASH_DURATION,
-        jumpBufferTimer = 0,
-        coyoteTimer = 0,
-        dashTimer = 0,
-        dashCooldownTimer = 0,
-        hitStunTimer = 0,
-        jumpCount = 0,
-        isDashing = false,
-        isHit = false,
-        isSpawning = true,
-        spawnComplete = false,
-        isDespawning = false,
-        despawnAnimationFinished = false,
-        needsRespawn = false,
-        deathCount = 0,
-        activeSurfaceSound = null,
-        surfaceParticleTimer = 0,
-        jumpParticleTimer = 0,
-        hLock = false,
-        vLock = false,
-        inputLocked = false,
-        jumpedFromMud = false
+        stats = {}
     } = {}) {
         this.speed = speed;
-        this.jumpForce = jumpForce;
+        this.baseJumpForce = jumpForce;
+        this.baseDashDuration = dashDuration;
         this.dashSpeed = dashSpeed;
-        this.dashDuration = dashDuration;
 
-        this.jumpBufferTimer = jumpBufferTimer;
-        this.coyoteTimer = coyoteTimer;
-        this.dashTimer = dashTimer;
-        this.dashCooldownTimer = dashCooldownTimer;
-        this.hitStunTimer = hitStunTimer;
-        this.surfaceParticleTimer = surfaceParticleTimer;
-        this.jumpParticleTimer = jumpParticleTimer;
+        // Apply Character Stats
+        this.maxJumps = stats.maxJumps || 2;
+        this.jumpForce = this.baseJumpForce * (stats.jumpForceMult || 1.0);
+        
+        this.maxDashes = stats.maxDashes || 1;
+        this.dashCooldownMult = stats.dashCooldownMult || 1.0;
+        this.dashDuration = this.baseDashDuration * (stats.dashDurationMult || 1.0);
+        
+        this.ignoreSurfaceEffects = stats.ignoreSurfaceEffects || false;
+        this.detectTraps = stats.detectTraps || false;
 
-        this.jumpCount = jumpCount;
-        this.isDashing = isDashing;
-        this.isHit = isHit;
-        this.isSpawning = isSpawning;
-        this.spawnComplete = spawnComplete;
-        this.isDespawning = isDespawning;
-        this.despawnAnimationFinished = despawnAnimationFinished;
-        this.needsRespawn = needsRespawn;
-        this.hLock = hLock;
-        this.vLock = vLock;
-        this.inputLocked = inputLocked;
+        this.currentDashCount = 0;
 
-        this.deathCount = deathCount;
-        this.activeSurfaceSound = activeSurfaceSound;
+        // State
+        this.jumpBufferTimer = 0;
+        this.coyoteTimer = 0;
+        this.dashTimer = 0;
+        this.dashCooldownTimer = 0;
+        this.hitStunTimer = 0;
+        this.surfaceParticleTimer = 0;
+        this.jumpParticleTimer = 0;
+
+        this.jumpCount = 0;
+        this.isDashing = false;
+        this.isHit = false;
+        this.isSpawning = true;
+        this.spawnComplete = false;
+        this.isDespawning = false;
+        this.despawnAnimationFinished = false;
+        this.needsRespawn = false;
+        this.hLock = false;
+        this.vLock = false;
+        this.inputLocked = false;
+
+        this.deathCount = 0;
+        this.activeSurfaceSound = null;
         this.previousGroundEntity = null;
         this.fallDistance = 0;
         this.isInMud = false;
         this.mudSinkAmount = PLAYER_CONSTANTS.HEIGHT / 5;
-        this.jumpedFromMud = jumpedFromMud;
+        this.jumpedFromMud = false;
 
         this.currentState = null;
     }

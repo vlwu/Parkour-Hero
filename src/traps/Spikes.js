@@ -6,18 +6,14 @@ export class Spikes extends Trap {
     constructor(x, y, config) {
         super(x, y, { ...config, width: 16, height: 16 });
 
-
         this.state = 'hidden';
         this.activationRadius = 64;
         this.warningDuration = 0.4;
         this.retractDelay = 1.5;
         this.timer = 0;
         this.damage = config.damage || TRAP_CONSTANTS.SPIKE_DAMAGE;
+        this.forceVisible = false; // For Virtual Guy
     }
-
-
-
-
 
     get hitbox() {
         return {
@@ -28,9 +24,11 @@ export class Spikes extends Trap {
         };
     }
 
-    update(dt, playerPos) {
-
+    update(dt, playerPos, eventBus, level, groundEntity, playerCtrl) {
         if (!playerPos) return;
+
+        // Check if player can see hidden traps
+        this.forceVisible = playerCtrl && playerCtrl.detectTraps;
 
         if (this.timer > 0) {
             this.timer -= dt;
@@ -71,7 +69,7 @@ export class Spikes extends Trap {
     }
 
     getRenderableData(assets, textures) {
-        if (this.state === 'hidden' || this.state === 'warning') return null;
+        if ((this.state === 'hidden' && !this.forceVisible) || this.state === 'warning') return null;
 
         const sprite = assets.spike_two;
         const texture = textures.spike_two;
@@ -84,7 +82,14 @@ export class Spikes extends Trap {
             sprite.width, sprite.height,
             0.0
         ];
-        return { texture, instanceData };
+        
+        // If force visible but hidden state, show semi-transparent
+        let alpha = 1.0;
+        if (this.forceVisible && this.state === 'hidden') {
+            alpha = 0.5;
+        }
+
+        return { texture, instanceData, alpha };
     }
 
     onCollision(player, eventBus) {
@@ -109,8 +114,8 @@ export class Spikes extends Trap {
     }
 
     reset() {
-
         this.state = 'hidden';
         this.timer = 0;
+        this.forceVisible = false;
     }
 }

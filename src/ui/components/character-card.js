@@ -5,7 +5,6 @@ import './bitmap-text.js';
 export class CharacterCard extends LitElement {
   static styles = css`
     :host {
-      /* This allows the card to participate correctly in a flex/grid layout */
       display: flex;
     }
     .character-card {
@@ -13,8 +12,8 @@ export class CharacterCard extends LitElement {
       padding: 15px; display: flex; flex-direction: column;
       align-items: center; gap: 10px; transition: all 0.2s ease-in-out;
       position: relative;
-      width: 100%; /* Fill the grid cell */
-      box-sizing: border-box; /* Include padding in width calculation */
+      width: 100%; 
+      box-sizing: border-box;
     }
     .character-card:not(.locked):hover { border-color: #007bff; transform: translateY(-3px); }
     .character-card.locked { opacity: 0.6; cursor: not-allowed; }
@@ -23,7 +22,7 @@ export class CharacterCard extends LitElement {
     .char-canvas {
       width: 64px; height: 64px; background-color: #444; border-radius: 6px;
       image-rendering: pixelated;
-      flex-shrink: 0; /* Prevent canvas from shrinking */
+      flex-shrink: 0;
     }
     .char-name-container { 
       margin-top: 5px;
@@ -31,7 +30,17 @@ export class CharacterCard extends LitElement {
     .char-unlock-container { 
       display: flex; flex-direction: column; 
       justify-content: center; align-items: center;
-      flex-grow: 1; /* This is key: it will take up available space, pushing the button down */
+      flex-grow: 1;
+      padding: 5px 0;
+    }
+    
+    .description-text {
+        font-size: 0.9em;
+        color: #ddd;
+        margin-top: 5px;
+        text-align: center;
+        line-height: 1.3;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     
     .select-button {
@@ -39,16 +48,14 @@ export class CharacterCard extends LitElement {
       border-radius: 6px; cursor: pointer; width: 100%;
       transition: background-color 0.2s;
       display: flex; justify-content: center; align-items: center;
-      margin-top: auto; /* Push the button to the bottom of the card */
-      flex-shrink: 0; /* Prevent button from shrinking */
+      margin-top: auto; 
+      flex-shrink: 0;
     }
     .select-button:hover:not(:disabled) { background-color: #0056b3; }
     
     .selected .select-button { background-color: #4CAF50; cursor: default; }
     .locked .select-button { background-color: #666; cursor: not-allowed; }
   `;
-
-  // ... (The rest of the component's JavaScript is unchanged) ...
 
   static properties = {
     characterId: { type: String },
@@ -133,7 +140,9 @@ export class CharacterCard extends LitElement {
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="Complete ${config.unlockRequirement} levels" scale="1.5" color="#ccc"></bitmap-text>
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="to unlock" scale="1.5" color="#ccc"></bitmap-text>
               `
-            : html`<bitmap-text .fontRenderer=${this.fontRenderer} text="Available" scale="1.5" color="#ccc"></bitmap-text>`
+            : html`
+                <div class="description-text">${config.description}</div>
+            `
           }
         </div>
         <button class="select-button" @click=${this._handleSelect} ?disabled=${this.isLocked || this.isSelected}>

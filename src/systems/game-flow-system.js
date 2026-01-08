@@ -48,7 +48,11 @@ export class GameFlowSystem {
             const newGameState = gameState.onLevelComplete(runStats);
             if (newGameState !== gameState) {
                 eventBus.publish('gameStateUpdated', newGameState);
-                eventBus.publish('pauseGame'); // Use a generic event to signal the engine
+                eventBus.publish('pauseGame'); 
+
+                if (newGameState.newlyUnlockedCharacter) {
+                    eventBus.publish('characterUnlocked', newGameState.newlyUnlockedCharacter);
+                }
 
                 eventBus.publish('levelComplete', {
                     deaths: runStats.deaths,

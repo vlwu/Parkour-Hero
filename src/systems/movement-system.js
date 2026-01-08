@@ -59,8 +59,11 @@ export class MovementSystem {
         ctrl.hLock = false;
 
         const GROUND_FRICTION = 1000;
+        
+        // Virtual Guy Immunity check
+        const effectiveGroundType = ctrl.ignoreSurfaceEffects ? 'normal' : col.groundType;
 
-        if (col.isGrounded && col.groundType === 'ice') {
+        if (col.isGrounded && effectiveGroundType === 'ice') {
             const acc = PLAYER_CONSTANTS.ICE_ACCELERATION;
             const fric = PLAYER_CONSTANTS.ICE_FRICTION;
             if (applyInput && input.moveLeft) {
@@ -78,7 +81,7 @@ export class MovementSystem {
             }
             vel.vx = Math.max(-ctrl.speed, Math.min(ctrl.speed, vel.vx));
         } else {
-            const moveSpeed = ctrl.speed * (col.isGrounded && col.groundType === 'sand' ? PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER : 1);
+            const moveSpeed = ctrl.speed * (col.isGrounded && effectiveGroundType === 'sand' ? PLAYER_CONSTANTS.SAND_MOVE_MULTIPLIER : 1);
             if (applyInput && input.moveLeft) {
                 vel.vx = -moveSpeed;
             } else if (applyInput && input.moveRight) {
@@ -95,6 +98,7 @@ export class MovementSystem {
         }
     }
 
+    // ... _applyVerticalMovement, _applyStickyPlatformMovement, _updateSurfaceEffects (unchanged)
     _applyVerticalMovement(dt, vel, col, ctrl, state) {
         if (ctrl.isInMud && vel.vy >= 0) {
             vel.vy = 0;
@@ -111,7 +115,6 @@ export class MovementSystem {
             vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
         }
 
-
         if (state && state.currentState === 'cling') {
             vel.vy = Math.min(vel.vy, 30);
         }
@@ -119,15 +122,12 @@ export class MovementSystem {
         vel.vy = Math.min(vel.vy, PLAYER_CONSTANTS.MAX_FALL_SPEED);
     }
 
-
     _applyStickyPlatformMovement(pos, col) {
         if (col.isGrounded && col.groundEntity && typeof col.groundEntity.getMovementDelta === 'function') {
             const delta = col.groundEntity.getMovementDelta();
             pos.x += delta.dx;
             pos.y += delta.dy;
-            
-            // Ensure player stays on top of moving platforms
-            if (delta.dy < 0) { // Platform moving up
+            if (delta.dy < 0) { 
                 const platformTop = col.groundEntity.hitbox.y;
                 const playerBottom = pos.y + col.height;
                 if (playerBottom > platformTop) {
@@ -147,7 +147,9 @@ export class MovementSystem {
                 ctrl.surfaceParticleTimer = 0;
 
                 let particleType;
-                switch (col.groundType) {
+                const groundType = ctrl.ignoreSurfaceEffects ? 'normal' : col.groundType;
+
+                switch (groundType) {
                     case 'sand': particleType = 'sand'; break;
                     case 'mud': particleType = 'mud'; break;
                     case 'ice': particleType = 'ice'; break;

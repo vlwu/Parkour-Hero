@@ -59,6 +59,7 @@ export class PlayerStateSystem {
         for (const entityId of entities) {
             const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
             const vel = entityManager.getComponent(entityId, VelocityComponent);
+            const col = entityManager.getComponent(entityId, CollisionComponent);
 
             if (ctrl.jumpedFromMud && !ctrl.isInMud) {
                 ctrl.jumpedFromMud = false;
@@ -66,6 +67,11 @@ export class PlayerStateSystem {
 
             if (!ctrl.currentState) {
                 this._transitionTo(entityId, new SpawnState(entityId, entityManager), entityManager);
+            }
+
+            // Reset Dash Count if Grounded
+            if (col.isGrounded) {
+                ctrl.currentDashCount = 0;
             }
 
             this._updateTimers(dt, ctrl);
@@ -86,7 +92,7 @@ export class PlayerStateSystem {
             this._updateAnimation(dt, entityId, entityManager);
             this._handleJumpTrail(dt, entityId, entityManager);
 
-            if (entityManager.getComponent(entityId, CollisionComponent).isGrounded) {
+            if (col.isGrounded) {
                 ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
             }
         }
@@ -129,6 +135,8 @@ export class PlayerStateSystem {
                 const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
                 vel.vy = -event.stompBounceVelocity;
                 ctrl.jumpCount = 1;
+                // Reset dashes on stomp
+                ctrl.currentDashCount = 0;
             }
         }
         this.stompEvents = [];
@@ -200,6 +208,7 @@ export class PlayerStateSystem {
             const justPressedJump = input.jumpPressedThisFrame;
 
             if (ctrl.jumpBufferTimer > 0 && (col.isGrounded || ctrl.coyoteTimer > 0) && ctrl.jumpCount === 0) {
+                // First Jump
                 vel.vy = -ctrl.jumpForce;
                 ctrl.jumpCount = 1;
                 ctrl.jumpBufferTimer = 0;
@@ -207,14 +216,18 @@ export class PlayerStateSystem {
                 eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
                 this._transitionTo(entityId, new JumpState(entityId, entityManager), entityManager);
             } else if (justPressedJump && col.isAgainstWall && !col.isGrounded) {
+                // Wall Jump
                 vel.vx = (renderable.direction === 'left' ? 1 : -1) * ctrl.speed;
                 renderable.direction = renderable.direction === 'left' ? 'right' : 'left';
                 vel.vy = -ctrl.jumpForce;
+                // Wall jump doesn't consume multi-jump counters if standard wall jump
+                ctrl.jumpCount = 1; 
                 this._transitionTo(entityId, new JumpState(entityId, entityManager), entityManager);
                 eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'SFX' });
-            } else if (justPressedJump && ctrl.jumpCount === 1 && !col.isGrounded && !col.isAgainstWall) {
+            } else if (justPressedJump && ctrl.jumpCount > 0 && ctrl.jumpCount < ctrl.maxJumps && !col.isGrounded && !col.isAgainstWall) {
+                // Multi Jump (Double/Triple)
                 vel.vy = -ctrl.jumpForce;
-                ctrl.jumpCount = 2;
+                ctrl.jumpCount++;
                 ctrl.jumpBufferTimer = 0;
                 eventBus.publish('playSound', { key: 'double_jump', volume: 0.6, channel: 'SFX' });
                 eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'double_jump' });
@@ -223,12 +236,14 @@ export class PlayerStateSystem {
         }
         ctrl.vLock = false;
 
-        if (input.dashPressedThisFrame && ctrl.dashCooldownTimer <= 0) {
+        // Multi Dash Logic
+        if (input.dashPressedThisFrame && ctrl.dashCooldownTimer <= 0 && ctrl.currentDashCount < ctrl.maxDashes) {
             ctrl.isDashing = true;
+            ctrl.currentDashCount++;
             ctrl.dashTimer = ctrl.dashDuration;
             vel.vx = renderable.direction === 'right' ? ctrl.dashSpeed : -ctrl.dashSpeed;
             vel.vy = 0;
-            ctrl.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN;
+            ctrl.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN * ctrl.dashCooldownMult;
             eventBus.publish('playSound', { key: 'dash', volume: 0.7, channel: 'SFX' });
             eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: 'dash', direction: renderable.direction });
             this._transitionTo(entityId, new DashState(entityId, entityManager), entityManager);

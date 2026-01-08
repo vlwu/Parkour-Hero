@@ -149,7 +149,7 @@ export class CollisionSystem {
             const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
 
             if (playerCtrl) {
-                playerCtrl.previousGroundEntity = col.groundEntity;
+                this._handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager);
             }
             col.groundEntity = null;
 
@@ -446,9 +446,11 @@ export class CollisionSystem {
         }
     }
 
-_handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager) {
-        const vel = entityManager.getComponent(entityId, VelocityComponent);
+    _handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager) {
+        // Virtual Guy Immunity
+        if (playerCtrl.ignoreSurfaceEffects) return;
 
+        const vel = entityManager.getComponent(entityId, VelocityComponent);
 
         const PROBE_POINTS = 5;
         let mudPoints = 0;

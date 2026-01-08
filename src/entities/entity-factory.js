@@ -9,11 +9,10 @@ import { InputComponent } from '../components/InputComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
 import { DynamicColliderComponent } from '../components/DynamicColliderComponent.js';
+import { characterConfig } from './level-definitions.js';
 
 export function createPlayer(entityManager, x, y, characterId) {
     const playerEntityId = entityManager.createEntity();
-
-
 
     const topLeftX = x - PLAYER_CONSTANTS.WIDTH / 2;
     const topLeftY = y - PLAYER_CONSTANTS.HEIGHT / 2;
@@ -22,7 +21,6 @@ export function createPlayer(entityManager, x, y, characterId) {
     entityManager.addComponent(playerEntityId, new VelocityComponent());
     entityManager.addComponent(playerEntityId, new CharacterComponent(characterId));
 
-
     entityManager.addComponent(playerEntityId, new RenderableComponent({
         spriteKey: null,
         width: PLAYER_CONSTANTS.SPAWN_WIDTH,
@@ -30,8 +28,11 @@ export function createPlayer(entityManager, x, y, characterId) {
         animationState: 'spawn',
     }));
 
+    const config = characterConfig[characterId] || characterConfig['PinkMan'];
 
-    entityManager.addComponent(playerEntityId, new PlayerControlledComponent());
+    entityManager.addComponent(playerEntityId, new PlayerControlledComponent({
+        stats: config.stats
+    }));
 
     entityManager.addComponent(playerEntityId, new CollisionComponent({
         type: 'dynamic',
