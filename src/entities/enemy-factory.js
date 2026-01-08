@@ -34,14 +34,15 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
     entityManager.addComponent(enemyEntityId, new StateComponent(initialState));
     entityManager.addComponent(enemyEntityId, new DynamicColliderComponent());
 
-
-
     const { type: _enemyType, x: _enemyX, y: _enemyY, initialDragPos, ...aiOverrides } = config;
     const aiConfig = { ...data.ai, ...aiOverrides };
 
     entityManager.addComponent(enemyEntityId, new EnemyComponent({
         type: type,
-        ai: aiConfig
+        ai: aiConfig,
+        spawnX: initialTopLeftX,
+        spawnY: topLeftY,
+        initialState: initialState
     }));
 
     entityManager.addComponent(enemyEntityId, new KillableComponent({ ...data.killable }));

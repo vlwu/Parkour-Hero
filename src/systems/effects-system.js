@@ -8,8 +8,10 @@ export class EffectsSystem {
         this.effectsPool = [];
         this.damageIndicators = [];
         this.indicatorPool = [];
+        this.respawnTimers = []; // Track active respawn timers
         eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
         eventBus.subscribe('createDamageIndicator', (data) => this._onDamageTaken(data));
+        eventBus.subscribe('createRespawnTimer', (data) => this._onRespawnTimer(data));
     }
 
     _onFruitCollected(fruit) {
@@ -51,6 +53,15 @@ export class EffectsSystem {
         this.damageIndicators.push(indicator);
     }
 
+    _onRespawnTimer({ x, y, duration }) {
+        this.respawnTimers.push({
+            x,
+            y,
+            life: duration,
+            initialDuration: duration
+        });
+    }
+
     reset() {
         for (const effect of this.activeEffects) {
             this.effectsPool.push(effect);
@@ -60,6 +71,7 @@ export class EffectsSystem {
             this.indicatorPool.push(indicator);
         }
         this.damageIndicators = [];
+        this.respawnTimers = [];
     }
 
     update(dt) {
@@ -87,10 +99,18 @@ export class EffectsSystem {
                 indicator.alpha = Math.min(1.0, (indicator.life / indicator.maxLife) * 2);
             }
         }
+
+        for (let i = this.respawnTimers.length - 1; i >= 0; i--) {
+            const timer = this.respawnTimers[i];
+            timer.life -= dt;
+            if (timer.life <= 0) {
+                this.respawnTimers.splice(i, 1);
+            }
+        }
     }
 
     render(ctx, camera, alpha) {
-        if (this.activeEffects.length === 0 && this.damageIndicators.length === 0) return;
+        if (this.activeEffects.length === 0 && this.damageIndicators.length === 0 && this.respawnTimers.length === 0) return;
 
         camera.apply(ctx, alpha);
 
@@ -104,19 +124,38 @@ export class EffectsSystem {
             }
         }
 
-        if (this.damageIndicators.length > 0 && this.fontRenderer) {
-            this.damageIndicators.forEach(indicator => {
-                const color = `rgba(255, 0, 0, ${indicator.alpha})`;
-                const outlineColor = `rgba(0, 0, 0, ${indicator.alpha})`;
+        if (this.fontRenderer) {
+            // Render Damage Indicators
+            if (this.damageIndicators.length > 0) {
+                this.damageIndicators.forEach(indicator => {
+                    const color = `rgba(255, 0, 0, ${indicator.alpha})`;
+                    const outlineColor = `rgba(0, 0, 0, ${indicator.alpha})`;
 
-                this.fontRenderer.drawText(ctx, indicator.text, indicator.x, indicator.y, {
-                    scale: 1,
-                    align: 'center',
-                    color: color,
-                    outlineColor: outlineColor,
-                    outlineWidth: 1
+                    this.fontRenderer.drawText(ctx, indicator.text, indicator.x, indicator.y, {
+                        scale: 1.3, // Increased scale as requested
+                        align: 'center',
+                        color: color,
+                        outlineColor: outlineColor,
+                        outlineWidth: 1
+                    });
                 });
-            });
+            }
+
+            // Render Respawn Timers
+            if (this.respawnTimers.length > 0) {
+                this.respawnTimers.forEach(timer => {
+                    if (timer.life > 0) {
+                        const timeLeft = Math.ceil(timer.life);
+                        this.fontRenderer.drawText(ctx, timeLeft.toString(), timer.x, timer.y - 10, {
+                            scale: 1.5,
+                            align: 'center',
+                            color: 'white',
+                            outlineColor: 'black',
+                            outlineWidth: 1
+                        });
+                    }
+                });
+            }
         }
 
         camera.restore(ctx);

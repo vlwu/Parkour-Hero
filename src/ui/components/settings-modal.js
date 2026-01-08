@@ -58,6 +58,53 @@ export class SettingsMenu extends LitElement {
 
     .volume-control { display: flex; align-items: center; gap: 10px; }
 
+    /* Custom Range Input Styles */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      cursor: pointer;
+      margin-top: -6px;
+    }
+    input[type=range]::-moz-range-thumb {
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      cursor: pointer;
+      background: #666;
+      border-radius: 2px;
+    }
+    input[type=range]::-moz-range-track {
+      width: 100%;
+      height: 4px;
+      cursor: pointer;
+      background: #666;
+      border-radius: 2px;
+    }
+
+    /* Volume Slider Colors */
+    input[type="range"].volume-enabled::-webkit-slider-thumb { background: #4CAF50; }
+    input[type="range"].volume-enabled::-moz-range-thumb { background: #4CAF50; }
+    
+    input[type="range"].volume-disabled::-webkit-slider-thumb { background: #f44336; }
+    input[type="range"].volume-disabled::-moz-range-thumb { background: #f44336; }
+
+    /* Minimap Slider Colors */
+    input[type="range"].minimap-slider::-webkit-slider-thumb { background: #3498db; }
+    input[type="range"].minimap-slider::-moz-range-thumb { background: #3498db; }
+
     .action-button {
         background-color: #007bff; color: #fff; border: none; padding: 10px 20px;
         border-radius: 6px; cursor: pointer;
@@ -107,6 +154,7 @@ export class SettingsMenu extends LitElement {
       return html``;
     }
     const keybindActions = Object.keys(this.keybinds);
+    const volumeClass = this.soundSettings.enabled ? 'volume-enabled' : 'volume-disabled';
 
     return html`
       <div class="modal-overlay" @click=${this._dispatchClose}>
@@ -135,7 +183,15 @@ export class SettingsMenu extends LitElement {
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="Global Volume:" scale="1.8"></bitmap-text>
               </div>
               <div class="volume-control">
-                <input type="range" min="0" max="1" step="0.1" .value=${this.soundSettings.volume} @input=${this._setVolume} />
+                <input 
+                  type="range" 
+                  class="${volumeClass}"
+                  min="0" 
+                  max="1" 
+                  step="0.1" 
+                  .value=${this.soundSettings.volume} 
+                  @input=${this._setVolume} 
+                />
                 <bitmap-text .fontRenderer=${this.fontRenderer} text=${`${Math.round(this.soundSettings.volume * 100)}%`} scale="1.8"></bitmap-text>
               </div>
             </div>
@@ -155,7 +211,16 @@ export class SettingsMenu extends LitElement {
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="Minimap Size:" scale="1.8"></bitmap-text>
               </div>
               <div class="volume-control">
-                <input type="range" min="0.5" max="1.5" step="0.25" .value=${this.gameplaySettings.minimapSize} @input=${this._setMinimapSize} />
+                <input 
+                  type="range"
+                  class="minimap-slider"
+                  id="minimap-slider"
+                  min="0.5" 
+                  max="2.0" 
+                  step="0.25" 
+                  .value=${this.gameplaySettings.minimapSize} 
+                  @input=${this._setMinimapSize} 
+                />
                 <bitmap-text .fontRenderer=${this.fontRenderer} text=${`${Math.round(this.gameplaySettings.minimapSize * 100)}%`} scale="1.8"></bitmap-text>
               </div>
             </div>

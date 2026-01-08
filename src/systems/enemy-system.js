@@ -9,7 +9,8 @@ import { ENEMY_DEFINITIONS } from '../entities/enemy-definitions.js';
 import { KillableComponent } from '../components/KillableComponent.js';
 import { createAIBehavior } from '../ai-behaviors/index.js';
 import { createEnemy } from '../entities/enemy-factory.js';
-import { DIRECTIONS } from '../utils/constants.js';
+import { DIRECTIONS, ENEMY_STATES, ANIMATION_STATES } from '../utils/constants.js';
+import { DynamicColliderComponent } from '../components/DynamicColliderComponent.js';
 
 export class EnemySystem {
     constructor(collisionSystem) {
@@ -56,7 +57,7 @@ export class EnemySystem {
                     renderable.animationTimer = 0;
                     collision.solid = false;
                     enemy.deathTimer = 0.5;
-                    this.collisionSystem.removeDynamicEntity(enemyId, entityManager);
+                    // Don't remove dynamic entity yet, handled in _updateDyingState
                     eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
                 }
             } else if (enemy.type === 'radish' && !enemy.isDead) {
@@ -66,7 +67,6 @@ export class EnemySystem {
                     killable.stompable = false;
                     enemy.immunityTimer = 0.5;
                     const pos = entityManager.getComponent(enemyId, PositionComponent);
-
 
                     eventBus.publish('createParticles', { x: pos.x + collision.width / 2, y: pos.y, type: 'radish_leaf', leafIndex: 0 });
                     eventBus.publish('createParticles', { x: pos.x + collision.width / 2, y: pos.y, type: 'radish_leaf', leafIndex: 1 });
@@ -80,7 +80,6 @@ export class EnemySystem {
                     renderable.animationTimer = 0;
                     collision.solid = false;
                     enemy.deathTimer = 0.5;
-                    this.collisionSystem.removeDynamicEntity(enemyId, entityManager);
                     eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
                 }
             } else if (enemy.type === 'angrypig' && !enemy.isDead) {
@@ -101,7 +100,6 @@ export class EnemySystem {
                     renderable.animationTimer = 0;
                     collision.solid = false;
                     enemy.deathTimer = 0.5;
-                    this.collisionSystem.removeDynamicEntity(enemyId, entityManager);
                     eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
                 }
             } else if ((enemy.type === 'rock1' || enemy.type === 'rock2') && !enemy.isDead) {
@@ -112,30 +110,30 @@ export class EnemySystem {
                 renderable.animationTimer = 0;
                 collision.solid = false;
                 enemy.deathTimer = 0.05;
-                this.collisionSystem.removeDynamicEntity(enemyId, entityManager);
                 eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
 
+                // Rock splitting logic remains, but parent dies
                 const pos = entityManager.getComponent(enemyId, PositionComponent);
                 const col = entityManager.getComponent(enemyId, CollisionComponent);
 
                 const nextRockType = enemy.type === 'rock1' ? 'rock2' : 'rock3';
                 const nextRockDef = ENEMY_DEFINITIONS[nextRockType];
-                if (!nextRockDef) continue;
+                if (nextRockDef) {
+                    const originalBottomY = pos.y + col.height;
+                    const spawnY = originalBottomY - nextRockDef.height / 2;
+                    const spawnX = pos.x + col.width / 2;
 
-                const originalBottomY = pos.y + col.height;
-                const spawnY = originalBottomY - nextRockDef.height / 2;
-                const spawnX = pos.x + col.width / 2;
+                    const rock1Id = createEnemy(entityManager, nextRockType, spawnX - nextRockDef.width / 2, spawnY);
+                    if (rock1Id !== null) {
+                        const rock1Renderable = entityManager.getComponent(rock1Id, RenderableComponent);
+                        if (rock1Renderable) rock1Renderable.direction = DIRECTIONS.LEFT;
+                    }
 
-                const rock1Id = createEnemy(entityManager, nextRockType, spawnX - nextRockDef.width / 2, spawnY);
-                if (rock1Id !== null) {
-                    const rock1Renderable = entityManager.getComponent(rock1Id, RenderableComponent);
-                    if (rock1Renderable) rock1Renderable.direction = DIRECTIONS.LEFT;
-                }
-
-                const rock2Id = createEnemy(entityManager, nextRockType, spawnX + nextRockDef.width / 2, spawnY);
-                if (rock2Id !== null) {
-                    const rock2Renderable = entityManager.getComponent(rock2Id, RenderableComponent);
-                    if (rock2Renderable) rock2Renderable.direction = DIRECTIONS.RIGHT;
+                    const rock2Id = createEnemy(entityManager, nextRockType, spawnX + nextRockDef.width / 2, spawnY);
+                    if (rock2Id !== null) {
+                        const rock2Renderable = entityManager.getComponent(rock2Id, RenderableComponent);
+                        if (rock2Renderable) rock2Renderable.direction = DIRECTIONS.RIGHT;
+                    }
                 }
 
             } else if (enemy && !enemy.isDead) {
@@ -150,11 +148,79 @@ export class EnemySystem {
                 renderable.animationTimer = 0;
                 collision.solid = false;
                 enemy.deathTimer = 0.5;
-                this.collisionSystem.removeDynamicEntity(enemyId, entityManager);
                 eventBus.publish('playSound', { key: 'enemy_stomp', volume: 0.9, channel: 'SFX' });
             }
         }
         this.stompEvents = [];
+    }
+
+    _respawnEnemy(entityId, entityManager) {
+        const enemy = entityManager.getComponent(entityId, EnemyComponent);
+        const pos = entityManager.getComponent(entityId, PositionComponent);
+        const vel = entityManager.getComponent(entityId, VelocityComponent);
+        const state = entityManager.getComponent(entityId, StateComponent);
+        const renderable = entityManager.getComponent(entityId, RenderableComponent);
+        const killable = entityManager.getComponent(entityId, KillableComponent);
+        const col = entityManager.getComponent(entityId, CollisionComponent);
+
+        if (!enemy || !pos) return;
+
+        enemy.isDead = false;
+        enemy.respawnTimer = 0;
+        enemy.immunityTimer = 0;
+        enemy.deathTimer = 0;
+
+        // Reset custom states
+        if (enemy.type === 'snail') enemy.snailState = ENEMY_STATES.WALKING;
+        if (enemy.type === 'angrypig') enemy.angryPigState = ENEMY_STATES.WALKING;
+        if (enemy.type === 'ghost') enemy.ghostState = ENEMY_STATES.APPEARING;
+        if (enemy.type === 'skull') enemy.skullState = ENEMY_STATES.IDLE2;
+        if (enemy.type === 'radish') enemy.radishState = ENEMY_STATES.FLYING;
+        if (enemy.type === 'defensive_cycle') enemy.timer = enemy.ai.spikesInDuration;
+
+        pos.x = enemy.spawnX;
+        pos.y = enemy.spawnY;
+        vel.vx = 0;
+        vel.vy = 0;
+
+        state.currentState = enemy.initialState;
+        
+        // Reset renderable
+        renderable.isVisible = true;
+        renderable.animationTimer = 0;
+        renderable.animationFrame = 0;
+        
+        // Determine initial animation state
+        let initialAnimationState;
+        if (enemy.type === 'bluebird') initialAnimationState = 'flying';
+        else if (enemy.initialState === 'idle') {
+             switch(enemy.type) {
+                case 'slime': initialAnimationState = 'idle_run'; break;
+                case 'turtle': initialAnimationState = 'idle2'; break;
+                case 'skull': initialAnimationState = 'idle2'; break;
+                default: initialAnimationState = 'idle'; break;
+            }
+        } else if (enemy.type === 'radish') initialAnimationState = 'idle1';
+        else if (enemy.type === 'bee') initialAnimationState = 'idle';
+        else {
+            if (enemy.type === 'slime') initialAnimationState = 'idle_run';
+            else initialAnimationState = (enemy.type === 'snail' ? 'walk' : 'run');
+        }
+        renderable.animationState = initialAnimationState;
+
+        // Reset killable
+        const def = ENEMY_DEFINITIONS[enemy.type];
+        if (def && def.killable) {
+            killable.stompable = def.killable.stompable;
+            killable.dealsContactDamage = def.killable.dealsContactDamage;
+        }
+
+        // Re-enable collision
+        col.solid = true;
+        entityManager.addComponent(entityId, new DynamicColliderComponent());
+        
+        // Re-create AI Behavior
+        enemy.aiBehavior = null;
     }
 
     update(dt, { entityManager, playerEntityId, level }) {
@@ -176,15 +242,42 @@ export class EnemySystem {
             }
 
             if (enemy.isDead) {
-                const wasDestroyed = this._updateDyingState(dt, enemy, vel, entityManager, id);
-                if (wasDestroyed) continue;
-            } else {
+                if (enemy.respawnTimer > 0) {
+                    // Waiting for respawn
+                    enemy.respawnTimer -= dt;
+                    if (enemy.respawnTimer <= 0) {
+                        this._respawnEnemy(id, entityManager);
+                    }
+                    continue;
+                }
 
+                // If not waiting for respawn, check death animation
+                const deathAnimationFinished = this._updateDyingState(dt, enemy, vel, entityManager, id, col);
+                if (deathAnimationFinished) {
+                    // Rocks don't respawn because they split
+                    if (enemy.type.startsWith('rock')) {
+                        this.collisionSystem.removeDynamicEntity(id, entityManager);
+                        entityManager.destroyEntity(id);
+                    } else {
+                        // Start respawn sequence
+                        enemy.respawnTimer = 5.0; // Standard 5s respawn
+                        const renderable = entityManager.getComponent(id, RenderableComponent);
+                        renderable.isVisible = false;
+                        this.collisionSystem.removeDynamicEntity(id, entityManager);
+                        entityManager.removeComponent(id, DynamicColliderComponent);
+                        
+                        eventBus.publish('createRespawnTimer', {
+                            x: enemy.spawnX + col.width / 2,
+                            y: enemy.spawnY + col.height / 2,
+                            duration: 5.0
+                        });
+                    }
+                }
+                continue;
+            } else {
                 if (!enemy.aiBehavior) {
                     enemy.aiBehavior = createAIBehavior(enemy.ai.type, id, entityManager, level, playerEntityId);
                 }
-
-
                 if (enemy.aiBehavior) {
                     enemy.aiBehavior.update(dt);
                 }
@@ -236,19 +329,16 @@ export class EnemySystem {
         }
     }
 
-    _updateDyingState(dt, enemy, vel, entityManager, entityId) {
+    _updateDyingState(dt, enemy, vel, entityManager, entityId, col) {
         vel.vx = 0;
         vel.vy += 200 * dt;
         enemy.deathTimer -= dt;
         if (enemy.deathTimer <= 0) {
             const pos = entityManager.getComponent(entityId, PositionComponent);
-            const col = entityManager.getComponent(entityId, CollisionComponent);
             if (pos && col) {
                 eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: 'enemy_death' });
             }
-            this.collisionSystem.removeDynamicEntity(entityId, entityManager);
-            entityManager.destroyEntity(entityId);
-            return true;
+            return true; // Death animation finished
         }
         return false;
     }
