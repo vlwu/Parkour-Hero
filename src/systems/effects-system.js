@@ -132,7 +132,7 @@ export class EffectsSystem {
                     const outlineColor = `rgba(0, 0, 0, ${indicator.alpha})`;
 
                     this.fontRenderer.drawText(ctx, indicator.text, indicator.x, indicator.y, {
-                        scale: 1.3, // Increased scale as requested
+                        scale: 1.5,
                         align: 'center',
                         color: color,
                         outlineColor: outlineColor,
@@ -146,6 +146,17 @@ export class EffectsSystem {
                 this.respawnTimers.forEach(timer => {
                     if (timer.life > 0) {
                         const timeLeft = Math.ceil(timer.life);
+                        
+                        // Calculate pulse effect based on the fractional second
+                        // Fraction goes from 0.99 -> 0.00 as time decreases per second
+                        const fraction = timer.life - Math.floor(timer.life);
+                        // Sine wave: sin(0) = 0, sin(PI/2) = 1, sin(PI) = 0
+                        // This creates a fade in -> fade out effect for each number
+                        const opacity = Math.sin(fraction * Math.PI);
+
+                        ctx.save();
+                        ctx.globalAlpha = opacity;
+
                         this.fontRenderer.drawText(ctx, timeLeft.toString(), timer.x, timer.y - 10, {
                             scale: 1.5,
                             align: 'center',
@@ -153,6 +164,8 @@ export class EffectsSystem {
                             outlineColor: 'black',
                             outlineWidth: 1
                         });
+                        
+                        ctx.restore();
                     }
                 });
             }
