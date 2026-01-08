@@ -100,6 +100,8 @@ export class FallingPlatform extends Trap {
                 if (this.opacity <= 0) {
                     this.state = 'respawning';
                     this.respawnTimer = this.RESPAWN_DURATION;
+                    
+                    // Trigger the visual countdown timer
                     eventBus.publish('createRespawnTimer', {
                         x: this.initialX,
                         y: this.initialY,
