@@ -8,7 +8,7 @@ import { EnemyComponent } from '../components/EnemyComponent.js';
 import { createEnemy } from './enemy-factory.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from './enemy-definitions.js';
-
+import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 
 const trapFactory = {
   fire_trap: Traps.FireTrap,
