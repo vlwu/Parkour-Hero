@@ -1,4 +1,5 @@
 import { PositionComponent } from '../components/PositionComponent.js';
+import { PreviousPositionComponent } from '../components/PreviousPositionComponent.js';
 import { VelocityComponent } from '../components/VelocityComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
@@ -157,6 +158,7 @@ export class EnemySystem {
     _respawnEnemy(entityId, entityManager) {
         const enemy = entityManager.getComponent(entityId, EnemyComponent);
         const pos = entityManager.getComponent(entityId, PositionComponent);
+        const prevPos = entityManager.getComponent(entityId, PreviousPositionComponent);
         const vel = entityManager.getComponent(entityId, VelocityComponent);
         const state = entityManager.getComponent(entityId, StateComponent);
         const renderable = entityManager.getComponent(entityId, RenderableComponent);
@@ -180,6 +182,13 @@ export class EnemySystem {
 
         pos.x = enemy.spawnX;
         pos.y = enemy.spawnY;
+        
+        // Reset previous position to prevent interpolation glitch
+        if (prevPos) {
+            prevPos.x = enemy.spawnX;
+            prevPos.y = enemy.spawnY;
+        }
+
         vel.vx = 0;
         vel.vy = 0;
 
