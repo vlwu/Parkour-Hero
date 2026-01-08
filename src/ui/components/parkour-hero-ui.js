@@ -278,12 +278,27 @@ export class ParkourHeroUI extends LitElement {
 
   _handleCharacterSelected(e) {
     const { characterId } = e.detail;
+    
+    const isMidLevel = this.gameHasStarted && !this.previewMode && !this.levelCompleteStats;
+
+    if (isMidLevel) {
+        if (!window.confirm("Switching characters will restart the current level. Are you sure?")) {
+            return;
+        }
+    }
+
     const newGameState = this.gameState.setSelectedCharacter(characterId);
     if (newGameState !== this.gameState) {
       eventBus.publish('gameStateUpdated', newGameState);
     }
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
-    eventBus.publish('characterUpdated', characterId);
+    
+    if (isMidLevel) {
+        this._closeModal();
+        eventBus.publish('requestLevelRestart');
+    } else {
+        eventBus.publish('characterUpdated', characterId);
+    }
   }
 
   _handleLevelAction(action) {
