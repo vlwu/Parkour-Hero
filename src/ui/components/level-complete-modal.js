@@ -56,6 +56,14 @@ export class LevelCompleteModal extends LitElement {
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Deaths: ${this.stats.deaths}" scale="1.8"></bitmap-text>
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Time: ${formatTime(this.stats.time)}" scale="1.8"></bitmap-text>
           </div>
+          
+          ${!this.hasNextLevel ? html`
+            <div class="stats-container" style="border: 2px solid #FFD700; background-color: #3a3a3a;">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="CONGRATULATIONS!" scale="2" color="#FFD700"></bitmap-text>
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Virtual Guy Unlocked!" scale="1.5" color="#fff"></bitmap-text>
+            </div>
+          ` : ''}
+
           <div class="button-container">
             <button class="modal-image-button" title="Previous Level" ?disabled=${!this.hasPreviousLevel} @click=${() => this._dispatch('previous-level')}>
               <img src="/assets/Menu/Buttons/Previous.png" alt="Previous">
@@ -63,9 +71,11 @@ export class LevelCompleteModal extends LitElement {
             <button class="modal-image-button" title="Restart Level" @click=${() => this._dispatch('restart-level')}>
               <img src="/assets/Menu/Buttons/Restart.png" alt="Restart">
             </button>
-            <button class="modal-image-button" title="Next Level" ?disabled=${!this.hasNextLevel} @click=${() => this._dispatch('next-level')}>
+            ${this.hasNextLevel ? html`
+            <button class="modal-image-button" title="Next Level" @click=${() => this._dispatch('next-level')}>
               <img src="/assets/Menu/Buttons/Next.png" alt="Next">
             </button>
+            ` : ''}
           </div>
         </div>
       </div>

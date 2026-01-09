@@ -96,9 +96,22 @@ export class LevelManager {
 
   hasNextLevel() {
     const { currentSection, currentLevelIndex } = this.gameState;
-    const hasNextInSection = currentLevelIndex + 1 < this.levelSections[currentSection].levels.length;
-    const hasNextSection = currentSection + 1 < this.levelSections.length;
-    return hasNextInSection || hasNextSection;
+    
+    // Check if there are more levels in the current section
+    if (currentLevelIndex + 1 < this.levelSections[currentSection].levels.length) {
+        return true;
+    }
+
+    // Check if there is a next section that isn't 'DIY' and has levels
+    const nextSectionIndex = currentSection + 1;
+    if (nextSectionIndex < this.levelSections.length) {
+        const nextSection = this.levelSections[nextSectionIndex];
+        if (nextSection.name !== 'DIY' && nextSection.levels.length > 0) {
+            return true;
+        }
+    }
+    
+    return false;
   }
 
   hasPreviousLevel() {

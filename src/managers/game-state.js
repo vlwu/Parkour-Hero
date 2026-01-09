@@ -172,15 +172,53 @@ static resetProgress() {
 
   unlockAllLevels() {
       const newState = this._clone();
-      const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
+      const totalLevels = levelSections.reduce((acc, section) => {
+          if (section.name === 'DIY') return acc;
+          return acc + section.levels.length;
+      }, 0);
       newState.levelProgress.unlockedLevels[0] = totalLevels;
 
       newState.levelProgress.completedLevels = [];
       levelSections.forEach((section, sIdx) => {
+          if (section.name === 'DIY') return;
           section.levels.forEach((_, lIdx) => {
               newState.levelProgress.completedLevels.push(`${sIdx}-${lIdx}`);
           });
       });
+
+      return newState;
+  }
+
+  unlockLevels(count) {
+      const totalLevels = levelSections.reduce((acc, section) => {
+          if (section.name === 'DIY') return acc;
+          return acc + section.levels.length;
+      }, 0);
+
+      if (count < 1 || count > totalLevels) {
+          throw new Error(`Invalid level count: ${count}. Must be between 1 and ${totalLevels}.`);
+      }
+
+      const newState = this._clone();
+      
+      newState.levelProgress.unlockedLevels[0] = count;
+      newState.levelProgress.completedLevels = [];
+      
+      let levelsAdded = 0;
+      for (let sIdx = 0; sIdx < levelSections.length; sIdx++) {
+          const section = levelSections[sIdx];
+          if (section.name === 'DIY') continue;
+          
+          for (let lIdx = 0; lIdx < section.levels.length; lIdx++) {
+              if (levelsAdded < count - 1) {
+                  newState.levelProgress.completedLevels.push(`${sIdx}-${lIdx}`);
+                  levelsAdded++;
+              } else {
+                  break;
+              }
+          }
+          if (levelsAdded >= count - 1) break;
+      }
 
       return newState;
   }

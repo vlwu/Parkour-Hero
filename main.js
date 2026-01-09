@@ -4,6 +4,7 @@ import { eventBus } from './src/utils/event-bus.js';
 import { FontRenderer } from './src/ui/font-renderer.js';
 import './src/ui/ui-main.js';
 import { StorageManager } from './src/managers/storage-manager.js';
+import { GameState } from './src/managers/game-state.js';
 
 const gameCanvas = document.getElementById('gameCanvas');
 const uiCanvas = document.getElementById('uiCanvas');
@@ -122,13 +123,29 @@ assetManager.loadCoreAssets().then(async (assets) => {
     console.log('Developer command available: Type `unlockAllLevels()` in the console to unlock all levels.');
 
     window.resetProgress = () => {
-        if (engine && engine.gameState) {
-            engine.gameState = engine.gameState.resetProgress();
+        if (engine) {
+            const newState = GameState.resetProgress();
+            engine.gameState = newState;
+            eventBus.publish('gameStateUpdated', newState);
             engine.loadLevel(0, 0);
             console.log("Game progress has been reset.");
         }
     };
     console.log('Developer command available: Type `resetProgress()` in the console to reset all saved data.');
+
+    window.unlockSomeLevels = (count) => {
+        if (engine && engine.gameState) {
+            try {
+                const newState = engine.gameState.unlockLevels(count);
+                engine.gameState = newState;
+                eventBus.publish('gameStateUpdated', newState);
+                console.log(`Unlocked ${count} levels.`);
+            } catch (e) {
+                console.error(e.message);
+            }
+        }
+    };
+    console.log('Developer command available: Type `unlockSomeLevels(n)` in the console to unlock n levels.');
 
     console.log('Game is ready. Waiting for user to start from the main menu.');
   } catch (error) {
