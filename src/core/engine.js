@@ -33,6 +33,7 @@ import { BulletSystem } from '../systems/bullet-system.js';
 import { TransitionSystem } from '../systems/transition-system.js';
 import { coreSoundKeys, gameplaySoundKeys } from '../managers/asset-manager.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
+import { characterConfig } from '../entities/level-definitions.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -403,6 +404,7 @@ export class Engine {
     const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
     const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     const prevPos = this.entityManager.getComponent(this.playerEntityId, PreviousPositionComponent);
+    const charComp = this.entityManager.getComponent(this.playerEntityId, CharacterComponent);
 
     pos.x = respawnPosition.x; pos.y = respawnPosition.y;
     if (prevPos) {
@@ -415,7 +417,11 @@ export class Engine {
     const currentDeathCount = oldPlayerCtrl.deathCount;
     const currentSound = oldPlayerCtrl.activeSurfaceSound;
 
-    this.entityManager.addComponent(this.playerEntityId, new PlayerControlledComponent());
+    const config = characterConfig[charComp ? charComp.characterId : 'PinkMan'] || characterConfig['PinkMan'];
+    this.entityManager.addComponent(this.playerEntityId, new PlayerControlledComponent({
+        stats: config.stats
+    }));
+    
     const newPlayerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
     newPlayerCtrl.deathCount = currentDeathCount;
     newPlayerCtrl.activeSurfaceSound = currentSound;

@@ -19,7 +19,7 @@ export class ArrowBubble extends Trap {
         this.hitAnimation = { frameCount: 4, frameSpeed: 0.08, frameTimer: 0, currentFrame: 0 };
     }
 
-    update(dt) {
+    update(dt, playerData, eventBus) {
         if (this.state === 'idle') {
             this.idleAnimation.frameTimer += dt;
             if (this.idleAnimation.frameTimer >= this.idleAnimation.frameSpeed) {
@@ -34,6 +34,13 @@ export class ArrowBubble extends Trap {
                 if (this.hitAnimation.currentFrame >= this.hitAnimation.frameCount) {
                     this.state = 'respawning';
                     this.respawnTimer = this.RESPAWN_DURATION;
+                    if (eventBus) {
+                        eventBus.publish('createRespawnTimer', {
+                            x: this.x,
+                            y: this.y,
+                            duration: this.RESPAWN_DURATION
+                        });
+                    }
                 }
             }
         } else if (this.state === 'respawning') {
