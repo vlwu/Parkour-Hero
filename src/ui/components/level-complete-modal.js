@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { formatTime } from '../ui-utils.js';
+import { eventBus } from '../../utils/event-bus.js';
 import './bitmap-text.js';
 
 export class LevelCompleteModal extends LitElement {
@@ -30,6 +31,19 @@ export class LevelCompleteModal extends LitElement {
     .modal-image-button:hover:not(:disabled) { transform: scale(1.1); }
     .modal-image-button:disabled { cursor: not-allowed; filter: grayscale(1); opacity: 0.6; }
     .modal-image-button img { width: 100%; height: 100%; }
+    
+    .equip-btn {
+        background-color: #4CAF50;
+        border: 2px solid #45a049;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+        font-family: inherit;
+        font-weight: bold;
+    }
+    .equip-btn:hover { background-color: #45a049; }
   `;
 
   static properties = {
@@ -37,10 +51,19 @@ export class LevelCompleteModal extends LitElement {
     hasNextLevel: { type: Boolean },
     hasPreviousLevel: { type: Boolean },
     fontRenderer: { type: Object },
+    unlockedCharacterId: { type: String }, // New property to handle unlock inside this modal
   };
 
   _dispatch(eventName) {
     this.dispatchEvent(new CustomEvent(eventName));
+  }
+
+  _handleEquip() {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+      if (this.unlockedCharacterId) {
+          eventBus.publish('characterUpdated', this.unlockedCharacterId);
+          // Optional: Give feedback or disable button
+      }
   }
 
   render() {
@@ -61,6 +84,9 @@ export class LevelCompleteModal extends LitElement {
             <div class="stats-container" style="border: 2px solid #FFD700; background-color: #3a3a3a;">
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="CONGRATULATIONS!" scale="2" color="#FFD700"></bitmap-text>
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="Virtual Guy Unlocked!" scale="1.5" color="#fff"></bitmap-text>
+                ${this.unlockedCharacterId === 'VirtualGuy' ? html`
+                    <button class="equip-btn" @click=${this._handleEquip}>Equip Now</button>
+                ` : ''}
             </div>
           ` : ''}
 

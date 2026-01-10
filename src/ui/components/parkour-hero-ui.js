@@ -299,7 +299,10 @@ export class ParkourHeroUI extends LitElement {
   }
 
   _handleLevelAction(action) {
+      // Clear level complete stats AND unlock state to prevent double popups
       this.levelCompleteStats = null;
+      this.newlyUnlockedCharacterId = null;
+      
       if (action === 'restart') { eventBus.publish('requestLevelRestart'); }
       else if (action === 'next') { eventBus.publish('requestNextLevel'); }
       else if (action === 'previous') { eventBus.publish('requestPreviousLevel'); }
@@ -314,6 +317,7 @@ export class ParkourHeroUI extends LitElement {
             .hasNextLevel=${this.levelCompleteStats.hasNextLevel}
             .hasPreviousLevel=${this.levelCompleteStats.hasPreviousLevel}
             .fontRenderer=${this.fontRenderer}
+            .unlockedCharacterId=${this.newlyUnlockedCharacterId}
             @next-level=${() => this._handleLevelAction('next')}
             @restart-level=${() => this._handleLevelAction('restart')}
             @previous-level=${() => this._handleLevelAction('previous')}
@@ -321,55 +325,7 @@ export class ParkourHeroUI extends LitElement {
         `;
     }
 
-    // Only show unlock modal if we are NOT showing the level complete stats (which now includes the unlock message for final level)
-    // Actually, for intermediate unlocks, we still want the separate modal.
-    // The issue is prioritization.
-    // If levelCompleteStats says hasNextLevel=false, we know it's the end.
-    // In that case, level-complete-modal shows the message.
-    // But characterUnlocked event sets newlyUnlockedCharacterId.
-    // If hasNextLevel is true, we want to show the unlock modal on top or after.
-    
-    // Simplest fix: Just show unlock modal if it exists. 
-    // BUT for the final level, we might want to suppress it if we handle it in level complete.
-    // However, the cleanest logic is:
-    // If newlyUnlockedCharacterId is set:
-    // 1. If it's the final level (Virtual Guy), maybe we suppress this modal because level-complete-modal handles it?
-    //    But level-complete-modal is just text. The unlock modal is interactable (Equip/Close).
-    //    The prompt said "include the notification... in the custom level completion popup".
-    //    It implies we rely on that popup.
-    // Let's assume for the final level, we suppress the generic unlock modal.
-    
-    // We don't easily know if it's the final level here without levelCompleteStats.
-    // But levelCompleteStats is null if we rendered it above? No, render returns early.
-    
-    // Correct logic:
-    // If we have levelCompleteStats AND !hasNextLevel, we render level-complete-modal (which has the text).
-    // In that case, we should IGNORE newlyUnlockedCharacterId so we don't show the other modal.
-    
     if (this.newlyUnlockedCharacterId) {
-         // If we completed the game, suppress the standalone unlock modal so the custom end screen shows.
-         // We can check if levelCompleteStats exists and !hasNextLevel.
-         // Wait, if levelCompleteStats exists, we returned already above.
-         // So we just need to NOT render this block if levelCompleteStats is active.
-         // BUT, levelCompleteStats might be active.
-         
-         // Let's reorder:
-         // 1. Level Complete Modal (handles final game msg)
-         // 2. Unlock Modal (handles intermediate unlocks)
-         
-         // The render method exits early. So if levelCompleteStats is present, we show that.
-         // If it's the final level (!hasNextLevel), we show the special message in level-complete-modal.
-         // And we NEVER reach this block.
-         // So the unlock modal is effectively suppressed for the final level if levelCompleteStats is present.
-         // Perfect.
-         
-         // What if it's NOT the final level?
-         // We show level-complete-modal. 
-         // User clicks Next. levelCompleteStats becomes null.
-         // Then we render again. newlyUnlockedCharacterId is still set.
-         // Then we show character-unlock-modal.
-         // This is good behavior for intermediate unlocks.
-         
          return html`
             <character-unlock-modal
                 .characterId=${this.newlyUnlockedCharacterId}
@@ -484,6 +440,7 @@ export class ParkourHeroUI extends LitElement {
       case 'enemy-catalogue':
         return html`<enemy-catalogue-modal
                       .fontRenderer=${this.fontRenderer}
+                      .assets=${this.assets}
                       @close-modal=${this._closeModal}
                     ></enemy-catalogue-modal>`;
       default:

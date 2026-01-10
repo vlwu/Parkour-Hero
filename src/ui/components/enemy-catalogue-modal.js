@@ -3,28 +3,29 @@ import { map } from 'lit/directives/map.js';
 import { eventBus } from '../../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from '../../entities/enemy-definitions.js';
 import './bitmap-text.js';
+import './animated-sprite-card.js';
 
 const ENEMY_DESCRIPTIONS = {
-    mushroom: "A simple-minded fungus that patrols back and forth on its platform. Be careful not to run into it.",
-    chicken: "This feisty fowl stays put until it spots a target on its level. Once provoked, it charges relentlessly.",
-    rhino: "A ground enemy that detects the player on the same platform. It charges, accelerating rapidly, and only stops when it hits a wall.",
-    snail: "Moves slowly and predictably. A single stomp will cause it fall out of its shell. The shell then continues to bounce around.",
-    slime: "Hops along platforms, leaving behind a trail of damaging goo. Time your jumps to avoid both the slime and its puddles.",
-    turtle: "A defensive creature. It periodically extends sharp spikes from its shell, making it dangerous to touch. It can only be stomped when its spikes are retracted.",
-    bluebird: "Flies in a horizontal pattern, bobbing gently up and down. Its flight path is consistent, making it a predictable obstacle.",
-    fatbird: "Hovers in the air until a player passes directly underneath, at which point it slams down to the ground with force.",
-    radish: "This vegetable starts by flying around a small area. After being stomped once, it loses its leaves and falls, then begins patrolling on the ground.",
-    bee: "Patrols a small area in the air. Periodically stops to shoot a projectile straight down. Can be a threat from above.",
-    bat: "Hangs from ceilings and waits. When a player approaches from below, it swoops down to attack. It will return if the player moves too far away.",
-    ghost: "A spooky foe that patrols a platform, periodically turning invisible. It cannot be harmed or harm you while invisible.",
-    plant: "A stationary plant that shoots projectiles at the player when they enter its line of sight.",
-    trunk: "A mobile enemy that patrols platforms and shoots projectiles when the player is nearby.",
-    angrypig: "A pig that patrols slowly. When stomped, it becomes angry and charges back and forth at high speed.",
-    chameleon: "Sits idle on a platform. When the player lands on the same platform, it chases them down and performs a quick attack when in range.",
-    rock1: "A large rock that patrols a platform. When stomped, it splits into two smaller Rock2s.",
-    rock2: "A medium-sized rock that patrols a platform. When stomped, it splits into two tiny Rock3s.",
-    rock3: "The smallest rock, created when a Rock2 is stomped. It is destroyed when stomped.",
-    skull: "A dangerous enemy that bounces around the screen. It alternates between a vulnerable state (no fire) and an invulnerable state (red glow) each time it hits a surface. Be careful!"
+    mushroom: "Patrols platforms back and forth. Simple and predictable.",
+    chicken: "Charges relentlessly when it spots you on its level.",
+    rhino: "Charges at high speed when you share a platform. Hits walls to stun itself.",
+    snail: "Slow mover. Jumping on it leaves a shell that can be kicked.",
+    slime: "Hops around and leaves damaging puddles of goo.",
+    turtle: "Spiky defender. Only vulnerable when spikes are retracted.",
+    bluebird: "Flies in a horizontal wave pattern. Good for bouncing.",
+    fatbird: "Hovers and slams down when you pass underneath.",
+    radish: "Flies until stomped, then runs on the ground.",
+    bee: "Patrols the air and shoots stingers downward.",
+    bat: "Hangs on ceilings and swoops down at intruders.",
+    ghost: "Patrols and turns invisible. Invulnerable while unseen.",
+    plant: "Stationary turret. Shoots projectiles when you are in line of sight.",
+    trunk: "Patrols and shoots straight projectiles at you.",
+    angrypig: "Slow walk until hit, then runs in a rage.",
+    chameleon: "Camouflaged until you get close, then strikes quickly.",
+    rock1: "Large rock. Splits into two medium rocks when broken.",
+    rock2: "Medium rock. Splits into two small rocks when broken.",
+    rock3: "Small rock. Crumbles when broken.",
+    skull: "Bounces around. Alternates between fiery (deadly) and cold (vulnerable)."
 };
 
 export class EnemyCatalogueModal extends LitElement {
@@ -43,7 +44,7 @@ export class EnemyCatalogueModal extends LitElement {
       background-color: #333; padding: 30px; border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); color: #eee;
       text-align: center; position: relative; width: 90%;
-      max-width: 700px; max-height: 80vh; overflow-y: auto;
+      max-width: 900px; max-height: 85vh; overflow-y: auto;
       display: flex; flex-direction: column;
     }
     .close-button {
@@ -52,6 +53,7 @@ export class EnemyCatalogueModal extends LitElement {
       background-size: cover; background-color: transparent;
       border: none; cursor: pointer; border-radius: 50%;
       transition: transform 0.2s ease-in-out;
+      z-index: 10;
     }
     .close-button:hover { transform: scale(1.1); }
 
@@ -59,35 +61,34 @@ export class EnemyCatalogueModal extends LitElement {
       display: flex;
       justify-content: center;
       margin-bottom: 25px;
+      flex-shrink: 0;
     }
 
-    .catalogue-container {
-      display: flex; flex-direction: column; gap: 20px;
+    .catalogue-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
       padding: 10px;
     }
 
-    .enemy-entry {
-      background-color: #444;
-      border: 1px solid #555;
-      border-radius: 8px;
-      padding: 15px;
-      text-align: left;
-    }
-
     .enemy-title {
-      border-bottom: 2px solid #666;
-      padding-bottom: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #666;
+      width: 100%;
+      padding-bottom: 5px;
     }
 
     .enemy-description {
       color: #ccc;
-      line-height: 1.6;
+      font-size: 0.85em;
+      line-height: 1.4;
+      text-align: center;
     }
   `;
 
   static properties = {
     fontRenderer: { type: Object },
+    assets: { type: Object },
   };
 
   _dispatchClose() {
@@ -95,8 +96,35 @@ export class EnemyCatalogueModal extends LitElement {
     this.dispatchEvent(new CustomEvent('close-modal', { bubbles: true, composed: true }));
   }
 
+  _getEnemySprite(enemyId) {
+      if (!this.assets) return null;
+      // Map enemy ID to asset key based on logic in Renderer/AssetManager
+      const def = ENEMY_DEFINITIONS[enemyId];
+      if (!def) return null;
+      
+      let spriteKey = def.spriteKey;
+      let animState = 'idle';
+      
+      // Handle special naming conventions
+      if (enemyId === 'radish') animState = 'idle1';
+      if (enemyId === 'turtle' || enemyId === 'skull') animState = 'idle1'; // or idle1/idle2
+      if (enemyId === 'bluebird') animState = 'flying';
+      if (enemyId === 'slime') animState = 'idle_run';
+      if (enemyId === 'snail') animState = 'walk';
+      if (enemyId === 'angrypig') animState = 'walk';
+      
+      // Construct asset key like the AssetManager does
+      const assetName = `${spriteKey}_${animState}`;
+      
+      return {
+          img: this.assets[assetName],
+          frameCount: def.animations[animState]?.frameCount || 1,
+          speed: def.animations[animState]?.speed || 0.1
+      };
+  }
+
   render() {
-    if (!this.fontRenderer) return html``;
+    if (!this.fontRenderer || !this.assets) return html``;
 
     return html`
       <div class="modal-overlay" @click=${this._dispatchClose}>
@@ -105,15 +133,22 @@ export class EnemyCatalogueModal extends LitElement {
           <div class="title-container">
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Enemy Catalogue" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
           </div>
-          <div class="catalogue-container">
-            ${map(Object.keys(ENEMY_DEFINITIONS), (enemyId) => html`
-              <div class="enemy-entry">
-                <div class="enemy-title">
-                  <bitmap-text .fontRenderer=${this.fontRenderer} text=${enemyId.charAt(0).toUpperCase() + enemyId.slice(1)} scale="2.2"></bitmap-text>
-                </div>
-                <p class="enemy-description">${ENEMY_DESCRIPTIONS[enemyId] || 'No behavior description available.'}</p>
-              </div>
-            `)}
+          <div class="catalogue-grid">
+            ${map(Object.keys(ENEMY_DEFINITIONS), (enemyId) => {
+              const spriteData = this._getEnemySprite(enemyId);
+              return html`
+                <animated-sprite-card
+                    .sprite=${spriteData?.img}
+                    .frameCount=${spriteData?.frameCount}
+                    .frameSpeed=${spriteData?.speed}
+                >
+                    <div class="enemy-title">
+                        <bitmap-text .fontRenderer=${this.fontRenderer} text=${enemyId.charAt(0).toUpperCase() + enemyId.slice(1)} scale="1.5"></bitmap-text>
+                    </div>
+                    <p class="enemy-description">${ENEMY_DESCRIPTIONS[enemyId] || 'Unknown enemy.'}</p>
+                </animated-sprite-card>
+              `;
+            })}
           </div>
         </div>
       </div>
