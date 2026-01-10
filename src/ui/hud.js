@@ -1,6 +1,9 @@
 import { eventBus } from '../utils/event-bus.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
+import { HealthComponent } from '../components/HealthComponent.js';
+import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
+import { PLAYER_CONSTANTS } from '../utils/constants.js';
 
 export class HUD {
   constructor(ctx, fontRenderer, gameplaySettings) {
@@ -119,9 +122,63 @@ export class HUD {
     ctx.restore();
   }
 
+  _drawPlayerOverlays(ctx, camera, entityManager, playerEntityId) {
+      if (!playerEntityId) return;
+      const pos = entityManager.getComponent(playerEntityId, PositionComponent);
+      const col = entityManager.getComponent(playerEntityId, CollisionComponent);
+      const health = entityManager.getComponent(playerEntityId, HealthComponent);
+      const ctrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);
+
+      if (!pos || !col || !health || !ctrl || ctrl.isSpawning || ctrl.isDespawning || ctrl.needsRespawn) return;
+
+      const barWidth = PLAYER_CONSTANTS.WIDTH; 
+      const barHeight = 4;
+      const dashBarHeight = 2;
+      const spacing = 1;
+      const yOffset = 10;
+
+      // Draw in World Space relative to camera (handled by camera.apply)
+      const x = pos.x + (col.width - barWidth) / 2;
+      const y = pos.y - yOffset;
+
+      // Background for Health
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(x, y, barWidth, barHeight);
+
+      // Foreground Health
+      const healthPct = health.currentHealth / health.maxHealth;
+      if (healthPct > 0.6) ctx.fillStyle = '#2ecc71'; // Green
+      else if (healthPct > 0.3) ctx.fillStyle = '#f1c40f'; // Yellow
+      else ctx.fillStyle = '#e74c3c'; // Red
+
+      ctx.fillRect(x, y, barWidth * healthPct, barHeight);
+
+      // Dash Cooldown Bar
+      const dashY = y + barHeight + spacing;
+      
+      // Calculate Dash Capacity
+      // If ctrl.currentDashCount = 0, full bar (100% capacity)
+      // If ctrl.currentDashCount = 1 (and max is 1), empty bar (0% capacity)
+      // If ctrl.currentDashCount = 1 (and max is 2), half bar (50% capacity)
+      const availableDashes = Math.max(0, ctrl.maxDashes - ctrl.currentDashCount);
+      let dashPct = availableDashes / ctrl.maxDashes;
+      
+      // If grounded, it's instant refill logic in code, but visually we want it full
+      // The update logic resets currentDashCount instantly when grounded.
+      
+      // Background for Dash
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(x, dashY, barWidth, dashBarHeight);
+
+      // Foreground Dash
+      if (dashPct > 0) {
+          ctx.fillStyle = '#00BCD4'; // Cyan
+          ctx.fillRect(x, dashY, barWidth * dashPct, dashBarHeight);
+      }
+  }
+
   drawGameHUD(ctx, camera, level, dt, entityManager, playerEntityId) {
     if (!this.isVisible || !this.fontRenderer) return;
-
 
     this.frameCount++;
     this.elapsedTime += dt;
@@ -132,10 +189,16 @@ export class HUD {
     }
 
     try {
+      // 1. Draw Player Overlays (Health/Dash) using camera transform
+      camera.apply(ctx);
+      this._drawPlayerOverlays(ctx, camera, entityManager, playerEntityId);
+      camera.restore(ctx);
+
+      // 2. Draw Static HUD Elements (Screen Space)
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-      const { levelName, collectedFruits, totalFruits, deathCount, soundEnabled, soundVolume, health, maxHealth } = this.stats;
+      const { levelName, collectedFruits, totalFruits, deathCount, soundEnabled, soundVolume } = this.stats;
 
       const lines = [
         `${levelName}`,
@@ -152,7 +215,6 @@ export class HUD {
           outlineWidth: 1
       };
 
-
       let maxWidth = 0;
       lines.forEach(line => {
         const width = this.fontRenderer.getTextWidth(line, fontOptions.scale);
@@ -165,8 +227,7 @@ export class HUD {
       const hudX = 10;
       const hudY = 10;
       const hudWidth = maxWidth + horizontalPadding;
-      const hudHeight = 180;
-
+      const hudHeight = 160; // Slightly reduced since HP bar is gone
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
@@ -182,33 +243,6 @@ export class HUD {
         this.fontRenderer.drawText(ctx, text, textX, y, fontOptions);
       });
 
-
-      const healthBarWidth = 150;
-      const healthBarHeight = 20;
-      const healthBarX = hudX + hudWidth + 15;
-      const healthBarY = hudY;
-
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(healthBarX - 2, healthBarY - 2, healthBarWidth + 4, healthBarHeight + 4);
-      ctx.fillStyle = 'rgba(51, 51, 51, 0.7)';
-      ctx.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
-
-      const healthPercentage = (health || 0) / (maxHealth || 100);
-      const currentHealthWidth = healthBarWidth * healthPercentage;
-
-      if (healthPercentage > 0.6) {
-          ctx.fillStyle = '#4CAF50';
-      } else if (healthPercentage > 0.3) {
-          ctx.fillStyle = '#FFC107';
-      } else {
-          ctx.fillStyle = '#F44336';
-      }
-
-      ctx.fillRect(healthBarX, healthBarY, currentHealthWidth, healthBarHeight);
-
-      this.fontRenderer.drawText(ctx, `HP`, healthBarX + healthBarWidth + 10, healthBarY + healthBarHeight / 2 - 12, { scale: 2, align: 'left' });
-
-
       const fpsText = `FPS: ${this.fps}`;
       const fpsFontOptions = {
           scale: 2,
@@ -217,9 +251,8 @@ export class HUD {
           outlineColor: 'black',
           outlineWidth: 1
       };
-      const fpsX = healthBarX;
-      const fpsY = healthBarY + healthBarHeight + 10;
-      this.fontRenderer.drawText(ctx, fpsText, fpsX, fpsY, fpsFontOptions);
+      
+      this.fontRenderer.drawText(ctx, fpsText, hudX, hudY + hudHeight + 10, fpsFontOptions);
 
       this.drawMinimap(ctx, camera, level, entityManager, playerEntityId);
 

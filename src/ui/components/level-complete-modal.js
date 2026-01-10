@@ -42,8 +42,15 @@ export class LevelCompleteModal extends LitElement {
         margin-top: 10px;
         font-family: inherit;
         font-weight: bold;
+        transition: all 0.2s;
     }
-    .equip-btn:hover { background-color: #45a049; }
+    .equip-btn:hover:not(:disabled) { background-color: #45a049; }
+    .equip-btn:disabled {
+        background-color: #555;
+        border-color: #666;
+        cursor: default;
+        opacity: 0.8;
+    }
   `;
 
   static properties = {
@@ -51,18 +58,26 @@ export class LevelCompleteModal extends LitElement {
     hasNextLevel: { type: Boolean },
     hasPreviousLevel: { type: Boolean },
     fontRenderer: { type: Object },
-    unlockedCharacterId: { type: String }, // New property to handle unlock inside this modal
+    unlockedCharacterId: { type: String },
+    isEquipped: { type: Boolean, state: true }
   };
+
+  constructor() {
+    super();
+    this.isEquipped = false;
+  }
 
   _dispatch(eventName) {
     this.dispatchEvent(new CustomEvent(eventName));
   }
 
   _handleEquip() {
+      if (this.isEquipped) return;
+      
       eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       if (this.unlockedCharacterId) {
           eventBus.publish('characterUpdated', this.unlockedCharacterId);
-          // Optional: Give feedback or disable button
+          this.isEquipped = true;
       }
   }
 
@@ -80,12 +95,14 @@ export class LevelCompleteModal extends LitElement {
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Time: ${formatTime(this.stats.time)}" scale="1.8"></bitmap-text>
           </div>
           
-          ${!this.hasNextLevel ? html`
+          ${!this.hasNextLevel && this.unlockedCharacterId ? html`
             <div class="stats-container" style="border: 2px solid #FFD700; background-color: #3a3a3a;">
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="CONGRATULATIONS!" scale="2" color="#FFD700"></bitmap-text>
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="Virtual Guy Unlocked!" scale="1.5" color="#fff"></bitmap-text>
                 ${this.unlockedCharacterId === 'VirtualGuy' ? html`
-                    <button class="equip-btn" @click=${this._handleEquip}>Equip Now</button>
+                    <button class="equip-btn" ?disabled=${this.isEquipped} @click=${this._handleEquip}>
+                        ${this.isEquipped ? 'Equipped!' : 'Equip Now'}
+                    </button>
                 ` : ''}
             </div>
           ` : ''}
