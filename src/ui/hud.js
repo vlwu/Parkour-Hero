@@ -132,17 +132,23 @@ export class HUD {
       if (!pos || !col || !health || !ctrl || ctrl.isSpawning || ctrl.isDespawning || ctrl.needsRespawn) return;
 
       const barWidth = PLAYER_CONSTANTS.WIDTH; 
-      const barHeight = 4;
-      const dashBarHeight = 2;
-      const spacing = 1;
-      const yOffset = 10;
+      const barHeight = 3;
+      const dashBarHeight = 1.2;
+      const spacing = 0; // Spacing between health bar and dash bar (including borders)
+      const yOffset = 14; // Distance above player
+      const borderSize = 1;
 
       // Draw in World Space relative to camera (handled by camera.apply)
       const x = pos.x + (col.width - barWidth) / 2;
       const y = pos.y - yOffset;
 
-      // Background for Health
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      // --- Health Bar ---
+      // Black Border
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(x - borderSize, y - borderSize, barWidth + borderSize * 2, barHeight + borderSize * 2);
+
+      // Background (Dark)
+      ctx.fillStyle = 'rgba(50, 50, 50, 1)';
       ctx.fillRect(x, y, barWidth, barHeight);
 
       // Foreground Health
@@ -153,23 +159,21 @@ export class HUD {
 
       ctx.fillRect(x, y, barWidth * healthPct, barHeight);
 
-      // Dash Cooldown Bar
+      // --- Dash Cooldown Bar ---
       const dashY = y + barHeight + spacing;
       
+      // Black Border
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(x - borderSize, dashY - borderSize, barWidth + borderSize * 2, dashBarHeight + borderSize * 2);
+
+      // Background (Dark)
+      ctx.fillStyle = 'rgba(50, 50, 50, 1)';
+      ctx.fillRect(x, dashY, barWidth, dashBarHeight);
+
       // Calculate Dash Capacity
-      // If ctrl.currentDashCount = 0, full bar (100% capacity)
-      // If ctrl.currentDashCount = 1 (and max is 1), empty bar (0% capacity)
-      // If ctrl.currentDashCount = 1 (and max is 2), half bar (50% capacity)
       const availableDashes = Math.max(0, ctrl.maxDashes - ctrl.currentDashCount);
       let dashPct = availableDashes / ctrl.maxDashes;
       
-      // If grounded, it's instant refill logic in code, but visually we want it full
-      // The update logic resets currentDashCount instantly when grounded.
-      
-      // Background for Dash
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(x, dashY, barWidth, dashBarHeight);
-
       // Foreground Dash
       if (dashPct > 0) {
           ctx.fillStyle = '#00BCD4'; // Cyan
@@ -227,7 +231,7 @@ export class HUD {
       const hudX = 10;
       const hudY = 10;
       const hudWidth = maxWidth + horizontalPadding;
-      const hudHeight = 160; // Slightly reduced since HP bar is gone
+      const hudHeight = 160; 
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
