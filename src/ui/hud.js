@@ -95,7 +95,7 @@ export class HUD {
       }
     }
 
-    if (entityManager && playerEntityId !== null) {
+    if (entityManager && playerEntityId !== null && playerEntityId !== undefined) {
         const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
         const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
         if (playerPos && playerCol) {
@@ -123,7 +123,7 @@ export class HUD {
   }
 
   _drawPlayerOverlays(ctx, camera, entityManager, playerEntityId) {
-      if (!playerEntityId) return;
+      if (playerEntityId === null || playerEntityId === undefined) return;
       const pos = entityManager.getComponent(playerEntityId, PositionComponent);
       const col = entityManager.getComponent(playerEntityId, CollisionComponent);
       const health = entityManager.getComponent(playerEntityId, HealthComponent);
