@@ -1,5 +1,5 @@
 import { Engine } from './src/core/engine.js';
-import { assetManager, gameplaySoundKeys } from './src/managers/asset-manager.js';
+import { assetManager } from './src/managers/asset-manager.js';
 import { eventBus } from './src/utils/event-bus.js';
 import { FontRenderer } from './src/ui/font-renderer.js';
 import './src/ui/ui-main.js';
@@ -109,7 +109,7 @@ assetManager.loadCoreAssets().then(async (assets) => {
     await assetManager.loadGameplayAssets();
     engine.renderer.syncTextures();
     engine.particleSystem.syncTextures();
-    engine.soundManager.addSounds(assetManager.assets, gameplaySoundKeys);
+    engine.soundManager.addSounds(assetManager.assets, assetManager.gameplaySoundKeys);
     console.log("All gameplay assets are now loaded and ready.");
 
 

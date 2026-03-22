@@ -22,6 +22,11 @@ export const ENEMY_DEFINITIONS = {
             patrolSpeed: 40,
             idleTime: 0.5,
             particleDropInterval: 0.4,
+        },
+        assets: {
+            mushroom_hit: '/assets/Enemies/Mushroom/Hit.png',
+            mushroom_idle: '/assets/Enemies/Mushroom/Idle.png',
+            mushroom_run: '/assets/Enemies/Mushroom/Run.png'
         }
     },
 
@@ -50,6 +55,11 @@ export const ENEMY_DEFINITIONS = {
             idleTime: 1.,
             chargeTime: 2.0,
             cooldownTime: 1.0,
+        },
+        assets: {
+            chicken_hit: '/assets/Enemies/Chicken/Hit.png',
+            chicken_idle: '/assets/Enemies/Chicken/Idle.png',
+            chicken_run: '/assets/Enemies/Chicken/Run.png'
         }
     },
 
@@ -83,6 +93,12 @@ export const ENEMY_DEFINITIONS = {
             maxSpeed: 500,
             reboundSpeed: 50,
             stunDuration: 1.2,
+        },
+        assets: {
+            rhino_hit: '/assets/Enemies/Rhino/Hit.png',
+            rhino_idle: '/assets/Enemies/Rhino/Idle.png',
+            rhino_run: '/assets/Enemies/Rhino/Run.png',
+            rhino_wall_hit: '/assets/Enemies/Rhino/Wall Hit.png'
         }
     },
 
@@ -110,7 +126,16 @@ export const ENEMY_DEFINITIONS = {
             wallHitStunTime: 0.2,
             particleDropInterval: 0.45,
         },
-        behavior: { type: 'shell' }
+        behavior: { type: 'shell' },
+        assets: {
+            snail_hit: '/assets/Enemies/Snail/Hit.png',
+            snail_idle: '/assets/Enemies/Snail/Idle.png',
+            snail_walk: '/assets/Enemies/Snail/Walk.png',
+            snail_die: '/assets/Enemies/Snail/Snail without shell.png',
+            snail_shell_idle: '/assets/Enemies/Snail/Shell Idle.png',
+            snail_shell_top_hit: '/assets/Enemies/Snail/Shell Top Hit.png',
+            snail_shell_wall_hit: '/assets/Enemies/Snail/Shell Wall Hit.png'
+        }
     },
 
     slime: {
@@ -134,6 +159,11 @@ export const ENEMY_DEFINITIONS = {
             type: 'patrol',
             patrolSpeed: 25,
             particleDropInterval: 0.3,
+        },
+        assets: {
+            slime_hit: '/assets/Enemies/Slime/Hit.png',
+            slime_idle_run: '/assets/Enemies/Slime/Idle-Run.png',
+            slime_particles: '/assets/Enemies/Slime/Particles.png'
         }
     },
 
@@ -161,6 +191,13 @@ export const ENEMY_DEFINITIONS = {
             type: 'defensive_cycle',
             spikesInDuration: 2.0,
             spikesOutDuration: 3.0,
+        },
+        assets: {
+            turtle_hit: '/assets/Enemies/Turtle/Hit.png',
+            turtle_idle1: '/assets/Enemies/Turtle/Idle 1.png',
+            turtle_idle2: '/assets/Enemies/Turtle/Idle 2.png',
+            turtle_spikes_in: '/assets/Enemies/Turtle/Spikes in.png',
+            turtle_spikes_out: '/assets/Enemies/Turtle/Spikes out.png'
         }
     },
 
@@ -188,6 +225,10 @@ export const ENEMY_DEFINITIONS = {
             tetherStrength: 5,
             turnDuration: 1,
             acceleration: 120,
+        },
+        assets: {
+            bluebird_flying: '/assets/Enemies/BlueBird/Flying.png',
+            bluebird_hit: '/assets/Enemies/BlueBird/Hit.png'
         }
     },
 
@@ -216,6 +257,12 @@ export const ENEMY_DEFINITIONS = {
             slamSpeed: 275,
             retractSpeed: 100,
             groundedDuration: 1.0,
+        },
+        assets: {
+            fatbird_hit: '/assets/Enemies/FatBird/Hit.png',
+            fatbird_idle: '/assets/Enemies/FatBird/Idle.png',
+            fatbird_fall: '/assets/Enemies/FatBird/Fall.png',
+            fatbird_ground: '/assets/Enemies/FatBird/Ground.png'
         }
     },
 
@@ -247,7 +294,14 @@ export const ENEMY_DEFINITIONS = {
             idleTime: 1.0,
             particleDropInterval: 0.3,
         },
-        behavior: { type: 'fall' }
+        behavior: { type: 'fall' },
+        assets: {
+            radish_hit: '/assets/Enemies/Radish/Hit.png',
+            radish_idle1: '/assets/Enemies/Radish/Idle 1.png',
+            radish_idle2: '/assets/Enemies/Radish/Idle 2.png',
+            radish_leaves: '/assets/Enemies/Radish/Leaves.png',
+            radish_run: '/assets/Enemies/Radish/Run.png'
+        }
     },
 
     bee: {
@@ -276,6 +330,13 @@ export const ENEMY_DEFINITIONS = {
                 width: 16,
                 height: 16,
             }
+        },
+        assets: {
+            bee_hit: '/assets/Enemies/Bee/Hit.png',
+            bee_attack: '/assets/Enemies/Bee/Attack.png',
+            bee_idle: '/assets/Enemies/Bee/Idle.png',
+            bee_bullet: '/assets/Enemies/Bee/Bullet.png',
+            bee_bullet_pieces: '/assets/Enemies/Bee/Bullet Pieces.png'
         }
     },
 
@@ -300,6 +361,13 @@ export const ENEMY_DEFINITIONS = {
             aggroRadius: 150,
             deaggroRadius: 300,
             flyingSpeed: 35,
+        },
+        assets: {
+            bat_hit: '/assets/Enemies/Bat/Hit.png',
+            bat_idle: '/assets/Enemies/Bat/Idle.png',
+            bat_ceiling_in: '/assets/Enemies/Bat/Ceiling In.png',
+            bat_ceiling_out: '/assets/Enemies/Bat/Ceiling Out.png',
+            bat_flying: '/assets/Enemies/Bat/Flying.png'
         }
     },
 
@@ -326,6 +394,13 @@ export const ENEMY_DEFINITIONS = {
             invisibleDuration: 2.0,
             particleDropInterval: 0.2,
             soundRadius: 200,
+        },
+        assets: {
+            ghost_hit: '/assets/Enemies/Ghost/Hit.png',
+            ghost_idle: '/assets/Enemies/Ghost/Idle.png',
+            ghost_appear: '/assets/Enemies/Ghost/Appear.png',
+            ghost_disappear: '/assets/Enemies/Ghost/Disappear.png',
+            ghost_particles: '/assets/Enemies/Ghost/Ghost Particles.png'
         }
     },
 
@@ -358,6 +433,13 @@ export const ENEMY_DEFINITIONS = {
                 width: 16,
                 height: 16,
             }
+        },
+        assets: {
+            plant_hit: '/assets/Enemies/Plant/Hit.png',
+            plant_attack: '/assets/Enemies/Plant/Attack.png',
+            plant_idle: '/assets/Enemies/Plant/Idle.png',
+            plant_bullet: '/assets/Enemies/Plant/Bullet.png',
+            plant_bullet_pieces: '/assets/Enemies/Plant/Bullet Pieces.png'
         }
     },
     trunk: {
@@ -392,6 +474,14 @@ export const ENEMY_DEFINITIONS = {
                 width: 16,
                 height: 16,
             }
+        },
+        assets: {
+            trunk_hit: '/assets/Enemies/Trunk/Hit.png',
+            trunk_idle: '/assets/Enemies/Trunk/Idle.png',
+            trunk_run: '/assets/Enemies/Trunk/Run.png',
+            trunk_attack: '/assets/Enemies/Trunk/Attack.png',
+            trunk_bullet: '/assets/Enemies/Trunk/Bullet.png',
+            trunk_bullet_pieces: '/assets/Enemies/Trunk/Bullet Pieces.png'
         }
     },
     angrypig: {
@@ -418,7 +508,14 @@ export const ENEMY_DEFINITIONS = {
             idleTime: 0.5,
             particleDropInterval: 0.3,
         },
-        behavior: { type: 'rage' }
+        behavior: { type: 'rage' },
+        assets: {
+            angrypig_hit1: '/assets/Enemies/AngryPig/Hit 1.png',
+            angrypig_hit2: '/assets/Enemies/AngryPig/Hit 2.png',
+            angrypig_idle: '/assets/Enemies/AngryPig/Idle.png',
+            angrypig_run: '/assets/Enemies/AngryPig/Run.png',
+            angrypig_walk: '/assets/Enemies/AngryPig/Walk.png'
+        }
     },
     chameleon: {
         width: 84,
@@ -446,6 +543,12 @@ export const ENEMY_DEFINITIONS = {
             aggroRange: 350,
             attackRange: 80,
             attackDamage: 50,
+        },
+        assets: {
+            chameleon_hit: '/assets/Enemies/Chameleon/Hit.png',
+            chameleon_idle: '/assets/Enemies/Chameleon/Idle.png',
+            chameleon_run: '/assets/Enemies/Chameleon/Run.png',
+            chameleon_attack: '/assets/Enemies/Chameleon/Attack.png'
         }
     },
     rock1: {
@@ -468,7 +571,12 @@ export const ENEMY_DEFINITIONS = {
             idleTime: 0.5,
             particleDropInterval: 0.35,
         },
-        behavior: { type: 'split', splitInto: 'rock2' }
+        behavior: { type: 'split', splitInto: 'rock2' },
+        assets: {
+            rock1_hit: '/assets/Enemies/Rocks/Rock1 Hit.png',
+            rock1_idle: '/assets/Enemies/Rocks/Rock1 Idle.png',
+            rock1_run: '/assets/Enemies/Rocks/Rock1 Run.png'
+        }
     },
     rock2: {
         width: 32,
@@ -490,7 +598,12 @@ export const ENEMY_DEFINITIONS = {
             idleTime: 0.5,
             particleDropInterval: 0.3,
         },
-        behavior: { type: 'split', splitInto: 'rock3' }
+        behavior: { type: 'split', splitInto: 'rock3' },
+        assets: {
+            rock2_hit: '/assets/Enemies/Rocks/Rock2 Hit.png',
+            rock2_idle: '/assets/Enemies/Rocks/Rock2 Idle.png',
+            rock2_run: '/assets/Enemies/Rocks/Rock2 Run.png'
+        }
     },
     rock3: {
         width: 22,
@@ -511,6 +624,11 @@ export const ENEMY_DEFINITIONS = {
             patrolSpeed: 60,
             idleTime: 0.5,
             particleDropInterval: 0.25,
+        },
+        assets: {
+            rock3_hit: '/assets/Enemies/Rocks/Rock3 Hit.png',
+            rock3_idle: '/assets/Enemies/Rocks/Rock3 Idle.png',
+            rock3_run: '/assets/Enemies/Rocks/Rock3 Run.png'
         }
     },
     skull: {
@@ -538,6 +656,15 @@ export const ENEMY_DEFINITIONS = {
             type: 'skull',
             bounceSpeed: 50,
             soundRadius: 200,
+        },
+        assets: {
+            skull_hit: '/assets/Enemies/Skull/Hit.png',
+            skull_hit_wall_1: '/assets/Enemies/Skull/Hit Wall 1.png',
+            skull_hit_wall_2: '/assets/Enemies/Skull/Hit Wall 2.png',
+            skull_idle1: '/assets/Enemies/Skull/Idle 1.png',
+            skull_idle2: '/assets/Enemies/Skull/Idle 2.png',
+            skull_orange_particle: '/assets/Enemies/Skull/Orange Particle.png',
+            skull_red_particle: '/assets/Enemies/Skull/Red Particle.png'
         }
     }
 };

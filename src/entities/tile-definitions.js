@@ -12,6 +12,14 @@ export const TILESET_CONFIG_SPECIAL = {
     columns: 12,
 };
 
+export const TILESET_ASSETS = {
+    block: '/assets/Terrain/Terrain.png',
+    sand_mud_ice: '/assets/Traps/Sand Mud Ice/Sand Mud Ice.png',
+    ice_particle: '/assets/Traps/Sand Mud Ice/Ice Particle.png',
+    sand_particle: '/assets/Traps/Sand Mud Ice/Sand Particle.png',
+    mud_particle: '/assets/Traps/Sand Mud Ice/Mud Particle.png'
+};
+
 export const SPECIAL_TILE_ID_OFFSET = 1000;
 
 const properties = {

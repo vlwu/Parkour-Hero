@@ -31,7 +31,6 @@ import { EnemySystem } from '../systems/enemy-system.js';
 import { Level } from '../entities/level.js';
 import { BulletSystem } from '../systems/bullet-system.js';
 import { TransitionSystem } from '../systems/transition-system.js';
-import { coreSoundKeys, gameplaySoundKeys } from '../managers/asset-manager.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { characterConfig } from '../entities/level-definitions.js';
 import { TrapSystem } from '../systems/trap-system.js';
@@ -67,7 +66,7 @@ export class Engine {
     this.camera = new Camera(this.canvas.width, this.canvas.height);
     this.hud = new HUD(this.ctx, fontRenderer, this.gameplaySettings);
     this.soundManager = new SoundManager();
-    this.soundManager.addSounds(assets, coreSoundKeys);
+    this.soundManager.addSounds(assets, this.assetManager.coreSoundKeys);
     this.renderer = new Renderer(this.gl, this.canvas, this.assets);
     this.gameState = new GameState();
 
