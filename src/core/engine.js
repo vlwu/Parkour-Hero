@@ -34,6 +34,7 @@ import { TransitionSystem } from '../systems/transition-system.js';
 import { coreSoundKeys, gameplaySoundKeys } from '../managers/asset-manager.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { characterConfig } from '../entities/level-definitions.js';
+import { TrapSystem } from '../systems/trap-system.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -80,6 +81,7 @@ export class Engine {
     this.uiSystem = new UISystem(this.uiCanvas, this.assets);
     this.enemySystem = new EnemySystem(this.collisionSystem);
     this.bulletSystem = new BulletSystem(this.collisionSystem);
+    this.trapSystem = new TrapSystem();
     this.transitionSystem = new TransitionSystem(this.uiCanvas, this.assets);
 
     this.systems = [
@@ -89,6 +91,7 @@ export class Engine {
         this.collisionSystem,
         this.enemySystem,
         this.bulletSystem,
+        this.trapSystem,
         this.gameplaySystem,
         this.renderer,
         this.particleSystem,
@@ -243,7 +246,7 @@ export class Engine {
 
     this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
     this.camera.snapToPlayer(this.entityManager, this.playerEntityId);
-    this.renderer.preRenderLevel(this.currentLevel);
+    this.renderer.preRenderLevel(this.currentLevel, this.entityManager);
 
     if (!this.gameHasStarted) {
       this.gameHasStarted = true;
@@ -267,7 +270,7 @@ export class Engine {
 
       this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
       this.camera.snapToPlayer(this.entityManager, this.playerEntityId);
-      this.renderer.preRenderLevel(this.currentLevel);
+      this.renderer.preRenderLevel(this.currentLevel, this.entityManager);
 
       this.timeScale = 1.0;
       if (!this.gameHasStarted) {

@@ -14,6 +14,7 @@ import { PlayerControlledComponent } from '../components/PlayerControlledCompone
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { TILESET_CONFIG, TILESET_CONFIG_SPECIAL, SPECIAL_TILE_ID_OFFSET, getTileProperties } from '../entities/tile-definitions.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
+import { TrapComponent } from '../components/TrapComponent.js';
 
 const MAX_SPRITES_PER_BATCH = 5000;
 const ATTRIBUTES_PER_INSTANCE = 11;
@@ -55,11 +56,9 @@ export class Renderer {
     this.syncTextures();
 
     const quadVertices = new Float32Array([
-
         0.0, 0.0,
         1.0, 0.0,
         0.0, 1.0,
-
         0.0, 1.0,
         1.0, 0.0,
         1.0, 1.0,
@@ -142,7 +141,7 @@ export class Renderer {
     gl.bindVertexArray(null);
   }
 
-  preRenderLevel(level) {
+  preRenderLevel(level, entityManager) {
     this.currentLevel = level;
     const gl = this.gl;
     this.staticBatches.clear();
@@ -168,7 +167,9 @@ export class Renderer {
         }
     }
 
-    level.traps.forEach(trap => {
+    const trapEntities = entityManager.query([TrapComponent]);
+    for (const entityId of trapEntities) {
+        const trap = entityManager.getComponent(entityId, TrapComponent).trap;
         if (fractionalPlatformTypes.includes(trap.type)) {
             const spriteKey = 'block';
             if (!staticGroups.has(spriteKey)) {
@@ -176,7 +177,7 @@ export class Renderer {
             }
             staticGroups.get(spriteKey).push({ trap });
         }
-    });
+    }
 
     for (const [spriteKey, groupItems] of staticGroups.entries()) {
         const staticData = [];
@@ -328,11 +329,9 @@ export class Renderer {
                 let offsetX, offsetY;
 
                 if (playerCtrl.isSpawning || playerCtrl.isDespawning) {
-                    // Center the large spawn/despawn animation on the hitbox
                     offsetX = (col.width - renderable.width) / 2;
                     offsetY = (col.height - renderable.height) / 2;
                 } else {
-                    // Align the bottom-center of the sprite with the bottom-center of the hitbox
                     offsetX = (col.width - renderable.width) / 2;
                     offsetY = (col.height - renderable.height);
                 }
@@ -378,8 +377,10 @@ export class Renderer {
             }
         }
 
-        level.traps.forEach(trap => {
-            if (fractionalPlatformTypes.includes(trap.type)) return;
+        const trapEntities = entityManager.query([TrapComponent]);
+        for (const entityId of trapEntities) {
+            const trap = entityManager.getComponent(entityId, TrapComponent).trap;
+            if (fractionalPlatformTypes.includes(trap.type)) continue;
             if (typeof trap.getRenderableData === 'function') {
                 const trapRenderData = trap.getRenderableData(this.assets, this.textures);
                 if (trapRenderData) {
@@ -392,7 +393,7 @@ export class Renderer {
                     });
                 }
             }
-        });
+        }
 
         level.fruits.forEach(f => {
             if (!f.collected) {

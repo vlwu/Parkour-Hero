@@ -9,6 +9,7 @@ import { createEnemy } from './enemy-factory.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_DEFINITIONS } from './enemy-definitions.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
+import { TrapComponent } from '../components/TrapComponent.js';
 
 const trapFactory = {
   fire_trap: Traps.FireTrap,
@@ -28,8 +29,8 @@ const trapFactory = {
 
 export class Level {
   constructor(levelConfig, entityManager) {
+    this.entityManager = entityManager;
     this.name = levelConfig.name || 'Unnamed Level';
-
 
     this.gridWidth = levelConfig.gridWidth;
     this.gridHeight = levelConfig.gridHeight;
@@ -64,10 +65,8 @@ export class Level {
 
     this.spatialGrid = new SpatialGrid(this.width, this.height, GRID_CONSTANTS.TILE_SIZE * 4);
 
-
     this.fruits = [];
     this.checkpoints = [];
-    this.traps = [];
     this.trophy = null;
     this.initialEnemyConfigs = [];
     this.slimePuddlePool = [];
@@ -174,13 +173,15 @@ export class Level {
                 const segmentX = worldX + (i * segmentWidth);
                 const segmentConfig = { ...config, chainLength: 1 };
                 const instance = new Traps.FireTrap(segmentX, worldY, segmentConfig);
-                this.traps.push(instance);
+                const trapId = this.entityManager.createEntity();
+                this.entityManager.addComponent(trapId, new TrapComponent(instance));
             }
         } else {
             const ItemClass = trapFactory[type];
             if (ItemClass) {
                 const instance = new ItemClass(worldX, worldY, config);
-                this.traps.push(instance);
+                const trapId = this.entityManager.createEntity();
+                this.entityManager.addComponent(trapId, new TrapComponent(instance));
             } else if (type.startsWith('fruit_')) {
                 const instance = {
                     x: worldX, y: worldY, size: 28,
@@ -210,8 +211,8 @@ export class Level {
         }
     });
 
-    if (entityManager) {
-        this.resetEnemies(entityManager);
+    if (this.entityManager) {
+        this.resetEnemies(this.entityManager);
     }
     this._populateSpatialGrid();
 
@@ -247,7 +248,8 @@ export class Level {
     } else {
         puddleTrap = new Traps.SlimePuddle(position.x, position.y, {});
     }
-    this.traps.push(puddleTrap);
+    const trapId = this.entityManager.createEntity();
+    this.entityManager.addComponent(trapId, new TrapComponent(puddleTrap));
 
     const gridObject = { ...(puddleTrap.hitbox), instance: puddleTrap, type: 'trap' };
     puddleTrap.gridObject = gridObject;
@@ -256,11 +258,13 @@ export class Level {
 
   _populateSpatialGrid() {
       this.spatialGrid.clear();
-      this.traps.forEach(instance => {
-        const gridObject = { ...(instance.hitbox || { x: instance.x, y: instance.y, width: 1, height: 1 }), instance, type: 'trap' };
-        instance.gridObject = gridObject;
-        this.spatialGrid.insert(gridObject)
-      });
+      const trapEntities = this.entityManager.query([TrapComponent]);
+      for (const entityId of trapEntities) {
+          const instance = this.entityManager.getComponent(entityId, TrapComponent).trap;
+          const gridObject = { ...(instance.hitbox || { x: instance.x, y: instance.y, width: 1, height: 1 }), instance, type: 'trap' };
+          instance.gridObject = gridObject;
+          this.spatialGrid.insert(gridObject);
+      }
       this.fruits.forEach(instance => this.spatialGrid.insert({ x: instance.x - 14, y: instance.y - 14, width: 28, height: 28, instance, type: 'fruit' }));
       this.checkpoints.forEach(instance => this.spatialGrid.insert({ x: instance.x - 32, y: instance.y - 32, width: 64, height: 64, instance, type: 'checkpoint' }));
       if (this.trophy) {
@@ -312,33 +316,6 @@ export class Level {
   }
 
   update(dt, entityManager, playerEntityId, eventBus, camera) {
-      const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
-      const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
-      const playerCtrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);
-      
-      const playerData = playerPos && playerCol ? { ...playerPos, width: playerCol.width, height: playerCol.height } : null;
-      const groundEntity = playerCol ? playerCol.groundEntity : null;
-
-      for (const trap of this.traps) {
-          // Pass playerCtrl to trap update
-          trap.update(dt, playerData, eventBus, this, groundEntity, playerCtrl);
-      }
-
-      const remainingTraps = [];
-      for (const trap of this.traps) {
-          if (trap.isExpired) {
-              if (trap.gridObject) {
-                  this.spatialGrid.removeObjectFromCells(trap.id, this.spatialGrid.getGridIndices(trap.gridObject));
-              }
-              if (trap.type === 'slime_puddle') {
-                  this.slimePuddlePool.push(trap);
-              }
-          } else {
-              remainingTraps.push(trap);
-          }
-      }
-      this.traps = remainingTraps;
-
       const visibleObjects = this.spatialGrid.query(camera.getViewportBounds());
       for (const obj of visibleObjects) {
           if (obj.instance) {
@@ -389,7 +366,6 @@ export class Level {
     if (trophy.animationTimer >= trophy.animationSpeed) {
       trophy.animationTimer -= trophy.animationSpeed;
       trophy.animationFrame = (trophy.animationFrame + 1);
-
 
       if (trophy.animationFrame >= trophy.frameCount) {
         trophy.animationFrame = trophy.frameCount - 1;
@@ -470,17 +446,19 @@ export class Level {
         cp.frameTimer = 0;
     });
 
-    this.traps.forEach(trap => {
+    const trapEntities = this.entityManager.query([TrapComponent]);
+    for (const entityId of trapEntities) {
+        const trap = this.entityManager.getComponent(entityId, TrapComponent).trap;
         if (trap.type === 'slime_puddle') {
             if (trap.gridObject) {
                 this.spatialGrid.removeObjectFromCells(trap.id, this.spatialGrid.getGridIndices(trap.gridObject));
             }
             this.slimePuddlePool.push(trap);
+            this.entityManager.destroyEntity(entityId);
         } else {
             trap.reset(eventBus);
         }
-    });
-    this.traps = this.traps.filter(trap => trap.type !== 'slime_puddle');
+    }
 
     if (this.trophy) {
       this.trophy.acquired = false;
