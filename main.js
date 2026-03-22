@@ -75,86 +75,95 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-const settings = StorageManager.loadSettings();
-let keybinds = settings.keybinds;
-let gameplaySettings = settings.gameplay;
-
 let engine;
 
-assetManager.loadCoreAssets().then(async (assets) => {
-  console.log('Core assets loaded successfully, preparing main menu...');
+async function initGame() {
+    const settings = await StorageManager.loadSettings();
+    let keybinds = settings.keybinds;
+    let gameplaySettings = settings.gameplay;
+    let soundSettings = settings.sound;
 
-  try {
-    const fontRenderer = new FontRenderer(assets.font_spritesheet);
+    const initialGameState = await GameState.load();
 
-    engine = new Engine(gl, uiCanvas, ctx, assets, keybinds, fontRenderer, assetManager, gameplaySettings);
+    assetManager.loadCoreAssets().then(async (assets) => {
+        console.log('Core assets loaded successfully, preparing main menu...');
 
-    eventBus.publish('assetsLoaded', assets);
+        try {
+            const fontRenderer = new FontRenderer(assets.font_spritesheet);
 
-    const uiRootEl = document.querySelector('parkour-hero-ui');
-    if (uiRootEl) {
-        uiRootEl.fontRenderer = fontRenderer;
-    }
+            engine = new Engine(gl, uiCanvas, ctx, assets, keybinds, fontRenderer, assetManager, gameplaySettings, soundSettings);
+            engine.gameState = initialGameState;
 
-    eventBus.subscribe('requestStartGame', () => {
-        engine.start();
-    });
+            eventBus.publish('assetsLoaded', assets);
+            eventBus.publish('gameStateUpdated', initialGameState);
 
-    eventBus.subscribe('gameplaySettingsChanged', (newSettings) => {
-        if (engine) {
-            engine.updateGameplaySettings(newSettings);
-        }
-    });
-
-    await assetManager.loadGameplayAssets();
-    engine.renderer.syncTextures();
-    engine.particleSystem.syncTextures();
-    engine.soundManager.addSounds(assetManager.assets, assetManager.gameplaySoundKeys);
-    console.log("All gameplay assets are now loaded and ready.");
-
-
-    window.unlockAllLevels = () => {
-        if (engine && engine.gameState) {
-            engine.gameState = engine.gameState.unlockAllLevels();
-            eventBus.publish('gameStateUpdated', engine.gameState);
-            console.log("All levels have been unlocked.");
-        }
-    };
-    console.log('Developer command available: Type `unlockAllLevels()` in the console to unlock all levels.');
-
-    window.resetProgress = () => {
-        if (engine) {
-            const newState = GameState.resetProgress();
-            engine.gameState = newState;
-            eventBus.publish('gameStateUpdated', newState);
-            engine.loadLevel(0, 0);
-            console.log("Game progress has been reset.");
-        }
-    };
-    console.log('Developer command available: Type `resetProgress()` in the console to reset all saved data.');
-
-    window.unlockSomeLevels = (count) => {
-        if (engine && engine.gameState) {
-            try {
-                const newState = engine.gameState.unlockLevels(count);
-                engine.gameState = newState;
-                eventBus.publish('gameStateUpdated', newState);
-                console.log(`Unlocked ${count} levels.`);
-            } catch (e) {
-                console.error(e.message);
+            const uiRootEl = document.querySelector('parkour-hero-ui');
+            if (uiRootEl) {
+                uiRootEl.fontRenderer = fontRenderer;
+                uiRootEl.gameState = initialGameState;
+                uiRootEl.keybinds = keybinds;
+                uiRootEl.soundSettings = soundSettings;
+                uiRootEl.gameplaySettings = gameplaySettings;
             }
+
+            eventBus.subscribe('requestStartGame', () => {
+                engine.start();
+            });
+
+            eventBus.subscribe('gameplaySettingsChanged', (newSettings) => {
+                if (engine) {
+                    engine.updateGameplaySettings(newSettings);
+                }
+            });
+
+            await assetManager.loadGameplayAssets();
+            engine.renderer.syncTextures();
+            engine.particleSystem.syncTextures();
+            await engine.soundManager.addSounds(assetManager.assets, [...assetManager.coreSoundKeys, ...assetManager.gameplaySoundKeys]);
+            console.log("All gameplay assets are now loaded and ready.");
+
+            window.unlockAllLevels = () => {
+                if (engine && engine.gameState) {
+                    engine.gameState = engine.gameState.unlockAllLevels();
+                    eventBus.publish('gameStateUpdated', engine.gameState);
+                    console.log("All levels have been unlocked.");
+                }
+            };
+            console.log('Developer command available: Type `unlockAllLevels()` in the console to unlock all levels.');
+
+            window.resetProgress = async () => {
+                if (engine) {
+                    const newState = await GameState.resetProgress();
+                    engine.gameState = newState;
+                    eventBus.publish('gameStateUpdated', newState);
+                    engine.loadLevel(0, 0);
+                    console.log("Game progress has been reset.");
+                }
+            };
+            console.log('Developer command available: Type `resetProgress()` in the console to reset all saved data.');
+
+            window.unlockSomeLevels = (count) => {
+                if (engine && engine.gameState) {
+                    try {
+                        const newState = engine.gameState.unlockLevels(count);
+                        engine.gameState = newState;
+                        eventBus.publish('gameStateUpdated', newState);
+                        console.log(`Unlocked ${count} levels.`);
+                    } catch (e) {
+                        console.error(e.message);
+                    }
+                }
+            };
+            console.log('Developer command available: Type `unlockSomeLevels(n)` in the console to unlock n levels.');
+
+            console.log('Game is ready. Waiting for user to start from the main menu.');
+        } catch (error) {
+            console.error('Failed to start game engine:', error);
         }
-    };
-    console.log('Developer command available: Type `unlockSomeLevels(n)` in the console to unlock n levels.');
-
-    console.log('Game is ready. Waiting for user to start from the main menu.');
-  } catch (error) {
-    console.error('Failed to start game engine:', error);
-  }
-
-}).catch((error) => {
-  console.error("Asset loading failed:", error);
-});
+    }).catch((error) => {
+        console.error("Asset loading failed:", error);
+    });
+}
 
 window.addEventListener('error', (event) => {
   console.error('Global error:', event.error);
@@ -168,3 +177,5 @@ console.log('Game initialization started');
 console.log('Canvas dimensions:', gameCanvas.width, 'x', gameCanvas.height);
 console.log('Device pixel ratio:', window.devicePixelRatio);
 console.log('User agent:', navigator.userAgent);
+
+initGame();

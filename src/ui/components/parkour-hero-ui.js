@@ -108,13 +108,12 @@ export class ParkourHeroUI extends LitElement {
     this.activeModal = 'main-menu';
     this.gameHasStarted = false;
 
-    const settings = StorageManager.loadSettings();
-    this.keybinds = settings.keybinds;
-    this.soundSettings = settings.sound;
-    this.gameplaySettings = settings.gameplay;
+    this.keybinds = null;
+    this.soundSettings = null;
+    this.gameplaySettings = null;
 
     this.currentStats = {};
-    this.gameState = new GameState();
+    this.gameState = null;
     this.assets = null;
     this.fontRenderer = null;
     this.levelCompleteStats = null;
@@ -170,7 +169,7 @@ export class ParkourHeroUI extends LitElement {
   _handleLevelLoad = ({ gameState }) => {
       this.gameState = gameState;
       this.levelCompleteStats = null;
-      this.newlyUnlockedCharacterId = null; // Clear unlock on new level load
+      this.newlyUnlockedCharacterId = null;
       if (!this.gameHasStarted) {
           this.gameHasStarted = true;
       }
@@ -185,13 +184,15 @@ export class ParkourHeroUI extends LitElement {
 
   _handleSoundUpdate = (settings) => { this.soundSettings = { ...settings }; };
   _handleKeybindsUpdate = (keybinds) => { this.keybinds = { ...keybinds }; };
-  _handleMinimapSizeUpdate = ({ size }) => {
+  
+  _handleMinimapSizeUpdate = async ({ size }) => {
     this.gameplaySettings = { ...this.gameplaySettings, minimapSize: size };
-    const currentSettings = StorageManager.loadSettings();
+    const currentSettings = await StorageManager.loadSettings();
     currentSettings.gameplay = this.gameplaySettings;
-    StorageManager.saveSettings(currentSettings);
+    await StorageManager.saveSettings(currentSettings);
     eventBus.publish('gameplaySettingsChanged', this.gameplaySettings);
   };
+  
   _handleStatsUpdate = (stats) => { this.currentStats = { ...stats }; };
 
   _handleUIButtonClick = ({ buttonId }) => {
@@ -212,17 +213,18 @@ export class ParkourHeroUI extends LitElement {
 
   _handleEscapePress = () => {
     if (this.levelCompleteStats) return;
-    if (this.newlyUnlockedCharacterId) return; // Don't close unlock modal with escape easily? Or handle it.
+    if (this.newlyUnlockedCharacterId) return;
     if (this.activeModal) { this._closeModal(); }
     else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
   };
 
-  _handleKeybindChange = (e) => {
+  _handleKeybindChange = async (e) => {
     const { action, newKey } = e.detail;
     const newKeybinds = { ...this.keybinds, [action]: newKey };
-    const currentSettings = StorageManager.loadSettings();
+    this.keybinds = newKeybinds;
+    const currentSettings = await StorageManager.loadSettings();
     currentSettings.keybinds = newKeybinds;
-    StorageManager.saveSettings(currentSettings);
+    await StorageManager.saveSettings(currentSettings);
     eventBus.publish('keybindsUpdated', newKeybinds);
   };
 
@@ -299,7 +301,6 @@ export class ParkourHeroUI extends LitElement {
   }
 
   _handleLevelAction(action) {
-      // Clear level complete stats AND unlock state to prevent double popups
       this.levelCompleteStats = null;
       this.newlyUnlockedCharacterId = null;
       
@@ -309,7 +310,6 @@ export class ParkourHeroUI extends LitElement {
   }
 
   render() {
-    // If level is complete, show the stats modal first.
     if (this.levelCompleteStats) {
         return html`
             <level-complete-modal
@@ -336,7 +336,7 @@ export class ParkourHeroUI extends LitElement {
         `;
     }
 
-    const isLoading = !this.assets || !this.fontRenderer;
+    const isLoading = !this.assets || !this.fontRenderer || !this.gameState || !this.keybinds || !this.soundSettings || !this.gameplaySettings;
     if (!this.gameHasStarted && !this.previewMode) {
       return html`
         <div class="main-menu-overlay">

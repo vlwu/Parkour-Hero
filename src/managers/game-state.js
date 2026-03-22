@@ -41,185 +41,199 @@ export class GameState {
             this.newlyUnlockedCharacter = initialState.newlyUnlockedCharacter;
         } else {
             this.showingLevelComplete = false;
-            const savedState = StorageManager.loadProgress();
-            this.levelProgress = savedState.levelProgress;
-            this.selectedCharacter = savedState.selectedCharacter;
-            this.levelStats = savedState.levelStats;
-            this.tutorialShown = savedState.tutorialShown;
+            this.levelProgress = { unlockedLevels: [1], completedLevels: [] };
+            this.selectedCharacter = 'PinkMan';
+            this.levelStats = {};
+            this.tutorialShown = false;
             this.newlyUnlockedCharacter = null;
+            this.currentSection = 0;
+            this.currentLevelIndex = 0;
             this.ensureStatsForAllLevels();
-
-            const lastUnlockedLinearIndex = this.levelProgress.unlockedLevels[0] - 1;
-            const { sectionIndex, levelIndex } = getSectionAndLevelFromLinearIndex(lastUnlockedLinearIndex, levelSections);
-            this.currentSection = sectionIndex;
-            this.currentLevelIndex = levelIndex;
         }
-}
-
-_clone() {
-    const clonedState = JSON.parse(JSON.stringify(this));
-    return new GameState(clonedState);
-}
-
-setSelectedCharacter(characterId) {
-    if (characterConfig[characterId] && this.selectedCharacter !== characterId) {
-    const newState = this._clone();
-    newState.selectedCharacter = characterId;
-    return newState;
     }
-    return this;
-}
 
-ensureStatsForAllLevels() {
-    levelSections.forEach((section, sectionIndex) => {
-        section.levels.forEach((_, levelIndex) => {
-            const levelId = `${sectionIndex}-${levelIndex}`;
-            if (!this.levelStats[levelId]) {
-                this.levelStats[levelId] = {
-                    fastestTime: null,
-                    lowestDeaths: null,
-                    totalAttempts: 0,
-                };
-            }
+    static async load() {
+        const savedState = await StorageManager.loadProgress();
+        const instance = new GameState();
+        instance.showingLevelComplete = false;
+        instance.levelProgress = savedState.levelProgress;
+        instance.selectedCharacter = savedState.selectedCharacter;
+        instance.levelStats = savedState.levelStats;
+        instance.tutorialShown = savedState.tutorialShown;
+        instance.newlyUnlockedCharacter = null;
+        instance.ensureStatsForAllLevels();
+
+        const lastUnlockedLinearIndex = instance.levelProgress.unlockedLevels[0] - 1;
+        const { sectionIndex, levelIndex } = getSectionAndLevelFromLinearIndex(lastUnlockedLinearIndex, levelSections);
+        instance.currentSection = sectionIndex;
+        instance.currentLevelIndex = levelIndex;
+        
+        return instance;
+    }
+
+    _clone() {
+        const clonedState = JSON.parse(JSON.stringify(this));
+        return new GameState(clonedState);
+    }
+
+    setSelectedCharacter(characterId) {
+        if (characterConfig[characterId] && this.selectedCharacter !== characterId) {
+        const newState = this._clone();
+        newState.selectedCharacter = characterId;
+        return newState;
+        }
+        return this;
+    }
+
+    ensureStatsForAllLevels() {
+        levelSections.forEach((section, sectionIndex) => {
+            section.levels.forEach((_, levelIndex) => {
+                const levelId = `${sectionIndex}-${levelIndex}`;
+                if (!this.levelStats[levelId]) {
+                    this.levelStats[levelId] = {
+                        fastestTime: null,
+                        lowestDeaths: null,
+                        totalAttempts: 0,
+                    };
+                }
+            });
         });
-    });
-}
-
-incrementAttempts(sectionIndex, levelIndex) {
-    const newState = this._clone();
-    const levelId = `${sectionIndex}-${levelIndex}`;
-    if (newState.levelStats[levelId]) {
-        newState.levelStats[levelId].totalAttempts += 1;
     }
-    return newState;
-}
 
-onLevelComplete(runStats) {
-    const newState = this._clone();
-    const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
-    newState.newlyUnlockedCharacter = null;
+    incrementAttempts(sectionIndex, levelIndex) {
+        const newState = this._clone();
+        const levelId = `${sectionIndex}-${levelIndex}`;
+        if (newState.levelStats[levelId]) {
+            newState.levelStats[levelId].totalAttempts += 1;
+        }
+        return newState;
+    }
 
-    if (!this.levelProgress.completedLevels.includes(levelId)) {
-        newState.levelProgress.completedLevels.push(levelId);
+    onLevelComplete(runStats) {
+        const newState = this._clone();
+        const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
+        newState.newlyUnlockedCharacter = null;
 
-        const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
-        const currentLinearIndex = getLinearIndex(this.currentSection, this.currentLevelIndex, levelSections);
+        if (!this.levelProgress.completedLevels.includes(levelId)) {
+            newState.levelProgress.completedLevels.push(levelId);
 
-        if (currentLinearIndex + 1 < totalLevels) {
-            const nextUnlockedCount = currentLinearIndex + 2;
-            if (nextUnlockedCount > this.levelProgress.unlockedLevels[0]) {
-                newState.levelProgress.unlockedLevels[0] = nextUnlockedCount;
+            const totalLevels = levelSections.reduce((acc, section) => acc + section.levels.length, 0);
+            const currentLinearIndex = getLinearIndex(this.currentSection, this.currentLevelIndex, levelSections);
+
+            if (currentLinearIndex + 1 < totalLevels) {
+                const nextUnlockedCount = currentLinearIndex + 2;
+                if (nextUnlockedCount > this.levelProgress.unlockedLevels[0]) {
+                    newState.levelProgress.unlockedLevels[0] = nextUnlockedCount;
+                }
+            }
+
+            const totalCompleted = newState.levelProgress.completedLevels.length;
+            for (const [charId, config] of Object.entries(characterConfig)) {
+                if (config.unlockRequirement === totalCompleted) {
+                    newState.newlyUnlockedCharacter = charId;
+                }
             }
         }
 
-        // Check for character unlocks
-        const totalCompleted = newState.levelProgress.completedLevels.length;
-        for (const [charId, config] of Object.entries(characterConfig)) {
-            if (config.unlockRequirement === totalCompleted) {
-                newState.newlyUnlockedCharacter = charId;
+        const currentStats = newState.levelStats[levelId];
+        if (currentStats) {
+            if (currentStats.fastestTime === null || runStats.time < currentStats.fastestTime) {
+                currentStats.fastestTime = runStats.time;
+            }
+            if (currentStats.lowestDeaths === null || runStats.deaths < currentStats.lowestDeaths) {
+                currentStats.lowestDeaths = runStats.deaths;
             }
         }
+
+        newState.showingLevelComplete = true;
+        eventBus.publish(EVENTS.PLAY_SOUND, { key: 'level_complete', volume: 1.0, channel: 'UI' });
+
+        return newState;
     }
 
-    const currentStats = newState.levelStats[levelId];
-    if (currentStats) {
-        if (currentStats.fastestTime === null || runStats.time < currentStats.fastestTime) {
-            currentStats.fastestTime = runStats.time;
+    isCharacterUnlocked(characterId) {
+        const config = characterConfig[characterId];
+        if (!config) return false;
+        const completedCount = this.levelProgress.completedLevels.length;
+        return completedCount >= config.unlockRequirement;
+    }
+
+    isLevelUnlocked(sectionIndex, levelIndex) {
+        const section = levelSections[sectionIndex];
+        if (section && section.name === 'DIY') {
+            return true;
         }
-        if (currentStats.lowestDeaths === null || runStats.deaths < currentStats.lowestDeaths) {
-            currentStats.lowestDeaths = runStats.deaths;
+        const levelLinearIndex = getLinearIndex(sectionIndex, levelIndex, levelSections);
+        return levelLinearIndex < this.levelProgress.unlockedLevels[0];
+    }
+
+    isLevelCompleted(sectionIndex, levelIndex) {
+        const levelId = `${sectionIndex}-${levelIndex}`;
+        return this.levelProgress.completedLevels.includes(levelId);
+    }
+
+    static async resetProgress() {
+        await StorageManager.resetProgress();
+        return await GameState.load();
+    }
+
+    markTutorialAsShown() {
+        if (this.tutorialShown) return this;
+        const newState = this._clone();
+        newState.tutorialShown = true;
+        return newState;
+    }
+
+    unlockAllLevels() {
+        const newState = this._clone();
+        const totalLevels = levelSections.reduce((acc, section) => {
+            if (section.name === 'DIY') return acc;
+            return acc + section.levels.length;
+        }, 0);
+        newState.levelProgress.unlockedLevels[0] = totalLevels;
+
+        newState.levelProgress.completedLevels = [];
+        levelSections.forEach((section, sIdx) => {
+            if (section.name === 'DIY') return;
+            section.levels.forEach((_, lIdx) => {
+                newState.levelProgress.completedLevels.push(`${sIdx}-${lIdx}`);
+            });
+        });
+
+        return newState;
+    }
+
+    unlockLevels(count) {
+        const totalLevels = levelSections.reduce((acc, section) => {
+            if (section.name === 'DIY') return acc;
+            return acc + section.levels.length;
+        }, 0);
+
+        if (count < 1 || count > totalLevels) {
+            throw new Error(`Invalid level count: ${count}. Must be between 1 and ${totalLevels}.`);
         }
+
+        const newState = this._clone();
+        
+        newState.levelProgress.unlockedLevels[0] = count;
+        newState.levelProgress.completedLevels = [];
+        
+        let levelsAdded = 0;
+        for (let sIdx = 0; sIdx < levelSections.length; sIdx++) {
+            const section = levelSections[sIdx];
+            if (section.name === 'DIY') continue;
+            
+            for (let lIdx = 0; lIdx < section.levels.length; lIdx++) {
+                if (levelsAdded < count - 1) {
+                    newState.levelProgress.completedLevels.push(`${sIdx}-${lIdx}`);
+                    levelsAdded++;
+                } else {
+                    break;
+                }
+            }
+            if (levelsAdded >= count - 1) break;
+        }
+
+        return newState;
     }
-
-    newState.showingLevelComplete = true;
-    eventBus.publish(EVENTS.PLAY_SOUND, { key: 'level_complete', volume: 1.0, channel: 'UI' });
-
-    return newState;
-}
-
-isCharacterUnlocked(characterId) {
-    const config = characterConfig[characterId];
-    if (!config) return false;
-    const completedCount = this.levelProgress.completedLevels.length;
-    return completedCount >= config.unlockRequirement;
-}
-
-isLevelUnlocked(sectionIndex, levelIndex) {
-    const section = levelSections[sectionIndex];
-    if (section && section.name === 'DIY') {
-        return true;
-    }
-    const levelLinearIndex = getLinearIndex(sectionIndex, levelIndex, levelSections);
-    return levelLinearIndex < this.levelProgress.unlockedLevels[0];
-}
-
-isLevelCompleted(sectionIndex, levelIndex) {
-    const levelId = `${sectionIndex}-${levelIndex}`;
-    return this.levelProgress.completedLevels.includes(levelId);
-}
-
-static resetProgress() {
-    StorageManager.resetProgress();
-    return new GameState();
-}
-
-  markTutorialAsShown() {
-      if (this.tutorialShown) return this;
-      const newState = this._clone();
-      newState.tutorialShown = true;
-      return newState;
-  }
-
-  unlockAllLevels() {
-      const newState = this._clone();
-      const totalLevels = levelSections.reduce((acc, section) => {
-          if (section.name === 'DIY') return acc;
-          return acc + section.levels.length;
-      }, 0);
-      newState.levelProgress.unlockedLevels[0] = totalLevels;
-
-      newState.levelProgress.completedLevels = [];
-      levelSections.forEach((section, sIdx) => {
-          if (section.name === 'DIY') return;
-          section.levels.forEach((_, lIdx) => {
-              newState.levelProgress.completedLevels.push(`${sIdx}-${lIdx}`);
-          });
-      });
-
-      return newState;
-  }
-
-  unlockLevels(count) {
-      const totalLevels = levelSections.reduce((acc, section) => {
-          if (section.name === 'DIY') return acc;
-          return acc + section.levels.length;
-      }, 0);
-
-      if (count < 1 || count > totalLevels) {
-          throw new Error(`Invalid level count: ${count}. Must be between 1 and ${totalLevels}.`);
-      }
-
-      const newState = this._clone();
-      
-      newState.levelProgress.unlockedLevels[0] = count;
-      newState.levelProgress.completedLevels = [];
-      
-      let levelsAdded = 0;
-      for (let sIdx = 0; sIdx < levelSections.length; sIdx++) {
-          const section = levelSections[sIdx];
-          if (section.name === 'DIY') continue;
-          
-          for (let lIdx = 0; lIdx < section.levels.length; lIdx++) {
-              if (levelsAdded < count - 1) {
-                  newState.levelProgress.completedLevels.push(`${sIdx}-${lIdx}`);
-                  levelsAdded++;
-              } else {
-                  break;
-              }
-          }
-          if (levelsAdded >= count - 1) break;
-      }
-
-      return newState;
-  }
 }

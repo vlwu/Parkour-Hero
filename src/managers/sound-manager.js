@@ -2,61 +2,53 @@ import { eventBus } from '../utils/event-bus.js';
 import { StorageManager } from './storage-manager.js';
 
 export class SoundManager {
-  constructor() {
+  constructor(initialSettings) {
     this.sounds = {};
-    this.soundPool = {};
-    this.poolSize = 5;
-
-    this.channels = {
+    this.activeSources = {
       SFX: new Set(),
       UI: new Set(),
       Music: new Set(),
     };
+    this.loopingSources = new Map();
 
-    this.audioContext = null;
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.audioContext = new AudioContext();
+    } catch(e) {
+        console.error("AudioContext not supported", e);
+    }
+
     this.audioUnlocked = false;
-    this.settings = {
+    this.settings = initialSettings || {
       enabled: true,
       volume: 0.5,
     };
     this.subscriptions = [];
 
-    this.loadSettings();
     this._setupEventSubscriptions();
     this._initializeAudioContext();
   }
 
   _initializeAudioContext() {
-    if (this.audioContext) return;
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-            this.audioContext = new AudioContext();
-            
-            const unlock = () => {
-                if (this.audioContext.state === 'suspended') {
-                    this.audioContext.resume().then(() => {
-                        this.audioUnlocked = true;
-                    }).catch(() => {});
-                } else if (this.audioContext.state === 'running') {
-                    this.audioUnlocked = true;
-                }
-                
-                ['click', 'keydown', 'touchstart'].forEach(evt => {
-                    document.removeEventListener(evt, unlock, { capture: true });
-                });
-            };
-
-            ['click', 'keydown', 'touchstart'].forEach(evt => {
-                document.addEventListener(evt, unlock, { capture: true, once: true });
-            });
-
-        } else {
-            console.warn("AudioContext not supported.");
+    if (!this.audioContext) return;
+    
+    const unlock = () => {
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume().then(() => {
+                this.audioUnlocked = true;
+            }).catch(() => {});
+        } else if (this.audioContext.state === 'running') {
+            this.audioUnlocked = true;
         }
-    } catch (e) {
-        console.error("Failed to create early AudioContext:", e);
-    }
+        
+        ['click', 'keydown', 'touchstart'].forEach(evt => {
+            document.removeEventListener(evt, unlock, { capture: true });
+        });
+    };
+
+    ['click', 'keydown', 'touchstart'].forEach(evt => {
+        document.addEventListener(evt, unlock, { capture: true, once: true });
+    });
   }
 
   _setupEventSubscriptions() {
@@ -80,40 +72,33 @@ export class SoundManager {
       this.stopAll();
   }
 
-  loadSettings() {
-    const settings = StorageManager.loadSettings();
-    this.settings.enabled = settings.sound.enabled;
-    this.settings.volume = settings.sound.volume;
-  }
-
-  saveSettings() {
-      const currentSettings = StorageManager.loadSettings();
+  async saveSettings() {
+      const currentSettings = await StorageManager.loadSettings();
       currentSettings.sound = {
           enabled: this.settings.enabled,
           volume: this.settings.volume,
       };
-      StorageManager.saveSettings(currentSettings);
+      await StorageManager.saveSettings(currentSettings);
   }
 
-  addSounds(assets, soundKeys) {
-    soundKeys.forEach(key => {
+  async addSounds(assets, soundKeys) {
+    if (!this.audioContext) return;
+    for (const key of soundKeys) {
       if (assets[key] && !this.sounds[key]) {
-        this.sounds[key] = assets[key];
-        this.soundPool[key] = {
-            pool: [],
-            next: 0
-        };
-        for (let i = 0; i < this.poolSize; i++) {
-            const clone = this.sounds[key].cloneNode(true);
-            clone.load();
-            this.soundPool[key].pool.push(clone);
+        try {
+          if (assets[key].byteLength > 0) {
+              const audioBuffer = await this.audioContext.decodeAudioData(assets[key].slice(0));
+              this.sounds[key] = audioBuffer;
+          }
+        } catch (e) {
+          console.error(`Failed to decode audio data for ${key}`, e);
         }
       }
-    });
+    }
   }
 
   async play({ key, volumeMultiplier = 1.0, channel = 'SFX' }) {
-    if (!this.settings.enabled || !this.sounds[key] || !this.channels[channel]) {
+    if (!this.settings.enabled || !this.sounds[key] || !this.activeSources[channel]) {
       return;
     }
 
@@ -122,127 +107,124 @@ export class SoundManager {
       return;
     }
 
-    const poolData = this.soundPool[key];
-    if (!poolData || poolData.pool.length === 0) {
-      console.warn(`Sound pool for ${key} not found or is empty.`);
-      return;
-    }
-
-
-    const audio = poolData.pool[poolData.next];
-    poolData.next = (poolData.next + 1) % this.poolSize;
-
-    audio.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
-    audio.currentTime = 0;
-
-    this.channels[channel].add(audio);
-
-    audio.onended = () => {
-      this.channels[channel].delete(audio);
-      audio.onended = null;
-    };
-
     try {
-      await audio.play();
+        const source = this.audioContext.createBufferSource();
+        source.buffer = this.sounds[key];
+
+        const gainNode = this.audioContext.createGain();
+        gainNode.gain.value = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
+
+        source.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        source.start(0);
+
+        this.activeSources[channel].add(source);
+        source.onended = () => {
+            this.activeSources[channel].delete(source);
+            source.disconnect();
+            gainNode.disconnect();
+        };
     } catch (e) {
-      if (e.name !== 'AbortError') {
-        console.error(`Audio pool play failed for ${key}:`, e);
-      }
-      this.audioUnlocked = this.audioContext.state === 'running';
-      this.channels[channel].delete(audio);
+        console.error(`Play failed for ${key}:`, e);
     }
   }
 
   async playLoop({ key, volumeMultiplier = 1.0, channel = 'SFX' }) {
-    if (!this.settings.enabled || !this.sounds[key] || !this.channels[channel]) {
-      return;
-    }
-    if (Array.from(this.channels[channel]).some(audio => audio.src === this.sounds[key].src)) {
-        return;
-    }
+    if (!this.settings.enabled || !this.sounds[key] || !this.activeSources[channel]) return;
+    if (this.loopingSources.has(key)) return;
 
     await this.unlockAudio();
     if (!this.audioUnlocked) return;
 
     try {
-      const audio = this.sounds[key].cloneNode(true);
-      audio.volume = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
-      audio.loop = true;
-      await audio.play();
-      this.channels[channel].add(audio);
-    } catch (error) {
-      console.error(`Failed to play looping sound ${key}:`, error);
-      this.audioUnlocked = this.audioContext.state === 'running';
+        const source = this.audioContext.createBufferSource();
+        source.buffer = this.sounds[key];
+        source.loop = true;
+
+        const gainNode = this.audioContext.createGain();
+        gainNode.gain.value = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
+
+        source.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        source.start(0);
+        
+        this.loopingSources.set(key, { source, gainNode, channel });
+        this.activeSources[channel].add(source);
+    } catch (e) {
+        console.error(`Play loop failed for ${key}:`, e);
     }
   }
 
   stopLoop(soundKey) {
-    const soundSrc = this.sounds[soundKey]?.src;
-    if (!soundSrc) return;
-
-    for (const channelName in this.channels) {
-        this.channels[channelName].forEach(audio => {
-            if (audio.src === soundSrc && audio.loop) {
-                audio.pause();
-                audio.currentTime = 0;
-                this.channels[channelName].delete(audio);
-            }
-        });
+    if (this.loopingSources.has(soundKey)) {
+        const { source, gainNode, channel } = this.loopingSources.get(soundKey);
+        try {
+            source.stop();
+            source.disconnect();
+            gainNode.disconnect();
+        } catch (e) {}
+        this.activeSources[channel].delete(source);
+        this.loopingSources.delete(soundKey);
     }
   }
 
   stopAll({ except = [] } = {}) {
-    for (const channelName in this.channels) {
-      if (except.includes(channelName)) {
-        continue;
-      }
-      this.channels[channelName].forEach(audio => {
-        audio.pause();
-        audio.currentTime = 0;
+    for (const channelName in this.activeSources) {
+      if (except.includes(channelName)) continue;
+      
+      this.activeSources[channelName].forEach(source => {
+        try {
+            source.stop();
+            source.disconnect();
+        } catch (e) {}
       });
-      this.channels[channelName].clear();
+      this.activeSources[channelName].clear();
+    }
+    
+    for (const [key, data] of this.loopingSources.entries()) {
+        if (!except.includes(data.channel)) {
+            this.loopingSources.delete(key);
+        }
     }
   }
 
   async unlockAudio() {
     if (!this.audioContext) {
-      console.warn("AudioContext not available. Sound will be disabled.");
+      console.warn("AudioContext not available.");
       this.audioUnlocked = false;
       return;
     }
 
     if (this.audioContext.state === 'suspended') {
       try {
-          await Promise.race([
-              this.audioContext.resume(),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 100))
-          ]);
+          await this.audioContext.resume();
       } catch(e) {
-          // Ignore timeout or resume errors to prevent hanging
+          // Ignore errors
       }
     }
 
     this.audioUnlocked = this.audioContext.state === 'running';
   }
 
-  setVolume(volume) {
+  async setVolume(volume) {
     this.settings.volume = Math.max(0, Math.min(1, volume));
 
-    for (const channelName in this.channels) {
-        this.channels[channelName].forEach(audio => {
-            audio.volume = this.settings.volume;
-        });
+    for (const data of this.loopingSources.values()) {
+        data.gainNode.gain.value = this.settings.volume;
     }
-    this.saveSettings();
+
+    await this.saveSettings();
     eventBus.publish('soundSettingsChanged', { enabled: this.settings.enabled, volume: this.settings.volume });
   }
 
-  setEnabled(enabled) {
+  async setEnabled(enabled) {
     this.settings.enabled = enabled;
     if (!this.settings.enabled) {
       this.stopAll();
     }
-    this.saveSettings();
+    await this.saveSettings();
     eventBus.publish('soundSettingsChanged', { enabled: this.settings.enabled, volume: this.settings.volume });
   }
 

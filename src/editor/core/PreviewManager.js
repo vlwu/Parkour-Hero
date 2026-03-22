@@ -5,12 +5,11 @@ import { DOM } from '../ui/DOM.js';
 
 export class PreviewManager {
     constructor(context) {
-
         this.context = context;
         this.engine = null;
     }
 
-    start() {
+    async start() {
         if (!this.context.assets || !this.context.fontRenderer) {
             alert("Game assets are not loaded yet. Please wait.");
             return;
@@ -66,8 +65,14 @@ export class PreviewManager {
         const gl = particleCanvas.getContext('webgl2', { alpha: true });
         ctx.imageSmoothingEnabled = false;
 
-        this.engine = new Engine(gl, uiRoot, ctx, this.context.assets, {}, this.context.fontRenderer, assetManager);
+        const StorageManager = (await import('../../managers/storage-manager.js')).StorageManager;
+        const settings = await StorageManager.loadSettings();
+
+        this.engine = new Engine(gl, uiRoot, ctx, this.context.assets, settings.keybinds, this.context.fontRenderer, assetManager, settings.gameplay, settings.sound);
         this.engine.renderer.previewMode = true;
+        
+        await this.engine.soundManager.addSounds(this.context.assets, [...assetManager.coreSoundKeys, ...assetManager.gameplaySoundKeys]);
+        
         this.engine.soundManager.setEnabled(false);
         this.engine.loadLevelFromData(levelData);
         this.engine.playerEntityId = null;

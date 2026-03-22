@@ -41,7 +41,7 @@ import { CombatSystem } from '../systems/combat-system.js';
 const FIXED_DT = 1 / 60;
 
 export class Engine {
-  constructor(gl, uiCanvas, ctx, assets, initialKeybinds, fontRenderer, assetManager, gameplaySettings) {
+  constructor(gl, uiCanvas, ctx, assets, initialKeybinds, fontRenderer, assetManager, gameplaySettings, initialSoundSettings) {
     this.gl = gl;
     this.canvas = gl.canvas;
     this.uiCanvas = uiCanvas;
@@ -65,8 +65,7 @@ export class Engine {
 
     this.camera = new Camera(this.canvas.width, this.canvas.height);
     this.hud = new HUD(this.ctx, fontRenderer, this.gameplaySettings);
-    this.soundManager = new SoundManager();
-    this.soundManager.addSounds(assets, this.assetManager.coreSoundKeys);
+    this.soundManager = new SoundManager(initialSoundSettings);
     this.renderer = new Renderer(this.gl, this.canvas, this.assets);
     this.gameState = new GameState();
 

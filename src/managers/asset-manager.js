@@ -58,39 +58,16 @@ function loadImage(src, key) {
   });
 }
 
-function loadSound(src, key) {
-  return new Promise((resolve) => {
-    const audio = new Audio();
-    const timeout = 10000;
-
-    let fallbackUsed = false;
-
-    const useFallback = () => {
-        if (fallbackUsed) return;
-        fallbackUsed = true;
-        console.warn(`Failed or timed out loading sound: ${src}. Using silent fallback.`);
-        const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
-        resolve(silentAudio);
-    };
-
-    const timer = setTimeout(useFallback, timeout);
-
-    audio.addEventListener('canplaythrough', () => {
-      if (fallbackUsed) return;
-      clearTimeout(timer);
-      resolve(audio);
-    });
-
-    audio.addEventListener('error', () => {
-      clearTimeout(timer);
-      useFallback();
-    });
-
-    audio.crossOrigin = 'anonymous';
-    audio.preload = 'auto';
-    audio.src = src;
-    audio.load();
-  });
+async function loadSound(src, key) {
+  try {
+    const response = await fetch(src);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const arrayBuffer = await response.arrayBuffer();
+    return arrayBuffer;
+  } catch (e) {
+    console.warn(`Failed loading sound: ${src}. Using empty ArrayBuffer.`, e);
+    return new ArrayBuffer(0);
+  }
 }
 
 function loadJSON(path) {
@@ -128,7 +105,6 @@ class AssetManager {
     async _fetchManifest() {
         if (this.manifest) return;
         try {
-            // FIX: Changed path from '/assets/asset-manifest.json' to '/asset-manifest.json'
             const response = await fetch('/asset-manifest.json');
             if (!response.ok) throw new Error('Could not load asset manifest');
             this.manifest = await response.json();
@@ -145,7 +121,7 @@ class AssetManager {
             loadImage(src, key).then(img => ({ [key]: img }))
         );
         const soundPromises = Object.entries(soundPaths).map(([key, src]) =>
-            loadSound(src, key).then(audio => ({ [key]: audio }))
+            loadSound(src, key).then(buffer => ({ [key]: buffer }))
         );
 
         const characterPromises = [];

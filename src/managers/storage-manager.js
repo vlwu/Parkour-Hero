@@ -28,13 +28,18 @@ export class StorageManager {
         };
     }
 
-    static loadProgress() {
+    static async loadProgress() {
         try {
-            const saved = localStorage.getItem('parkourGameState');
-            if (!saved) return this._getDefaultState();
+            let state = null;
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+                const data = await chrome.storage.sync.get('parkourGameState');
+                state = data.parkourGameState || null;
+            } else {
+                const saved = localStorage.getItem('parkourGameState');
+                if (saved) state = JSON.parse(saved);
+            }
 
-            const state = JSON.parse(saved);
-            if (typeof state !== 'object' || state === null) return this._getDefaultState();
+            if (!state || typeof state !== 'object') return this._getDefaultState();
 
             const lp = state.levelProgress;
             if (typeof lp !== 'object' || lp === null || !Array.isArray(lp.unlockedLevels) || !Array.isArray(lp.completedLevels)) {
@@ -48,18 +53,18 @@ export class StorageManager {
             if (!state.levelStats || typeof state.levelStats !== 'object') {
                 state.levelStats = {};
             }
-             if (typeof state.tutorialShown !== 'boolean') {
+            if (typeof state.tutorialShown !== 'boolean') {
                 state.tutorialShown = false;
             }
 
             return state;
         } catch (e) {
-            console.error("Failed to parse game state from localStorage. Resetting to default.", e);
+            console.error("Failed to parse game state from storage. Resetting to default.", e);
             return this._getDefaultState();
         }
     }
 
-    static saveProgress(gameState) {
+    static async saveProgress(gameState) {
         try {
             const stateToSave = {
                 levelProgress: gameState.levelProgress,
@@ -67,29 +72,44 @@ export class StorageManager {
                 levelStats: gameState.levelStats,
                 tutorialShown: gameState.tutorialShown,
             };
-            localStorage.setItem('parkourGameState', JSON.stringify(stateToSave));
-            console.log("Progress saved:", stateToSave);
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+                await chrome.storage.sync.set({ parkourGameState: stateToSave });
+            } else {
+                localStorage.setItem('parkourGameState', JSON.stringify(stateToSave));
+            }
+            console.log("Progress saved");
         } catch (e) {
-            console.error("Failed to save game state to localStorage", e);
+            console.error("Failed to save game state to storage", e);
+            localStorage.setItem('parkourGameState', JSON.stringify(gameState));
         }
     }
 
-    static resetProgress() {
+    static async resetProgress() {
         try {
-            localStorage.removeItem('parkourGameState');
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+                await chrome.storage.sync.remove('parkourGameState');
+            } else {
+                localStorage.removeItem('parkourGameState');
+            }
             console.log("Game progress has been reset.");
         } catch (e) {
-            console.error("Failed to reset game state in localStorage", e);
+            console.error("Failed to reset game state in storage", e);
         }
     }
 
-    static loadSettings() {
+    static async loadSettings() {
         try {
-            const saved = localStorage.getItem('parkourUserSettings');
-            if (!saved) return this._getDefaultSettings();
-            const savedSettings = JSON.parse(saved);
+            let savedSettings = null;
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+                const data = await chrome.storage.sync.get('parkourUserSettings');
+                savedSettings = data.parkourUserSettings || null;
+            } else {
+                const saved = localStorage.getItem('parkourUserSettings');
+                if (saved) savedSettings = JSON.parse(saved);
+            }
 
             const defaultSettings = this._getDefaultSettings();
+            if (!savedSettings) return defaultSettings;
 
             return {
                 sound: { ...defaultSettings.sound, ...savedSettings.sound },
@@ -97,16 +117,20 @@ export class StorageManager {
                 gameplay: { ...defaultSettings.gameplay, ...savedSettings.gameplay },
             };
         } catch (e) {
-            console.error("Failed to parse user settings from localStorage. Using defaults.", e);
+            console.error("Failed to parse user settings from storage. Using defaults.", e);
             return this._getDefaultSettings();
         }
     }
 
-    static saveSettings(settings) {
+    static async saveSettings(settings) {
         try {
-            localStorage.setItem('parkourUserSettings', JSON.stringify(settings));
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+                await chrome.storage.sync.set({ parkourUserSettings: settings });
+            } else {
+                localStorage.setItem('parkourUserSettings', JSON.stringify(settings));
+            }
         } catch (e) {
-            console.error("Failed to save user settings to localStorage", e);
+            console.error("Failed to save user settings to storage", e);
         }
     }
 }
