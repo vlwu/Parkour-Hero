@@ -47,6 +47,11 @@ export class CharacterMenu extends LitElement {
       padding: 10px;
       grid-auto-rows: 1fr;
     }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #2a2a2a; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #777; }
   `;
 
   static properties = {

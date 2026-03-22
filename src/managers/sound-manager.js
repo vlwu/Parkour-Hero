@@ -32,6 +32,25 @@ export class SoundManager {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) {
             this.audioContext = new AudioContext();
+            
+            const unlock = () => {
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().then(() => {
+                        this.audioUnlocked = true;
+                    }).catch(() => {});
+                } else if (this.audioContext.state === 'running') {
+                    this.audioUnlocked = true;
+                }
+                
+                ['click', 'keydown', 'touchstart'].forEach(evt => {
+                    document.removeEventListener(evt, unlock, { capture: true });
+                });
+            };
+
+            ['click', 'keydown', 'touchstart'].forEach(evt => {
+                document.addEventListener(evt, unlock, { capture: true, once: true });
+            });
+
         } else {
             console.warn("AudioContext not supported.");
         }
@@ -194,9 +213,12 @@ export class SoundManager {
 
     if (this.audioContext.state === 'suspended') {
       try {
-          await this.audioContext.resume();
+          await Promise.race([
+              this.audioContext.resume(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 100))
+          ]);
       } catch(e) {
-          console.error("Failed to resume AudioContext:", e);
+          // Ignore timeout or resume errors to prevent hanging
       }
     }
 

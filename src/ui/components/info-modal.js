@@ -83,6 +83,11 @@ export class InfoModal extends LitElement {
     .footer-button:hover {
       background-color: #0056b3;
     }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #2a2a2a; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #777; }
   `;
 
   static properties = {

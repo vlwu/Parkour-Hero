@@ -474,3 +474,20 @@ body {
 .resize-button-group button.success-action:hover {
     background-color: #27ae60;
 }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main); 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: #4a627a; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #5c7a99; 
+}
