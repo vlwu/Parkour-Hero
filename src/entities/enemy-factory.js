@@ -7,6 +7,10 @@ import { DynamicColliderComponent } from '../components/DynamicColliderComponent
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { KillableComponent } from '../components/KillableComponent.js';
 import { ENEMY_DEFINITIONS } from './enemy-definitions.js';
+import { SplitOnDeathComponent } from '../components/SplitOnDeathComponent.js';
+import { ShellComponent } from '../components/ShellComponent.js';
+import { RageStateComponent } from '../components/RageStateComponent.js';
+import { FallStateComponent } from '../components/FallStateComponent.js';
 
 export function createEnemy(entityManager, type, x, y, config = {}) {
     const data = ENEMY_DEFINITIONS[type];
@@ -55,6 +59,15 @@ export function createEnemy(entityManager, type, x, y, config = {}) {
         width: hitboxWidth,
         height: hitboxHeight,
     }));
+
+    if (data.behavior) {
+        switch(data.behavior.type) {
+            case 'shell': entityManager.addComponent(enemyEntityId, new ShellComponent()); break;
+            case 'rage': entityManager.addComponent(enemyEntityId, new RageStateComponent()); break;
+            case 'fall': entityManager.addComponent(enemyEntityId, new FallStateComponent()); break;
+            case 'split': entityManager.addComponent(enemyEntityId, new SplitOnDeathComponent(data.behavior.splitInto)); break;
+        }
+    }
 
     let initialAnimationState;
     if (type === 'bluebird') {

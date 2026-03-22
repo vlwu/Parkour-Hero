@@ -1,10 +1,12 @@
 import { BaseAI } from './BaseAI.js';
 import { eventBus } from '../utils/event-bus.js';
 import { ENEMY_STATES, ANIMATION_STATES, DIRECTIONS, EVENTS } from '../utils/constants.js';
+import { ShellComponent } from '../components/ShellComponent.js';
 
 export class SnailAI extends BaseAI {
     update(dt) {
-        if (this.enemy.snailState === ENEMY_STATES.SHELL) {
+        const shell = this.entityManager.getComponent(this.entityId, ShellComponent);
+        if (shell && shell.isActive) {
             this._updateShellAI(dt);
         } else {
             this._updateWalkingAI(dt);

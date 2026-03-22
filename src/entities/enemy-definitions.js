@@ -109,7 +109,8 @@ export const ENEMY_DEFINITIONS = {
             shellSpeed: 150,
             wallHitStunTime: 0.2,
             particleDropInterval: 0.45,
-        }
+        },
+        behavior: { type: 'shell' }
     },
 
     slime: {
@@ -245,7 +246,8 @@ export const ENEMY_DEFINITIONS = {
             groundSpeed: 30,
             idleTime: 1.0,
             particleDropInterval: 0.3,
-        }
+        },
+        behavior: { type: 'fall' }
     },
 
     bee: {
@@ -415,7 +417,8 @@ export const ENEMY_DEFINITIONS = {
             runSpeed: 150,
             idleTime: 0.5,
             particleDropInterval: 0.3,
-        }
+        },
+        behavior: { type: 'rage' }
     },
     chameleon: {
         width: 84,
@@ -464,7 +467,8 @@ export const ENEMY_DEFINITIONS = {
             patrolSpeed: 40,
             idleTime: 0.5,
             particleDropInterval: 0.35,
-        }
+        },
+        behavior: { type: 'split', splitInto: 'rock2' }
     },
     rock2: {
         width: 32,
@@ -485,7 +489,8 @@ export const ENEMY_DEFINITIONS = {
             patrolSpeed: 50,
             idleTime: 0.5,
             particleDropInterval: 0.3,
-        }
+        },
+        behavior: { type: 'split', splitInto: 'rock3' }
     },
     rock3: {
         width: 22,

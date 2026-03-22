@@ -1,7 +1,8 @@
 import { BaseAI } from './BaseAI.js';
 import { GroundPatrol } from './GroundPatrol.js';
 import { BoxPatrol } from './BoxPatrol.js';
-import { ENEMY_STATES, ANIMATION_STATES, EVENTS } from '../utils/constants.js';
+import { ENEMY_STATES, ANIMATION_STATES } from '../utils/constants.js';
+import { FallStateComponent } from '../components/FallStateComponent.js';
 
 export class RadishAI extends BaseAI {
     constructor(entityId, entityManager, level, playerEntityId) {
@@ -9,19 +10,18 @@ export class RadishAI extends BaseAI {
 
         this.boxPatrol = new BoxPatrol(entityId, entityManager, level, playerEntityId);
         this.groundPatrolBehavior = null;
-
-        if (!this.enemy.radishState) {
-            this.enemy.radishState = ENEMY_STATES.FLYING;
-        }
     }
 
     update(dt) {
-        if (this.enemy.radishState === ENEMY_STATES.FLYING) {
-            this._updateFlying(dt);
-        } else if (this.enemy.radishState === ENEMY_STATES.FALLING) {
-            this._updateFalling(dt);
-        } else if (this.enemy.radishState === ENEMY_STATES.GROUNDED) {
+        const fall = this.entityManager.getComponent(this.entityId, FallStateComponent);
+        if (!fall) return;
+
+        if (fall.isGrounded) {
             this._updateGrounded(dt);
+        } else if (fall.isFalling) {
+            this._updateFalling(dt, fall);
+        } else {
+            this._updateFlying(dt);
         }
     }
 
@@ -31,14 +31,15 @@ export class RadishAI extends BaseAI {
         this.boxPatrol.update(dt);
     }
 
-    _updateFalling(dt) {
+    _updateFalling(dt, fall) {
         this.renderable.animationState = ANIMATION_STATES.IDLE1;
         this.state.currentState = ENEMY_STATES.FALLING;
         this.vel.vx = 0;
         this.vel.vy += 600 * dt;
 
         if (this.col.isGrounded) {
-            this.enemy.radishState = ENEMY_STATES.GROUNDED;
+            fall.isFalling = false;
+            fall.isGrounded = true;
             this.state.currentState = ENEMY_STATES.IDLE_GROUNDED;
             this.renderable.animationState = ANIMATION_STATES.IDLE2;
             this.renderable.animationFrame = 0;
