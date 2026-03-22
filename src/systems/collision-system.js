@@ -9,7 +9,6 @@ import { DynamicColliderComponent } from '../components/DynamicColliderComponent
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { KillableComponent } from '../components/KillableComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
-import { IdleState } from '../states/player/IdleState.js';
 import { getTileProperties } from '../entities/tile-definitions.js';
 import { TrapComponent } from '../components/TrapComponent.js';
 
@@ -147,9 +146,6 @@ export class CollisionSystem {
             const col = entityManager.getComponent(entityId, CollisionComponent);
             const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
 
-            if (playerCtrl) {
-                this._handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager);
-            }
             col.groundEntity = null;
 
             if (playerCtrl && (playerCtrl.isSpawning || playerCtrl.isDespawning || playerCtrl.needsRespawn)) {
@@ -429,58 +425,6 @@ export class CollisionSystem {
                 pos.y = 0;
                 if (vel.vy < 0) vel.vy = 0;
             }
-            this._checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager);
-
-            if (playerCtrl) {
-                this._handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager);
-            }
-        }
-    }
-
-    _handleMudInteraction(entityId, pos, col, playerCtrl, level, entityManager) {
-        if (playerCtrl.ignoreSurfaceEffects) return;
-
-        const vel = entityManager.getComponent(entityId, VelocityComponent);
-
-        const PROBE_POINTS = 5;
-        let mudPoints = 0;
-        let highestMudY = -Infinity;
-
-        for (let i = 0; i < PROBE_POINTS; i++) {
-            const probeX = pos.x + (col.width / (PROBE_POINTS - 1)) * i;
-            const probeY = pos.y + col.height + 1;
-            const tileProps = level.getTilePropertiesAt(probeX, probeY);
-
-            if (tileProps && tileProps.interaction === 'mud') {
-                mudPoints++;
-                const tileGridY = Math.floor(probeY / GRID_CONSTANTS.TILE_SIZE);
-                const tileTopY = tileGridY * GRID_CONSTANTS.TILE_SIZE;
-                if (tileTopY > highestMudY) {
-                    highestMudY = tileTopY;
-                }
-            }
-        }
-
-        const isSubstantiallyOnMud = (mudPoints / PROBE_POINTS) >= 0.8;
-
-        if (isSubstantiallyOnMud) {
-            if (vel.vy >= 0) {
-                if (!playerCtrl.isInMud) {
-                    playerCtrl.isInMud = true;
-                    eventBus.publish('createParticles', {
-                        x: pos.x + col.width / 2,
-                        y: highestMudY,
-                        type: 'mud_splash'
-                    });
-                    eventBus.publish('playSound', { key: 'mud_splat', volume: 0.8, channel: 'SFX' });
-                }
-                pos.y = highestMudY - col.height + playerCtrl.mudSinkAmount;
-                vel.vy = 0;
-                col.isGrounded = true;
-                col.groundType = 'mud';
-            }
-        } else if (playerCtrl.isInMud) {
-            playerCtrl.isInMud = false;
         }
     }
 
@@ -515,87 +459,5 @@ export class CollisionSystem {
         col.isGrounded = true;
         col.groundType = surfaceType;
         col.groundEntity = groundInstance;
-    }
-
-    _isCollidingWith(pos, col, other) {
-        const hitbox = other.damageHitbox || other.hitbox || {
-            x: other.x - (other.width || other.size) / 2,
-            y: other.y - (other.height || other.size) / 2,
-            width: other.width || other.size,
-            height: other.height || other.size
-        };
-        return (
-            pos.x < hitbox.x + hitbox.width &&
-            pos.x + col.width > hitbox.x &&
-            pos.y < hitbox.y + hitbox.height &&
-            pos.y + col.height > hitbox.y
-        );
-    }
-
-    _checkObjectInteractions(pos, vel, col, level, dt, entityId, entityManager) {
-        this._checkFruitCollisions(pos, col, level, entityId, entityManager);
-        this._checkTrophyCollision(pos, col, level.trophy, entityId, entityManager, vel, dt);
-        this.checkCheckpointCollisions(pos, col, level, entityId, entityManager);
-        this._checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager);
-    }
-
-    _checkTrapInteractions(pos, vel, col, level, dt, entityId, entityManager) {
-        const player = { pos, vel, col, entityId, entityManager, dt };
-        const trapEntities = entityManager.query([TrapComponent]);
-        for (const trapId of trapEntities) {
-            const trap = entityManager.getComponent(trapId, TrapComponent).trap;
-            if (!trap.solid && this._isCollidingWith(pos, col, trap)) {
-                trap.onCollision(player, eventBus);
-            }
-        }
-    }
-
-    _checkFruitCollisions(pos, col, level, entityId, entityManager) {
-        for (const fruit of level.getActiveFruits()) {
-            if (this._isCollidingWith(pos, col, fruit)) {
-                eventBus.publish('collisionEvent', { type: 'fruit', entityId, target: fruit, entityManager });
-            }
-        }
-    }
-
-    _checkTrophyCollision(pos, col, trophy, entityId, entityManager, vel, dt) {
-        if (!trophy || trophy.inactive || trophy.acquired) return;
-        const collisionOffset = 15;
-        const trophyHitbox = { x: trophy.x - trophy.size / 2, y: (trophy.y - trophy.size / 2) + collisionOffset, width: trophy.size, height: trophy.size - collisionOffset };
-
-        if (!this._isRectColliding({ x: pos.x, y: pos.y, width: col.width, height: col.height }, trophyHitbox)) {
-            return;
-        }
-
-        const prevPlayerBottom = (pos.y + col.height) - vel.vy * dt;
-        if (vel.vy >= 0 && prevPlayerBottom <= trophyHitbox.y) {
-            if (!trophy.isAnimating) {
-                trophy.isAnimating = true;
-                const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
-                if (playerCtrl) {
-                    playerCtrl.inputLocked = true;
-                }
-                eventBus.publish('playerKnockback', { entityId, entityManager, vx: 0, vy: -300 });
-                eventBus.publish('playSound', { key: 'trophy_activated', volume: 0.9, channel: 'UI' });
-                eventBus.publish('cameraShakeRequested', { intensity: 6, duration: 0.25 });
-            }
-            return;
-        }
-
-        if (vel.vx > 0) {
-            pos.x = trophyHitbox.x - col.width;
-            vel.vx = 0;
-        } else if (vel.vx < 0) {
-            pos.x = trophyHitbox.x + trophyHitbox.width;
-            vel.vx = 0;
-        }
-    }
-
-    checkCheckpointCollisions(pos, col, level, entityId, entityManager) {
-        for (const cp of level.getInactiveCheckpoints()) {
-            if (this._isCollidingWith(pos, col, cp)) {
-                eventBus.publish('collisionEvent', { type: 'checkpoint', entityId, target: cp, entityManager });
-            }
-        }
     }
 }

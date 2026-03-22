@@ -35,6 +35,9 @@ import { coreSoundKeys, gameplaySoundKeys } from '../managers/asset-manager.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { characterConfig } from '../entities/level-definitions.js';
 import { TrapSystem } from '../systems/trap-system.js';
+import { EnvironmentSystem } from '../systems/environment-system.js';
+import { InteractionSystem } from '../systems/interaction-system.js';
+import { CombatSystem } from '../systems/combat-system.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -74,6 +77,9 @@ export class Engine {
     this.playerStateSystem = new PlayerStateSystem();
     this.movementSystem = new MovementSystem();
     this.collisionSystem = new CollisionSystem();
+    this.environmentSystem = new EnvironmentSystem();
+    this.interactionSystem = new InteractionSystem();
+    this.combatSystem = new CombatSystem();
     this.gameplaySystem = new GameplaySystem();
     this.particleSystem = new ParticleSystemWebGL(this.gl, this.assets);
     this.effectsSystem = new EffectsSystem(this.assets, fontRenderer);
@@ -89,6 +95,9 @@ export class Engine {
         this.playerStateSystem,
         this.movementSystem,
         this.collisionSystem,
+        this.environmentSystem,
+        this.interactionSystem,
+        this.combatSystem,
         this.enemySystem,
         this.bulletSystem,
         this.trapSystem,
