@@ -26,10 +26,12 @@ export class SettingsMenu extends LitElement {
       position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
       background-image: url('/assets/Menu/Buttons/Close.png');
       background-size: cover; background-color: transparent;
-      border: none; cursor: pointer; border-radius: 50%;
+      border: none; cursor: pointer;
       transition: transform 0.2s ease-in-out;
     }
     .close-button:hover { transform: scale(1.1); }
+    .close-button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .close-button:disabled:hover { transform: none; }
 
     .title-container {
         display: flex;
@@ -130,7 +132,26 @@ export class SettingsMenu extends LitElement {
     fontRenderer: { type: Object },
   };
 
+  _getDuplicateKeys() {
+      if (!this.keybinds) return new Set();
+      const keys = Object.values(this.keybinds);
+      const duplicates = new Set();
+      const seen = new Set();
+      for (const key of keys) {
+          if (seen.has(key)) {
+              duplicates.add(key);
+          }
+          seen.add(key);
+      }
+      return duplicates;
+  }
+
+  _hasDuplicates() {
+      return this._getDuplicateKeys().size > 0;
+  }
+
   _dispatchClose() {
+    if (this._hasDuplicates()) return;
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     this.dispatchEvent(new CustomEvent('close-modal', { bubbles: true, composed: true }));
   }
@@ -160,11 +181,12 @@ export class SettingsMenu extends LitElement {
     }
     const keybindActions = Object.keys(this.keybinds);
     const volumeClass = this.soundSettings.enabled ? 'volume-enabled' : 'volume-disabled';
+    const duplicates = this._getDuplicateKeys();
 
     return html`
       <div class="modal-overlay" @click=${this._dispatchClose}>
         <div class="modal-content" @click=${e => e.stopPropagation()}>
-          <button class="close-button" @click=${this._dispatchClose}></button>
+          <button class="close-button" @click=${this._dispatchClose} ?disabled=${this._hasDuplicates()}></button>
 
           <div class="title-container">
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Game Settings" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
@@ -244,6 +266,7 @@ export class SettingsMenu extends LitElement {
                   <keybind-display
                     .action=${action}
                     .currentKey=${this.keybinds[action]}
+                    .hasError=${duplicates.has(this.keybinds[action])}
                     .fontRenderer=${this.fontRenderer}
                   ></keybind-display>
                 </div>

@@ -81,7 +81,6 @@ body {
   background-color: transparent;
   border: none;
   cursor: pointer;
-  border-radius: 50%;
   transition: transform 0.2s ease-in-out;
 }
 

@@ -123,7 +123,26 @@ export class TutorialModal extends LitElement {
     this._checkScroll(e.target);
   }
 
+  _getDuplicateKeys() {
+      if (!this.keybinds) return new Set();
+      const keys = Object.values(this.keybinds);
+      const duplicates = new Set();
+      const seen = new Set();
+      for (const key of keys) {
+          if (seen.has(key)) {
+              duplicates.add(key);
+          }
+          seen.add(key);
+      }
+      return duplicates;
+  }
+
+  _hasDuplicates() {
+      return this._getDuplicateKeys().size > 0;
+  }
+
   _dispatchClose() {
+    if (this._hasDuplicates()) return;
     if (!this.hasScrolledToBottom) return;
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     this.dispatchEvent(new CustomEvent('close-modal', { bubbles: true, composed: true }));
@@ -133,6 +152,7 @@ export class TutorialModal extends LitElement {
     if (!this.keybinds || !this.fontRenderer || !this.assets) return html``;
 
     const keybindActions = Object.keys(this.keybinds);
+    const duplicates = this._getDuplicateKeys();
 
     return html`
       <div class="modal-overlay">
@@ -156,6 +176,7 @@ export class TutorialModal extends LitElement {
                       <keybind-display
                         .action=${action}
                         .currentKey=${this.keybinds[action]}
+                        .hasError=${duplicates.has(this.keybinds[action])}
                         .fontRenderer=${this.fontRenderer}
                       ></keybind-display>
                     </div>
@@ -222,8 +243,8 @@ export class TutorialModal extends LitElement {
           </div>
           
           <div class="footer-actions">
-            <button class="action-button" @click=${this._dispatchClose} ?disabled=${!this.hasScrolledToBottom}>
-                <bitmap-text .fontRenderer=${this.fontRenderer} text="Got It!" scale="2" color=${this.hasScrolledToBottom ? 'white' : '#999'}></bitmap-text>
+            <button class="action-button" @click=${this._dispatchClose} ?disabled=${!this.hasScrolledToBottom || this._hasDuplicates()}>
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Got It!" scale="2" color=${(this.hasScrolledToBottom && !this._hasDuplicates()) ? 'white' : '#999'}></bitmap-text>
             </button>
           </div>
         </div>

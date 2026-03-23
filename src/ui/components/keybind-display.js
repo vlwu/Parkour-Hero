@@ -28,11 +28,17 @@ export class KeybindDisplay extends LitElement {
       background-color: #444;
       box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
     }
+    .keybind-display.error {
+      border-color: #f44336;
+      background-color: #444;
+      box-shadow: 0 0 8px rgba(244, 67, 54, 0.8);
+    }
   `;
 
   static properties = {
     action: { type: String },
     currentKey: { type: String },
+    hasError: { type: Boolean },
     isRemapping: { type: Boolean, state: true },
     fontRenderer: { type: Object },
   };
@@ -40,6 +46,7 @@ export class KeybindDisplay extends LitElement {
   constructor() {
     super();
     this.isRemapping = false;
+    this.hasError = false;
   }
 
   connectedCallback() {
@@ -76,12 +83,12 @@ export class KeybindDisplay extends LitElement {
 
   render() {
     const displayText = this.isRemapping
-      ? 'Press key...'
+      ? '...'
       : formatKeyForDisplay(this.currentKey);
 
     return html`
       <div
-        class="keybind-display ${this.isRemapping ? 'active-rebind' : ''}"
+        class="keybind-display ${this.isRemapping ? 'active-rebind' : ''} ${this.hasError && !this.isRemapping ? 'error' : ''}"
         @click=${this._startRemap}
       >
         <bitmap-text
