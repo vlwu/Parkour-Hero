@@ -239,7 +239,7 @@ export class HUD {
       ctx.fill();
 
       const lineHeight = 35;
-      const startY = hudY + 25;
+      const startY = hudY + 15;
       const textX = hudX + hudWidth / 2;
 
       lines.forEach((text, index) => {

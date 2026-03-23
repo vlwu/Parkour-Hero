@@ -402,7 +402,9 @@ export class ParkourHeroUI extends LitElement {
         return html`<tutorial-modal
                       .keybinds=${this.keybinds}
                       .fontRenderer=${this.fontRenderer}
+                      .assets=${this.assets}
                       @close-modal=${this._closeModal}
+                      @keybind-changed=${this._handleKeybindChange}
                     ></tutorial-modal>`;
       case 'settings':
         return html`<settings-menu
