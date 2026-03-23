@@ -27,7 +27,7 @@ export class ShopModal extends LitElement {
     .close-button:hover { transform: scale(1.1); }
     
     .header {
-        display: flex; justify-content: space-between; align-items: center;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;
         margin-bottom: 20px; border-bottom: 2px solid #555; padding-bottom: 15px;
     }
     .coin-display {

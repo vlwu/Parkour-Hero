@@ -38,6 +38,9 @@ export class PlayerControlledComponent {
         this.jumpCount = 0;
         this.isDashing = false;
         this.isHit = false;
+        this.isDead = false;
+        this.respawnDelayTimer = 0;
+        
         this.isSpawning = true;
         this.spawnComplete = false;
         this.isDespawning = false;

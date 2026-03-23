@@ -30,7 +30,7 @@ export class ParticleSystemWebGL {
 
         this.activeParticles = [];
         this.inactivePool = [];
-        this.poolSize = 1000; // Increased pool for dense cosmetic effects
+        this.poolSize = 1000;
 
         for (let i = 0; i < this.poolSize; i++) {
             this.inactivePool.push({});
@@ -104,7 +104,6 @@ export class ParticleSystemWebGL {
 
         this.particleBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
-        // Stride: pos(2) + size(1) + alpha(1) + tex_info(4) + color(4) = 12 floats
         const strideBytes = 12 * Float32Array.BYTES_PER_ELEMENT;
         gl.bufferData(gl.ARRAY_BUFFER, this.poolSize * strideBytes, gl.DYNAMIC_DRAW);
 
@@ -173,42 +172,43 @@ export class ParticleSystemWebGL {
 
     create({ x, y, type, direction = 'right', particleSpeed = null, leafIndex = 0 }) {
         const particleConfigs = {
-            // Gameplay default effects
-            dash: { count: 10, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
-            double_jump: { count: 7, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
-            sand: { count: 2, baseSpeed: 20, spriteKey: 'sand_particle', life: 0.5, gravity: 120 },
-            mud: { count: 2, baseSpeed: 15, spriteKey: 'mud_particle', life: 0.6, gravity: 100 },
-            mud_splash: { count: 12, baseSpeed: 200, spriteKey: 'mud_particle', life: 0.8, gravity: 400 },
-            ice: { count: 3, baseSpeed: 80, spriteKey: 'ice_particle', life: 0.6, gravity: 250 },
-            walk_dust: { count: 1, baseSpeed: 15, spriteKey: 'dust_particle', life: 0.4, gravity: 80 },
-            enemy_walk_dust: { count: 2, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.5, gravity: 40 },
-            jump_trail: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.3, gravity: 20 },
-            fan_push: { count: 2, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.7, gravity: 0 },
-            enemy_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
+            // Gameplay default effects (Sizes and Speeds increased significantly)
+            dash: { count: 15, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
+            double_jump: { count: 12, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
+            sand: { count: 4, baseSpeed: 30, spriteKey: 'sand_particle', life: 0.6, gravity: 120, size: 8 },
+            mud: { count: 4, baseSpeed: 25, spriteKey: 'mud_particle', life: 0.7, gravity: 100, size: 8 },
+            mud_splash: { count: 15, baseSpeed: 220, spriteKey: 'mud_particle', life: 0.9, gravity: 400, size: 10 },
+            ice: { count: 5, baseSpeed: 100, spriteKey: 'ice_particle', life: 0.7, gravity: 250, size: 8 },
+            walk_dust: { count: 2, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.5, gravity: 80, size: 10 },
+            enemy_walk_dust: { count: 3, baseSpeed: 25, spriteKey: 'dust_particle', life: 0.6, gravity: 40, size: 10 },
+            jump_trail: { count: 2, baseSpeed: 15, spriteKey: 'dust_particle', life: 0.4, gravity: 20, size: 8 },
+            fan_push: { count: 4, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.8, gravity: 0, size: 10 },
+            enemy_death: { count: 20, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.7, gravity: 150, size: 14 },
+            
             slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 3.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
-            ghost_particles: { count: 1, baseSpeed: 20, spriteKey: 'ghost_particles', life: 2.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.1 }, size: 16 },
+            ghost_particles: { count: 1, baseSpeed: 20, spriteKey: 'ghost_particles', life: 2.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.1 }, size: 24 },
             snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
-            wing_flap: { count: 1, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30 },
+            wing_flap: { count: 1, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30, size: 10 },
             radish_leaf: { count: 1, baseSpeed: 120, spriteKey: 'radish_leaves', life: 0.8, gravity: 200, size: 16 },
             bee_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'bee_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
             plant_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'plant_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
             
             // Cosmetics - Dash Trails
-            default_dash: { count: 10, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
-            phantom_dash: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.4, gravity: -10, color: [0.6, 0.2, 1.0, 0.8] },
-            rainbow_dash: { count: 3, baseSpeed: 50, spriteKey: 'dust_particle', life: 0.5, gravity: 20, behavior: 'rainbow' },
-            pixel_dash: { count: 3, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.4, gravity: 0, size: 4, behavior: 'random_color' },
+            default_dash: { count: 15, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
+            phantom_dash: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.5, gravity: -10, color: [0.6, 0.2, 1.0, 0.8], size: 24 },
+            rainbow_dash: { count: 3, baseSpeed: 50, spriteKey: 'dust_particle', life: 0.5, gravity: 20, behavior: 'rainbow' }, // Kept size untouched to match prompt constraint
+            pixel_dash: { count: 6, baseSpeed: 30, spriteKey: 'dust_particle', life: 0.5, gravity: 0, size: 12, behavior: 'random_color' },
             
             // Cosmetics - Death Effects
-            default_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
-            shatter_death: { count: 30, baseSpeed: 200, spriteKey: 'dust_particle', life: 0.8, gravity: 300, size: 6, behavior: 'random_color' },
-            glitch_death: { count: 8, baseSpeed: 300, spriteKey: 'dust_particle', life: 0.4, gravity: 0, size: 12, behavior: 'glitch' },
-            implosion_death: { count: 40, baseSpeed: -150, spriteKey: 'dust_particle', life: 0.6, gravity: 0, color: [0.2, 0.0, 0.3, 1.0], behavior: 'implosion' },
+            default_death: { count: 25, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.8, gravity: 150, size: 14 },
+            shatter_death: { count: 40, baseSpeed: 250, spriteKey: 'dust_particle', life: 1.0, gravity: 300, size: 12, behavior: 'random_color' },
+            glitch_death: { count: 12, baseSpeed: 400, spriteKey: 'dust_particle', life: 0.5, gravity: 0, size: 24, behavior: 'glitch' },
+            implosion_death: { count: 50, baseSpeed: -200, spriteKey: 'dust_particle', life: 0.8, gravity: 0, color: [0.2, 0.0, 0.3, 1.0], behavior: 'implosion', size: 16 },
 
             // Cosmetics - Auras
-            supercharge_aura: { count: 1, baseSpeed: 80, spriteKey: 'dust_particle', life: 0.4, gravity: -100, color: [1.0, 0.8, 0.1, 0.8] },
-            shadow_aura: { count: 1, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.6, gravity: -10, color: [0.1, 0.0, 0.2, 0.8] },
-            orbit_node: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.1, gravity: 0, color: [0.0, 1.0, 1.0, 1.0], size: 6 }
+            supercharge_aura: { count: 1, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.5, gravity: -150, color: [1.0, 0.8, 0.1, 0.8], size: 16 },
+            shadow_aura: { count: 1, baseSpeed: 30, spriteKey: 'dust_particle', life: 0.8, gravity: -15, color: [0.1, 0.0, 0.2, 0.8], size: 18 },
+            orbit_node: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.15, gravity: 0, color: [0.0, 1.0, 1.0, 1.0], size: 12 }
         };
 
         const config = particleConfigs[type];
@@ -255,19 +255,21 @@ export class ParticleSystemWebGL {
             p.x = x; 
             p.y = y;
             
-            // Adjust implosion start positions
             if (config.behavior === 'implosion') {
                 const r = 50; 
                 p.x = x + Math.cos(angle) * r;
                 p.y = y + Math.sin(angle) * r;
             } else if (config.behavior === 'glitch') {
-                angle = (Math.random() > 0.5 ? 0 : Math.PI); // Only horizontal movement
+                angle = (Math.random() > 0.5 ? 0 : Math.PI);
             }
 
             p.vx = Math.cos(angle) * speed;
             p.vy = Math.sin(angle) * speed;
             p.life = config.life + Math.random() * 0.3;
-            p.size = config.size || (type === 'slime_puddle' ? 16 : (type === 'enemy_walk_dust' ? 8 + Math.random() * 4 : 6 + Math.random() * 4));
+            
+            // Apply new elevated default sizes, except where overridden
+            p.size = config.size || (type === 'slime_puddle' ? 16 : 10 + Math.random() * 6);
+            
             p.alpha = 1.0;
             p.spriteKey = config.spriteKey;
             p.gravity = config.gravity;
@@ -278,7 +280,6 @@ export class ParticleSystemWebGL {
                 p.leafIndex = leafIndex;
             }
 
-            // Initialization of cosmetic colors
             if (p.behavior === 'random_color') {
                 const r = Math.random();
                 if (r < 0.33) p.color = [1, 0.2, 0.2, 1];

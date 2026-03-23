@@ -21,6 +21,7 @@ yarn-debug.log
 *.njsproj
 *.sln
 *.sw?
+*.xml
 
 # Operating System Files
 .DS_Store

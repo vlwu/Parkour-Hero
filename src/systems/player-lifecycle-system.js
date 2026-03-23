@@ -67,7 +67,7 @@ export class PlayerLifecycleSystem {
         for (const { amount } of this.damageQueue) {
             const health = entityManager.getComponent(playerEntityId, HealthComponent);
             const playerCtrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);
-            if (health && playerCtrl && !playerCtrl.isHit && !playerCtrl.needsRespawn) {
+            if (health && playerCtrl && !playerCtrl.isHit && !playerCtrl.needsRespawn && !playerCtrl.isDead) {
                 health.currentHealth = Math.max(0, health.currentHealth - amount);
                 const pos = entityManager.getComponent(playerEntityId, PositionComponent);
                 const col = entityManager.getComponent(playerEntityId, CollisionComponent);
@@ -87,13 +87,15 @@ export class PlayerLifecycleSystem {
         // Process Deaths
         for (const _ of this.diedQueue) {
             const playerCtrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);
-            if (playerCtrl && !playerCtrl.needsRespawn) {
+            if (playerCtrl && !playerCtrl.needsRespawn && !playerCtrl.isDead) {
                 const vel = entityManager.getComponent(playerEntityId, VelocityComponent);
                 const state = entityManager.getComponent(playerEntityId, StateComponent);
                 const renderable = entityManager.getComponent(playerEntityId, RenderableComponent);
                 const pos = entityManager.getComponent(playerEntityId, PositionComponent);
                 const col = entityManager.getComponent(playerEntityId, CollisionComponent);
                 
+                playerCtrl.isDead = true;
+                playerCtrl.respawnDelayTimer = 1.0; // Wait 1 second before actually respawning
                 playerCtrl.needsRespawn = true;
                 playerCtrl.deathCount++;
                 vel.vx = 0; vel.vy = 0;
@@ -107,9 +109,8 @@ export class PlayerLifecycleSystem {
                 eventBus.publish(EVENTS.PLAY_SOUND, { key: 'death_sound', volume: 0.3, channel: 'SFX' });
                 eventBus.publish('createParticles', { type: deathType, x: pos.x + col.width/2, y: pos.y + col.height/2 });
                 
-                if (deathType !== 'default_death') {
-                    renderable.isVisible = false;
-                }
+                // Hide player during the death animation so particles take the spotlight
+                renderable.isVisible = false;
 
                 const enemyEntities = entityManager.query([EnemyComponent, StateComponent]);
                 for (const enemyId of enemyEntities) {
@@ -126,10 +127,15 @@ export class PlayerLifecycleSystem {
         }
         this.diedQueue = [];
         
-        // Process Respawn
+        // Process Respawn Delay
         const playerCtrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);
         if (playerCtrl && playerCtrl.needsRespawn && !gameState.showingLevelComplete) {
-            this._respawnPlayer(context);
+            if (playerCtrl.respawnDelayTimer > 0) {
+                playerCtrl.respawnDelayTimer -= dt;
+            } else {
+                playerCtrl.isDead = false;
+                this._respawnPlayer(context);
+            }
         }
     }
     
@@ -191,7 +197,7 @@ export class PlayerLifecycleSystem {
         renderable.direction = 'right';
         renderable.width = PLAYER_CONSTANTS.SPAWN_WIDTH;
         renderable.height = PLAYER_CONSTANTS.SPAWN_HEIGHT;
-        renderable.isVisible = true; // Ensure visible
+        renderable.isVisible = true; // Ensure they are visible again
         collision.isGrounded = false;
         collision.isAgainstWall = false;
         collision.groundType = null;
