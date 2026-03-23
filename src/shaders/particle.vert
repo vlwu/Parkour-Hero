@@ -9,6 +9,7 @@ layout(location = 2) in vec2 a_particle_position; // World position of the parti
 layout(location = 3) in float a_particle_size;
 layout(location = 4) in float a_particle_alpha;
 layout(location = 5) in vec4 a_tex_info; // x_off, y_off, x_scale, y_scale
+layout(location = 6) in vec4 a_color_tint; // New: color tint
 
 // Uniforms (global for all particles in a draw call)
 uniform mat4 u_projection;
@@ -16,6 +17,7 @@ uniform mat4 u_projection;
 // Outputs to the fragment shader
 out vec2 v_texCoord;
 out float v_alpha;
+out vec4 v_color_tint;
 
 void main() {
     // Calculate the final vertex position in world space
@@ -27,6 +29,7 @@ void main() {
     // Calculate the texture coordinate for the specific animation frame
     v_texCoord = a_tex_coord * a_tex_info.zw + a_tex_info.xy;
 
-    // Pass alpha to the fragment shader
+    // Pass varying attributes to the fragment shader
     v_alpha = a_particle_alpha;
+    v_color_tint = a_color_tint;
 }

@@ -7,6 +7,9 @@ export class StorageManager {
             selectedCharacter: 'PinkMan',
             levelStats: {},
             tutorialShown: false,
+            fruitCoins: 0,
+            unlockedCosmetics: ['default_dash', 'default_death', 'default_aura'],
+            equippedCosmetics: { dash: 'default_dash', death: 'default_death', aura: 'default_aura' }
         };
     }
 
@@ -56,6 +59,15 @@ export class StorageManager {
             if (typeof state.tutorialShown !== 'boolean') {
                 state.tutorialShown = false;
             }
+            if (typeof state.fruitCoins !== 'number') {
+                state.fruitCoins = 0;
+            }
+            if (!Array.isArray(state.unlockedCosmetics)) {
+                state.unlockedCosmetics = ['default_dash', 'default_death', 'default_aura'];
+            }
+            if (!state.equippedCosmetics || typeof state.equippedCosmetics !== 'object') {
+                state.equippedCosmetics = { dash: 'default_dash', death: 'default_death', aura: 'default_aura' };
+            }
 
             return state;
         } catch (e) {
@@ -71,13 +83,15 @@ export class StorageManager {
                 selectedCharacter: gameState.selectedCharacter,
                 levelStats: gameState.levelStats,
                 tutorialShown: gameState.tutorialShown,
+                fruitCoins: gameState.fruitCoins,
+                unlockedCosmetics: gameState.unlockedCosmetics,
+                equippedCosmetics: gameState.equippedCosmetics
             };
             if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
                 await chrome.storage.sync.set({ parkourGameState: stateToSave });
             } else {
                 localStorage.setItem('parkourGameState', JSON.stringify(stateToSave));
             }
-            console.log("Progress saved");
         } catch (e) {
             console.error("Failed to save game state to storage", e);
             localStorage.setItem('parkourGameState', JSON.stringify(gameState));

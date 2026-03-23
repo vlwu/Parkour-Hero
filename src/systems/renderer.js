@@ -17,7 +17,7 @@ import { CollisionComponent } from '../components/CollisionComponent.js';
 import { TrapComponent } from '../components/TrapComponent.js';
 
 const MAX_SPRITES_PER_BATCH = 5000;
-const ATTRIBUTES_PER_INSTANCE = 11;
+const ATTRIBUTES_PER_INSTANCE = 15; // Increased from 11 to 15 for 4-float color tint
 const INSTANCE_STRIDE = ATTRIBUTES_PER_INSTANCE * 4;
 
 const fractionalPlatformTypes = [
@@ -138,6 +138,7 @@ export class Renderer {
     gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 1, gl.FLOAT, false, INSTANCE_STRIDE, 32); gl.vertexAttribDivisor(5, 1);
     gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 1, gl.FLOAT, false, INSTANCE_STRIDE, 36); gl.vertexAttribDivisor(6, 1);
     gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 1, gl.FLOAT, false, INSTANCE_STRIDE, 40); gl.vertexAttribDivisor(7, 1);
+    gl.enableVertexAttribArray(8); gl.vertexAttribPointer(8, 4, gl.FLOAT, false, INSTANCE_STRIDE, 44); gl.vertexAttribDivisor(8, 1);
 
     gl.bindVertexArray(null);
   }
@@ -199,7 +200,8 @@ export class Renderer {
                     GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE,
                     sx, sy,
                     config.tileWidth, config.tileHeight,
-                    0.0, 1.0, 0.0
+                    0.0, 1.0, 0.0,
+                    1.0, 1.0, 1.0, 1.0 // Color tint (white)
                 );
             } else if (item.trap) {
                 const { trap } = item;
@@ -208,7 +210,8 @@ export class Renderer {
                     trap.width, trap.height,
                     trap.spriteConfig.srcX, trap.spriteConfig.srcY,
                     trap.spriteConfig.width, trap.spriteConfig.height,
-                    0.0, 1.0, 0.0
+                    0.0, 1.0, 0.0,
+                    1.0, 1.0, 1.0, 1.0 // Color tint
                 );
             }
         });
@@ -241,7 +244,8 @@ export class Renderer {
                     GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE,
                     sx, sy,
                     config.tileWidth, config.tileHeight,
-                    0.0, 1.0, 0.0
+                    0.0, 1.0, 0.0,
+                    1.0, 1.0, 1.0, 1.0 // Color tint
                 );
             }
         });
@@ -377,7 +381,16 @@ export class Renderer {
             }
 
             if (spriteData) {
-                const instanceData = [renderX, renderY, renderable.width, renderable.height, spriteData.sx, spriteData.sy, spriteData.sw, spriteData.sh, spriteData.isFlipped, 1.0, renderable.rotation || 0.0];
+                const instanceData = [
+                    renderX, renderY, 
+                    renderable.width, renderable.height, 
+                    spriteData.sx, spriteData.sy, 
+                    spriteData.sw, spriteData.sh, 
+                    spriteData.isFlipped, 
+                    1.0, // alpha
+                    renderable.rotation || 0.0,
+                    1.0, 1.0, 1.0, 1.0 // Default Color Tint
+                ];
                 addToBatch(spriteData.texture, instanceData);
             }
         }
@@ -392,7 +405,12 @@ export class Renderer {
                     const dataArray = Array.isArray(trapRenderData) ? trapRenderData : [trapRenderData];
                     dataArray.forEach(d => {
                         if (d && d.texture && d.instanceData) {
-                             const finalInstanceData = [...d.instanceData, d.alpha !== undefined ? d.alpha : 1.0, d.rotation !== undefined ? d.rotation : 0.0];
+                             const finalInstanceData = [
+                                 ...d.instanceData, 
+                                 d.alpha !== undefined ? d.alpha : 1.0, 
+                                 d.rotation !== undefined ? d.rotation : 0.0,
+                                 1.0, 1.0, 1.0, 1.0 // Default color tint
+                             ];
                             addToBatch(d.texture, finalInstanceData);
                         }
                     });
@@ -405,21 +423,42 @@ export class Renderer {
                 const sprite = this.assets[f.spriteKey];
                 const tex = this.textures[f.spriteKey];
                 const frameWidth = sprite.width / f.frameCount;
-                const instanceData = [f.x - f.size / 2, f.y - f.size / 2, f.size, f.size, f.frame * frameWidth, 0, frameWidth, sprite.height, 0.0, 1.0, 0.0];
+                const instanceData = [
+                    f.x - f.size / 2, f.y - f.size / 2, 
+                    f.size, f.size, 
+                    f.frame * frameWidth, 0, 
+                    frameWidth, sprite.height, 
+                    0.0, 1.0, 0.0,
+                    1.0, 1.0, 1.0, 1.0
+                ];
                 addToBatch(tex, instanceData);
             }
         });
 
         level.checkpoints.forEach(cp => {
             const {sprite, tex, srcX, frameWidth} = this._getCheckpointSpriteData(cp);
-            const instanceData = [cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size, srcX, 0, frameWidth, sprite.height, 0.0, 1.0, 0.0];
+            const instanceData = [
+                cp.x - cp.size / 2, cp.y - cp.size / 2, 
+                cp.size, cp.size, 
+                srcX, 0, 
+                frameWidth, sprite.height, 
+                0.0, 1.0, 0.0,
+                1.0, 1.0, 1.0, 1.0
+            ];
             addToBatch(tex, instanceData);
         });
 
         if (level.trophy) {
             const alpha = level.trophy.inactive ? 0.5 : 1.0;
             const {sprite, tex, srcX, frameWidth} = this._getTrophySpriteData(level.trophy);
-            const instanceData = [level.trophy.x - level.trophy.size / 2, level.trophy.y - level.trophy.size / 2, level.trophy.size, level.trophy.size, srcX, 0, frameWidth, sprite.height, 0.0, alpha, 0.0];
+            const instanceData = [
+                level.trophy.x - level.trophy.size / 2, level.trophy.y - level.trophy.size / 2, 
+                level.trophy.size, level.trophy.size, 
+                srcX, 0, 
+                frameWidth, sprite.height, 
+                0.0, alpha, 0.0,
+                1.0, 1.0, 1.0, 1.0
+            ];
             addToBatch(tex, instanceData);
         }
 

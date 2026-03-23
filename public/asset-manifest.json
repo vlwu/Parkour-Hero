@@ -8,6 +8,8 @@
     "character_icon": "/assets/Menu/Buttons/Character.png",
     "info_icon": "/assets/Menu/Buttons/Info.png",
     "editor_icon": "/assets/Menu/Buttons/Editor.png",
+    "shop_icon": "/assets/Menu/Buttons/Achievements.png",
+    "coin_icon": "/assets/Items/coin_16x16.png",
     "transition": "/assets/Other/Transition.png"
   },
   "coreSounds": {

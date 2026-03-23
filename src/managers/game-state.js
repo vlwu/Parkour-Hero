@@ -39,6 +39,9 @@ export class GameState {
             this.levelStats = initialState.levelStats;
             this.tutorialShown = initialState.tutorialShown;
             this.newlyUnlockedCharacter = initialState.newlyUnlockedCharacter;
+            this.fruitCoins = initialState.fruitCoins || 0;
+            this.unlockedCosmetics = initialState.unlockedCosmetics || ['default_dash', 'default_death', 'default_aura'];
+            this.equippedCosmetics = initialState.equippedCosmetics || { dash: 'default_dash', death: 'default_death', aura: 'default_aura' };
         } else {
             this.showingLevelComplete = false;
             this.levelProgress = { unlockedLevels: [1], completedLevels: [] };
@@ -48,6 +51,9 @@ export class GameState {
             this.newlyUnlockedCharacter = null;
             this.currentSection = 0;
             this.currentLevelIndex = 0;
+            this.fruitCoins = 0;
+            this.unlockedCosmetics = ['default_dash', 'default_death', 'default_aura'];
+            this.equippedCosmetics = { dash: 'default_dash', death: 'default_death', aura: 'default_aura' };
             this.ensureStatsForAllLevels();
         }
     }
@@ -60,6 +66,9 @@ export class GameState {
         instance.selectedCharacter = savedState.selectedCharacter;
         instance.levelStats = savedState.levelStats;
         instance.tutorialShown = savedState.tutorialShown;
+        instance.fruitCoins = savedState.fruitCoins;
+        instance.unlockedCosmetics = savedState.unlockedCosmetics;
+        instance.equippedCosmetics = savedState.equippedCosmetics;
         instance.newlyUnlockedCharacter = null;
         instance.ensureStatsForAllLevels();
 
@@ -78,9 +87,9 @@ export class GameState {
 
     setSelectedCharacter(characterId) {
         if (characterConfig[characterId] && this.selectedCharacter !== characterId) {
-        const newState = this._clone();
-        newState.selectedCharacter = characterId;
-        return newState;
+            const newState = this._clone();
+            newState.selectedCharacter = characterId;
+            return newState;
         }
         return this;
     }
@@ -113,6 +122,9 @@ export class GameState {
         const newState = this._clone();
         const levelId = `${this.currentSection}-${this.currentLevelIndex}`;
         newState.newlyUnlockedCharacter = null;
+        
+        // Add collected fruit from this run to global balance
+        newState.fruitCoins += (runStats.fruitsCollected || 0);
 
         if (!this.levelProgress.completedLevels.includes(levelId)) {
             newState.levelProgress.completedLevels.push(levelId);
@@ -149,6 +161,22 @@ export class GameState {
         eventBus.publish(EVENTS.PLAY_SOUND, { key: 'level_complete', volume: 1.0, channel: 'UI' });
 
         return newState;
+    }
+
+    addFruitCoins(amount) {
+        this.fruitCoins += amount;
+    }
+
+    unlockCosmetic(id) {
+        if (!this.unlockedCosmetics.includes(id)) {
+            this.unlockedCosmetics.push(id);
+        }
+    }
+
+    equipCosmetic(category, id) {
+        if (this.equippedCosmetics.hasOwnProperty(category)) {
+            this.equippedCosmetics[category] = id;
+        }
     }
 
     isCharacterUnlocked(characterId) {

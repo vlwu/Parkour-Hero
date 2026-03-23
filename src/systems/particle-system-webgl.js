@@ -2,6 +2,27 @@ import { eventBus } from '../utils/event-bus.js';
 import vertexShaderSource from '../shaders/particle.vert?raw';
 import fragmentShaderSource from '../shaders/particle.frag?raw';
 
+function hslToRgb(h, s, l) {
+    let r, g, b;
+    if (s === 0) { r = g = b = l; }
+    else {
+        const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+    }
+    return [r, g, b, 1.0];
+}
+
 export class ParticleSystemWebGL {
     constructor(gl, assets) {
         this.gl = gl;
@@ -9,7 +30,7 @@ export class ParticleSystemWebGL {
 
         this.activeParticles = [];
         this.inactivePool = [];
-        this.poolSize = 500;
+        this.poolSize = 1000; // Increased pool for dense cosmetic effects
 
         for (let i = 0; i < this.poolSize; i++) {
             this.inactivePool.push({});
@@ -83,7 +104,8 @@ export class ParticleSystemWebGL {
 
         this.particleBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
-        const strideBytes = 8 * Float32Array.BYTES_PER_ELEMENT;
+        // Stride: pos(2) + size(1) + alpha(1) + tex_info(4) + color(4) = 12 floats
+        const strideBytes = 12 * Float32Array.BYTES_PER_ELEMENT;
         gl.bufferData(gl.ARRAY_BUFFER, this.poolSize * strideBytes, gl.DYNAMIC_DRAW);
 
         this.vao = gl.createVertexArray();
@@ -98,7 +120,7 @@ export class ParticleSystemWebGL {
         gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
-        const instanceStride = 8 * 4;
+        const instanceStride = 12 * 4;
 
         gl.enableVertexAttribArray(2);
         gl.vertexAttribPointer(2, 2, gl.FLOAT, false, instanceStride, 0);
@@ -115,6 +137,10 @@ export class ParticleSystemWebGL {
         gl.enableVertexAttribArray(5);
         gl.vertexAttribPointer(5, 4, gl.FLOAT, false, instanceStride, 16);
         gl.vertexAttribDivisor(5, 1);
+        
+        gl.enableVertexAttribArray(6);
+        gl.vertexAttribPointer(6, 4, gl.FLOAT, false, instanceStride, 32);
+        gl.vertexAttribDivisor(6, 1);
 
         gl.bindVertexArray(null);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -147,6 +173,7 @@ export class ParticleSystemWebGL {
 
     create({ x, y, type, direction = 'right', particleSpeed = null, leafIndex = 0 }) {
         const particleConfigs = {
+            // Gameplay default effects
             dash: { count: 10, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
             double_jump: { count: 7, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
             sand: { count: 2, baseSpeed: 20, spriteKey: 'sand_particle', life: 0.5, gravity: 120 },
@@ -165,6 +192,23 @@ export class ParticleSystemWebGL {
             radish_leaf: { count: 1, baseSpeed: 120, spriteKey: 'radish_leaves', life: 0.8, gravity: 200, size: 16 },
             bee_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'bee_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
             plant_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'plant_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
+            
+            // Cosmetics - Dash Trails
+            default_dash: { count: 10, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.4, gravity: 50 },
+            phantom_dash: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.4, gravity: -10, color: [0.6, 0.2, 1.0, 0.8] },
+            rainbow_dash: { count: 3, baseSpeed: 50, spriteKey: 'dust_particle', life: 0.5, gravity: 20, behavior: 'rainbow' },
+            pixel_dash: { count: 3, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.4, gravity: 0, size: 4, behavior: 'random_color' },
+            
+            // Cosmetics - Death Effects
+            default_death: { count: 15, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.6, gravity: 150 },
+            shatter_death: { count: 30, baseSpeed: 200, spriteKey: 'dust_particle', life: 0.8, gravity: 300, size: 6, behavior: 'random_color' },
+            glitch_death: { count: 8, baseSpeed: 300, spriteKey: 'dust_particle', life: 0.4, gravity: 0, size: 12, behavior: 'glitch' },
+            implosion_death: { count: 40, baseSpeed: -150, spriteKey: 'dust_particle', life: 0.6, gravity: 0, color: [0.2, 0.0, 0.3, 1.0], behavior: 'implosion' },
+
+            // Cosmetics - Auras
+            supercharge_aura: { count: 1, baseSpeed: 80, spriteKey: 'dust_particle', life: 0.4, gravity: -100, color: [1.0, 0.8, 0.1, 0.8] },
+            shadow_aura: { count: 1, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.6, gravity: -10, color: [0.1, 0.0, 0.2, 0.8] },
+            orbit_node: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.1, gravity: 0, color: [0.0, 1.0, 1.0, 1.0], size: 6 }
         };
 
         const config = particleConfigs[type];
@@ -190,8 +234,8 @@ export class ParticleSystemWebGL {
             else if (type === 'wing_flap') {
                 angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             }
-            else if (type === 'enemy_death' || type === 'radish_leaf' || type === 'bee_bullet_pieces' || type === 'plant_bullet_pieces') angle = Math.random() * Math.PI * 2;
-            else if (type === 'dash') angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
+            else if (type.includes('death') || type === 'radish_leaf' || type === 'bee_bullet_pieces' || type === 'plant_bullet_pieces') angle = Math.random() * Math.PI * 2;
+            else if (type.includes('dash')) angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
             else if (type === 'double_jump') angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI * 0.8);
             else if (type === 'mud_splash') angle = -(Math.PI / 2) + (Math.random() - 0.5) * (Math.PI * 0.8);
             else if (type === 'jump_trail') { angle = (Math.random() * Math.PI * 2); speed *= (Math.random() * 0.5); }
@@ -208,7 +252,18 @@ export class ParticleSystemWebGL {
                 angle = -Math.PI / 2 + (Math.random() - 0.5) * (Math.PI / 4);
             } else angle = - (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 4);
 
-            p.x = x; p.y = y;
+            p.x = x; 
+            p.y = y;
+            
+            // Adjust implosion start positions
+            if (config.behavior === 'implosion') {
+                const r = 50; 
+                p.x = x + Math.cos(angle) * r;
+                p.y = y + Math.sin(angle) * r;
+            } else if (config.behavior === 'glitch') {
+                angle = (Math.random() > 0.5 ? 0 : Math.PI); // Only horizontal movement
+            }
+
             p.vx = Math.cos(angle) * speed;
             p.vy = Math.sin(angle) * speed;
             p.life = config.life + Math.random() * 0.3;
@@ -216,10 +271,26 @@ export class ParticleSystemWebGL {
             p.alpha = 1.0;
             p.spriteKey = config.spriteKey;
             p.gravity = config.gravity;
+            p.behavior = config.behavior || 'normal';
             p.animation = config.animation ? { ...config.animation, frameTimer: 0, currentFrame: 0 } : null;
 
             if (type === 'radish_leaf' || type === 'bee_bullet_pieces' || type === 'plant_bullet_pieces') {
                 p.leafIndex = leafIndex;
+            }
+
+            // Initialization of cosmetic colors
+            if (p.behavior === 'random_color') {
+                const r = Math.random();
+                if (r < 0.33) p.color = [1, 0.2, 0.2, 1];
+                else if (r < 0.66) p.color = [0.2, 1, 0.2, 1];
+                else p.color = [0.2, 0.2, 1, 1];
+            } else if (p.behavior === 'glitch') {
+                const r = Math.random();
+                if (r < 0.33) p.color = [1, 0, 0, 1];
+                else if (r < 0.66) p.color = [0, 1, 0, 1];
+                else p.color = [0, 0, 1, 1];
+            } else {
+                p.color = config.color ? [...config.color] : [1.0, 1.0, 1.0, 1.0];
             }
 
             this.activeParticles.push(p);
@@ -242,6 +313,14 @@ export class ParticleSystemWebGL {
                 p.y += p.vy * dt;
                 p.vy += p.gravity * dt;
                 p.alpha = Math.min(1.0, p.life / 1.5);
+
+                if (p.behavior === 'rainbow') {
+                    const hue = (p.life * 2) % 1;
+                    p.color = hslToRgb(hue, 1, 0.6);
+                } else if (p.behavior === 'glitch') {
+                    p.x += (Math.random() - 0.5) * 15;
+                    p.y += (Math.random() - 0.5) * 5;
+                }
 
                 if (p.animation) {
                     p.animation.frameTimer += dt;
@@ -279,7 +358,7 @@ export class ParticleSystemWebGL {
             particlesByTexture[p.spriteKey].push(p);
         }
 
-        const stride = 8;
+        const stride = 12;
 
         for (const spriteKey in particlesByTexture) {
             const particles = particlesByTexture[spriteKey];
@@ -311,6 +390,12 @@ export class ParticleSystemWebGL {
                     instanceData[offset + 6] = 1;
                     instanceData[offset + 7] = 1;
                 }
+                
+                // Color Tint
+                instanceData[offset + 8] = p.color[0];
+                instanceData[offset + 9] = p.color[1];
+                instanceData[offset + 10] = p.color[2];
+                instanceData[offset + 11] = p.color[3];
             }
 
             const textureInfo = this.textures[spriteKey];

@@ -91,6 +91,8 @@ export class PlayerLifecycleSystem {
                 const vel = entityManager.getComponent(playerEntityId, VelocityComponent);
                 const state = entityManager.getComponent(playerEntityId, StateComponent);
                 const renderable = entityManager.getComponent(playerEntityId, RenderableComponent);
+                const pos = entityManager.getComponent(playerEntityId, PositionComponent);
+                const col = entityManager.getComponent(playerEntityId, CollisionComponent);
                 
                 playerCtrl.needsRespawn = true;
                 playerCtrl.deathCount++;
@@ -100,7 +102,14 @@ export class PlayerLifecycleSystem {
                 renderable.animationState = PLAYER_STATES.HIT;
                 renderable.animationFrame = 0;
                 renderable.animationTimer = 0;
+                
+                const deathType = gameState.equippedCosmetics ? gameState.equippedCosmetics.death : 'default_death';
                 eventBus.publish(EVENTS.PLAY_SOUND, { key: 'death_sound', volume: 0.3, channel: 'SFX' });
+                eventBus.publish('createParticles', { type: deathType, x: pos.x + col.width/2, y: pos.y + col.height/2 });
+                
+                if (deathType !== 'default_death') {
+                    renderable.isVisible = false;
+                }
 
                 const enemyEntities = entityManager.query([EnemyComponent, StateComponent]);
                 for (const enemyId of enemyEntities) {
@@ -182,6 +191,7 @@ export class PlayerLifecycleSystem {
         renderable.direction = 'right';
         renderable.width = PLAYER_CONSTANTS.SPAWN_WIDTH;
         renderable.height = PLAYER_CONSTANTS.SPAWN_HEIGHT;
+        renderable.isVisible = true; // Ensure visible
         collision.isGrounded = false;
         collision.isAgainstWall = false;
         collision.groundType = null;

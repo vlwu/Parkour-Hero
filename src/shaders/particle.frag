@@ -5,6 +5,7 @@ uniform sampler2D u_texture;
 
 in vec2 v_texCoord;
 in float v_alpha;
+in vec4 v_color_tint;
 
 out vec4 outColor;
 
@@ -16,5 +17,6 @@ void main() {
     discard;
   }
   
-  outColor = vec4(texColor.rgb, texColor.a * v_alpha);
+  // Apply color tint and alpha
+  outColor = vec4(texColor.rgb * v_color_tint.rgb, texColor.a * v_alpha * v_color_tint.a);
 }

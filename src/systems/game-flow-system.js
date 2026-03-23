@@ -43,6 +43,7 @@ export class GameFlowSystem {
             const runStats = {
                 deaths: playerCtrl.deathCount,
                 time: this.levelTime,
+                fruitsCollected: level.collectedFruitCount
             };
 
             const newGameState = gameState.onLevelComplete(runStats);

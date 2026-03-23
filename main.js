@@ -129,8 +129,7 @@ async function initGame() {
                     console.log("All levels have been unlocked.");
                 }
             };
-            console.log('Developer command available: Type `unlockAllLevels()` in the console to unlock all levels.');
-
+            
             window.resetProgress = async () => {
                 if (engine) {
                     const newState = await GameState.resetProgress();
@@ -140,7 +139,6 @@ async function initGame() {
                     console.log("Game progress has been reset.");
                 }
             };
-            console.log('Developer command available: Type `resetProgress()` in the console to reset all saved data.');
 
             window.unlockSomeLevels = (count) => {
                 if (engine && engine.gameState) {
@@ -154,7 +152,18 @@ async function initGame() {
                     }
                 }
             };
-            console.log('Developer command available: Type `unlockSomeLevels(n)` in the console to unlock n levels.');
+            
+            window.addFruitCoins = (amount = 1000) => {
+                if (engine && engine.gameState) {
+                    const newState = engine.gameState._clone();
+                    newState.addFruitCoins(amount);
+                    engine.gameState = newState;
+                    eventBus.publish('gameStateUpdated', newState);
+                    console.log(`Added ${amount} fruit coins. Total: ${newState.fruitCoins}`);
+                }
+            };
+            
+            console.log('Developer commands available: \n- unlockAllLevels()\n- resetProgress()\n- unlockSomeLevels(n)\n- addFruitCoins(amount)');
 
             console.log('Game is ready. Waiting for user to start from the main menu.');
         } catch (error) {

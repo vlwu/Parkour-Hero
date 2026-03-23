@@ -12,6 +12,7 @@ import './stats-modal.js';
 import './tutorial-modal.js';
 import './enemy-catalogue-modal.js';
 import './character-unlock-modal.js';
+import './shop-modal.js';
 import './bitmap-text.js';
 
 export class ParkourHeroUI extends LitElement {
@@ -368,6 +369,7 @@ export class ParkourHeroUI extends LitElement {
     const iconButtons = [
         { id: 'levels', title: 'Levels' },
         { id: 'character', title: 'Character' },
+        { id: 'shop', title: 'Shop', key: 'shop_icon' },
         { id: 'settings', title: 'Settings' },
         { id: 'info', title: 'How to Play' },
         { id: 'editor', title: 'Level Editor' },
@@ -388,7 +390,7 @@ export class ParkourHeroUI extends LitElement {
         <div class="main-menu-icon-buttons">
             ${iconButtons.map(btn => html`
                 <button class="icon-button" title=${btn.title} @click=${() => this._openModalFromMenu(btn.id)}>
-                    <img src="/assets/Menu/Buttons/${capitalize(btn.id)}.png" alt=${btn.title}>
+                    <img src="${btn.key ? `/assets/Menu/Buttons/${capitalize(btn.key.replace('_icon', ''))}.png` : `/assets/Menu/Buttons/${capitalize(btn.id)}.png`}" alt=${btn.title}>
                 </button>
             `)}
         </div>
@@ -427,6 +429,11 @@ export class ParkourHeroUI extends LitElement {
                       .gameState=${this.gameState} .assets=${this.assets} .fontRenderer=${this.fontRenderer}
                       @close-modal=${this._closeModal} @character-selected=${this._handleCharacterSelected}
                     ></character-menu>`;
+      case 'shop':
+        return html`<shop-modal
+                      .gameState=${this.gameState} .assets=${this.assets} .fontRenderer=${this.fontRenderer}
+                      @close-modal=${this._closeModal}
+                    ></shop-modal>`;
       case 'info':
         return html`<info-modal
                       .keybinds=${this.keybinds}

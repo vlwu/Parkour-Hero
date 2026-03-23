@@ -10,7 +10,8 @@ layout(location = 3) in vec2 a_tex_coord_origin;
 layout(location = 4) in vec2 a_tex_coord_size;
 layout(location = 5) in float a_is_flipped;
 layout(location = 6) in float a_alpha;
-layout(location = 7) in float a_rotation; // New: Rotation attribute
+layout(location = 7) in float a_rotation;
+layout(location = 8) in vec4 a_color_tint; // New: Color Tint
 
 // Uniforms (global for all vertices in a draw call)
 uniform mat4 u_projection;
@@ -19,6 +20,7 @@ uniform vec2 u_texture_size;
 // Outputs to the fragment shader
 out vec2 v_texCoord;
 out float v_alpha;
+out vec4 v_color_tint;
 
 void main() {
     // 1. Scale the unit quad vertex to get local-space coordinates relative to the object's origin (0,0)
@@ -51,6 +53,7 @@ void main() {
     // Calculate the final texture coordinate by scaling and offsetting
     v_texCoord = (a_tex_coord_origin + (quad_tex_coord * a_tex_coord_size)) / u_texture_size;
     
-    // Pass alpha to the fragment shader
+    // Pass varying properties to the fragment shader
     v_alpha = a_alpha;
+    v_color_tint = a_color_tint;
 }

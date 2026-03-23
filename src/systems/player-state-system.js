@@ -48,7 +48,7 @@ export class PlayerStateSystem {
         ctrl.currentState.enter();
     }
 
-    update(dt, { entityManager }) {
+    update(dt, { entityManager, gameState }) {
 
         this._processDamageEvents(entityManager);
         this._processKnockbackEvents(entityManager);
@@ -60,6 +60,7 @@ export class PlayerStateSystem {
             const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
             const vel = entityManager.getComponent(entityId, VelocityComponent);
             const col = entityManager.getComponent(entityId, CollisionComponent);
+            const pos = entityManager.getComponent(entityId, PositionComponent);
 
             if (ctrl.jumpedFromMud && !ctrl.isInMud) {
                 ctrl.jumpedFromMud = false;
@@ -75,7 +76,7 @@ export class PlayerStateSystem {
             }
 
             this._updateTimers(dt, ctrl);
-            this._handleGlobalInputLogic(entityId, entityManager);
+            this._handleGlobalInputLogic(entityId, entityManager, gameState);
 
 
             if (ctrl.currentState) {
@@ -91,10 +92,48 @@ export class PlayerStateSystem {
 
             this._updateAnimation(dt, entityId, entityManager);
             this._handleJumpTrail(dt, entityId, entityManager);
+            this._handleAura(dt, entityId, pos, col, ctrl, gameState);
+
+            // Continuous Dash trail
+            if (ctrl.isDashing && gameState && gameState.equippedCosmetics) {
+                ctrl.dashParticleTimer = (ctrl.dashParticleTimer || 0) + dt;
+                if (ctrl.dashParticleTimer > 0.03) {
+                    ctrl.dashParticleTimer = 0;
+                    const renderable = entityManager.getComponent(entityId, RenderableComponent);
+                    eventBus.publish('createParticles', { 
+                        x: pos.x + col.width / 2, 
+                        y: pos.y + col.height / 2, 
+                        type: gameState.equippedCosmetics.dash, 
+                        direction: renderable.direction 
+                    });
+                }
+            }
 
             if (col.isGrounded) {
                 ctrl.coyoteTimer = PLAYER_CONSTANTS.COYOTE_TIME;
             }
+        }
+    }
+    
+    _handleAura(dt, entityId, pos, col, ctrl, gameState) {
+        if (ctrl.isSpawning || ctrl.isDespawning || ctrl.isHit) return;
+        if (!gameState || !gameState.equippedCosmetics) return;
+        
+        const equippedAura = gameState.equippedCosmetics.aura;
+        ctrl.auraTimer = (ctrl.auraTimer || 0) + dt;
+        
+        if (equippedAura === 'supercharge_aura' && ctrl.auraTimer > 0.05) {
+            ctrl.auraTimer = 0;
+            eventBus.publish('createParticles', { type: 'supercharge_aura', x: pos.x + col.width/2, y: pos.y + col.height });
+        } else if (equippedAura === 'shadow_aura' && ctrl.auraTimer > 0.08) {
+            ctrl.auraTimer = 0;
+            eventBus.publish('createParticles', { type: 'shadow_aura', x: pos.x + col.width/2, y: pos.y + col.height/2 });
+        } else if (equippedAura === 'orbiting_aura') {
+            const angle1 = performance.now() / 300;
+            const angle2 = angle1 + Math.PI;
+            const radius = 20;
+            eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle1)*radius, y: pos.y + col.height/2 + Math.sin(angle1)*radius });
+            eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle2)*radius, y: pos.y + col.height/2 + Math.sin(angle2)*radius });
         }
     }
 
@@ -158,7 +197,7 @@ export class PlayerStateSystem {
         }
     }
 
-    _handleGlobalInputLogic(entityId, entityManager) {
+    _handleGlobalInputLogic(entityId, entityManager, gameState) {
         const input = entityManager.getComponent(entityId, InputComponent);
         const ctrl = entityManager.getComponent(entityId, PlayerControlledComponent);
         const renderable = entityManager.getComponent(entityId, RenderableComponent);
@@ -245,7 +284,10 @@ export class PlayerStateSystem {
             vel.vy = 0;
             ctrl.dashCooldownTimer = PLAYER_CONSTANTS.DASH_COOLDOWN * ctrl.dashCooldownMult;
             eventBus.publish('playSound', { key: 'dash', volume: 0.7, channel: 'SFX' });
-            eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: 'dash', direction: renderable.direction });
+            
+            const dashType = gameState.equippedCosmetics ? gameState.equippedCosmetics.dash : 'default_dash';
+            eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: dashType, direction: renderable.direction });
+            
             this._transitionTo(entityId, new DashState(entityId, entityManager), entityManager);
         }
     }
