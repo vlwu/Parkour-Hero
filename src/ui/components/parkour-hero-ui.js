@@ -367,15 +367,13 @@ export class ParkourHeroUI extends LitElement {
     const startButtonText = hasProgress ? 'Continue' : 'Start Game';
 
     const iconButtons = [
-        { id: 'levels', title: 'Levels' },
-        { id: 'character', title: 'Character' },
-        { id: 'shop', title: 'Shop', key: 'shop_icon' },
-        { id: 'settings', title: 'Settings' },
-        { id: 'info', title: 'How to Play' },
-        { id: 'editor', title: 'Level Editor' },
+        { id: 'levels', title: 'Levels', icon: 'Levels' },
+        { id: 'character', title: 'Character', icon: 'Character' },
+        { id: 'shop', title: 'Shop', icon: 'Achievements' },
+        { id: 'settings', title: 'Settings', icon: 'Settings' },
+        { id: 'info', title: 'How to Play', icon: 'Info' },
+        { id: 'editor', title: 'Level Editor', icon: 'Editor' },
     ];
-
-    const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
     return html`
       <div class="main-menu-container">
@@ -390,7 +388,7 @@ export class ParkourHeroUI extends LitElement {
         <div class="main-menu-icon-buttons">
             ${iconButtons.map(btn => html`
                 <button class="icon-button" title=${btn.title} @click=${() => this._openModalFromMenu(btn.id)}>
-                    <img src="${btn.key ? `/assets/Menu/Buttons/${capitalize(btn.key.replace('_icon', ''))}.png` : `/assets/Menu/Buttons/${capitalize(btn.id)}.png`}" alt=${btn.title}>
+                    <img src="/assets/Menu/Buttons/${btn.icon}.png" alt=${btn.title}>
                 </button>
             `)}
         </div>

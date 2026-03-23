@@ -41,25 +41,49 @@ export class AnimatedSpriteCard extends LitElement {
       width: 100%;
       flex-grow: 1;
     }
+
+    /* Bare Mode (Overrides styles to display just the canvas smoothly) */
+    :host([bare]) .card {
+      background-color: transparent;
+      border: none;
+      padding: 0;
+      gap: 0;
+    }
+    :host([bare]) .canvas-container {
+      background-color: transparent;
+      width: 100%;
+      height: 100%;
+    }
+    :host([bare]) .content {
+      display: none;
+    }
+    :host([bare]) canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
   `;
 
   static properties = {
     sprite: { type: Object },
     frameCount: { type: Number },
     frameSpeed: { type: Number },
+    bare: { type: Boolean, reflect: true },
+    scaleToFit: { type: Boolean }
   };
 
   constructor() {
     super();
     this.frameCount = 1;
     this.frameSpeed = 0.1;
+    this.bare = false;
+    this.scaleToFit = false;
     this.animationFrameId = null;
     this.animState = { frame: 0, timer: 0, lastTime: 0 };
   }
 
   updated(changedProperties) {
     if (changedProperties.has('sprite') && this.sprite) {
-        // Reset animation when sprite changes
         this.animState = { frame: 0, timer: 0, lastTime: 0 };
     }
   }
@@ -91,11 +115,22 @@ export class AnimatedSpriteCard extends LitElement {
 
     const frameWidth = this.sprite.width / this.frameCount;
 
-    // Center sprite in canvas if it's smaller than canvas, or scale down if larger
-    const destW = frameWidth > 64 ? 64 : frameWidth;
-    const destH = this.sprite.height > 64 ? 64 : this.sprite.height;
-    const destX = (64 - destW) / 2;
-    const destY = (64 - destH) / 2;
+    let destW, destH, destX, destY;
+
+    if (this.scaleToFit) {
+        // Uniformly scale the sprite to fit the maximum possible bounds of the internal 64x64 canvas
+        const scale = Math.min(canvas.width / frameWidth, canvas.height / this.sprite.height);
+        destW = frameWidth * scale;
+        destH = this.sprite.height * scale;
+        destX = (canvas.width - destW) / 2;
+        destY = (canvas.height - destH) / 2;
+    } else {
+        // Original logic: Center sprite in canvas if it's smaller, or scale down if larger
+        destW = frameWidth > canvas.width ? canvas.width : frameWidth;
+        destH = this.sprite.height > canvas.height ? canvas.height : this.sprite.height;
+        destX = (canvas.width - destW) / 2;
+        destY = (canvas.height - destH) / 2;
+    }
 
     if (this.animState.timer >= this.frameSpeed) {
       this.animState.timer = 0;

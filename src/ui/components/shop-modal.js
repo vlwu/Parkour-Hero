@@ -2,7 +2,6 @@ import { LitElement, html, css } from 'lit';
 import { map } from 'lit/directives/map.js';
 import { eventBus } from '../../utils/event-bus.js';
 import { COSMETICS } from '../../utils/constants.js';
-import { StorageManager } from '../../managers/storage-manager.js';
 import './bitmap-text.js';
 import './animated-sprite-card.js';
 
@@ -36,7 +35,6 @@ export class ShopModal extends LitElement {
         background: rgba(0,0,0,0.4); padding: 8px 15px; border-radius: 20px;
         border: 2px solid #f1c40f;
     }
-    .coin-icon { width: 24px; height: 24px; image-rendering: pixelated; }
 
     .tabs {
         display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;
@@ -137,7 +135,7 @@ export class ShopModal extends LitElement {
           <div class="header">
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Cosmetics Shop" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
             <div class="coin-display">
-                <animated-sprite-card style="width:32px; height:32px; border:none; padding:0; background:transparent;" .sprite=${this.assets?.coin_icon} .frameCount=${14} .frameSpeed=${0.05}></animated-sprite-card>
+                <animated-sprite-card bare scaleToFit style="width:32px; height:32px;" .sprite=${this.assets?.coin_icon} .frameCount=${14} .frameSpeed=${0.05}></animated-sprite-card>
                 <bitmap-text .fontRenderer=${this.fontRenderer} text="${this.gameState.fruitCoins}" scale="2" color="#f1c40f"></bitmap-text>
             </div>
           </div>
@@ -177,7 +175,7 @@ export class ShopModal extends LitElement {
                             @click=${() => this._handleAction(item, this.activeTab)}
                         >
                             ${(!isUnlocked) ? html`
-                                <animated-sprite-card style="width:20px; height:20px; border:none; padding:0; background:transparent;" .sprite=${this.assets?.coin_icon} .frameCount=${14} .frameSpeed=${0.05}></animated-sprite-card>
+                                <animated-sprite-card bare scaleToFit style="width:20px; height:20px;" .sprite=${this.assets?.coin_icon} .frameCount=${14} .frameSpeed=${0.05}></animated-sprite-card>
                             ` : ''}
                             <bitmap-text .fontRenderer=${this.fontRenderer} text=${btnText} scale="1.5"></bitmap-text>
                         </button>
