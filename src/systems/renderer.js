@@ -34,6 +34,7 @@ export class Renderer {
     this.assets = assets;
     this.previewMode = false;
     this.backgroundOffset = { x: 0, y: 0 };
+    this.prevBackgroundOffset = { x: 0, y: 0 };
     this.currentLevel = null;
 
     this.sceneProgram = createShaderProgram(gl, sceneVertexShader, sceneFragmentShader);
@@ -143,6 +144,8 @@ export class Renderer {
 
   preRenderLevel(level, entityManager) {
     this.currentLevel = level;
+    this.backgroundOffset = { x: 0, y: 0 };
+    this.prevBackgroundOffset = { x: 0, y: 0 };
     const gl = this.gl;
     this.staticBatches.clear();
     this.staticOverlayBatches.clear();
@@ -257,6 +260,8 @@ export class Renderer {
 
   update(dt) {
       if (this.currentLevel) {
+          this.prevBackgroundOffset.x = this.backgroundOffset.x;
+          this.prevBackgroundOffset.y = this.backgroundOffset.y;
           this.backgroundOffset.x += this.currentLevel.backgroundScroll.x * dt;
           this.backgroundOffset.y += this.currentLevel.backgroundScroll.y * dt;
       }
@@ -537,8 +542,11 @@ export class Renderer {
     const renderX = camera.prevX + (camera.x - camera.prevX) * alpha;
     const renderY = camera.prevY + (camera.y - camera.prevY) * alpha;
 
+    const interpolatedBgX = this.prevBackgroundOffset.x + (this.backgroundOffset.x - this.prevBackgroundOffset.x) * alpha;
+    const interpolatedBgY = this.prevBackgroundOffset.y + (this.backgroundOffset.y - this.prevBackgroundOffset.y) * alpha;
+
     gl.uniform2f(this.backgroundUniforms.resolution, this.canvas.width, this.canvas.height);
-    gl.uniform2f(this.backgroundUniforms.camera_offset, renderX + this.backgroundOffset.x, renderY + this.backgroundOffset.y);
+    gl.uniform2f(this.backgroundUniforms.camera_offset, renderX + interpolatedBgX, renderY + interpolatedBgY);
     gl.uniform1f(this.backgroundUniforms.camera_zoom, camera.zoom);
     gl.uniform2f(this.backgroundUniforms.texture_size, textureInfo.width, textureInfo.height);
 

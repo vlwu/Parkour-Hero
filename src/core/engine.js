@@ -162,6 +162,9 @@ export class Engine {
     let deltaTime = (currentTime - this.lastFrameTime) / 1000;
     this.lastFrameTime = currentTime;
 
+    // Capture the raw real-world delta time before capping it to pass to the HUD for FPS calculation
+    const renderDeltaTime = deltaTime;
+
     if (deltaTime > 0.25) {
         deltaTime = 0.25;
     }
@@ -177,7 +180,7 @@ export class Engine {
     }
 
     const alpha = this.accumulator / FIXED_DT;
-    this.render(alpha);
+    this.render(alpha, renderDeltaTime);
 
     requestAnimationFrame((time) => this.gameLoop(time));
   }
@@ -345,7 +348,7 @@ export class Engine {
       if (this.camera) this.camera.shake(intensity, duration);
   }
 
-  render(alpha) {
+  render(alpha, renderDeltaTime) {
     if (!this.currentLevel) return;
 
     this.renderer.renderScene(this.camera, this.currentLevel, this.entityManager, alpha);
@@ -353,7 +356,7 @@ export class Engine {
 
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     this.effectsSystem.render(this.ctx, this.camera, alpha);
-    this.hud.drawGameHUD(this.ctx, this.camera, this.currentLevel, FIXED_DT, this.entityManager, this.playerEntityId);
+    this.hud.drawGameHUD(this.ctx, this.camera, this.currentLevel, renderDeltaTime, this.entityManager, this.playerEntityId);
     this.uiSystem.render(this.ctx, this.timeScale > 0);
     this.transitionSystem.render(this.ctx);
   }
