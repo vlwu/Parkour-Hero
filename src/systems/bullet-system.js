@@ -13,6 +13,12 @@ export class BulletSystem {
         this.bulletQueue = [];
         this.bulletPool = []; // Pool for reusing bullet entities
         eventBus.subscribe('spawnBullet', (data) => this.bulletQueue.push(data));
+        
+        // Clear stale bullet IDs when a level is loaded/restarted
+        eventBus.subscribe('levelLoaded', () => {
+            this.bulletQueue = [];
+            this.bulletPool = [];
+        });
     }
 
     update(dt, { entityManager, level, playerEntityId }) {
@@ -91,10 +97,18 @@ export class BulletSystem {
     }
 
     _createBullet(entityManager, { x, y, vx, vy, config, spriteKey = 'bee_bullet', rotation = 0, piecesSpriteKey = null }) {
-        let bulletId;
+        let bulletId = null;
 
-        if (this.bulletPool.length > 0) {
-            bulletId = this.bulletPool.pop();
+        // Extract a valid entity from the pool (failsafe check to ensure the entity is valid in the current EntityManager)
+        while (this.bulletPool.length > 0) {
+            const id = this.bulletPool.pop();
+            if (entityManager.hasComponent(id, PositionComponent)) {
+                bulletId = id;
+                break;
+            }
+        }
+
+        if (bulletId !== null) {
             const pos = entityManager.getComponent(bulletId, PositionComponent);
             const vel = entityManager.getComponent(bulletId, VelocityComponent);
             const col = entityManager.getComponent(bulletId, CollisionComponent);
