@@ -9,7 +9,8 @@ layout(location = 2) in vec2 a_particle_position; // World position of the parti
 layout(location = 3) in float a_particle_size;
 layout(location = 4) in float a_particle_alpha;
 layout(location = 5) in vec4 a_tex_info; // x_off, y_off, x_scale, y_scale
-layout(location = 6) in vec4 a_color_tint; // New: color tint
+layout(location = 6) in vec4 a_color_tint; // color tint
+layout(location = 7) in float a_shape; // 0.0 = Texture, 1.0 = Solid Square
 
 // Uniforms (global for all particles in a draw call)
 uniform mat4 u_projection;
@@ -18,6 +19,7 @@ uniform mat4 u_projection;
 out vec2 v_texCoord;
 out float v_alpha;
 out vec4 v_color_tint;
+out float v_shape;
 
 void main() {
     // Calculate the final vertex position in world space
@@ -32,4 +34,5 @@ void main() {
     // Pass varying attributes to the fragment shader
     v_alpha = a_particle_alpha;
     v_color_tint = a_color_tint;
+    v_shape = a_shape;
 }

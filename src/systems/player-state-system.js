@@ -116,7 +116,7 @@ export class PlayerStateSystem {
     }
     
     _handleAura(dt, entityId, pos, col, ctrl, gameState) {
-        if (ctrl.isSpawning || ctrl.isDespawning || ctrl.isHit) return;
+        if (!ctrl.spawnComplete || ctrl.isSpawning || ctrl.isDespawning || ctrl.isHit || ctrl.isDead) return;
         if (!gameState || !gameState.equippedCosmetics) return;
         
         const equippedAura = gameState.equippedCosmetics.aura;
