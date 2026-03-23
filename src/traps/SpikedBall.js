@@ -96,7 +96,6 @@ export class SpikedBall extends Trap {
         eventBus.publish('collisionEvent', {
             type: 'hazard',
             entityId: player.entityId,
-            entityManager: player.entityManager,
             damage: TRAP_CONSTANTS.SPIKED_BALL_DAMAGE,
             knockback: {
                 vx: dx * knockbackStrength,

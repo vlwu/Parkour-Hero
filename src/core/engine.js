@@ -12,8 +12,7 @@ import { UISystem } from '../ui/ui-system.js';
 import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
-import { CharacterComponent } from '../components/CharacterComponent.js';
-import { PLAYER_CONSTANTS, EVENTS, PLAYER_STATES } from '../utils/constants.js';
+import { EVENTS } from '../utils/constants.js';
 import { InputSystem } from '../systems/input-system.js';
 import { GameplaySystem } from '../systems/gameplay-system.js';
 import { PlayerStateSystem } from '../systems/player-state-system.js';
@@ -23,20 +22,17 @@ import { EffectsSystem } from '../systems/effects-system.js';
 import { HealthComponent } from '../components/HealthComponent.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { PreviousPositionComponent } from '../components/PreviousPositionComponent.js';
-import { VelocityComponent } from '../components/VelocityComponent.js';
-import { RenderableComponent } from '../components/RenderableComponent.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
-import { StateComponent } from '../components/StateComponent.js';
 import { EnemySystem } from '../systems/enemy-system.js';
 import { Level } from '../entities/level.js';
 import { BulletSystem } from '../systems/bullet-system.js';
 import { TransitionSystem } from '../systems/transition-system.js';
-import { EnemyComponent } from '../components/EnemyComponent.js';
-import { characterConfig } from '../entities/level-definitions.js';
 import { TrapSystem } from '../systems/trap-system.js';
 import { EnvironmentSystem } from '../systems/environment-system.js';
 import { InteractionSystem } from '../systems/interaction-system.js';
 import { CombatSystem } from '../systems/combat-system.js';
+import { CharacterComponent } from '../components/CharacterComponent.js';
+import { PlayerLifecycleSystem } from '../systems/player-lifecycle-system.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -59,8 +55,6 @@ export class Engine {
     this.isTransitioning = false;
 
     this.entityManager = new EntityManager();
-    this.lastCheckpoint = null;
-    this.fruitsAtLastCheckpoint = new Set();
     this.playerEntityId = null;
 
     this.camera = new Camera(this.canvas.width, this.canvas.height);
@@ -87,6 +81,7 @@ export class Engine {
     this.bulletSystem = new BulletSystem(this.collisionSystem);
     this.trapSystem = new TrapSystem();
     this.transitionSystem = new TransitionSystem(this.uiCanvas, this.assets);
+    this.playerLifecycleSystem = new PlayerLifecycleSystem();
 
     this.systems = [
         this.inputSystem,
@@ -100,6 +95,7 @@ export class Engine {
         this.bulletSystem,
         this.trapSystem,
         this.gameplaySystem,
+        this.playerLifecycleSystem,
         this.renderer,
         this.particleSystem,
         this.effectsSystem,
@@ -122,10 +118,6 @@ export class Engine {
     subscribeAndTrack(EVENTS.REQUEST_LEVEL_LOAD, ({ sectionIndex, levelIndex }) => this.initiateLevelLoad(sectionIndex, levelIndex));
     subscribeAndTrack(EVENTS.REQUEST_LEVEL_RESTART, () => this.initiateLevelLoad(this.gameState.currentSection, this.gameState.currentLevelIndex));
     subscribeAndTrack(EVENTS.KEYBINDS_UPDATED, this.updateKeybinds);
-    subscribeAndTrack(EVENTS.FRUIT_COLLECTED, this._onFruitCollected);
-    subscribeAndTrack(EVENTS.PLAYER_TOOK_DAMAGE, this._onPlayerTookDamage);
-    subscribeAndTrack(EVENTS.CHECKPOINT_ACTIVATED, this._onCheckpointActivated);
-    subscribeAndTrack(EVENTS.PLAYER_DIED, this._onPlayerDied);
     subscribeAndTrack(EVENTS.CHARACTER_UPDATED, this.updatePlayerCharacter);
     subscribeAndTrack(EVENTS.CAMERA_SHAKE_REQUESTED, this._onCameraShakeRequested);
     subscribeAndTrack(EVENTS.MENU_OPENED, () => { this.pauseForMenu = true; this.pause(); });
@@ -199,13 +191,10 @@ export class Engine {
       this.gameState = new GameState(newStateData);
       eventBus.publish(EVENTS.GAME_STATE_UPDATED, this.gameState);
 
-      this.lastCheckpoint = null;
-      this.fruitsAtLastCheckpoint.clear();
       this.soundManager.stopAll();
       this.entityManager = new EntityManager();
       this.inputSystem.entityManager = this.entityManager;
-      this.effectsSystem.reset();
-      this.particleSystem.reset();
+      this.playerLifecycleSystem.reset();
       this.gameFlowSystem.reset(this.isRunning);
   }
 
@@ -315,6 +304,7 @@ export class Engine {
         keybinds: this.keybinds,
         dt,
         levelManager: this.levelManager,
+        collisionSystem: this.collisionSystem
     };
 
     for (const system of this.systems) {
@@ -323,10 +313,6 @@ export class Engine {
     }
 
     const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
-    if (playerCtrl && playerCtrl.needsRespawn && !this.gameState.showingLevelComplete && this.timeScale > 0) {
-      this._respawnPlayer();
-    }
-
     const playerHealth = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
     eventBus.publish(EVENTS.STATS_UPDATED, {
       levelName: this.currentLevel.name,
@@ -337,128 +323,6 @@ export class Engine {
       health: playerHealth ? playerHealth.currentHealth : 100,
       maxHealth: playerHealth ? playerHealth.maxHealth : 100,
     });
-  }
-
-  _onPlayerTookDamage({ amount }) {
-      const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
-      const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
-      if (health && playerCtrl && !playerCtrl.isHit && !playerCtrl.needsRespawn) {
-          health.currentHealth = Math.max(0, health.currentHealth - amount);
-          const pos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
-          const col = this.entityManager.getComponent(this.playerEntityId, CollisionComponent);
-          if (pos && col) {
-              eventBus.publish(EVENTS.CREATE_DAMAGE_INDICATOR, {
-                  amount,
-                  x: pos.x + col.width / 2,
-                  y: pos.y
-              });
-          }
-          this.camera.shake(8, 0.3);
-          if (health.currentHealth <= 0) this._onPlayerDied();
-      }
-  }
-
-  _onPlayerDied() {
-    const playerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
-    if (playerCtrl && !playerCtrl.needsRespawn) {
-        const vel = this.entityManager.getComponent(this.playerEntityId, VelocityComponent);
-        const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
-        const renderable = this.entityManager.getComponent(this.playerEntityId, RenderableComponent);
-        playerCtrl.needsRespawn = true;
-        playerCtrl.deathCount++;
-        vel.vx = 0; vel.vy = 0;
-        playerCtrl.isHit = true;
-        state.currentState = PLAYER_STATES.HIT;
-        renderable.animationState = PLAYER_STATES.HIT;
-        renderable.animationFrame = 0;
-        renderable.animationTimer = 0;
-        eventBus.publish(EVENTS.PLAY_SOUND, { key: 'death_sound', volume: 0.3, channel: 'SFX' });
-
-        const enemyEntities = this.entityManager.query([EnemyComponent, StateComponent]);
-        for (const enemyId of enemyEntities) {
-            const enemy = this.entityManager.getComponent(enemyId, EnemyComponent);
-            if (enemy.type === 'rhino') {
-                const enemyState = this.entityManager.getComponent(enemyId, StateComponent);
-                if (enemyState.currentState === 'charging') {
-                    eventBus.publish(EVENTS.STOP_SOUND_LOOP, { key: 'rhino_charge' });
-                    break;
-                }
-            }
-        }
-    }
-  }
-
-  _respawnPlayer() {
-    const respawnPosition = this.lastCheckpoint || this.currentLevel.startPosition;
-    if (this.lastCheckpoint) this.currentLevel.fruits.forEach((fruit, index) => fruit.collected = this.fruitsAtLastCheckpoint.has(index));
-    else this.currentLevel.fruits.forEach(f => f.collected = false);
-    this.currentLevel.recalculateCollectedFruits();
-    this.effectsSystem.reset();
-    this.particleSystem.reset();
-
-    if (this.currentLevel.trophy) {
-        this.currentLevel.trophy.acquired = false;
-        this.currentLevel.trophy.isAnimating = false;
-        this.currentLevel.trophy.animationFrame = 0;
-        this.currentLevel.trophy.animationTimer = 0;
-        this.currentLevel.trophy.inactive = !this.currentLevel.allFruitsCollected();
-    }
-
-    this.currentLevel.resetEnemies(this.entityManager, this.collisionSystem);
-
-    const pos = this.entityManager.getComponent(this.playerEntityId, PositionComponent);
-    const vel = this.entityManager.getComponent(this.playerEntityId, VelocityComponent);
-    const oldPlayerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
-    const renderable = this.entityManager.getComponent(this.playerEntityId, RenderableComponent);
-    const collision = this.entityManager.getComponent(this.playerEntityId, CollisionComponent);
-    const state = this.entityManager.getComponent(this.playerEntityId, StateComponent);
-    const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
-    const prevPos = this.entityManager.getComponent(this.playerEntityId, PreviousPositionComponent);
-    const charComp = this.entityManager.getComponent(this.playerEntityId, CharacterComponent);
-
-    pos.x = respawnPosition.x; pos.y = respawnPosition.y;
-    if (prevPos) {
-        prevPos.x = respawnPosition.x;
-        prevPos.y = respawnPosition.y;
-    }
-    vel.vx = 0; vel.vy = 0;
-    if (health) health.currentHealth = health.maxHealth;
-
-    const currentDeathCount = oldPlayerCtrl.deathCount;
-    const currentSound = oldPlayerCtrl.activeSurfaceSound;
-
-    const config = characterConfig[charComp ? charComp.characterId : 'PinkMan'] || characterConfig['PinkMan'];
-    this.entityManager.addComponent(this.playerEntityId, new PlayerControlledComponent({
-        stats: config.stats
-    }));
-    
-    const newPlayerCtrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
-    newPlayerCtrl.deathCount = currentDeathCount;
-    newPlayerCtrl.activeSurfaceSound = currentSound;
-    newPlayerCtrl.needsRespawn = false;
-
-    state.currentState = PLAYER_STATES.SPAWN;
-    renderable.animationState = PLAYER_STATES.SPAWN;
-    renderable.animationFrame = 0;
-    renderable.animationTimer = 0;
-    renderable.direction = 'right';
-    renderable.width = PLAYER_CONSTANTS.SPAWN_WIDTH;
-    renderable.height = PLAYER_CONSTANTS.SPAWN_HEIGHT;
-    collision.isGrounded = false;
-    collision.isAgainstWall = false;
-    collision.groundType = null;
-
-    this.camera.shake(15, 0.5);
-    eventBus.publish(EVENTS.PLAYER_RESPAWNED);
-  }
-
-  _onFruitCollected(fruit) {
-    this.currentLevel.collectFruit(fruit);
-    eventBus.publish(EVENTS.PLAY_SOUND, { key: 'collect', volume: 0.8, channel: 'SFX' });
-    const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
-    if (health && health.currentHealth < health.maxHealth) {
-        health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 10);
-    }
   }
 
   updatePlayerCharacter(newCharId) {
@@ -475,15 +339,6 @@ export class Engine {
               }
           }
       }
-  }
-
-  _onCheckpointActivated(cp) {
-      cp.state = 'activating';
-      this.lastCheckpoint = { x: cp.x, y: cp.y - cp.size / 2 };
-      eventBus.publish(EVENTS.PLAY_SOUND, { key: 'checkpoint_activated', volume: 1, channel: 'UI' });
-      this.fruitsAtLastCheckpoint.clear();
-      this.currentLevel.fruits.forEach((fruit, index) => { if (fruit.collected) this.fruitsAtLastCheckpoint.add(index); });
-      this.currentLevel.checkpoints.forEach(otherCp => { if (otherCp !== cp && otherCp.state === 'active') { otherCp.state = 'inactive'; otherCp.frame = 0; } });
   }
 
   _onCameraShakeRequested({ intensity, duration }) {

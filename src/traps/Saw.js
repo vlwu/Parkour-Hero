@@ -110,7 +110,6 @@ export class Saw extends Trap {
         eventBus.publish('collisionEvent', {
             type: 'hazard',
             entityId: player.entityId,
-            entityManager: player.entityManager,
             damage: TRAP_CONSTANTS.SAW_DAMAGE,
             knockback: {
                 vx: dx * knockbackStrength,

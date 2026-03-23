@@ -1,15 +1,31 @@
 export class EntityManager {
     constructor() {
         this.nextEntityId = 0;
-        this.entities = new Set();
+        this.freeEntities = [];
+        this.activeEntities = []; 
+        
         this.componentsByClass = new Map();
-        this.queryCache = new Map();
+        
+        this.nextBit = 1;
+        this.componentBits = new Map();
+        
+        this.entityMasks = []; 
+        this.queryCache = new Map(); 
     }
 
     createEntity() {
-        const entityId = this.nextEntityId++;
-        this.entities.add(entityId);
+        const entityId = this.freeEntities.length > 0 ? this.freeEntities.pop() : this.nextEntityId++;
+        this.entityMasks[entityId] = 0;
+        this.activeEntities.push(entityId);
         return entityId;
+    }
+
+    _getComponentBit(componentClass) {
+        if (!this.componentBits.has(componentClass)) {
+            this.componentBits.set(componentClass, this.nextBit);
+            this.nextBit <<= 1;
+        }
+        return this.componentBits.get(componentClass);
     }
 
     addComponent(entityId, component) {
@@ -18,7 +34,8 @@ export class EntityManager {
             this.componentsByClass.set(componentClass, new Map());
         }
         this.componentsByClass.get(componentClass).set(entityId, component);
-        this.queryCache.clear(); // Invalidate cache
+        
+        this.entityMasks[entityId] |= this._getComponentBit(componentClass);
         return this;
     }
 
@@ -28,8 +45,9 @@ export class EntityManager {
     }
 
     hasComponent(entityId, componentClass) {
-        const componentMap = this.componentsByClass.get(componentClass);
-        return componentMap ? componentMap.has(entityId) : false;
+        const bit = this.componentBits.get(componentClass);
+        if (!bit) return false;
+        return (this.entityMasks[entityId] & bit) === bit;
     }
 
     removeComponent(entityId, componentClass) {
@@ -37,33 +55,37 @@ export class EntityManager {
         if (componentMap) {
             componentMap.delete(entityId);
         }
-        this.queryCache.clear(); // Invalidate cache
+        const bit = this.componentBits.get(componentClass);
+        if (bit) {
+            this.entityMasks[entityId] &= ~bit;
+        }
     }
 
     destroyEntity(entityId) {
+        const idx = this.activeEntities.indexOf(entityId);
+        if (idx !== -1) {
+            this.activeEntities.splice(idx, 1);
+        }
         for (const componentMap of this.componentsByClass.values()) {
             componentMap.delete(entityId);
         }
-        this.entities.delete(entityId);
-        this.queryCache.clear(); // Invalidate cache
+        this.entityMasks[entityId] = 0;
+        this.freeEntities.push(entityId);
     }
 
     query(componentClasses) {
-        // Create a stable cache key from the component classes
-        const cacheKey = componentClasses.map(c => c.name).sort().join(',');
-
-        if (this.queryCache.has(cacheKey)) {
-            return this.queryCache.get(cacheKey);
+        let requiredMask = 0;
+        for (let i = 0; i < componentClasses.length; i++) {
+            requiredMask |= this._getComponentBit(componentClasses[i]);
         }
 
-        const entitiesWithComponents = [];
-        for (const entityId of this.entities) {
-            if (componentClasses.every(cls => this.hasComponent(entityId, cls))) {
-                entitiesWithComponents.push(entityId);
+        const result = [];
+        for (let i = 0; i < this.activeEntities.length; i++) {
+            const id = this.activeEntities[i];
+            if ((this.entityMasks[id] & requiredMask) === requiredMask) {
+                result.push(id);
             }
         }
-
-        this.queryCache.set(cacheKey, entitiesWithComponents);
-        return entitiesWithComponents;
+        return result;
     }
 }

@@ -11,6 +11,7 @@ export class BulletSystem {
     constructor(collisionSystem) {
         this.collisionSystem = collisionSystem;
         this.bulletQueue = [];
+        this.bulletPool = []; // Pool for reusing bullet entities
         eventBus.subscribe('spawnBullet', (data) => this.bulletQueue.push(data));
     }
 
@@ -25,10 +26,12 @@ export class BulletSystem {
         const playerCol = playerEntityId ? entityManager.getComponent(playerEntityId, CollisionComponent) : null;
 
         for (const id of bulletEntities) {
+            const bullet = entityManager.getComponent(id, BulletComponent);
+            if (!bullet.active) continue;
+
             const pos = entityManager.getComponent(id, PositionComponent);
             const vel = entityManager.getComponent(id, VelocityComponent);
             const col = entityManager.getComponent(id, CollisionComponent);
-            const bullet = entityManager.getComponent(id, BulletComponent);
             const renderable = entityManager.getComponent(id, RenderableComponent);
 
             const destroyBullet = (playerCurrentPos) => {
@@ -44,8 +47,18 @@ export class BulletSystem {
                     eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: bullet.piecesSpriteKey, leafIndex: 0 });
                     eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: bullet.piecesSpriteKey, leafIndex: 1 });
                 }
+                
                 this.collisionSystem.removeDynamicEntity(id, entityManager);
-                entityManager.destroyEntity(id);
+                entityManager.removeComponent(id, DynamicColliderComponent);
+                
+                bullet.active = false;
+                renderable.isVisible = false;
+                pos.x = -9999;
+                pos.y = -9999;
+                vel.vx = 0;
+                vel.vy = 0;
+                
+                this.bulletPool.push(id);
             };
 
             if (playerPos && playerCol) {
@@ -78,13 +91,32 @@ export class BulletSystem {
     }
 
     _createBullet(entityManager, { x, y, vx, vy, config, spriteKey = 'bee_bullet', rotation = 0, piecesSpriteKey = null }) {
-        const bulletId = entityManager.createEntity();
+        let bulletId;
 
-        entityManager.addComponent(bulletId, new PositionComponent(x - config.width / 2, y));
-        entityManager.addComponent(bulletId, new VelocityComponent(vx ?? 0, vy ?? config.speed));
-        entityManager.addComponent(bulletId, new DynamicColliderComponent());
-        entityManager.addComponent(bulletId, new CollisionComponent({ type: 'hazard', width: config.width, height: config.height }));
-        entityManager.addComponent(bulletId, new RenderableComponent({ spriteKey: spriteKey, width: config.width, height: config.height, rotation: rotation }));
-        entityManager.addComponent(bulletId, new BulletComponent({ damage: config.damage, speed: config.speed, piecesSpriteKey: piecesSpriteKey }));
+        if (this.bulletPool.length > 0) {
+            bulletId = this.bulletPool.pop();
+            const pos = entityManager.getComponent(bulletId, PositionComponent);
+            const vel = entityManager.getComponent(bulletId, VelocityComponent);
+            const col = entityManager.getComponent(bulletId, CollisionComponent);
+            const rend = entityManager.getComponent(bulletId, RenderableComponent);
+            const bul = entityManager.getComponent(bulletId, BulletComponent);
+            
+            pos.x = x - config.width / 2; pos.y = y;
+            vel.vx = vx ?? 0; vel.vy = vy ?? config.speed;
+            col.width = config.width; col.height = config.height;
+            col.isGrounded = false; col.isAgainstWall = false; col.hitCeiling = false;
+            rend.spriteKey = spriteKey; rend.width = config.width; rend.height = config.height; rend.rotation = rotation; rend.isVisible = true;
+            bul.damage = config.damage; bul.speed = config.speed; bul.piecesSpriteKey = piecesSpriteKey; bul.active = true;
+            
+            entityManager.addComponent(bulletId, new DynamicColliderComponent());
+        } else {
+            bulletId = entityManager.createEntity();
+            entityManager.addComponent(bulletId, new PositionComponent(x - config.width / 2, y));
+            entityManager.addComponent(bulletId, new VelocityComponent(vx ?? 0, vy ?? config.speed));
+            entityManager.addComponent(bulletId, new DynamicColliderComponent());
+            entityManager.addComponent(bulletId, new CollisionComponent({ type: 'hazard', width: config.width, height: config.height }));
+            entityManager.addComponent(bulletId, new RenderableComponent({ spriteKey: spriteKey, width: config.width, height: config.height, rotation: rotation }));
+            entityManager.addComponent(bulletId, new BulletComponent({ damage: config.damage, speed: config.speed, piecesSpriteKey: piecesSpriteKey }));
+        }
     }
 }

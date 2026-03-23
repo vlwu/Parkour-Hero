@@ -100,7 +100,6 @@ export class Spikes extends Trap {
         eventBus.publish('collisionEvent', {
             type: 'hazard',
             entityId: player.entityId,
-            entityManager: player.entityManager,
             damage: this.damage,
             knockback: {
                 vx: knockbackVx,

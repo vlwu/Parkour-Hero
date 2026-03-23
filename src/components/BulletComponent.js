@@ -4,5 +4,6 @@ export class BulletComponent {
         this.speed = speed;
         this.sourceEntityId = sourceEntityId;
         this.piecesSpriteKey = piecesSpriteKey;
+        this.active = true;
     }
 }

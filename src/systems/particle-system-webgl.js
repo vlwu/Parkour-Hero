@@ -27,6 +27,7 @@ export class ParticleSystemWebGL {
         this.syncTextures();
 
         eventBus.subscribe('createParticles', (data) => this.create(data));
+        eventBus.subscribe('resetEffects', () => this.reset());
     }
 
     _compileShader(source, type) {

@@ -49,7 +49,6 @@ export class SlimePuddle extends Trap {
             eventBus.publish('collisionEvent', {
                 type: 'hazard',
                 entityId: player.entityId,
-                entityManager: player.entityManager,
                 damage: 5,
                 knockback: null
             });

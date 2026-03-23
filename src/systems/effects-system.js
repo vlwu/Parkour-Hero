@@ -8,10 +8,11 @@ export class EffectsSystem {
         this.effectsPool = [];
         this.damageIndicators = [];
         this.indicatorPool = [];
-        this.respawnTimers = []; // Track active respawn timers
+        this.respawnTimers = []; 
         eventBus.subscribe('fruitCollected', (fruit) => this._onFruitCollected(fruit));
         eventBus.subscribe('createDamageIndicator', (data) => this._onDamageTaken(data));
         eventBus.subscribe('createRespawnTimer', (data) => this._onRespawnTimer(data));
+        eventBus.subscribe('resetEffects', () => this.reset());
     }
 
     _onFruitCollected(fruit) {
@@ -125,7 +126,6 @@ export class EffectsSystem {
         }
 
         if (this.fontRenderer) {
-            // Render Damage Indicators
             if (this.damageIndicators.length > 0) {
                 this.damageIndicators.forEach(indicator => {
                     const color = `rgba(255, 0, 0, ${indicator.alpha})`;
@@ -141,17 +141,11 @@ export class EffectsSystem {
                 });
             }
 
-            // Render Respawn Timers
             if (this.respawnTimers.length > 0) {
                 this.respawnTimers.forEach(timer => {
                     if (timer.life > 0) {
                         const timeLeft = Math.ceil(timer.life);
-                        
-                        // Calculate pulse effect based on the fractional second
-                        // Fraction goes from 0.99 -> 0.00 as time decreases per second
                         const fraction = timer.life - Math.floor(timer.life);
-                        // Sine wave: sin(0) = 0, sin(PI/2) = 1, sin(PI) = 0
-                        // This creates a fade in -> fade out effect for each number
                         const opacity = Math.sin(fraction * Math.PI);
 
                         ctx.save();

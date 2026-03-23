@@ -256,7 +256,7 @@ export class SlammingHead extends Trap {
 
     onCollision(player, eventBus) {
         if (this.state !== 'slamming' && this.state !== 'slammed') return;
-        eventBus.publish('collisionEvent', { type: 'hazard', entityId: player.entityId, entityManager: player.entityManager, damage: 1000 });
+        eventBus.publish('collisionEvent', { type: 'hazard', entityId: player.entityId, damage: 1000 });
     }
 
     reset() {
