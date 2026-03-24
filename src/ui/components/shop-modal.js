@@ -60,7 +60,96 @@ export class ShopModal extends LitElement {
     .shop-item.equipped { border-color: #4CAF50; background-color: #3d4a3e; }
     .shop-item:hover { transform: translateY(-3px); }
 
-    .item-name { margin-bottom: auto; }
+    .item-name { margin-bottom: 10px; }
+    
+    .preview-box {
+        width: 64px; height: 64px; background-color: #2a2a2a; border-radius: 8px;
+        display: flex; justify-content: center; align-items: center;
+        margin-bottom: auto; position: relative; overflow: hidden;
+    }
+    
+    /* Particle/Effect Previews */
+    .preview-player {
+        width: 32px; height: 32px; z-index: 2; position: relative;
+    }
+    
+    /* Dash Previews */
+    .preview-dash-default {
+        position: absolute; width: 8px; height: 8px; background: white; opacity: 0.7;
+        border-radius: 50%; right: 25px;
+        box-shadow: -10px 5px 0 2px rgba(255,255,255,0.4), -20px -2px 0 -1px rgba(255,255,255,0.2);
+    }
+    .preview-dash-phantom {
+        position: absolute; width: 32px; height: 32px; opacity: 0.4;
+        filter: sepia(1) hue-rotate(240deg) saturate(3); right: 20px;
+    }
+    .preview-dash-rainbow {
+        position: absolute; width: 12px; height: 12px; border-radius: 50%; right: 30px;
+        animation: rainbow-anim 2s linear infinite;
+        box-shadow: -15px 5px 0 2px rgba(255,255,255,0.4);
+    }
+    @keyframes rainbow-anim {
+        0% { background: red; } 33% { background: lime; } 66% { background: blue; } 100% { background: red; }
+    }
+    .preview-dash-pixel {
+        position: absolute; width: 10px; height: 10px; background: cyan; right: 25px;
+        box-shadow: -15px -5px 0 magenta, -5px 10px 0 yellow;
+    }
+
+    /* Death Previews */
+    .preview-death-default {
+        position: absolute; width: 8px; height: 8px; background: white; border-radius: 50%;
+        box-shadow: 15px -15px 0 white, -15px 15px 0 white, 15px 15px 0 white, -15px -15px 0 white;
+    }
+    .preview-death-shatter {
+        position: absolute; width: 8px; height: 8px; background: red;
+        box-shadow: 20px -10px 0 lime, -15px 20px 0 blue, 10px 15px 0 yellow, -10px -20px 0 cyan;
+    }
+    .preview-death-glitch {
+        position: absolute; width: 12px; height: 12px; background: magenta;
+        box-shadow: 10px -5px 0 cyan, -10px 5px 0 yellow, 5px 10px 0 red, -5px -10px 0 blue;
+        animation: glitch-anim 0.2s steps(2, end) infinite;
+    }
+    @keyframes glitch-anim {
+        0% { transform: translate(2px, -2px); } 50% { transform: translate(-2px, 2px); } 100% { transform: translate(2px, -2px); }
+    }
+    .preview-death-implosion {
+        position: absolute; width: 100%; height: 100%; border-radius: 50%;
+        box-shadow: inset 0 0 20px purple; animation: implode-anim 1.5s infinite;
+    }
+    @keyframes implode-anim {
+        0% { transform: scale(1.5); opacity: 0; } 50% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(0); opacity: 0; }
+    }
+
+    /* Aura Previews */
+    .preview-aura-supercharge {
+        position: absolute; width: 40px; height: 40px; border-radius: 50%;
+        box-shadow: 0 0 15px 5px rgba(255, 204, 25, 0.6);
+        animation: pulse-anim 1s infinite alternate;
+    }
+    .preview-aura-shadow {
+        position: absolute; width: 40px; height: 40px; border-radius: 50%;
+        box-shadow: 0 0 20px 10px rgba(25, 0, 51, 0.8);
+    }
+    .preview-aura-orbiting {
+        position: absolute; width: 40px; height: 40px; border-radius: 50%;
+        animation: orbit-anim 2s linear infinite;
+        border: 2px solid transparent;
+    }
+    .preview-aura-orbiting::before, .preview-aura-orbiting::after {
+        content: ''; position: absolute; width: 8px; height: 8px; background: cyan; border-radius: 50%;
+        top: 14px;
+    }
+    .preview-aura-orbiting::before { left: -6px; }
+    .preview-aura-orbiting::after { right: -6px; }
+    @keyframes orbit-anim {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    @keyframes pulse-anim {
+        0% { transform: scale(0.9); opacity: 0.7; }
+        100% { transform: scale(1.1); opacity: 1; }
+    }
     
     .buy-button {
         width: 100%; padding: 10px; border-radius: 6px; border: none;
@@ -164,11 +253,58 @@ export class ShopModal extends LitElement {
                 if (isEquipped) { btnClass = 'equipped'; btnText = 'Equipped'; }
                 else if (isUnlocked) { btnClass = 'equip'; btnText = 'Equip'; }
 
+                let previewHtml = '';
+                const playerSprite = this.assets?.characters[this.gameState.selectedCharacter]?.playerIdle;
+                const dashSprite = this.assets?.characters[this.gameState.selectedCharacter]?.playerDash;
+                
+                if (this.activeTab === 'dash') {
+                    const spriteToUse = dashSprite || playerSprite;
+                    let extraElement = '';
+                    if (item.id === 'default_dash') extraElement = html`<div class="preview-dash-default"></div>`;
+                    else if (item.id === 'phantom_dash') extraElement = html`<div class="preview-dash-phantom" style="background-image: url(${spriteToUse?.src}); background-position: left; object-fit: none;"></div>`;
+                    else if (item.id === 'rainbow_dash') extraElement = html`<div class="preview-dash-rainbow"></div>`;
+                    else if (item.id === 'pixel_dash') extraElement = html`<div class="preview-dash-pixel"></div>`;
+                    
+                    previewHtml = html`
+                        <div class="preview-box">
+                            <img class="preview-player" src=${spriteToUse?.src} style="image-rendering: pixelated; object-fit: none; object-position: left;" />
+                            ${extraElement}
+                        </div>
+                    `;
+                } else if (this.activeTab === 'death') {
+                    let extraElement = '';
+                    if (item.id === 'default_death') extraElement = html`<div class="preview-death-default"></div>`;
+                    else if (item.id === 'shatter_death') extraElement = html`<div class="preview-death-shatter"></div>`;
+                    else if (item.id === 'glitch_death') extraElement = html`<div class="preview-death-glitch"></div>`;
+                    else if (item.id === 'implosion_death') extraElement = html`<div class="preview-death-implosion"></div>`;
+                    
+                    previewHtml = html`
+                        <div class="preview-box">
+                            ${extraElement}
+                        </div>
+                    `;
+                } else if (this.activeTab === 'aura') {
+                    let extraElement = '';
+                    if (item.id === 'supercharge_aura') extraElement = html`<div class="preview-aura-supercharge"></div>`;
+                    else if (item.id === 'shadow_aura') extraElement = html`<div class="preview-aura-shadow"></div>`;
+                    else if (item.id === 'orbiting_aura') extraElement = html`<div class="preview-aura-orbiting"></div>`;
+                    
+                    previewHtml = html`
+                        <div class="preview-box">
+                            <img class="preview-player" src=${playerSprite?.src} style="image-rendering: pixelated; object-fit: none; object-position: left;" />
+                            ${extraElement}
+                        </div>
+                    `;
+                }
+
                 return html`
                     <div class="shop-item ${isEquipped ? 'equipped' : ''}">
                         <div class="item-name">
                             <bitmap-text .fontRenderer=${this.fontRenderer} text=${item.name} scale="1.5"></bitmap-text>
                         </div>
+                        
+                        ${previewHtml}
+
                         <button 
                             class="buy-button ${btnClass}" 
                             ?disabled=${(!isUnlocked && !canAfford) || isEquipped}

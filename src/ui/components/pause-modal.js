@@ -107,6 +107,7 @@ export class PauseModal extends LitElement {
 
           <div class="stats-container">
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Fruits: ${this.stats.collectedFruits}/${this.stats.totalFruits}" scale="1.8"></bitmap-text>
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="Coins: ${this.stats.fruitCoins || 0}" scale="1.8"></bitmap-text>
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Deaths: ${this.stats.deathCount}" scale="1.8"></bitmap-text>
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Time: ${formatTime(this.stats.levelTime)}" scale="1.8"></bitmap-text>
           </div>
@@ -119,7 +120,10 @@ export class PauseModal extends LitElement {
               <img src="/assets/Menu/Buttons/Restart.png" alt="Restart">
             </button>
             <button class="modal-image-button" title="Levels Menu" @click=${() => this._dispatch('open-levels-menu')}>
-              <img src="/assets/Menu/Buttons/Levels.png" alt="Main Menu">
+              <img src="/assets/Menu/Buttons/Levels.png" alt="Levels">
+            </button>
+            <button class="modal-image-button" title="Shop" @click=${() => this._dispatch('open-shop-menu')}>
+              <img src="/assets/Menu/Buttons/Achievements.png" alt="Shop">
             </button>
           </div>
           <div class="exit-button-container">

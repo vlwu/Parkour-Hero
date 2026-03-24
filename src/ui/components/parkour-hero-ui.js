@@ -415,6 +415,7 @@ export class ParkourHeroUI extends LitElement {
         return html`<pause-modal
                       .stats=${this.currentStats} .fontRenderer=${this.fontRenderer}
                       @resume-game=${this._closeModal} @restart-level=${this._handleRestart} @open-levels-menu=${this._handleOpenLevelsMenu}
+                      @open-shop-menu=${() => this._openModalFromMenu('shop')}
                       @exit-to-menu=${this._handleExitToMenu}
                     ></pause-modal>`;
       case 'levels':

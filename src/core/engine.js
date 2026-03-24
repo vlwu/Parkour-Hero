@@ -325,6 +325,7 @@ export class Engine {
       levelTime: this.gameFlowSystem.levelTime,
       health: playerHealth ? playerHealth.currentHealth : 100,
       maxHealth: playerHealth ? playerHealth.maxHealth : 100,
+      fruitCoins: this.gameState.fruitCoins
     });
   }
 

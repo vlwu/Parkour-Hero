@@ -20,9 +20,9 @@ export class HUD {
       soundEnabled: true,
       soundVolume: 0.5,
       health: 100,
-      maxHealth: 100
+      maxHealth: 100,
+      fruitCoins: 0
     };
-
 
     this.fps = 0;
     this.frameCount = 0;
@@ -202,11 +202,12 @@ export class HUD {
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-      const { levelName, collectedFruits, totalFruits, deathCount, soundEnabled, soundVolume } = this.stats;
+      const { levelName, collectedFruits, totalFruits, deathCount, soundEnabled, soundVolume, fruitCoins } = this.stats;
 
       const lines = [
         `${levelName}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
+        `Coins: ${fruitCoins || 0}`,
         `Deaths: ${deathCount || 0}`,
         `Sound: ${soundEnabled ? 'On' : 'Off'} (${Math.round(soundVolume * 100)}%)`
       ];
@@ -231,7 +232,7 @@ export class HUD {
       const hudX = 10;
       const hudY = 10;
       const hudWidth = maxWidth + horizontalPadding;
-      const hudHeight = 160; 
+      const hudHeight = 195; 
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
