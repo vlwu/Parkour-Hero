@@ -14,5 +14,6 @@ export class InputComponent {
         // "Just pressed" states for the current frame
         this.jumpPressedThisFrame = false;
         this.dashPressedThisFrame = false;
+        this.quickRespawnPressedThisFrame = false;
     }
 }

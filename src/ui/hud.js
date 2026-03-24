@@ -4,13 +4,13 @@ import { CollisionComponent } from '../components/CollisionComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { formatTime } from './ui-utils.js';
 
 export class HUD {
-  constructor(ctx, fontRenderer, gameplaySettings, assets) {
+  constructor(ctx, fontRenderer, gameplaySettings) {
     this.ctx = ctx;
     this.canvas = ctx.canvas;
     this.fontRenderer = fontRenderer;
-    this.assets = assets;
     this.isVisible = true;
     this.settings = gameplaySettings;
     this.stats = {
@@ -21,8 +21,7 @@ export class HUD {
       soundEnabled: true,
       soundVolume: 0.5,
       health: 100,
-      maxHealth: 100,
-      fruitCoins: 0
+      maxHealth: 100
     };
 
 
@@ -204,7 +203,7 @@ export class HUD {
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-      const { levelName, collectedFruits, totalFruits, deathCount, soundEnabled, soundVolume, fruitCoins } = this.stats;
+      const { levelName, collectedFruits, totalFruits, deathCount, soundEnabled, soundVolume, levelTime } = this.stats;
 
       const lines = [
         `${levelName}`,
@@ -249,33 +248,8 @@ export class HUD {
         this.fontRenderer.drawText(ctx, text, textX, y, fontOptions);
       });
 
-      // Coin Display right next to HUD
-      const coinBoxX = hudX + hudWidth + 10;
-      const coinBoxWidth = 100;
-      const coinBoxHeight = 44;
-      
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.beginPath();
-      ctx.roundRect(coinBoxX, hudY, coinBoxWidth, coinBoxHeight, 10);
-      ctx.fill();
-      
-      const coinSprite = this.assets?.coin_icon;
-      if (coinSprite) {
-          const frameCount = 14;
-          const frameSpeed = 0.05;
-          const currentFrame = Math.floor((performance.now() / 1000) / frameSpeed) % frameCount;
-          const frameWidth = coinSprite.width / frameCount;
-          
-          ctx.save();
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = '#f1c40f';
-          ctx.drawImage(coinSprite, currentFrame * frameWidth, 0, frameWidth, coinSprite.height, coinBoxX + 7, hudY + 10, 24, 24);
-          ctx.restore();
-          
-          this.fontRenderer.drawText(ctx, `${fruitCoins || 0}`, coinBoxX + 35, hudY + 14, { scale: 1.8, color: '#f1c40f', outlineColor: 'black', outlineWidth: 1 });
-      }
-
       const fpsText = `FPS: ${this.fps}`;
+      const timeText = `Time: ${formatTime(levelTime || 0)}`;
       const fpsFontOptions = {
           scale: 2,
           align: 'left',
@@ -285,6 +259,7 @@ export class HUD {
       };
       
       this.fontRenderer.drawText(ctx, fpsText, hudX, hudY + hudHeight + 10, fpsFontOptions);
+      this.fontRenderer.drawText(ctx, timeText, hudX, hudY + hudHeight + 40, fpsFontOptions);
 
       this.drawMinimap(ctx, camera, level, entityManager, playerEntityId);
 

@@ -1,4 +1,4 @@
-import { PLAYER_CONSTANTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, EVENTS } from '../utils/constants.js';
 import { eventBus } from '../utils/event-bus.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { PositionComponent } from '../components/PositionComponent.js';
@@ -129,14 +129,11 @@ export class PlayerStateSystem {
             ctrl.auraTimer = 0;
             eventBus.publish('createParticles', { type: 'shadow_aura', x: pos.x + col.width/2, y: pos.y + col.height/2 });
         } else if (equippedAura === 'orbiting_aura') {
-            if (ctrl.auraTimer > 0.02) {
-                ctrl.auraTimer = 0;
-                const angle1 = performance.now() / 300;
-                const angle2 = angle1 + Math.PI;
-                const radius = 20;
-                eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle1)*radius, y: pos.y + col.height/2 + Math.sin(angle1)*radius });
-                eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle2)*radius, y: pos.y + col.height/2 + Math.sin(angle2)*radius });
-            }
+            const angle1 = performance.now() / 300;
+            const angle2 = angle1 + Math.PI;
+            const radius = 20;
+            eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle1)*radius, y: pos.y + col.height/2 + Math.sin(angle1)*radius });
+            eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle2)*radius, y: pos.y + col.height/2 + Math.sin(angle2)*radius });
         }
     }
 
@@ -292,6 +289,10 @@ export class PlayerStateSystem {
             eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: dashType, direction: renderable.direction });
             
             this._transitionTo(entityId, new DashState(entityId, entityManager), entityManager);
+        }
+
+        if (input.quickRespawnPressedThisFrame) {
+            eventBus.publish(EVENTS.QUICK_RESPAWN_REQUESTED);
         }
     }
 

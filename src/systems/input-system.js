@@ -81,6 +81,7 @@ export class InputSystem {
 
         inputComp.jumpPressedThisFrame = false;
         inputComp.dashPressedThisFrame = false;
+        inputComp.quickRespawnPressedThisFrame = false;
     }
 
     if (canProcessGameplayInput) {
@@ -94,11 +95,13 @@ export class InputSystem {
                     if (event.key === keybinds.dash) {
                         inputComp.dashPressedThisFrame = true;
                     }
+                    if (event.key === keybinds.quickRespawn) {
+                        inputComp.quickRespawnPressedThisFrame = true;
+                    }
                 }
             }
         }
     }
-
 
     this.queue = [];
   }

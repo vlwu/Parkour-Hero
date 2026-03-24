@@ -21,11 +21,13 @@ export class PlayerLifecycleSystem {
         this.diedQueue = [];
         this.checkpointQueue = [];
         this.fruitQueue = [];
+        this.quickRespawnQueue = [];
         
         eventBus.subscribe(EVENTS.PLAYER_TOOK_DAMAGE, (data) => this.damageQueue.push(data));
         eventBus.subscribe(EVENTS.PLAYER_DIED, () => this.diedQueue.push({}));
         eventBus.subscribe(EVENTS.CHECKPOINT_ACTIVATED, (cp) => this.checkpointQueue.push(cp));
         eventBus.subscribe(EVENTS.FRUIT_COLLECTED, (fruit) => this.fruitQueue.push(fruit));
+        eventBus.subscribe(EVENTS.QUICK_RESPAWN_REQUESTED, () => this.quickRespawnQueue.push({}));
     }
     
     reset() {
@@ -35,11 +37,22 @@ export class PlayerLifecycleSystem {
         this.diedQueue = [];
         this.checkpointQueue = [];
         this.fruitQueue = [];
+        this.quickRespawnQueue = [];
     }
     
     update(dt, context) {
         const { entityManager, playerEntityId, camera, level, gameState, isRunning, collisionSystem } = context;
         if (!isRunning) return;
+
+        // Process Quick Respawn
+        for (const _ of this.quickRespawnQueue) {
+            const playerCtrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);
+            if (playerCtrl && !playerCtrl.isDead && !playerCtrl.needsRespawn && !playerCtrl.isDespawning && !playerCtrl.isSpawning) {
+                playerCtrl.deathCount++;
+                this._respawnPlayer(context);
+            }
+        }
+        this.quickRespawnQueue = [];
 
         // Process Fruits
         for (const fruit of this.fruitQueue) {

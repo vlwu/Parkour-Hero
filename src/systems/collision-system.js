@@ -152,7 +152,7 @@ export class CollisionSystem {
                 continue;
             }
 
-            if (pos.y > level.height + 100) {
+            if (pos.y > level.height) {
                 eventBus.publish('collisionEvent', { type: 'world_bottom', entityId, entityManager });
                 continue;
             }
@@ -448,6 +448,10 @@ export class CollisionSystem {
     _landOnSurface(pos, vel, col, surfaceTopY, surfaceType, groundInstance, entityId, entityManager) {
         const landingVelocity = vel.vy;
         const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
+
+        if (playerCtrl && landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY && playerCtrl.fallDistance > PLAYER_CONSTANTS.SPRITE_HEIGHT && surfaceType !== 'mud') {
+            eventBus.publish('playerLandedHard', { entityId, landingVelocity });
+        }
 
         const PUSH_BUFFER = 0.01;
         pos.y = surfaceTopY - col.height - PUSH_BUFFER;

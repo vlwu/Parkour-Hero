@@ -24,6 +24,7 @@ export class StorageManager {
                 moveRight: 'd',
                 jump: ' ',
                 dash: 'e',
+                quickRespawn: 'r',
             },
             gameplay: {
                 minimapSize: 1.0,
@@ -64,21 +65,9 @@ export class StorageManager {
             }
             if (!Array.isArray(state.unlockedCosmetics)) {
                 state.unlockedCosmetics = ['default_dash', 'default_death', 'default_aura'];
-            } else {
-                // Migrate legacy cosmetics safely
-                if (state.unlockedCosmetics.includes('pixel_dash')) {
-                    state.unlockedCosmetics[state.unlockedCosmetics.indexOf('pixel_dash')] = 'leaf_dash';
-                }
-                if (state.unlockedCosmetics.includes('glitch_death')) {
-                    state.unlockedCosmetics[state.unlockedCosmetics.indexOf('glitch_death')] = 'ascension_death';
-                }
             }
             if (!state.equippedCosmetics || typeof state.equippedCosmetics !== 'object') {
                 state.equippedCosmetics = { dash: 'default_dash', death: 'default_death', aura: 'default_aura' };
-            } else {
-                // Migrate equipped legacy cosmetics safely
-                if (state.equippedCosmetics.dash === 'pixel_dash') state.equippedCosmetics.dash = 'leaf_dash';
-                if (state.equippedCosmetics.death === 'glitch_death') state.equippedCosmetics.death = 'ascension_death';
             }
 
             return state;
