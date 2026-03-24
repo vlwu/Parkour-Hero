@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { map } from 'lit/directives/map.js';
 import { eventBus } from '../../utils/event-bus.js';
 import { COSMETICS } from '../../utils/constants.js';
+import { ParticleSystemWebGL } from '../../systems/particle-system-webgl.js';
 import './bitmap-text.js';
 import './animated-sprite-card.js';
 
@@ -16,7 +17,7 @@ export class ShopModal extends LitElement {
       background-color: #333; padding: 25px; border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8); color: #eee;
       text-align: center; position: relative; width: 95%;
-      max-width: 800px; max-height: 85vh; display: flex; flex-direction: column;
+      max-width: 850px; max-height: 85vh; display: flex; flex-direction: column;
     }
     .close-button {
       position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
@@ -28,7 +29,7 @@ export class ShopModal extends LitElement {
     
     .header {
         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;
-        margin-bottom: 20px; border-bottom: 2px solid #555; padding-bottom: 15px;
+        margin-bottom: 20px; border-bottom: 2px solid #555; padding-bottom: 15px; flex-shrink: 0;
     }
     .coin-display {
         display: flex; align-items: center; gap: 10px;
@@ -36,8 +37,32 @@ export class ShopModal extends LitElement {
         border: 2px solid #f1c40f;
     }
 
+    .main-area {
+        display: flex; gap: 25px; flex-grow: 1; overflow: hidden; min-height: 0;
+    }
+    
+    .left-panel {
+        display: flex; flex-direction: column; align-items: center; width: 180px; flex-shrink: 0;
+    }
+    .preview-box {
+        width: 150px; height: 150px; background-color: #222;
+        border: 2px solid #555; border-radius: 8px; position: relative;
+        margin-bottom: 15px; overflow: hidden;
+    }
+    .preview-box canvas {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        image-rendering: pixelated;
+    }
+    .preview-label {
+        margin-top: 10px;
+    }
+
+    .right-panel {
+        display: flex; flex-direction: column; flex-grow: 1; overflow: hidden;
+    }
+
     .tabs {
-        display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;
+        display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-shrink: 0;
     }
     .tab-button {
         background-color: #444; border: 2px solid #666; color: white;
@@ -55,19 +80,12 @@ export class ShopModal extends LitElement {
     .shop-item {
         background-color: #444; border: 2px solid #666; border-radius: 8px;
         padding: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px;
-        transition: transform 0.2s, border-color 0.2s;
+        transition: transform 0.2s, border-color 0.2s; cursor: crosshair;
     }
     .shop-item.equipped { border-color: #4CAF50; background-color: #3d4a3e; }
-    .shop-item:hover { transform: translateY(-3px); }
+    .shop-item:hover { transform: translateY(-3px); border-color: #007bff; }
 
     .item-name { margin-bottom: auto; }
-    
-    .preview-canvas {
-        background-color: #222;
-        border-radius: 4px;
-        margin-bottom: 5px;
-        border: 1px solid #555;
-    }
     
     .buy-button {
         width: 100%; padding: 10px; border-radius: 6px; border: none;
@@ -93,120 +111,150 @@ export class ShopModal extends LitElement {
     gameState: { type: Object },
     fontRenderer: { type: Object },
     assets: { type: Object },
-    activeTab: { type: String, state: true }
+    activeTab: { type: String, state: true },
+    previewedItem: { type: String, state: true }
   };
 
   constructor() {
     super();
     this.activeTab = 'dash';
+    this.previewFrameId = null;
+    this.particleSystem = null;
   }
 
-  connectedCallback() {
-      super.connectedCallback();
-      this.previewParticles = {};
-      this.lastTime = performance.now();
-      this.animFrame = requestAnimationFrame(this._animatePreviews);
+  firstUpdated() {
+      this.previewedItem = this.gameState?.equippedCosmetics?.[this.activeTab];
+      this._startPreviewLoop();
+  }
+
+  updated(changedProperties) {
+      if (changedProperties.has('activeTab') && this.gameState) {
+          this.previewedItem = this.gameState.equippedCosmetics[this.activeTab];
+          if (this.particleSystem) this.particleSystem.reset();
+      }
   }
 
   disconnectedCallback() {
       super.disconnectedCallback();
-      cancelAnimationFrame(this.animFrame);
-  }
-  
-  _animatePreviews = (time) => {
-      this.animFrame = requestAnimationFrame(this._animatePreviews);
-      const dt = (time - this.lastTime) / 1000;
-      this.lastTime = time;
-
-      const canvases = this.shadowRoot.querySelectorAll('.preview-canvas');
-      canvases.forEach(canvas => {
-          const ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          const itemId = canvas.dataset.id;
-          const category = canvas.dataset.category;
-          
-          const cx = canvas.width / 2;
-          const cy = canvas.height / 2;
-
-          ctx.fillStyle = '#ff8c21';
-          ctx.fillRect(cx - 10, cy - 10, 20, 20);
-
-          if (!this.previewParticles[itemId]) {
-              this.previewParticles[itemId] = [];
-          }
-          let particles = this.previewParticles[itemId];
-          
-          if (category === 'dash') {
-              if (Math.random() < 0.5) {
-                  this._emitShopParticle(particles, itemId, category, cx, cy);
-              }
-          } else if (category === 'aura') {
-              if (Math.random() < 0.2) {
-                  this._emitShopParticle(particles, itemId, category, cx, cy);
-              }
-          } else if (category === 'death') {
-              if (!this.burstTimers) this.burstTimers = {};
-              if ((this.burstTimers[itemId] || 0) <= 0) {
-                  this.burstTimers[itemId] = 2.0;
-                  ctx.clearRect(0,0,canvas.width,canvas.height);
-                  for (let i = 0; i < 20; i++) this._emitShopParticle(particles, itemId, category, cx, cy);
-              }
-              this.burstTimers[itemId] -= dt;
-              if (this.burstTimers[itemId] > 1.8) {
-                  ctx.clearRect(0,0,canvas.width,canvas.height);
-              }
-          }
-
-          for (let i = particles.length - 1; i >= 0; i--) {
-              let p = particles[i];
-              p.life -= dt;
-              if (p.life <= 0) {
-                  particles.splice(i, 1);
-              } else {
-                  p.x += p.vx * dt;
-                  p.y += p.vy * dt;
-                  p.vy += p.gravity * dt;
-                  ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
-                  ctx.fillStyle = p.color;
-                  ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
-              }
-          }
-          ctx.globalAlpha = 1.0;
-      });
+      if (this.previewFrameId) cancelAnimationFrame(this.previewFrameId);
   }
 
-  _emitShopParticle(particles, id, category, cx, cy) {
-      let p = { x: cx, y: cy, vx: 0, vy: 0, gravity: 0, life: 0.5, maxLife: 0.5, size: 6, color: 'white' };
+  _startPreviewLoop() {
+      if (this.previewFrameId) cancelAnimationFrame(this.previewFrameId);
       
-      if (category === 'dash') {
-          p.vx = -50 - Math.random()*50;
-          p.vy = (Math.random() - 0.5) * 20;
-          p.gravity = 50;
-          if (id === 'phantom_dash') { p.color = 'rgba(150, 50, 255, 0.8)'; p.gravity = -10; p.vx = -20; p.size = 12; }
-          else if (id === 'rainbow_dash') { p.color = `hsl(${Math.random()*360}, 100%, 50%)`; p.vy = (Math.random()-0.5)*50; }
-          else if (id === 'pixel_dash') { p.color = ['red','green','blue','yellow','cyan','magenta'][Math.floor(Math.random()*6)]; p.size = 8; p.vx = -30; p.gravity = 0; }
-      } else if (category === 'death') {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = 50 + Math.random() * 50;
-          p.vx = Math.cos(angle) * speed;
-          p.vy = Math.sin(angle) * speed;
-          p.gravity = 150;
-          if (id === 'shatter_death') { p.color = ['#ff3333','#33ff33','#3333ff'][Math.floor(Math.random()*3)]; p.vy -= 50; p.gravity = 300; }
-          else if (id === 'glitch_death') { p.color = ['red','green','blue','yellow','cyan','magenta'][Math.floor(Math.random()*6)]; p.gravity = 0; }
-          else if (id === 'implosion_death') { p.x += p.vx; p.y += p.vy; p.vx = -p.vx; p.vy = -p.vy; p.color = 'purple'; p.gravity = 0; }
-      } else if (category === 'aura') {
-          if (id === 'supercharge_aura') { p.color = 'rgba(255, 200, 50, 0.8)'; p.vy = -30; p.gravity = -50; p.size = 8; p.x += (Math.random()-0.5)*20; }
-          else if (id === 'shadow_aura') { p.color = 'rgba(20, 0, 50, 0.6)'; p.y += 10; p.vx = (Math.random()-0.5)*10; p.gravity = -5; p.size = 12; p.maxLife = 0.8; p.life = 0.8; }
-          else if (id === 'orbiting_aura') { 
-              const time = performance.now() / 300;
-              const angle = time + (Math.random() > 0.5 ? Math.PI : 0);
-              const z = Math.sin(angle);
-              p.x = cx + Math.cos(angle) * 15;
-              p.y = cy + Math.sin(angle) * 5;
-              p.color = 'cyan'; p.life = 0.1; p.maxLife = 0.1; p.size = 6 * (1 + z * 0.5);
-          }
+      const bgCanvas = this.shadowRoot.getElementById('preview-bg');
+      const fxCanvas = this.shadowRoot.getElementById('preview-fx');
+      if (!bgCanvas || !fxCanvas) return;
+
+      const gl = fxCanvas.getContext('webgl2', { alpha: true });
+      if (!this.particleSystem) {
+          this.particleSystem = new ParticleSystemWebGL(gl, this.assets);
       }
-      particles.push(p);
+      this.particleSystem.syncTextures();
+
+      let lastTime = performance.now();
+      let stateTime = 0;
+      let playerPos = { x: 75, y: 75 };
+      let direction = 1;
+      let particleTimer = 0;
+
+      const dummyCamera = {
+          getProjectionMatrix: () => {
+              const m = new Float32Array(16);
+              m[0] = 2/150; m[5] = -2/150; m[10] = -1; m[15] = 1;
+              m[12] = -1; m[13] = 1;
+              return m;
+          }
+      };
+
+      const loop = (timestamp) => {
+          if (!this.isConnected) return;
+          const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+          lastTime = timestamp;
+          stateTime += dt;
+
+          gl.clear(gl.COLOR_BUFFER_BIT);
+
+          const ctx = bgCanvas.getContext('2d');
+          ctx.clearRect(0, 0, 150, 150);
+
+          let drawPlayer = true;
+          const charId = this.gameState?.selectedCharacter || 'PinkMan';
+          const playerSprite = this.assets?.characters?.[charId]?.playerIdle;
+
+          if (this.activeTab === 'dash') {
+              playerPos.x += direction * 200 * dt;
+              if (playerPos.x > 120) direction = -1;
+              if (playerPos.x < 30) direction = 1;
+              
+              particleTimer += dt;
+              if (particleTimer > 0.03) {
+                  particleTimer = 0;
+                  if (this.previewedItem) {
+                      this.particleSystem.create({
+                          x: playerPos.x, y: playerPos.y,
+                          type: this.previewedItem,
+                          direction: direction === 1 ? 'right' : 'left'
+                      });
+                  }
+              }
+          } else if (this.activeTab === 'death') {
+              if (stateTime > 2.0) {
+                  stateTime = 0;
+                  if (this.previewedItem) {
+                      this.particleSystem.create({
+                          x: 75, y: 75, type: this.previewedItem
+                      });
+                  }
+              }
+              if (stateTime < 1.0) drawPlayer = false; 
+              playerPos = { x: 75, y: 75 };
+          } else if (this.activeTab === 'aura') {
+              playerPos = { x: 75, y: 75 };
+              particleTimer += dt;
+              if (this.previewedItem === 'supercharge_aura' && particleTimer > 0.05) {
+                  particleTimer = 0;
+                  this.particleSystem.create({ type: 'supercharge_aura', x: 75, y: 90 });
+              } else if (this.previewedItem === 'shadow_aura' && particleTimer > 0.08) {
+                  particleTimer = 0;
+                  this.particleSystem.create({ type: 'shadow_aura', x: 75, y: 75 });
+              } else if (this.previewedItem === 'orbiting_aura') {
+                  if (particleTimer > 0.02) {
+                      particleTimer = 0;
+                      const angle1 = performance.now() / 300;
+                      const angle2 = angle1 + Math.PI;
+                      const radius = 20;
+                      this.particleSystem.create({ type: 'orbit_node', x: 75 + Math.cos(angle1)*radius, y: 75 + Math.sin(angle1)*radius });
+                      this.particleSystem.create({ type: 'orbit_node', x: 75 + Math.cos(angle2)*radius, y: 75 + Math.sin(angle2)*radius });
+                  }
+              }
+          }
+
+          if (drawPlayer && playerSprite) {
+              const frameWidth = playerSprite.width / 11;
+              const frame = Math.floor(timestamp / 100) % 11;
+              
+              ctx.save();
+              ctx.translate(playerPos.x, playerPos.y);
+              if (direction === -1) ctx.scale(-1, 1);
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(playerSprite, frame * frameWidth, 0, frameWidth, playerSprite.height, -16, -16, 32, 32);
+              ctx.restore();
+          }
+
+          this.particleSystem.update(dt);
+          this.particleSystem.render(dummyCamera);
+
+          this.previewFrameId = requestAnimationFrame(loop);
+      };
+      this.previewFrameId = requestAnimationFrame(loop);
+  }
+
+  _setPreviewItem(id) {
+      if (this.previewedItem !== id) {
+          this.previewedItem = id;
+          if (this.particleSystem) this.particleSystem.reset();
+      }
   }
 
   _dispatchClose() {
@@ -241,6 +289,7 @@ export class ShopModal extends LitElement {
 
     const items = COSMETICS[this.activeTab] || [];
     const equippedId = this.gameState.equippedCosmetics[this.activeTab];
+    const previewName = items.find(c => c.id === this.previewedItem)?.name || 'None';
 
     return html`
       <div class="modal-overlay" @click=${this._dispatchClose}>
@@ -255,51 +304,63 @@ export class ShopModal extends LitElement {
             </div>
           </div>
 
-          <div class="tabs">
-              <button class="tab-button ${this.activeTab === 'dash' ? 'active' : ''}" @click=${() => { this.activeTab = 'dash'; eventBus.publish('playSound', {key:'button_click', volume:0.5, channel:'UI'}); }}>
-                  <bitmap-text .fontRenderer=${this.fontRenderer} text="Dash Trails" scale="1.5"></bitmap-text>
-              </button>
-              <button class="tab-button ${this.activeTab === 'death' ? 'active' : ''}" @click=${() => { this.activeTab = 'death'; eventBus.publish('playSound', {key:'button_click', volume:0.5, channel:'UI'}); }}>
-                  <bitmap-text .fontRenderer=${this.fontRenderer} text="Death Anims" scale="1.5"></bitmap-text>
-              </button>
-              <button class="tab-button ${this.activeTab === 'aura' ? 'active' : ''}" @click=${() => { this.activeTab = 'aura'; eventBus.publish('playSound', {key:'button_click', volume:0.5, channel:'UI'}); }}>
-                  <bitmap-text .fontRenderer=${this.fontRenderer} text="Auras" scale="1.5"></bitmap-text>
-              </button>
-          </div>
+          <div class="main-area">
+              <div class="left-panel">
+                  <div class="preview-box">
+                      <canvas id="preview-bg" width="150" height="150"></canvas>
+                      <canvas id="preview-fx" width="150" height="150"></canvas>
+                  </div>
+                  <bitmap-text .fontRenderer=${this.fontRenderer} text="Previewing:" scale="1.5" color="#aaa"></bitmap-text>
+                  <div class="preview-label">
+                      <bitmap-text .fontRenderer=${this.fontRenderer} text=${previewName} scale="1.5"></bitmap-text>
+                  </div>
+              </div>
 
-          <div class="items-grid">
-            ${map(items, item => {
-                const isUnlocked = this.gameState.unlockedCosmetics.includes(item.id);
-                const isEquipped = equippedId === item.id;
-                const canAfford = this.gameState.fruitCoins >= item.cost;
-                
-                let btnClass = 'purchase';
-                let btnText = `${item.cost} Coins`;
-                
-                if (isEquipped) { btnClass = 'equipped'; btnText = 'Equipped'; }
-                else if (isUnlocked) { btnClass = 'equip'; btnText = 'Equip'; }
+              <div class="right-panel">
+                  <div class="tabs">
+                      <button class="tab-button ${this.activeTab === 'dash' ? 'active' : ''}" @click=${() => { this.activeTab = 'dash'; eventBus.publish('playSound', {key:'button_click', volume:0.5, channel:'UI'}); }}>
+                          <bitmap-text .fontRenderer=${this.fontRenderer} text="Dash Trails" scale="1.5"></bitmap-text>
+                      </button>
+                      <button class="tab-button ${this.activeTab === 'death' ? 'active' : ''}" @click=${() => { this.activeTab = 'death'; eventBus.publish('playSound', {key:'button_click', volume:0.5, channel:'UI'}); }}>
+                          <bitmap-text .fontRenderer=${this.fontRenderer} text="Death Anims" scale="1.5"></bitmap-text>
+                      </button>
+                      <button class="tab-button ${this.activeTab === 'aura' ? 'active' : ''}" @click=${() => { this.activeTab = 'aura'; eventBus.publish('playSound', {key:'button_click', volume:0.5, channel:'UI'}); }}>
+                          <bitmap-text .fontRenderer=${this.fontRenderer} text="Auras" scale="1.5"></bitmap-text>
+                      </button>
+                  </div>
 
-                return html`
-                    <div class="shop-item ${isEquipped ? 'equipped' : ''}">
-                        <div class="item-name">
-                            <bitmap-text .fontRenderer=${this.fontRenderer} text=${item.name} scale="1.5"></bitmap-text>
-                        </div>
+                  <div class="items-grid">
+                    ${map(items, item => {
+                        const isUnlocked = this.gameState.unlockedCosmetics.includes(item.id);
+                        const isEquipped = equippedId === item.id;
+                        const canAfford = this.gameState.fruitCoins >= item.cost;
                         
-                        <canvas class="preview-canvas" width="160" height="80" data-id=${item.id} data-category=${this.activeTab}></canvas>
+                        let btnClass = 'purchase';
+                        let btnText = `${item.cost} Coins`;
+                        
+                        if (isEquipped) { btnClass = 'equipped'; btnText = 'Equipped'; }
+                        else if (isUnlocked) { btnClass = 'equip'; btnText = 'Equip'; }
 
-                        <button 
-                            class="buy-button ${btnClass}" 
-                            ?disabled=${(!isUnlocked && !canAfford) || isEquipped}
-                            @click=${() => this._handleAction(item, this.activeTab)}
-                        >
-                            ${(!isUnlocked) ? html`
-                                <animated-sprite-card bare scaleToFit style="width:20px; height:20px;" .sprite=${this.assets?.coin_icon} .frameCount=${14} .frameSpeed=${0.05}></animated-sprite-card>
-                            ` : ''}
-                            <bitmap-text .fontRenderer=${this.fontRenderer} text=${btnText} scale="1.5"></bitmap-text>
-                        </button>
-                    </div>
-                `;
-            })}
+                        return html`
+                            <div class="shop-item ${isEquipped ? 'equipped' : ''}" @mouseenter=${() => this._setPreviewItem(item.id)}>
+                                <div class="item-name">
+                                    <bitmap-text .fontRenderer=${this.fontRenderer} text=${item.name} scale="1.5"></bitmap-text>
+                                </div>
+                                <button 
+                                    class="buy-button ${btnClass}" 
+                                    ?disabled=${(!isUnlocked && !canAfford) || isEquipped}
+                                    @click=${() => this._handleAction(item, this.activeTab)}
+                                >
+                                    ${(!isUnlocked) ? html`
+                                        <animated-sprite-card bare scaleToFit style="width:20px; height:20px;" .sprite=${this.assets?.coin_icon} .frameCount=${14} .frameSpeed=${0.05}></animated-sprite-card>
+                                    ` : ''}
+                                    <bitmap-text .fontRenderer=${this.fontRenderer} text=${btnText} scale="1.5"></bitmap-text>
+                                </button>
+                            </div>
+                        `;
+                    })}
+                  </div>
+              </div>
           </div>
         </div>
       </div>

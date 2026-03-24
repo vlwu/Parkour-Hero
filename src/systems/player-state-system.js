@@ -125,27 +125,18 @@ export class PlayerStateSystem {
         if (equippedAura === 'supercharge_aura' && ctrl.auraTimer > 0.05) {
             ctrl.auraTimer = 0;
             eventBus.publish('createParticles', { type: 'supercharge_aura', x: pos.x + col.width/2, y: pos.y + col.height });
-        } else if (equippedAura === 'shadow_aura' && ctrl.auraTimer > 0.06) {
+        } else if (equippedAura === 'shadow_aura' && ctrl.auraTimer > 0.08) {
             ctrl.auraTimer = 0;
-            eventBus.publish('createParticles', { type: 'shadow_aura', x: pos.x + col.width/2, y: pos.y + col.height });
+            eventBus.publish('createParticles', { type: 'shadow_aura', x: pos.x + col.width/2, y: pos.y + col.height/2 });
         } else if (equippedAura === 'orbiting_aura') {
-            const time = performance.now() / 600;
-            const angle1 = time;
-            const angle2 = time + Math.PI;
-            const radiusX = 25;
-            const radiusY = 8;
-            eventBus.publish('createParticles', { 
-                type: 'orbit_node', 
-                x: pos.x + col.width/2 + Math.cos(angle1)*radiusX, 
-                y: pos.y + col.height/2 + Math.sin(angle1)*radiusY, 
-                z: Math.sin(angle1) 
-            });
-            eventBus.publish('createParticles', { 
-                type: 'orbit_node', 
-                x: pos.x + col.width/2 + Math.cos(angle2)*radiusX, 
-                y: pos.y + col.height/2 + Math.sin(angle2)*radiusY, 
-                z: Math.sin(angle2) 
-            });
+            if (ctrl.auraTimer > 0.02) {
+                ctrl.auraTimer = 0;
+                const angle1 = performance.now() / 300;
+                const angle2 = angle1 + Math.PI;
+                const radius = 20;
+                eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle1)*radius, y: pos.y + col.height/2 + Math.sin(angle1)*radius });
+                eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle2)*radius, y: pos.y + col.height/2 + Math.sin(angle2)*radius });
+            }
         }
     }
 

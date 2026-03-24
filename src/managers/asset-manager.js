@@ -32,7 +32,7 @@ function loadImage(src, key) {
       fallbackUsed = true;
       console.warn(`Failed or timed out loading image: ${src}. Using fallback.`);
       let color = '#808080';
-      if (key.includes('player')) color = '#ff8c21';
+      if (key.includes('player')) color = '#555555'; // Using a neutral gray instead of orange
       else if (key.includes('fruit')) color = '#FF6B6B';
       const fallbackCanvas = createFallbackCanvas(32, 32, color);
       const fallbackImage = new Image();
