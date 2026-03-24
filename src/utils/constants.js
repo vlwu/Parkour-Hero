@@ -245,8 +245,7 @@ export const EVENTS = Object.freeze({
 });
 
 export const EDITOR_TOOL_TYPES = Object.freeze({
-    PAINT: 'paint',
-    ERASER: 'eraser',
+    PAINT: 'eraser',
     PLACE: 'place',
     SELECT: 'select',
     PASTE: 'paste',
@@ -258,12 +257,12 @@ export const COSMETICS = {
         { id: 'default_dash', name: 'Default', cost: 0 },
         { id: 'phantom_dash', name: 'Phantom', cost: 100 },
         { id: 'rainbow_dash', name: 'Rainbow', cost: 150 },
-        { id: 'pixel_dash', name: 'Pixel', cost: 150 }
+        { id: 'leaf_dash', name: 'Leaf Swirl', cost: 150 }
     ],
     death: [
         { id: 'default_death', name: 'Default', cost: 0 },
         { id: 'shatter_death', name: 'Shatter', cost: 200 },
-        { id: 'glitch_death', name: 'Retro Glitch', cost: 250 },
+        { id: 'ascension_death', name: 'Ascension', cost: 250 },
         { id: 'implosion_death', name: 'Implosion', cost: 250 }
     ],
     aura: [
