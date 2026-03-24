@@ -449,10 +449,6 @@ export class CollisionSystem {
         const landingVelocity = vel.vy;
         const playerCtrl = entityManager.getComponent(entityId, PlayerControlledComponent);
 
-        if (playerCtrl && landingVelocity >= PLAYER_CONSTANTS.FALL_DAMAGE_MIN_VELOCITY && playerCtrl.fallDistance > PLAYER_CONSTANTS.SPRITE_HEIGHT && surfaceType !== 'mud') {
-            eventBus.publish('playerLandedHard', { entityId, landingVelocity });
-        }
-
         const PUSH_BUFFER = 0.01;
         pos.y = surfaceTopY - col.height - PUSH_BUFFER;
         vel.vy = 0;

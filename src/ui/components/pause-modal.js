@@ -81,6 +81,10 @@ export class PauseModal extends LitElement {
   _dispatch(eventName) {
     this.dispatchEvent(new CustomEvent(eventName, { bubbles: true, composed: true }));
   }
+  
+  _dispatchOpen(modalName) {
+      this.dispatchEvent(new CustomEvent('open-modal', { detail: { modal: modalName }, bubbles: true, composed: true }));
+  }
 
   render() {
     return html`
@@ -107,25 +111,37 @@ export class PauseModal extends LitElement {
 
           <div class="stats-container">
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Fruits: ${this.stats.collectedFruits}/${this.stats.totalFruits}" scale="1.8"></bitmap-text>
-            <bitmap-text .fontRenderer=${this.fontRenderer} text="Coins: ${this.stats.fruitCoins || 0}" scale="1.8"></bitmap-text>
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Deaths: ${this.stats.deathCount}" scale="1.8"></bitmap-text>
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Time: ${formatTime(this.stats.levelTime)}" scale="1.8"></bitmap-text>
           </div>
 
           <div class="button-container">
-            <button class="modal-image-button" title="Resume" @click=${() => this._dispatch('resume-game')}>
-              <img src="/assets/Menu/Buttons/Play.png" alt="Resume">
+            <button class="modal-image-button" title="Levels Menu" @click=${() => this._dispatchOpen('levels')}>
+              <img src="/assets/Menu/Buttons/Levels.png" alt="Levels">
             </button>
             <button class="modal-image-button" title="Restart" @click=${() => this._dispatch('restart-level')}>
               <img src="/assets/Menu/Buttons/Restart.png" alt="Restart">
             </button>
-            <button class="modal-image-button" title="Levels Menu" @click=${() => this._dispatch('open-levels-menu')}>
-              <img src="/assets/Menu/Buttons/Levels.png" alt="Levels">
-            </button>
-            <button class="modal-image-button" title="Shop" @click=${() => this._dispatch('open-shop-menu')}>
-              <img src="/assets/Menu/Buttons/Achievements.png" alt="Shop">
+            <button class="modal-image-button" title="Resume" @click=${() => this._dispatch('resume-game')}>
+              <img src="/assets/Menu/Buttons/Play.png" alt="Resume">
             </button>
           </div>
+          
+          <div class="button-container" style="margin-top: 15px;">
+            <button class="modal-image-button" title="Character Selection" @click=${() => this._dispatchOpen('character')}>
+              <img src="/assets/Menu/Buttons/Character.png" alt="Character">
+            </button>
+            <button class="modal-image-button" title="Cosmetics Shop" @click=${() => this._dispatchOpen('shop')}>
+              <img src="/assets/Menu/Buttons/Achievements.png" alt="Shop">
+            </button>
+            <button class="modal-image-button" title="Settings" @click=${() => this._dispatchOpen('settings')}>
+              <img src="/assets/Menu/Buttons/Settings.png" alt="Settings">
+            </button>
+            <button class="modal-image-button" title="How to Play" @click=${() => this._dispatchOpen('info')}>
+              <img src="/assets/Menu/Buttons/Info.png" alt="Info">
+            </button>
+          </div>
+
           <div class="exit-button-container">
             <button class="exit-button" @click=${() => this._dispatch('exit-to-menu')}>
               <bitmap-text .fontRenderer=${this.fontRenderer} text="Exit to Main Menu" scale="1.8"></bitmap-text>

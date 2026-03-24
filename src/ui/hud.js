@@ -6,10 +6,11 @@ import { PlayerControlledComponent } from '../components/PlayerControlledCompone
 import { PLAYER_CONSTANTS } from '../utils/constants.js';
 
 export class HUD {
-  constructor(ctx, fontRenderer, gameplaySettings) {
+  constructor(ctx, fontRenderer, gameplaySettings, assets) {
     this.ctx = ctx;
     this.canvas = ctx.canvas;
     this.fontRenderer = fontRenderer;
+    this.assets = assets;
     this.isVisible = true;
     this.settings = gameplaySettings;
     this.stats = {
@@ -23,6 +24,7 @@ export class HUD {
       maxHealth: 100,
       fruitCoins: 0
     };
+
 
     this.fps = 0;
     this.frameCount = 0;
@@ -207,7 +209,6 @@ export class HUD {
       const lines = [
         `${levelName}`,
         `Fruits: ${collectedFruits}/${totalFruits}`,
-        `Coins: ${fruitCoins || 0}`,
         `Deaths: ${deathCount || 0}`,
         `Sound: ${soundEnabled ? 'On' : 'Off'} (${Math.round(soundVolume * 100)}%)`
       ];
@@ -232,7 +233,7 @@ export class HUD {
       const hudX = 10;
       const hudY = 10;
       const hudWidth = maxWidth + horizontalPadding;
-      const hudHeight = 195; 
+      const hudHeight = 160; 
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
@@ -247,6 +248,32 @@ export class HUD {
         const y = startY + index * lineHeight;
         this.fontRenderer.drawText(ctx, text, textX, y, fontOptions);
       });
+
+      // Coin Display right next to HUD
+      const coinBoxX = hudX + hudWidth + 10;
+      const coinBoxWidth = 100;
+      const coinBoxHeight = 44;
+      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.beginPath();
+      ctx.roundRect(coinBoxX, hudY, coinBoxWidth, coinBoxHeight, 10);
+      ctx.fill();
+      
+      const coinSprite = this.assets?.coin_icon;
+      if (coinSprite) {
+          const frameCount = 14;
+          const frameSpeed = 0.05;
+          const currentFrame = Math.floor((performance.now() / 1000) / frameSpeed) % frameCount;
+          const frameWidth = coinSprite.width / frameCount;
+          
+          ctx.save();
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#f1c40f';
+          ctx.drawImage(coinSprite, currentFrame * frameWidth, 0, frameWidth, coinSprite.height, coinBoxX + 7, hudY + 10, 24, 24);
+          ctx.restore();
+          
+          this.fontRenderer.drawText(ctx, `${fruitCoins || 0}`, coinBoxX + 35, hudY + 14, { scale: 1.8, color: '#f1c40f', outlineColor: 'black', outlineWidth: 1 });
+      }
 
       const fpsText = `FPS: ${this.fps}`;
       const fpsFontOptions = {

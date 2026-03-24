@@ -39,6 +39,16 @@ export class CharacterMenu extends LitElement {
     .subtitle-container {
         margin-bottom: 25px;
     }
+    .shop-button {
+      background-color: #f39c12; color: #fff; border: 2px solid #e67e22;
+      padding: 10px 20px; border-radius: 8px; cursor: pointer;
+      display: flex; justify-content: center; align-items: center;
+      transition: all 0.2s ease-in-out;
+      margin: 0 auto 20px auto;
+    }
+    .shop-button:hover {
+      background-color: #e67e22; transform: scale(1.05);
+    }
 
     #character-selection-container {
       display: grid;
@@ -64,6 +74,11 @@ export class CharacterMenu extends LitElement {
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     this.dispatchEvent(new CustomEvent('close-modal', { bubbles: true, composed: true }));
   }
+  
+  _openShop() {
+      eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+      this.dispatchEvent(new CustomEvent('open-modal', { detail: { modal: 'shop' }, bubbles: true, composed: true }));
+  }
 
   render() {
     if (!this.gameState || !this.assets) {
@@ -82,6 +97,13 @@ export class CharacterMenu extends LitElement {
                 <div class="subtitle-container">
                     <bitmap-text .fontRenderer=${this.fontRenderer} text="Choose Your Hero!" scale="2"></bitmap-text>
                 </div>
+                
+                <div style="display:flex; justify-content:center;">
+                    <button class="shop-button" @click=${this._openShop}>
+                        <bitmap-text .fontRenderer=${this.fontRenderer} text="Cosmetics Shop" scale="1.5"></bitmap-text>
+                    </button>
+                </div>
+
                 <div id="character-selection-container">
                     ${map(characterIds, (id) => html`
                         <character-card

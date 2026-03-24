@@ -58,7 +58,7 @@ export class Engine {
     this.playerEntityId = null;
 
     this.camera = new Camera(this.canvas.width, this.canvas.height);
-    this.hud = new HUD(this.ctx, fontRenderer, this.gameplaySettings);
+    this.hud = new HUD(this.ctx, fontRenderer, this.gameplaySettings, this.assets);
     this.soundManager = new SoundManager(initialSoundSettings);
     this.renderer = new Renderer(this.gl, this.canvas, this.assets);
     this.gameState = new GameState();

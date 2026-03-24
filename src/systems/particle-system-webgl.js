@@ -176,7 +176,7 @@ export class ParticleSystemWebGL {
         }
     }
 
-    create({ x, y, type, direction = 'right', particleSpeed = null, leafIndex = 0 }) {
+    create({ x, y, type, direction = 'right', particleSpeed = null, leafIndex = 0, z = 0 }) {
         const particleConfigs = {
             // Gameplay default effects
             dash: { count: 15, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
@@ -213,7 +213,7 @@ export class ParticleSystemWebGL {
 
             // Cosmetics - Auras
             supercharge_aura: { count: 1, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.5, gravity: -150, color: [1.0, 0.8, 0.1, 0.8], size: 16 },
-            shadow_aura: { count: 1, baseSpeed: 30, spriteKey: 'dust_particle', life: 0.8, gravity: -15, color: [0.1, 0.0, 0.2, 0.8], size: 18 },
+            shadow_aura: { count: 1, baseSpeed: 10, spriteKey: 'dust_particle', life: 0.8, gravity: -5, color: [0.05, 0.0, 0.1, 0.6], size: 24 },
             orbit_node: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.15, gravity: 0, color: [0.0, 1.0, 1.0, 1.0], size: 12 }
         };
 
@@ -268,6 +268,10 @@ export class ParticleSystemWebGL {
             } else if (config.behavior === 'glitch') {
                 p.x += (Math.random() - 0.5) * 40;
                 p.y += (Math.random() - 0.5) * 40;
+            } else if (type === 'shadow_aura') {
+                p.x += (Math.random() - 0.5) * 15;
+                angle = Math.PI; // Just to face it
+                speed = Math.random() * 10;
             }
 
             p.vx = Math.cos(angle) * speed;
@@ -275,6 +279,13 @@ export class ParticleSystemWebGL {
             p.life = config.life + Math.random() * 0.3;
             
             p.size = config.size || (type === 'slime_puddle' ? 16 : 10 + Math.random() * 6);
+            
+            if (type === 'orbit_node') {
+                p.size = config.size * (1 + z * 0.5);
+                p.baseAlpha = 0.5 + z * 0.5;
+            } else {
+                p.baseAlpha = 1.0;
+            }
             
             p.alpha = 1.0;
             p.spriteKey = config.spriteKey;
@@ -325,7 +336,7 @@ export class ParticleSystemWebGL {
                 p.x += p.vx * dt;
                 p.y += p.vy * dt;
                 p.vy += p.gravity * dt;
-                p.alpha = Math.min(1.0, p.life / 1.5);
+                p.alpha = Math.min(1.0, p.life / 1.5) * (p.baseAlpha !== undefined ? p.baseAlpha : 1.0);
 
                 if (p.behavior === 'rainbow') {
                     const hue = (p.life * 2) % 1;

@@ -198,7 +198,7 @@ export class ParkourHeroUI extends LitElement {
 
   _handleUIButtonClick = ({ buttonId }) => {
     if (buttonId === 'pause') {
-      if (this.activeModal) { this._closeModal(); }
+      if (this.activeModal) { this._resumeGame(); }
       else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
     } else if (buttonId === 'stats') {
         this.activeModal = 'stats';
@@ -232,7 +232,19 @@ export class ParkourHeroUI extends LitElement {
   _closeModal = () => {
     const wasOpen = this.activeModal !== null;
     const modalThatWasClosed = this.activeModal;
-    this.activeModal = (this.gameHasStarted && !this.previewMode) ? null : 'main-menu';
+    
+    if (this.gameHasStarted && !this.previewMode) {
+        const pauseSubModals = ['settings', 'shop', 'character', 'info', 'levels', 'enemy-catalogue', 'stats'];
+        if (pauseSubModals.includes(modalThatWasClosed)) {
+            this.activeModal = 'pause';
+            return;
+        } else {
+            this.activeModal = null;
+        }
+    } else {
+        this.activeModal = 'main-menu';
+    }
+
     if (this.previewMode) this.activeModal = null;
 
     if (wasOpen && this.gameHasStarted) {
@@ -246,22 +258,28 @@ export class ParkourHeroUI extends LitElement {
         eventBus.publish('allMenusClosed');
     }
   }
+
+  _resumeGame = () => {
+      this.activeModal = null;
+      eventBus.publish('allMenusClosed');
+  }
   
   _closeUnlockModal = () => {
       this.newlyUnlockedCharacterId = null;
   }
 
-  _openModalFromMenu(modalName) {
+  _openModalFromMenu = (e) => {
+      let modalName = typeof e === 'string' ? e : e.detail.modal;
       eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
       if (modalName === 'editor') {
           window.location.href = 'editor.html';
       } else {
           this.activeModal = modalName;
+          eventBus.publish('menuOpened');
       }
   }
 
-  _handleRestart() { this._closeModal(); eventBus.publish('requestLevelRestart'); }
-  _handleOpenLevelsMenu() { this.activeModal = 'levels'; }
+  _handleRestart = () => { this._resumeGame(); eventBus.publish('requestLevelRestart'); }
   _handleExitToMenu = () => {
     this.gameHasStarted = false;
     this.activeModal = 'main-menu';
@@ -294,7 +312,7 @@ export class ParkourHeroUI extends LitElement {
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     
     if (isMidLevel) {
-        this._closeModal();
+        this._resumeGame();
         eventBus.publish('requestLevelRestart');
     } else {
         eventBus.publish('characterUpdated', characterId);
@@ -414,8 +432,8 @@ export class ParkourHeroUI extends LitElement {
       case 'pause':
         return html`<pause-modal
                       .stats=${this.currentStats} .fontRenderer=${this.fontRenderer}
-                      @resume-game=${this._closeModal} @restart-level=${this._handleRestart} @open-levels-menu=${this._handleOpenLevelsMenu}
-                      @open-shop-menu=${() => this._openModalFromMenu('shop')}
+                      @resume-game=${this._resumeGame} @restart-level=${this._handleRestart}
+                      @open-modal=${this._openModalFromMenu}
                       @exit-to-menu=${this._handleExitToMenu}
                     ></pause-modal>`;
       case 'levels':
@@ -427,6 +445,7 @@ export class ParkourHeroUI extends LitElement {
         return html`<character-menu
                       .gameState=${this.gameState} .assets=${this.assets} .fontRenderer=${this.fontRenderer}
                       @close-modal=${this._closeModal} @character-selected=${this._handleCharacterSelected}
+                      @open-modal=${this._openModalFromMenu}
                     ></character-menu>`;
       case 'shop':
         return html`<shop-modal
