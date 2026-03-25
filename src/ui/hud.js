@@ -255,9 +255,11 @@ export class HUD {
       
       // HUD Coin Display
       this.coinTimer += dt;
+      // Use modulo logic to process time debt appropriately without rapid catch-up spins
       if (this.coinTimer >= 0.05) {
-          this.coinTimer -= 0.05;
-          this.coinFrame = (this.coinFrame + 1) % 14;
+          const framesToAdvance = Math.floor(this.coinTimer / 0.05);
+          this.coinFrame = (this.coinFrame + framesToAdvance) % 14;
+          this.coinTimer %= 0.05;
       }
 
       const coinsStr = `${this.stats.fruitCoins || 0}`;

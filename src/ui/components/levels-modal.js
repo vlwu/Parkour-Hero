@@ -257,11 +257,39 @@ export class LevelsMenu extends LitElement {
       position: absolute;
       top: 100%;
       left: 50%;
-      margin-left: -6px;
+      transform: translateX(-50%);
       border-width: 6px;
       border-style: solid;
       border-color: #4CAF50 transparent transparent transparent;
     }
+
+    /* Prevent Tooltip Clipping for Edge Columns */
+    .level-button-container:nth-child(5n + 1) .tooltip {
+      left: 0;
+      transform: translateX(0) translateY(-10px);
+    }
+    .level-button-container:nth-child(5n + 1):hover .tooltip {
+      transform: translateX(0) translateY(-5px);
+    }
+    .level-button-container:nth-child(5n + 1) .tooltip::after {
+      left: 25%;
+      transform: translateX(-50%);
+    }
+
+    .level-button-container:nth-child(5n) .tooltip {
+      left: auto;
+      right: 0;
+      transform: translateX(0) translateY(-10px);
+    }
+    .level-button-container:nth-child(5n):hover .tooltip {
+      transform: translateX(0) translateY(-5px);
+    }
+    .level-button-container:nth-child(5n) .tooltip::after {
+      left: auto;
+      right: 25%;
+      transform: translateX(50%);
+    }
+
     .stat-line {
         display: flex;
         justify-content: space-between;
