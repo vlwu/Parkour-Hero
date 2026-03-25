@@ -270,8 +270,8 @@ export class HUD {
       const coinDisplayWidth = coinHorizontalPadding * 2 + iconSize + gap + coinTextWidth;
       const coinDisplayHeight = 48;
       
-      const coinX = ctx.canvas.width - coinDisplayWidth - 20;
-      const coinY = 20;
+      const coinX = hudX + hudWidth + 15;
+      const coinY = hudY;
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
       ctx.beginPath();
