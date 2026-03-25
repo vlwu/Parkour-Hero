@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { formatTime } from '../ui-utils.js';
 import './bitmap-text.js';
+import './animated-sprite-card.js';
 
 export class PauseModal extends LitElement {
   static styles = css`
@@ -26,9 +27,14 @@ export class PauseModal extends LitElement {
       justify-content: center;
     }
     .subtitle-container {
-      margin: 0 0 25px 0;
+      margin: 0 0 20px 0;
       display: flex;
       justify-content: center;
+    }
+    .coin-display {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: rgba(0,0,0,0.4); padding: 8px 15px; border-radius: 20px;
+      border: 2px solid #f1c40f; margin: 0 auto 20px auto; width: fit-content;
     }
     .stats-container {
         display: flex; flex-direction: column; align-items: center;
@@ -71,11 +77,12 @@ export class PauseModal extends LitElement {
   static properties = {
     stats: { type: Object },
     fontRenderer: { type: Object },
+    assets: { type: Object },
   };
 
   constructor() {
     super();
-    this.stats = { collectedFruits: 0, totalFruits: 0, deathCount: 0, levelTime: 0 };
+    this.stats = { collectedFruits: 0, totalFruits: 0, deathCount: 0, levelTime: 0, fruitCoins: 0 };
   }
 
   _dispatch(eventName) {
@@ -107,6 +114,11 @@ export class PauseModal extends LitElement {
                 scale="1.5"
                 color="#ccc"
               ></bitmap-text>
+          </div>
+
+          <div class="coin-display">
+            <animated-sprite-card bare scaleToFit style="width:32px; height:32px;" .sprite=${this.assets?.coin_icon} .frameCount=${14} .frameSpeed=${0.05}></animated-sprite-card>
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="${this.stats.fruitCoins || 0}" scale="2" color="#f1c40f"></bitmap-text>
           </div>
 
           <div class="stats-container">

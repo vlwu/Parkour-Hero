@@ -6,26 +6,16 @@ import { PLAYER_CONSTANTS } from '../utils/constants.js';
 
 export class GameFlowSystem {
     constructor() {
-        this.levelStartTime = 0;
         this.levelTime = 0;
     }
 
     reset(isRunning) {
-        if (isRunning) {
-            this.levelStartTime = performance.now();
-        } else {
-            this.levelStartTime = 0;
-        }
         this.levelTime = 0;
     }
 
     update(dt, { entityManager, playerEntityId, level, isRunning, gameState, levelManager }) {
-        if (this.levelStartTime === 0 && isRunning) {
-            this.levelStartTime = performance.now();
-        }
-
         if (isRunning && !gameState.showingLevelComplete) {
-            this.levelTime = (performance.now() - this.levelStartTime) / 1000;
+            this.levelTime += dt;
         }
 
         const playerCtrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);

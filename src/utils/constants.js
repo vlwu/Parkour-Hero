@@ -256,20 +256,20 @@ export const EDITOR_TOOL_TYPES = Object.freeze({
 export const COSMETICS = {
     dash: [
         { id: 'default_dash', name: 'Default', cost: 0 },
-        { id: 'phantom_dash', name: 'Phantom', cost: 100 },
-        { id: 'rainbow_dash', name: 'Rainbow', cost: 150 },
-        { id: 'leaf_dash', name: 'Leaf Swirl', cost: 150 }
+        { id: 'phantom_dash', name: 'Phantom', cost: 50 },
+        { id: 'rainbow_dash', name: 'Rainbow', cost: 75 },
+        { id: 'leaf_dash', name: 'Leaf Swirl', cost: 75 }
     ],
     death: [
         { id: 'default_death', name: 'Default', cost: 0 },
-        { id: 'shatter_death', name: 'Shatter', cost: 200 },
-        { id: 'ascension_death', name: 'Ascension', cost: 250 },
-        { id: 'implosion_death', name: 'Implosion', cost: 250 }
+        { id: 'shatter_death', name: 'Shatter', cost: 100 },
+        { id: 'ascension_death', name: 'Ascension', cost: 125 },
+        { id: 'implosion_death', name: 'Implosion', cost: 125 }
     ],
     aura: [
         { id: 'default_aura', name: 'None', cost: 0 },
-        { id: 'supercharge_aura', name: 'Supercharge', cost: 300 },
-        { id: 'shadow_aura', name: 'Shadow', cost: 300 },
-        { id: 'orbiting_aura', name: 'Orbiting', cost: 400 }
+        { id: 'supercharge_aura', name: 'Supercharge', cost: 150 },
+        { id: 'shadow_aura', name: 'Shadow', cost: 150 },
+        { id: 'orbiting_aura', name: 'Orbiting', cost: 200 }
     ]
 };

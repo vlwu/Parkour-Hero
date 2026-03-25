@@ -7,12 +7,13 @@ import { PLAYER_CONSTANTS } from '../utils/constants.js';
 import { formatTime } from './ui-utils.js';
 
 export class HUD {
-  constructor(ctx, fontRenderer, gameplaySettings) {
+  constructor(ctx, fontRenderer, gameplaySettings, assets) {
     this.ctx = ctx;
     this.canvas = ctx.canvas;
     this.fontRenderer = fontRenderer;
     this.isVisible = true;
     this.settings = gameplaySettings;
+    this.assets = assets;
     this.stats = {
       levelName: 'Loading...',
       collectedFruits: 0,
@@ -21,13 +22,17 @@ export class HUD {
       soundEnabled: true,
       soundVolume: 0.5,
       health: 100,
-      maxHealth: 100
+      maxHealth: 100,
+      fruitCoins: 0
     };
 
 
     this.fps = 0;
     this.frameCount = 0;
     this.elapsedTime = 0;
+    
+    this.coinFrame = 0;
+    this.coinTimer = 0;
 
     eventBus.subscribe('statsUpdated', (newStats) => this.updateStats(newStats));
   }
@@ -247,6 +252,52 @@ export class HUD {
         const y = startY + index * lineHeight;
         this.fontRenderer.drawText(ctx, text, textX, y, fontOptions);
       });
+      
+      // HUD Coin Display
+      this.coinTimer += dt;
+      if (this.coinTimer >= 0.05) {
+          this.coinTimer -= 0.05;
+          this.coinFrame = (this.coinFrame + 1) % 14;
+      }
+
+      const coinsStr = `${this.stats.fruitCoins || 0}`;
+      const coinTextScale = 2;
+      const coinTextWidth = this.fontRenderer.getTextWidth(coinsStr, coinTextScale);
+      
+      const iconSize = 32;
+      const gap = 10;
+      const coinHorizontalPadding = 15;
+      const coinDisplayWidth = coinHorizontalPadding * 2 + iconSize + gap + coinTextWidth;
+      const coinDisplayHeight = 48;
+      
+      const coinX = ctx.canvas.width - coinDisplayWidth - 20;
+      const coinY = 20;
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.roundRect(coinX, coinY, coinDisplayWidth, coinDisplayHeight, 24);
+      ctx.fill();
+      
+      ctx.strokeStyle = '#f1c40f';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const coinSprite = this.assets ? this.assets.coin_icon : null;
+      if (coinSprite) {
+          const frameWidth = coinSprite.width / 14;
+          ctx.drawImage(
+              coinSprite,
+              this.coinFrame * frameWidth, 0, frameWidth, coinSprite.height,
+              coinX + coinHorizontalPadding, coinY + (coinDisplayHeight - iconSize) / 2, iconSize, iconSize
+          );
+      }
+
+      this.fontRenderer.drawText(
+          ctx, coinsStr, 
+          coinX + coinHorizontalPadding + iconSize + gap, 
+          coinY + (coinDisplayHeight - 10 * coinTextScale) / 2, 
+          { scale: coinTextScale, color: '#f1c40f', outlineColor: 'black', outlineWidth: 1 }
+      );
 
       const fpsText = `FPS: ${this.fps}`;
       const timeText = `Time: ${formatTime(levelTime || 0)}`;

@@ -432,6 +432,7 @@ export class ParkourHeroUI extends LitElement {
       case 'pause':
         return html`<pause-modal
                       .stats=${this.currentStats} .fontRenderer=${this.fontRenderer}
+                      .assets=${this.assets}
                       @resume-game=${this._resumeGame} @restart-level=${this._handleRestart}
                       @open-modal=${this._openModalFromMenu}
                       @exit-to-menu=${this._handleExitToMenu}
