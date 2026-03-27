@@ -27,33 +27,24 @@ export class SlammingHead extends Trap {
         };
 
         this.shakeOffset = { x: 0, y: 0 };
+        this._detectionZone = { x: 0, y: 0, width: 0, height: 0 };
+        this._surfaceResult = { y: 0 };
     }
 
     get detectionZone() {
-        return {
-            x: this.x - this.width / 2,
-            y: this.y + this.height / 2,
-            width: this.width,
-            height: 500,
-        };
-    }
-
-    get hitbox() {
-        return {
-            x: this.x - this.width / 2,
-            y: this.y - this.height / 2,
-            width: this.width,
-            height: this.height,
-        };
+        this._detectionZone.x = this.x - this.width / 2;
+        this._detectionZone.y = this.y + this.height / 2;
+        this._detectionZone.width = this.width;
+        this._detectionZone.height = 500;
+        return this._detectionZone;
     }
 
     isPlayerInZone(playerData, level) {
         if (!playerData) return false;
 
         const zone = this.detectionZone;
-        const playerHitbox = { x: playerData.x, y: playerData.y, width: playerData.width, height: playerData.height };
 
-        if (playerHitbox.x + playerHitbox.width <= zone.x || playerHitbox.x >= zone.x + zone.width || playerHitbox.y < this.y) {
+        if (playerData.x + playerData.width <= zone.x || playerData.x >= zone.x + zone.width || playerData.y < this.y) {
             return false;
         }
 
@@ -75,18 +66,16 @@ export class SlammingHead extends Trap {
             }
         }
 
-        const actualZone = {
-            x: zone.x,
-            y: this.y + this.height / 2,
-            width: zone.width,
-            height: detectionBottomY - (this.y + this.height / 2),
-        };
+        const actualZoneX = zone.x;
+        const actualZoneY = this.y + this.height / 2;
+        const actualZoneWidth = zone.width;
+        const actualZoneHeight = detectionBottomY - actualZoneY;
 
         return (
-            playerHitbox.x < actualZone.x + actualZone.width &&
-            playerHitbox.x + playerHitbox.width > actualZone.x &&
-            playerHitbox.y < actualZone.y + actualZone.height &&
-            playerHitbox.y + playerHitbox.height > actualZone.y
+            playerData.x < actualZoneX + actualZoneWidth &&
+            playerData.x + playerData.width > actualZoneX &&
+            playerData.y < actualZoneY + actualZoneHeight &&
+            playerData.y + playerData.height > actualZoneY
         );
     }
 
@@ -199,7 +188,11 @@ export class SlammingHead extends Trap {
             }
         }
 
-        return surfaceFound ? { y: highestSurfaceY } : null;
+        if (surfaceFound) {
+            this._surfaceResult.y = highestSurfaceY;
+            return this._surfaceResult;
+        }
+        return null;
     }
 
     _update_slammed(dt) {

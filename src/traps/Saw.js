@@ -28,12 +28,11 @@ export class Saw extends Trap {
     }
 
     get hitbox() {
-        return {
-            x: this.sawX - this.width / 2,
-            y: this.sawY - this.height / 2,
-            width: this.width,
-            height: this.height,
-        };
+        this._hitbox.x = this.sawX - this.width / 2;
+        this._hitbox.y = this.sawY - this.height / 2;
+        this._hitbox.width = this.width;
+        this._hitbox.height = this.height;
+        return this._hitbox;
     }
 
     update(dt) {

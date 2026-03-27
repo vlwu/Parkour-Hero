@@ -33,16 +33,16 @@ export class BrownPlatform extends Trap {
     }
 
     get hitbox() {
-        return {
-            x: this.platformX - this.width / 2,
-            y: this.platformY,
-            width: this.width,
-            height: this.height,
-        };
+        this._hitbox.x = this.platformX - this.width / 2;
+        this._hitbox.y = this.platformY;
+        this._hitbox.width = this.width;
+        this._hitbox.height = this.height;
+        return this._hitbox;
     }
 
-    getMovementDelta() {
-        return { dx: this.platformX - this.prevX, dy: this.platformY - this.prevY };
+    getMovementDelta(outVector) {
+        outVector.dx = this.platformX - this.prevX;
+        outVector.dy = this.platformY - this.prevY;
     }
 
 

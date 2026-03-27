@@ -17,23 +17,14 @@ export class FireTrap extends Trap {
         };
     }
 
-    get hitbox() {
-        return {
-            x: this.x - this.width / 2,
-            y: this.y - this.height / 2,
-            width: this.width,
-            height: this.height,
-        };
-    }
-
     get damageHitbox() {
         if (this.state === 'on' || this.state === 'activating') {
-            return {
-                x: this.x - this.width / 2,
-                y: this.y - this.height * 1.5,
-                width: this.width,
-                height: this.height * 2
-            };
+            if (!this._damageHitbox) this._damageHitbox = { x: 0, y: 0, width: 0, height: 0 };
+            this._damageHitbox.x = this.x - this.width / 2;
+            this._damageHitbox.y = this.y - this.height * 1.5;
+            this._damageHitbox.width = this.width;
+            this._damageHitbox.height = this.height * 2;
+            return this._damageHitbox;
         }
         return null;
     }
@@ -86,14 +77,13 @@ export class FireTrap extends Trap {
 
         if (this.state === 'on' && playerData) {
             const hazardHitbox = this.damageHitbox;
-            const playerRect = { x: playerData.x, y: playerData.y, width: playerData.width, height: playerData.height };
 
             if (
                 hazardHitbox &&
-                playerRect.x < hazardHitbox.x + hazardHitbox.width &&
-                playerRect.x + playerRect.width > hazardHitbox.x &&
-                playerRect.y < hazardHitbox.y + hazardHitbox.height &&
-                playerRect.y + playerRect.height > hazardHitbox.y
+                playerData.x < hazardHitbox.x + hazardHitbox.width &&
+                playerData.x + playerData.width > hazardHitbox.x &&
+                playerData.y < hazardHitbox.y + hazardHitbox.height &&
+                playerData.y + playerData.height > hazardHitbox.y
             ) {
                 this.damageTimer += dt;
                 if (this.damageTimer >= TRAP_CONSTANTS.FIRE_TRAP_DAMAGE_INTERVAL) {

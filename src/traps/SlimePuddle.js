@@ -14,15 +14,6 @@ export class SlimePuddle extends Trap {
         this.damageTimer = 0;
     }
 
-    get hitbox() {
-        return {
-            x: this.x - this.width / 2,
-            y: this.y - this.height / 2,
-            width: this.width,
-            height: this.height,
-        };
-    }
-
     update(dt) {
 
         this.lifespan -= dt;

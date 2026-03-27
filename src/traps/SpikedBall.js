@@ -21,12 +21,11 @@ export class SpikedBall extends Trap {
     }
 
     get hitbox() {
-        return {
-            x: this.ballX - this.width / 2,
-            y: this.ballY - this.height / 2,
-            width: this.width,
-            height: this.height,
-        };
+        this._hitbox.x = this.ballX - this.width / 2;
+        this._hitbox.y = this.ballY - this.height / 2;
+        this._hitbox.width = this.width;
+        this._hitbox.height = this.height;
+        return this._hitbox;
     }
 
     update(dt) {

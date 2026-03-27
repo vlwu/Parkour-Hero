@@ -16,12 +16,11 @@ export class Spikes extends Trap {
     }
 
     get hitbox() {
-        return {
-            x: this.x - this.width / 2,
-            y: this.y - this.height / 4,
-            width: this.width,
-            height: this.height / 2,
-        };
+        this._hitbox.x = this.x - this.width / 2;
+        this._hitbox.y = this.y - this.height / 4;
+        this._hitbox.width = this.width;
+        this._hitbox.height = this.height / 2;
+        return this._hitbox;
     }
 
     update(dt, playerPos, eventBus, level, groundEntity, playerCtrl) {

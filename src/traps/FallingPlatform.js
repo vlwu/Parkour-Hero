@@ -38,8 +38,10 @@ export class FallingPlatform extends Trap {
         this.prevY = y;
     }
 
-    get hitbox() { return { x: this.x - this.width / 2, y: this.y - this.height / 2, width: this.width, height: this.height }; }
-    getMovementDelta() { return { dx: 0, dy: this.y - this.prevY }; }
+    getMovementDelta(outVector) {
+        outVector.dx = 0;
+        outVector.dy = this.y - this.prevY;
+    }
 
     update(dt, playerData, eventBus) {
 

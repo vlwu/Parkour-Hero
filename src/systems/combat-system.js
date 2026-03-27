@@ -33,17 +33,29 @@ export class CombatSystem {
     }
 
     _isCollidingWith(pos, col, other) {
-        const hitbox = other.damageHitbox || other.hitbox || {
-            x: other.x - (other.width || other.size) / 2,
-            y: other.y - (other.height || other.size) / 2,
-            width: other.width || other.size,
-            height: other.height || other.size
-        };
+        let hx, hy, hw, hh;
+        if (other.damageHitbox) {
+            hx = other.damageHitbox.x;
+            hy = other.damageHitbox.y;
+            hw = other.damageHitbox.width;
+            hh = other.damageHitbox.height;
+        } else if (other.hitbox) {
+            hx = other.hitbox.x;
+            hy = other.hitbox.y;
+            hw = other.hitbox.width;
+            hh = other.hitbox.height;
+        } else {
+            hw = other.width || other.size;
+            hh = other.height || other.size;
+            hx = other.x - hw / 2;
+            hy = other.y - hh / 2;
+        }
+
         return (
-            pos.x < hitbox.x + hitbox.width &&
-            pos.x + col.width > hitbox.x &&
-            pos.y < hitbox.y + hitbox.height &&
-            pos.y + col.height > hitbox.y
+            pos.x < hx + hw &&
+            pos.x + col.width > hx &&
+            pos.y < hy + hh &&
+            pos.y + col.height > hy
         );
     }
 }

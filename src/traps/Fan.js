@@ -25,15 +25,32 @@ export class Fan extends Trap {
         const bodyHeight = this.height;
         switch (this.direction) {
             case 'up':
-                return { x: this.x - bodyWidth / 2, y: this.y - (bodyHeight / 2) - this.windHeight, width: bodyWidth, height: this.windHeight };
+                this._hitbox.x = this.x - bodyWidth / 2;
+                this._hitbox.y = this.y - (bodyHeight / 2) - this.windHeight;
+                this._hitbox.width = bodyWidth;
+                this._hitbox.height = this.windHeight;
+                break;
             case 'down':
-                return { x: this.x - bodyWidth / 2, y: this.y + bodyHeight / 2, width: bodyWidth, height: this.windHeight };
+                this._hitbox.x = this.x - bodyWidth / 2;
+                this._hitbox.y = this.y + bodyHeight / 2;
+                this._hitbox.width = bodyWidth;
+                this._hitbox.height = this.windHeight;
+                break;
             case 'left':
-                return { x: this.x - (bodyHeight / 2) - this.windHeight, y: this.y - bodyWidth / 2, width: this.windHeight, height: bodyWidth };
+                this._hitbox.x = this.x - (bodyHeight / 2) - this.windHeight;
+                this._hitbox.y = this.y - bodyWidth / 2;
+                this._hitbox.width = this.windHeight;
+                this._hitbox.height = bodyWidth;
+                break;
             case 'right':
             default:
-                return { x: this.x + bodyHeight / 2, y: this.y - bodyWidth / 2, width: this.windHeight, height: bodyWidth };
+                this._hitbox.x = this.x + bodyHeight / 2;
+                this._hitbox.y = this.y - bodyWidth / 2;
+                this._hitbox.width = this.windHeight;
+                this._hitbox.height = bodyWidth;
+                break;
         }
+        return this._hitbox;
     }
 
     update(dt, playerData, eventBus) {

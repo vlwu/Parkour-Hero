@@ -9,7 +9,9 @@ import { StateComponent } from '../components/StateComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 
 export class MovementSystem {
-    constructor() {}
+    constructor() {
+        this._deltaVector = { dx: 0, dy: 0 };
+    }
 
     update(dt, { entityManager }) {
         const entities = entityManager.query([PlayerControlledComponent, VelocityComponent, CollisionComponent, InputComponent, PositionComponent, StateComponent]);
@@ -98,7 +100,6 @@ export class MovementSystem {
         }
     }
 
-    // ... _applyVerticalMovement, _applyStickyPlatformMovement, _updateSurfaceEffects (unchanged)
     _applyVerticalMovement(dt, vel, col, ctrl, state) {
         if (ctrl.isInMud && vel.vy >= 0) {
             vel.vy = 0;
@@ -124,10 +125,10 @@ export class MovementSystem {
 
     _applyStickyPlatformMovement(pos, col) {
         if (col.isGrounded && col.groundEntity && typeof col.groundEntity.getMovementDelta === 'function') {
-            const delta = col.groundEntity.getMovementDelta();
-            pos.x += delta.dx;
-            pos.y += delta.dy;
-            if (delta.dy < 0) { 
+            col.groundEntity.getMovementDelta(this._deltaVector);
+            pos.x += this._deltaVector.dx;
+            pos.y += this._deltaVector.dy;
+            if (this._deltaVector.dy < 0) { 
                 const platformTop = col.groundEntity.hitbox.y;
                 const playerBottom = pos.y + col.height;
                 if (playerBottom > platformTop) {

@@ -17,6 +17,7 @@ export class CollisionSystem {
         this.spatialGrid = null;
         this.currentLevel = null;
         this.trapGridCells = new Map();
+        this._deltaVector = { dx: 0, dy: 0 };
     }
 
     _initializeGridForLevel(level, entityManager) {
@@ -334,8 +335,8 @@ export class CollisionSystem {
                 this._landOnSurface(pos, vel, col, highestGround.y, highestGround.surfaceType, highestGround.instance, entityId, entityManager);
                 entityRect.y = pos.y;
             } else if (col.isGrounded && col.groundEntity && typeof col.groundEntity.getMovementDelta === 'function') {
-                const delta = col.groundEntity.getMovementDelta();
-                if (delta.dy < 0) {
+                col.groundEntity.getMovementDelta(this._deltaVector);
+                if (this._deltaVector.dy < 0) {
                     const platformTop = col.groundEntity.hitbox.y;
                     const playerBottom = pos.y + col.height;
                     if (playerBottom > platformTop) {
@@ -395,8 +396,8 @@ export class CollisionSystem {
                     }
                 }
             } else if (col.isGrounded && col.groundEntity && typeof col.groundEntity.getMovementDelta === 'function') {
-                const delta = col.groundEntity.getMovementDelta();
-                if (delta.dy !== 0) {
+                col.groundEntity.getMovementDelta(this._deltaVector);
+                if (this._deltaVector.dy !== 0) {
                     const platformTop = col.groundEntity.hitbox.y;
                     const playerBottom = pos.y + col.height;
                     const tolerance = 2;
