@@ -80,7 +80,10 @@ export class BulletSystem {
                 }
             }
 
-            if (col.isGrounded || col.isAgainstWall || col.hitCeiling) {
+            // We use `wallDirection !== null` instead of `isAgainstWall`.
+            // This ensures bullets are destroyed against sand/mud/ice walls too,
+            // bypassing the logic that prevents players from clinging to them.
+            if (col.isGrounded || col.wallDirection !== null || col.hitCeiling) {
                 destroyBullet(playerPos);
                 continue;
             }
@@ -118,7 +121,7 @@ export class BulletSystem {
             pos.x = x - config.width / 2; pos.y = y;
             vel.vx = vx ?? 0; vel.vy = vy ?? config.speed;
             col.width = config.width; col.height = config.height;
-            col.isGrounded = false; col.isAgainstWall = false; col.hitCeiling = false;
+            col.isGrounded = false; col.isAgainstWall = false; col.hitCeiling = false; col.wallDirection = null;
             rend.spriteKey = spriteKey; rend.width = config.width; rend.height = config.height; rend.rotation = rotation; rend.isVisible = true;
             bul.damage = config.damage; bul.speed = config.speed; bul.piecesSpriteKey = piecesSpriteKey; bul.active = true;
             
