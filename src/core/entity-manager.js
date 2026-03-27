@@ -17,6 +17,8 @@ export class EntityManager {
         const entityId = this.freeEntities.length > 0 ? this.freeEntities.pop() : this.nextEntityId++;
         this.entityMasks[entityId] = 0;
         this.activeEntities.push(entityId);
+        
+        this._updateQueryCache(entityId, 0, 0, false, true);
         return entityId;
     }
 
@@ -28,6 +30,21 @@ export class EntityManager {
         return this.componentBits.get(componentClass);
     }
 
+    _updateQueryCache(entityId, oldMask, newMask, isDestroyed = false, isCreated = false) {
+        for (const [requiredMask, cacheEntry] of this.queryCache.entries()) {
+            const matchedOld = !isCreated && ((oldMask & requiredMask) === requiredMask);
+            const matchedNew = !isDestroyed && ((newMask & requiredMask) === requiredMask);
+
+            if (matchedOld && !matchedNew) {
+                cacheEntry.set.delete(entityId);
+                cacheEntry.dirty = true;
+            } else if (!matchedOld && matchedNew) {
+                cacheEntry.set.add(entityId);
+                cacheEntry.dirty = true;
+            }
+        }
+    }
+
     addComponent(entityId, component) {
         const componentClass = component.constructor;
         if (!this.componentsByClass.has(componentClass)) {
@@ -35,7 +52,11 @@ export class EntityManager {
         }
         this.componentsByClass.get(componentClass).set(entityId, component);
         
-        this.entityMasks[entityId] |= this._getComponentBit(componentClass);
+        const oldMask = this.entityMasks[entityId] || 0;
+        const newMask = oldMask | this._getComponentBit(componentClass);
+        this.entityMasks[entityId] = newMask;
+        
+        this._updateQueryCache(entityId, oldMask, newMask);
         return this;
     }
 
@@ -57,7 +78,11 @@ export class EntityManager {
         }
         const bit = this.componentBits.get(componentClass);
         if (bit) {
-            this.entityMasks[entityId] &= ~bit;
+            const oldMask = this.entityMasks[entityId] || 0;
+            const newMask = oldMask & ~bit;
+            this.entityMasks[entityId] = newMask;
+            
+            this._updateQueryCache(entityId, oldMask, newMask);
         }
     }
 
@@ -69,7 +94,12 @@ export class EntityManager {
         for (const componentMap of this.componentsByClass.values()) {
             componentMap.delete(entityId);
         }
+        
+        const oldMask = this.entityMasks[entityId] || 0;
         this.entityMasks[entityId] = 0;
+        
+        this._updateQueryCache(entityId, oldMask, 0, true);
+        
         this.freeEntities.push(entityId);
     }
 
@@ -79,13 +109,27 @@ export class EntityManager {
             requiredMask |= this._getComponentBit(componentClasses[i]);
         }
 
-        const result = [];
-        for (let i = 0; i < this.activeEntities.length; i++) {
-            const id = this.activeEntities[i];
-            if ((this.entityMasks[id] & requiredMask) === requiredMask) {
-                result.push(id);
+        let cacheEntry = this.queryCache.get(requiredMask);
+        
+        if (!cacheEntry) {
+            const entitySet = new Set();
+            for (let i = 0; i < this.activeEntities.length; i++) {
+                const id = this.activeEntities[i];
+                if ((this.entityMasks[id] & requiredMask) === requiredMask) {
+                    entitySet.add(id);
+                }
             }
+            cacheEntry = {
+                set: entitySet,
+                array: Array.from(entitySet),
+                dirty: false
+            };
+            this.queryCache.set(requiredMask, cacheEntry);
+        } else if (cacheEntry.dirty) {
+            cacheEntry.array = Array.from(cacheEntry.set);
+            cacheEntry.dirty = false;
         }
-        return result;
+        
+        return cacheEntry.array;
     }
 }
