@@ -65,10 +65,11 @@ export class CollisionSystem {
         }
     }
 
-    _areSetsEqual(setA, setB) {
-        if (setA.size !== setB.size) return false;
-        for (const item of setA) {
-            if (!setB.has(item)) return false;
+    _areArraysEqual(arrA, arrB) {
+        if (arrA.length !== arrB.length) return false;
+        // Arrays are generated in consistent layout order, so direct element comparison works
+        for (let i = 0; i < arrA.length; i++) {
+            if (arrA[i] !== arrB[i]) return false;
         }
         return true;
     }
@@ -83,7 +84,7 @@ export class CollisionSystem {
             const newCells = this.spatialGrid.getGridIndices(entityRect);
             const oldCells = dynCol._spatialGridCells;
 
-            if (oldCells.size > 0) {
+            if (oldCells.length > 0) {
                 this.spatialGrid.removeObjectFromCells(entityId, oldCells);
             }
 
@@ -105,7 +106,7 @@ export class CollisionSystem {
                     const hitbox = trap.hitbox;
                     const newCells = this.spatialGrid.getGridIndices(hitbox);
 
-                    if (oldCells && this._areSetsEqual(oldCells, newCells)) {
+                    if (oldCells && this._areArraysEqual(oldCells, newCells)) {
                         continue;
                     }
 
@@ -432,7 +433,7 @@ export class CollisionSystem {
         const dynCol = entityManager.getComponent(entityId, DynamicColliderComponent);
         if (dynCol && dynCol._spatialGridCells) {
             this.spatialGrid.removeObjectFromCells(entityId, dynCol._spatialGridCells);
-            dynCol._spatialGridCells.clear();
+            dynCol._spatialGridCells.length = 0;
         }
     }
 
