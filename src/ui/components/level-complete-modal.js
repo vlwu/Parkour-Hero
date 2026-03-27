@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { formatTime } from '../ui-utils.js';
 import { eventBus } from '../../utils/event-bus.js';
 import './bitmap-text.js';
+import './animated-sprite-card.js';
 
 export class LevelCompleteModal extends LitElement {
   static styles = css`
@@ -15,8 +16,26 @@ export class LevelCompleteModal extends LitElement {
       background-color: #333; padding: 30px; border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); color: #eee;
       text-align: center; position: relative; width: 90%; max-width: 500px;
+      max-height: 90vh; overflow-y: auto;
     }
     .title-container { display: flex; justify-content: center; margin-bottom: 25px; }
+    
+    .coin-display {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: rgba(0,0,0,0.4); padding: 8px 15px; border-radius: 20px;
+      border: 2px solid #f1c40f; margin: 0 auto 20px auto; width: fit-content;
+    }
+    
+    @keyframes pulse-record {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .new-record {
+      animation: pulse-record 1.5s infinite;
+      margin-bottom: 10px;
+    }
+
     .stats-container {
       display: flex; flex-direction: column; align-items: center;
       gap: 12px; margin-bottom: 25px; padding: 15px;
@@ -51,6 +70,29 @@ export class LevelCompleteModal extends LitElement {
         cursor: default;
         opacity: 0.8;
     }
+
+    .exit-button-container {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #555;
+    }
+    .exit-button {
+      background-color: #e74c3c;
+      color: #fff;
+      border: 2px solid #c0392b;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.2s ease-in-out;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .exit-button:hover {
+      background-color: #c0392b;
+    }
   `;
 
   static properties = {
@@ -59,7 +101,8 @@ export class LevelCompleteModal extends LitElement {
     hasPreviousLevel: { type: Boolean },
     fontRenderer: { type: Object },
     unlockedCharacterId: { type: String },
-    isEquipped: { type: Boolean, state: true }
+    isEquipped: { type: Boolean, state: true },
+    assets: { type: Object }
   };
 
   constructor() {
@@ -90,7 +133,19 @@ export class LevelCompleteModal extends LitElement {
           <div class="title-container">
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Level Complete!" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
           </div>
+
+          <div class="coin-display">
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="+" scale="2" color="#2ecc71"></bitmap-text>
+            <animated-sprite-card bare scaleToFit style="width:32px; height:32px;" .sprite=${this.assets?.coin_icon} .frameCount=${14} .frameSpeed=${0.05}></animated-sprite-card>
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="${this.stats.fruitsCollected || 0}" scale="2" color="#f1c40f"></bitmap-text>
+          </div>
+
           <div class="stats-container">
+            ${this.stats.isNewRecord ? html`
+              <div class="new-record">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="New Record!" scale="2" color="#FFD700"></bitmap-text>
+              </div>
+            ` : ''}
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Deaths: ${this.stats.deaths}" scale="1.8"></bitmap-text>
             <bitmap-text .fontRenderer=${this.fontRenderer} text="Time: ${formatTime(this.stats.time)}" scale="1.8"></bitmap-text>
           </div>
@@ -119,6 +174,12 @@ export class LevelCompleteModal extends LitElement {
               <img src="/assets/Menu/Buttons/Next.png" alt="Next">
             </button>
             ` : ''}
+          </div>
+
+          <div class="exit-button-container">
+            <button class="exit-button" @click=${() => this._dispatch('exit-to-menu')}>
+              <bitmap-text .fontRenderer=${this.fontRenderer} text="Exit to Main Menu" scale="1.8"></bitmap-text>
+            </button>
           </div>
         </div>
       </div>

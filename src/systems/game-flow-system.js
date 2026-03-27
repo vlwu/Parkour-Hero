@@ -36,6 +36,10 @@ export class GameFlowSystem {
                 fruitsCollected: level.collectedFruitCount
             };
 
+            const levelId = `${gameState.currentSection}-${gameState.currentLevelIndex}`;
+            const currentStats = gameState.levelStats[levelId];
+            const isNewRecord = currentStats ? (currentStats.fastestTime === null || runStats.time < currentStats.fastestTime) : true;
+
             const newGameState = gameState.onLevelComplete(runStats);
             if (newGameState !== gameState) {
                 eventBus.publish('gameStateUpdated', newGameState);
@@ -48,6 +52,8 @@ export class GameFlowSystem {
                 eventBus.publish('levelComplete', {
                     deaths: runStats.deaths,
                     time: runStats.time,
+                    fruitsCollected: runStats.fruitsCollected,
+                    isNewRecord: isNewRecord,
                     hasNextLevel: levelManager.hasNextLevel(),
                     hasPreviousLevel: levelManager.hasPreviousLevel(),
                 });

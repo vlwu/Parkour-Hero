@@ -280,7 +280,10 @@ export class ParkourHeroUI extends LitElement {
   }
 
   _handleRestart = () => { this._resumeGame(); eventBus.publish('requestLevelRestart'); }
+  
   _handleExitToMenu = () => {
+    this.levelCompleteStats = null;
+    this.newlyUnlockedCharacterId = null;
     this.gameHasStarted = false;
     this.activeModal = 'main-menu';
   };
@@ -337,9 +340,11 @@ export class ParkourHeroUI extends LitElement {
             .hasPreviousLevel=${this.levelCompleteStats.hasPreviousLevel}
             .fontRenderer=${this.fontRenderer}
             .unlockedCharacterId=${this.newlyUnlockedCharacterId}
+            .assets=${this.assets}
             @next-level=${() => this._handleLevelAction('next')}
             @restart-level=${() => this._handleLevelAction('restart')}
             @previous-level=${() => this._handleLevelAction('previous')}
+            @exit-to-menu=${this._handleExitToMenu}
             ></level-complete-modal>
         `;
     }
