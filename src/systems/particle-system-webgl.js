@@ -168,7 +168,11 @@ export class ParticleSystemWebGL {
     }
 
     syncTextures() {
-        const textureKeys = ['dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 'slime_particles', 'snail_die', 'radish_leaves', 'bee_bullet_pieces', 'plant_bullet_pieces', 'ghost_particles'];
+        const textureKeys = [
+            'dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 
+            'slime_particles', 'snail_die', 'radish_leaves', 'bee_bullet_pieces', 
+            'plant_bullet_pieces', 'trunk_bullet_pieces', 'ghost_particles'
+        ];
         for (const key of textureKeys) {
             if (this.assets[key] && !this.textures[key]) {
                 this.textures[key] = this._createTexture(this.assets[key]);
@@ -198,6 +202,7 @@ export class ParticleSystemWebGL {
             radish_leaf: { count: 1, baseSpeed: 120, spriteKey: 'radish_leaves', life: 0.8, gravity: 200, size: 16 },
             bee_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'bee_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
             plant_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'plant_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
+            trunk_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'trunk_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
             
             // Cosmetics - Dash Trails
             default_dash: { count: 15, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
@@ -240,7 +245,7 @@ export class ParticleSystemWebGL {
             else if (type === 'wing_flap') {
                 angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             }
-            else if (type.includes('death') || type === 'radish_leaf' || type === 'bee_bullet_pieces' || type === 'plant_bullet_pieces') angle = Math.random() * Math.PI * 2;
+            else if (type.includes('death') || type === 'radish_leaf' || type === 'bee_bullet_pieces' || type === 'plant_bullet_pieces' || type === 'trunk_bullet_pieces') angle = Math.random() * Math.PI * 2;
             else if (type.includes('dash')) angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
             else if (type === 'double_jump') angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI * 0.8);
             else if (type === 'mud_splash') angle = -(Math.PI / 2) + (Math.random() - 0.5) * (Math.PI * 0.8);
@@ -283,9 +288,9 @@ export class ParticleSystemWebGL {
             p.behavior = config.behavior || 'normal';
             p.animation = config.animation ? { ...config.animation, frameTimer: 0, currentFrame: 0 } : null;
 
-            if (type === 'radish_leaf' || type === 'bee_bullet_pieces' || type === 'plant_bullet_pieces') {
+            if (type === 'radish_leaf' || type === 'bee_bullet_pieces' || type === 'plant_bullet_pieces' || type === 'trunk_bullet_pieces') {
                 p.leafIndex = leafIndex;
-            } else if (config.spriteKey === 'radish_leaves' || config.spriteKey === 'bee_bullet_pieces' || config.spriteKey === 'plant_bullet_pieces') {
+            } else if (config.spriteKey === 'radish_leaves' || config.spriteKey === 'bee_bullet_pieces' || config.spriteKey === 'plant_bullet_pieces' || config.spriteKey === 'trunk_bullet_pieces') {
                 p.leafIndex = Math.random() > 0.5 ? 0 : 1;
             }
 
@@ -399,7 +404,7 @@ export class ParticleSystemWebGL {
                     instanceData[offset + 5] = 0;
                     instanceData[offset + 6] = 1 / p.animation.frameCount;
                     instanceData[offset + 7] = 1;
-                } else if (p.spriteKey === 'radish_leaves' || p.spriteKey === 'bee_bullet_pieces' || p.spriteKey === 'plant_bullet_pieces') {
+                } else if (p.spriteKey === 'radish_leaves' || p.spriteKey === 'bee_bullet_pieces' || p.spriteKey === 'plant_bullet_pieces' || p.spriteKey === 'trunk_bullet_pieces') {
                     instanceData[offset + 4] = p.leafIndex === 0 ? 0.0 : 0.5;
                     instanceData[offset + 5] = 0;
                     instanceData[offset + 6] = 0.5;
