@@ -34,6 +34,13 @@ export class HUD {
     this.coinFrame = 0;
     this.coinTimer = 0;
 
+    // Minimap Cache
+    this.minimapCacheCanvas = document.createElement('canvas');
+    this.minimapCacheCtx = this.minimapCacheCanvas.getContext('2d');
+    this._lastLevel = null;
+    this._lastMinimapSize = -1;
+    this._lastFruitCount = -1;
+
     eventBus.subscribe('statsUpdated', (newStats) => this.updateStats(newStats));
   }
 
@@ -47,6 +54,48 @@ export class HUD {
 
   updateStats(newStats) {
     this.stats = { ...this.stats, ...newStats };
+  }
+
+  _updateMinimapCache(level, mapWidth, mapHeight, scaleX, scaleY) {
+    this.minimapCacheCanvas.width = mapWidth;
+    this.minimapCacheCanvas.height = mapHeight;
+    const ctx = this.minimapCacheCtx;
+
+    ctx.clearRect(0, 0, mapWidth, mapHeight);
+
+    // Draw Background & Border
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, mapWidth, mapHeight);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.strokeRect(0, 0, mapWidth, mapHeight);
+
+    // Draw Uncollected Fruits
+    if (level && level.fruits) {
+      ctx.fillStyle = '#2b5cb7ff';
+      for (const fruit of level.fruits) {
+        if (!fruit.collected) {
+          const fruitMapX = fruit.x * scaleX;
+          const fruitMapY = fruit.y * scaleY;
+          ctx.beginPath();
+          ctx.arc(fruitMapX, fruitMapY, 3, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+      }
+    }
+
+    // Draw Trophy
+    if (level && level.trophy) {
+      const trophyMapX = level.trophy.x * scaleX;
+      const trophyMapY = level.trophy.y * scaleY;
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath();
+      ctx.arc(trophyMapX, trophyMapY, 5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    this._lastLevel = level;
+    this._lastMinimapSize = this.settings.minimapSize;
+    this._lastFruitCount = level ? level.collectedFruitCount : -1;
   }
 
   drawMinimap(ctx, camera, level, entityManager, playerEntityId) {
@@ -72,14 +121,20 @@ export class HUD {
     const scaleX = mapWidth / level.width;
     const scaleY = mapHeight / level.height;
 
+    // Rebuild cache only if state has changed
+    if (this._lastLevel !== level || 
+        this._lastMinimapSize !== this.settings.minimapSize || 
+        this._lastFruitCount !== level.collectedFruitCount) {
+        this._updateMinimapCache(level, mapWidth, mapHeight, scaleX, scaleY);
+    }
+
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(mapX, mapY, mapWidth, mapHeight);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.strokeRect(mapX, mapY, mapWidth, mapHeight);
+    // Draw the static cached minimap layer
+    ctx.drawImage(this.minimapCacheCanvas, mapX, mapY);
 
+    // Draw the dynamic camera view
     const viewRectX = mapX + camera.x * scaleX;
     const viewRectY = mapY + camera.y * scaleY;
     const viewRectWidth = camera.width * scaleX;
@@ -88,19 +143,7 @@ export class HUD {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.fillRect(viewRectX, viewRectY, viewRectWidth, viewRectHeight);
 
-    if (level && level.fruits) {
-      ctx.fillStyle = '#2b5cb7ff';
-      for (const fruit of level.fruits) {
-        if (!fruit.collected) {
-          const fruitMapX = mapX + fruit.x * scaleX;
-          const fruitMapY = mapY + fruit.y * scaleY;
-          ctx.beginPath();
-          ctx.arc(fruitMapX, fruitMapY, 3, 0, 2 * Math.PI);
-          ctx.fill();
-        }
-      }
-    }
-
+    // Draw the dynamic player marker
     if (entityManager && playerEntityId !== null && playerEntityId !== undefined) {
         const playerPos = entityManager.getComponent(playerEntityId, PositionComponent);
         const playerCol = entityManager.getComponent(playerEntityId, CollisionComponent);
@@ -113,16 +156,6 @@ export class HUD {
             ctx.arc(playerMapX, playerMapY, 5, 0, 2 * Math.PI);
             ctx.fill();
         }
-    }
-
-    if (level && level.trophy) {
-        const trophyMapX = mapX + level.trophy.x * scaleX;
-        const trophyMapY = mapY + level.trophy.y * scaleY;
-
-        ctx.fillStyle = '#f1c40f';
-        ctx.beginPath();
-        ctx.arc(trophyMapX, trophyMapY, 5, 0, 2 * Math.PI);
-        ctx.fill();
     }
 
     ctx.restore();
