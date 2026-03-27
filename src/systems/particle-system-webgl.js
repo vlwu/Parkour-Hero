@@ -1,4 +1,5 @@
 import { eventBus } from '../utils/event-bus.js';
+import { TextureAtlas } from '../core/gl-utils.js';
 import vertexShaderSource from '../shaders/particle.vert?raw';
 import fragmentShaderSource from '../shaders/particle.frag?raw';
 
@@ -151,33 +152,28 @@ export class ParticleSystemWebGL {
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
 
-    _createTexture(image) {
-        const gl = this.gl;
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        return {
-            glTexture: texture,
-            width: image.width,
-            height: image.height
-        };
-    }
-
     syncTextures() {
+        this.atlas = new TextureAtlas(this.gl, 1024);
+        this.textures = {};
+
         const textureKeys = [
             'dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 
             'slime_particles', 'snail_die', 'radish_leaves', 'bee_bullet_pieces', 
             'plant_bullet_pieces', 'trunk_bullet_pieces', 'ghost_particles'
         ];
+        
         for (const key of textureKeys) {
-            if (this.assets[key] && !this.textures[key]) {
-                this.textures[key] = this._createTexture(this.assets[key]);
+            if (this.assets[key]) {
+                this.atlas.pack(key, this.assets[key]);
+                this.textures[key] = {
+                    width: this.assets[key].width,
+                    height: this.assets[key].height,
+                    isAtlas: true,
+                    atlasRegion: this.atlas.regions[key]
+                };
             }
         }
+        this.atlas.finalize();
     }
 
     create({ x, y, type, direction = 'right', particleSpeed = null, leafIndex = 0 }) {
@@ -375,18 +371,23 @@ export class ParticleSystemWebGL {
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-        const particlesByTexture = {};
+        const particlesByTexture = new Map();
         for (const p of this.activeParticles) {
-            if (!particlesByTexture[p.spriteKey]) {
-                particlesByTexture[p.spriteKey] = [];
+            const textureInfo = this.textures[p.spriteKey];
+            if (!textureInfo) continue;
+            
+            const texKey = textureInfo.isAtlas ? this.atlas.glTexture : textureInfo.glTexture;
+            
+            if (!particlesByTexture.has(texKey)) {
+                particlesByTexture.set(texKey, { glTexture: texKey, instances: [] });
             }
-            particlesByTexture[p.spriteKey].push(p);
+            particlesByTexture.get(texKey).instances.push(p);
         }
 
         const stride = 13;
 
-        for (const spriteKey in particlesByTexture) {
-            const particles = particlesByTexture[spriteKey];
+        for (const [_, batch] of particlesByTexture.entries()) {
+            const particles = batch.instances;
             const count = particles.length;
             if (count === 0) continue;
 
@@ -399,21 +400,27 @@ export class ParticleSystemWebGL {
                 instanceData[offset + 2] = p.size;
                 instanceData[offset + 3] = p.alpha;
 
+                const tInfo = this.textures[p.spriteKey];
+                const atlasX = tInfo.isAtlas ? tInfo.atlasRegion.x : 0;
+                const atlasY = tInfo.isAtlas ? tInfo.atlasRegion.y : 0;
+                const texW = tInfo.isAtlas ? this.atlas.size : tInfo.width;
+                const texH = tInfo.isAtlas ? this.atlas.size : tInfo.height;
+
                 if (p.animation) {
-                    instanceData[offset + 4] = p.animation.currentFrame / p.animation.frameCount;
-                    instanceData[offset + 5] = 0;
-                    instanceData[offset + 6] = 1 / p.animation.frameCount;
-                    instanceData[offset + 7] = 1;
+                    instanceData[offset + 4] = (atlasX + p.animation.currentFrame * (tInfo.width / p.animation.frameCount)) / texW;
+                    instanceData[offset + 5] = atlasY / texH;
+                    instanceData[offset + 6] = (tInfo.width / p.animation.frameCount) / texW;
+                    instanceData[offset + 7] = tInfo.height / texH;
                 } else if (p.spriteKey === 'radish_leaves' || p.spriteKey === 'bee_bullet_pieces' || p.spriteKey === 'plant_bullet_pieces' || p.spriteKey === 'trunk_bullet_pieces') {
-                    instanceData[offset + 4] = p.leafIndex === 0 ? 0.0 : 0.5;
-                    instanceData[offset + 5] = 0;
-                    instanceData[offset + 6] = 0.5;
-                    instanceData[offset + 7] = 1.0;
+                    instanceData[offset + 4] = (atlasX + (p.leafIndex === 0 ? 0 : tInfo.width / 2)) / texW;
+                    instanceData[offset + 5] = atlasY / texH;
+                    instanceData[offset + 6] = (tInfo.width / 2) / texW;
+                    instanceData[offset + 7] = tInfo.height / texH;
                 } else {
-                    instanceData[offset + 4] = 0;
-                    instanceData[offset + 5] = 0;
-                    instanceData[offset + 6] = 1;
-                    instanceData[offset + 7] = 1;
+                    instanceData[offset + 4] = atlasX / texW;
+                    instanceData[offset + 5] = atlasY / texH;
+                    instanceData[offset + 6] = tInfo.width / texW;
+                    instanceData[offset + 7] = tInfo.height / texH;
                 }
                 
                 // Color Tint
@@ -426,14 +433,11 @@ export class ParticleSystemWebGL {
                 instanceData[offset + 12] = p.shape;
             }
 
-            const textureInfo = this.textures[spriteKey];
-            if (textureInfo) {
-                gl.bindTexture(gl.TEXTURE_2D, textureInfo.glTexture);
-                gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
-                gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceData);
+            gl.bindTexture(gl.TEXTURE_2D, batch.glTexture);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer);
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceData);
 
-                gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
-            }
+            gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
         }
 
         gl.bindVertexArray(null);

@@ -1,4 +1,4 @@
-import { createShaderProgram } from '../core/gl-utils.js';
+import { createShaderProgram, TextureAtlas } from '../core/gl-utils.js';
 import sceneVertexShader from '../shaders/scene.vert?raw';
 import sceneFragmentShader from '../shaders/scene.frag?raw';
 import backgroundVertexShader from '../shaders/background.vert?raw';
@@ -36,6 +36,7 @@ export class Renderer {
     this.backgroundOffset = { x: 0, y: 0 };
     this.prevBackgroundOffset = { x: 0, y: 0 };
     this.currentLevel = null;
+    this.atlas = null;
 
     this.sceneProgram = createShaderProgram(gl, sceneVertexShader, sceneFragmentShader);
     this.backgroundProgram = createShaderProgram(gl, backgroundVertexShader, backgroundFragmentShader);
@@ -96,31 +97,49 @@ export class Renderer {
   }
 
   syncTextures() {
+    this.atlas = new TextureAtlas(this.gl, 2048);
+    this.textures = {}; 
+
     Object.keys(this.assets).forEach(key => {
-        if (this.assets[key] instanceof HTMLImageElement && !this.textures[key]) {
+        if (this.assets[key] instanceof HTMLImageElement) {
             const isBackground = key.startsWith('background_');
-            this.textures[key] = {
-                glTexture: this._createTexture(this.assets[key], isBackground),
-                width: this.assets[key].width,
-                height: this.assets[key].height
-            };
+            if (isBackground) {
+                // Backgrounds need repeat wrapping, so keep them separated from the atlas
+                this.textures[key] = {
+                    glTexture: this._createTexture(this.assets[key], true),
+                    width: this.assets[key].width,
+                    height: this.assets[key].height,
+                    isAtlas: false
+                };
+            } else {
+                this.atlas.pack(key, this.assets[key]);
+                this.textures[key] = {
+                    width: this.assets[key].width,
+                    height: this.assets[key].height,
+                    isAtlas: true,
+                    atlasRegion: this.atlas.regions[key]
+                };
+            }
         }
     });
 
     if (!this.textures.characters) this.textures.characters = {};
-    Object.keys(this.assets.characters).forEach(charId => {
-        if (!this.textures.characters[charId]) this.textures.characters[charId] = {};
+    Object.keys(this.assets.characters || {}).forEach(charId => {
+        this.textures.characters[charId] = {};
         Object.keys(this.assets.characters[charId]).forEach(spriteKey => {
-            if (!this.textures.characters[charId][spriteKey]) {
-                const img = this.assets.characters[charId][spriteKey];
-                this.textures.characters[charId][spriteKey] = {
-                    glTexture: this._createTexture(img),
-                    width: img.width,
-                    height: img.height
-                };
-            }
+            const fullKey = `char_${charId}_${spriteKey}`;
+            const img = this.assets.characters[charId][spriteKey];
+            this.atlas.pack(fullKey, img);
+            this.textures.characters[charId][spriteKey] = {
+                width: img.width,
+                height: img.height,
+                isAtlas: true,
+                atlasRegion: this.atlas.regions[fullKey]
+            };
         });
     });
+    
+    this.atlas.finalize();
   }
 
   _setupVAO(vao, vbo) {
@@ -185,6 +204,8 @@ export class Renderer {
 
     for (const [spriteKey, groupItems] of staticGroups.entries()) {
         const staticData = [];
+        const textureInfo = this.textures[spriteKey];
+        
         groupItems.forEach(item => {
             if (item.tileId !== undefined) {
                 const { tileId, x, y } = item;
@@ -195,20 +216,26 @@ export class Renderer {
                 const sx = (localId % config.columns) * config.tileWidth;
                 const sy = Math.floor(localId / config.columns) * config.tileHeight;
 
+                const atlasX = textureInfo.isAtlas ? textureInfo.atlasRegion.x + sx : sx;
+                const atlasY = textureInfo.isAtlas ? textureInfo.atlasRegion.y + sy : sy;
+
                 staticData.push(
                     x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE,
                     GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE,
-                    sx, sy,
+                    atlasX, atlasY,
                     config.tileWidth, config.tileHeight,
                     0.0, 1.0, 0.0,
                     1.0, 1.0, 1.0, 1.0 // Color tint (white)
                 );
             } else if (item.trap) {
                 const { trap } = item;
+                const atlasX = textureInfo.isAtlas ? textureInfo.atlasRegion.x + trap.spriteConfig.srcX : trap.spriteConfig.srcX;
+                const atlasY = textureInfo.isAtlas ? textureInfo.atlasRegion.y + trap.spriteConfig.srcY : trap.spriteConfig.srcY;
+
                 staticData.push(
                     trap.x - trap.width / 2, trap.y - trap.height / 2,
                     trap.width, trap.height,
-                    trap.spriteConfig.srcX, trap.spriteConfig.srcY,
+                    atlasX, atlasY,
                     trap.spriteConfig.width, trap.spriteConfig.height,
                     0.0, 1.0, 0.0,
                     1.0, 1.0, 1.0, 1.0 // Color tint
@@ -225,12 +252,14 @@ export class Renderer {
         this.staticBatches.set(spriteKey, {
             vao,
             instanceCount: staticData.length / ATTRIBUTES_PER_INSTANCE,
-            texture: this.textures[spriteKey]
+            texture: textureInfo
         });
     }
 
     for (const [spriteKey, groupItems] of staticOverlayGroups.entries()) {
         const staticData = [];
+        const textureInfo = this.textures[spriteKey];
+        
         groupItems.forEach(item => {
             if (item.tileId !== undefined) {
                 const { tileId, x, y } = item;
@@ -239,10 +268,14 @@ export class Renderer {
                 const localId = (isSpecial ? tileId - SPECIAL_TILE_ID_OFFSET : tileId) - 1;
                 const sx = (localId % config.columns) * config.tileWidth;
                 const sy = Math.floor(localId / config.columns) * config.tileHeight;
+                
+                const atlasX = textureInfo.isAtlas ? textureInfo.atlasRegion.x + sx : sx;
+                const atlasY = textureInfo.isAtlas ? textureInfo.atlasRegion.y + sy : sy;
+
                 staticData.push(
                     x * GRID_CONSTANTS.TILE_SIZE, y * GRID_CONSTANTS.TILE_SIZE,
                     GRID_CONSTANTS.TILE_SIZE, GRID_CONSTANTS.TILE_SIZE,
-                    sx, sy,
+                    atlasX, atlasY,
                     config.tileWidth, config.tileHeight,
                     0.0, 1.0, 0.0,
                     1.0, 1.0, 1.0, 1.0 // Color tint
@@ -257,7 +290,7 @@ export class Renderer {
         this.staticOverlayBatches.set(spriteKey, {
             vao,
             instanceCount: staticData.length / ATTRIBUTES_PER_INSTANCE,
-            texture: this.textures[spriteKey]
+            texture: textureInfo
         });
     }
   }
@@ -286,9 +319,12 @@ export class Renderer {
 
     for (const [_, batch] of this.staticBatches.entries()) {
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, batch.texture.glTexture);
+        const texInfo = batch.texture;
+        gl.bindTexture(gl.TEXTURE_2D, texInfo.isAtlas ? this.atlas.glTexture : texInfo.glTexture);
         gl.uniform1i(this.sceneUniforms.texture, 0);
-        gl.uniform2f(this.sceneUniforms.texture_size, batch.texture.width, batch.texture.height);
+        const texW = texInfo.isAtlas ? this.atlas.size : texInfo.width;
+        const texH = texInfo.isAtlas ? this.atlas.size : texInfo.height;
+        gl.uniform2f(this.sceneUniforms.texture_size, texW, texH);
         gl.bindVertexArray(batch.vao);
         gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, batch.instanceCount);
     }
@@ -297,9 +333,12 @@ export class Renderer {
 
     for (const [_, batch] of this.staticOverlayBatches.entries()) {
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, batch.texture.glTexture);
+        const texInfo = batch.texture;
+        gl.bindTexture(gl.TEXTURE_2D, texInfo.isAtlas ? this.atlas.glTexture : texInfo.glTexture);
         gl.uniform1i(this.sceneUniforms.texture, 0);
-        gl.uniform2f(this.sceneUniforms.texture_size, batch.texture.width, batch.texture.height);
+        const texW = texInfo.isAtlas ? this.atlas.size : texInfo.width;
+        const texH = texInfo.isAtlas ? this.atlas.size : texInfo.height;
+        gl.uniform2f(this.sceneUniforms.texture_size, texW, texH);
         gl.bindVertexArray(batch.vao);
         gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, batch.instanceCount);
     }
@@ -313,9 +352,10 @@ export class Renderer {
         const batches = new Map();
 
         const addToBatch = (textureRef, instanceData) => {
-            if (!textureRef || !textureRef.glTexture) return;
-            const key = textureRef.glTexture;
-            if (!batches.has(key)) batches.set(key, { texture: textureRef, instances: [] });
+            if (!textureRef) return;
+            const key = textureRef.isAtlas ? this.atlas.glTexture : textureRef.glTexture;
+            if (!key) return;
+            if (!batches.has(key)) batches.set(key, { texture: textureRef, glTexture: key, instances: [] });
             batches.get(key).instances.push(...instanceData);
         };
 
@@ -381,10 +421,14 @@ export class Renderer {
             }
 
             if (spriteData) {
+                const region = spriteData.texture.atlasRegion;
+                const srcX = region ? region.x + spriteData.sx : spriteData.sx;
+                const srcY = region ? region.y + spriteData.sy : spriteData.sy;
+                
                 const instanceData = [
                     renderX, renderY, 
                     renderable.width, renderable.height, 
-                    spriteData.sx, spriteData.sy, 
+                    srcX, srcY, 
                     spriteData.sw, spriteData.sh, 
                     spriteData.isFlipped, 
                     1.0, // alpha
@@ -405,12 +449,16 @@ export class Renderer {
                     const dataArray = Array.isArray(trapRenderData) ? trapRenderData : [trapRenderData];
                     dataArray.forEach(d => {
                         if (d && d.texture && d.instanceData) {
-                             const finalInstanceData = [
-                                 ...d.instanceData, 
+                             const finalInstanceData = [ ...d.instanceData ];
+                             if (d.texture.isAtlas) {
+                                 finalInstanceData[4] += d.texture.atlasRegion.x;
+                                 finalInstanceData[5] += d.texture.atlasRegion.y;
+                             }
+                             finalInstanceData.push(
                                  d.alpha !== undefined ? d.alpha : 1.0, 
                                  d.rotation !== undefined ? d.rotation : 0.0,
                                  1.0, 1.0, 1.0, 1.0 // Default color tint
-                             ];
+                             );
                             addToBatch(d.texture, finalInstanceData);
                         }
                     });
@@ -426,7 +474,8 @@ export class Renderer {
                 const instanceData = [
                     f.x - f.size / 2, f.y - f.size / 2, 
                     f.size, f.size, 
-                    f.frame * frameWidth, 0, 
+                    tex.isAtlas ? tex.atlasRegion.x + f.frame * frameWidth : f.frame * frameWidth, 
+                    tex.isAtlas ? tex.atlasRegion.y : 0, 
                     frameWidth, sprite.height, 
                     0.0, 1.0, 0.0,
                     1.0, 1.0, 1.0, 1.0
@@ -440,7 +489,8 @@ export class Renderer {
             const instanceData = [
                 cp.x - cp.size / 2, cp.y - cp.size / 2, 
                 cp.size, cp.size, 
-                srcX, 0, 
+                tex.isAtlas ? tex.atlasRegion.x + srcX : srcX, 
+                tex.isAtlas ? tex.atlasRegion.y : 0, 
                 frameWidth, sprite.height, 
                 0.0, 1.0, 0.0,
                 1.0, 1.0, 1.0, 1.0
@@ -454,7 +504,8 @@ export class Renderer {
             const instanceData = [
                 level.trophy.x - level.trophy.size / 2, level.trophy.y - level.trophy.size / 2, 
                 level.trophy.size, level.trophy.size, 
-                srcX, 0, 
+                tex.isAtlas ? tex.atlasRegion.x + srcX : srcX, 
+                tex.isAtlas ? tex.atlasRegion.y : 0, 
                 frameWidth, sprite.height, 
                 0.0, alpha, 0.0,
                 1.0, 1.0, 1.0, 1.0
@@ -465,7 +516,7 @@ export class Renderer {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.dynamicVBO);
         gl.bindVertexArray(this.dynamicVAO);
 
-        for (const [_, batch] of batches.entries()) {
+        for (const [key, batch] of batches.entries()) {
             const instanceCount = batch.instances.length / ATTRIBUTES_PER_INSTANCE;
             if (instanceCount === 0) continue;
 
@@ -473,9 +524,12 @@ export class Renderer {
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.dynamicInstanceData.subarray(0, batch.instances.length));
 
             gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, batch.texture.glTexture);
+            gl.bindTexture(gl.TEXTURE_2D, batch.glTexture);
             gl.uniform1i(this.sceneUniforms.texture, 0);
-            gl.uniform2f(this.sceneUniforms.texture_size, batch.texture.width, batch.texture.height);
+
+            const texW = batch.texture.isAtlas ? this.atlas.size : batch.texture.width;
+            const texH = batch.texture.isAtlas ? this.atlas.size : batch.texture.height;
+            gl.uniform2f(this.sceneUniforms.texture_size, texW, texH);
 
             gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, instanceCount);
         }
