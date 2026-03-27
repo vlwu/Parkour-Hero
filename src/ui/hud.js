@@ -41,6 +41,11 @@ export class HUD {
     this._lastMinimapSize = -1;
     this._lastFruitCount = -1;
 
+    // HUD Text Cache
+    this.textCacheCanvas = document.createElement('canvas');
+    this.textCacheCtx = this.textCacheCanvas.getContext('2d');
+    this._lastTextStatsStr = '';
+
     eventBus.subscribe('statsUpdated', (newStats) => this.updateStats(newStats));
   }
 
@@ -96,6 +101,30 @@ export class HUD {
     this._lastLevel = level;
     this._lastMinimapSize = this.settings.minimapSize;
     this._lastFruitCount = level ? level.collectedFruitCount : -1;
+  }
+
+  _updateTextCache(lines, hudX, hudY, hudWidth, hudHeight, fontOptions, lineHeight, startY, textX) {
+      // Size the cache canvas to hold the entire box exactly
+      this.textCacheCanvas.width = hudWidth;
+      this.textCacheCanvas.height = hudHeight;
+      const ctx = this.textCacheCtx;
+      
+      ctx.clearRect(0, 0, hudWidth, hudHeight);
+
+      // Draw Background Box
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.beginPath();
+      ctx.roundRect(0, 0, hudWidth, hudHeight, 10);
+      ctx.fill();
+
+      // We must translate coordinates to be relative to the cache canvas (0,0)
+      const localStartX = textX - hudX;
+      const localStartY = startY - hudY;
+
+      lines.forEach((text, index) => {
+        const y = localStartY + index * lineHeight;
+        this.fontRenderer.drawText(ctx, text, localStartX, y, fontOptions);
+      });
   }
 
   drawMinimap(ctx, camera, level, entityManager, playerEntityId) {
@@ -249,6 +278,9 @@ export class HUD {
         `Deaths: ${deathCount || 0}`,
         `Sound: ${soundEnabled ? 'On' : 'Off'} (${Math.round(soundVolume * 100)}%)`
       ];
+      
+      // Generate a string representation of the stats that affect the cached text
+      const currentStatsStr = lines.join('|');
 
       const fontOptions = {
           scale: 2.5,
@@ -258,33 +290,35 @@ export class HUD {
           outlineWidth: 1
       };
 
-      let maxWidth = 0;
-      lines.forEach(line => {
-        const width = this.fontRenderer.getTextWidth(line, fontOptions.scale);
-        if (width > maxWidth) {
-          maxWidth = width;
-        }
-      });
-
       const horizontalPadding = 40;
       const hudX = 10;
       const hudY = 10;
-      const hudWidth = maxWidth + horizontalPadding;
       const hudHeight = 160; 
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.beginPath();
-      ctx.roundRect(hudX, hudY, hudWidth, hudHeight, 10);
-      ctx.fill();
-
-      const lineHeight = 35;
-      const startY = hudY + 15;
-      const textX = hudX + hudWidth / 2;
-
-      lines.forEach((text, index) => {
-        const y = startY + index * lineHeight;
-        this.fontRenderer.drawText(ctx, text, textX, y, fontOptions);
-      });
+      let maxWidth = 0;
+      // Only recalculate widths and redraw cache if the stats have actually changed
+      if (currentStatsStr !== this._lastTextStatsStr) {
+          lines.forEach(line => {
+            const width = this.fontRenderer.getTextWidth(line, fontOptions.scale);
+            if (width > maxWidth) {
+              maxWidth = width;
+            }
+          });
+          
+          const hudWidth = maxWidth + horizontalPadding;
+          const lineHeight = 35;
+          const startY = hudY + 15;
+          const textX = hudX + hudWidth / 2;
+          
+          this._updateTextCache(lines, hudX, hudY, hudWidth, hudHeight, fontOptions, lineHeight, startY, textX);
+          this._lastTextStatsStr = currentStatsStr;
+      }
+      
+      // Draw the cached background and text
+      ctx.drawImage(this.textCacheCanvas, hudX, hudY);
+      
+      // We still need hudWidth for the coin display positioning
+      const hudWidth = this.textCacheCanvas.width;
       
       // HUD Coin Display
       this.coinTimer += dt;
