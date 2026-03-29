@@ -91,12 +91,14 @@ export class Renderer {
       this.ghostTrails.push({
           x: data.x,
           y: data.y,
+          vx: data.vx || 0,
+          vy: data.vy || 0,
           renderable: data.renderable,
           charComp: { characterId: data.charId },
           col: data.col,
-          maxLife: 0.3,
-          currentLife: 0.3,
-          color: [0.6, 0.2, 1.0, 0.6] // Semi-transparent Purple Phantom tint
+          maxLife: data.maxLife || 0.3,
+          currentLife: data.maxLife || 0.3,
+          color: data.color || [0.6, 0.2, 1.0, 0.6] // Semi-transparent Purple Phantom tint
       });
   }
 
@@ -323,6 +325,8 @@ export class Renderer {
       for (let i = this.ghostTrails.length - 1; i >= 0; i--) {
           const ghost = this.ghostTrails[i];
           ghost.currentLife -= dt;
+          ghost.x += ghost.vx * dt;
+          ghost.y += ghost.vy * dt;
           if (ghost.currentLife <= 0) {
               this.ghostTrails.splice(i, 1);
           }

@@ -146,6 +146,13 @@ export class ShopModal extends LitElement {
       const fxCanvas = this.shadowRoot.getElementById('preview-fx');
       if (!bgCanvas || !fxCanvas) return;
 
+      if (!this.tintCanvas) {
+          this.tintCanvas = document.createElement('canvas');
+          this.tintCanvas.width = 32;
+          this.tintCanvas.height = 32;
+          this.tintCtx = this.tintCanvas.getContext('2d');
+      }
+
       const gl = fxCanvas.getContext('webgl2', { alpha: true });
       if (!this.particleSystem) {
           this.particleSystem = new ParticleSystemWebGL(gl, this.assets);
@@ -157,6 +164,7 @@ export class ShopModal extends LitElement {
       let playerPos = { x: 75, y: 75 };
       let direction = 1;
       let particleTimer = 0;
+      let ghostTrails = [];
 
       const dummyCamera = {
           getProjectionMatrix: () => {
@@ -182,20 +190,41 @@ export class ShopModal extends LitElement {
           const charId = this.gameState?.selectedCharacter || 'PinkMan';
           const playerSprite = this.assets?.characters?.[charId]?.playerIdle;
 
+          for (let i = ghostTrails.length - 1; i >= 0; i--) {
+              const ghost = ghostTrails[i];
+              ghost.life -= dt;
+              ghost.x += ghost.vx * dt;
+              ghost.y += ghost.vy * dt;
+              if (ghost.life <= 0) {
+                  ghostTrails.splice(i, 1);
+              }
+          }
+
           if (this.activeTab === 'dash') {
               playerPos.x += direction * 200 * dt;
               if (playerPos.x > 120) direction = -1;
               if (playerPos.x < 30) direction = 1;
               
               particleTimer += dt;
-              if (particleTimer > 0.03) {
+              if (particleTimer > 0.06) {
                   particleTimer = 0;
                   if (this.previewedItem) {
-                      this.particleSystem.create({
-                          x: playerPos.x, y: playerPos.y,
-                          type: this.previewedItem,
-                          direction: direction === 1 ? 'right' : 'left'
-                      });
+                      if (this.previewedItem === 'phantom_dash') {
+                          ghostTrails.push({
+                              x: playerPos.x, y: playerPos.y,
+                              vx: 0, vy: 0,
+                              life: 0.3, maxLife: 0.3,
+                              dir: direction,
+                              frame: Math.floor(timestamp / 100) % 11,
+                              color: [153, 51, 255, 0.6]
+                          });
+                      } else {
+                          this.particleSystem.create({
+                              x: playerPos.x, y: playerPos.y,
+                              type: this.previewedItem,
+                              direction: direction === 1 ? 'right' : 'left'
+                          });
+                      }
                   }
               }
           } else if (this.activeTab === 'death') {
@@ -217,7 +246,16 @@ export class ShopModal extends LitElement {
                   this.particleSystem.create({ type: 'supercharge_aura', x: 75, y: 90 });
               } else if (this.previewedItem === 'shadow_aura' && particleTimer > 0.08) {
                   particleTimer = 0;
-                  this.particleSystem.create({ type: 'shadow_aura', x: 75, y: 75 });
+                  ghostTrails.push({
+                      x: playerPos.x + (Math.random() - 0.5) * 4,
+                      y: playerPos.y + (Math.random() - 0.5) * 4,
+                      vx: (Math.random() - 0.5) * 10,
+                      vy: -15,
+                      life: 0.5, maxLife: 0.5,
+                      dir: 1,
+                      frame: Math.floor(timestamp / 100) % 11,
+                      color: [25, 0, 51, 0.7]
+                  });
               } else if (this.previewedItem === 'orbiting_aura') {
                   if (particleTimer > 0.02) {
                       particleTimer = 0;
@@ -235,6 +273,27 @@ export class ShopModal extends LitElement {
                   playerPos = { x: 75, y: 75 + Math.sin(stateTime * 15) * 5 };
               } else {
                   playerPos = { x: 75, y: 75 + Math.sin(stateTime * 4) * 5 };
+              }
+          }
+
+          if (playerSprite) {
+              const frameWidth = playerSprite.width / 11;
+              for (const ghost of ghostTrails) {
+                  this.tintCtx.clearRect(0, 0, 32, 32);
+                  this.tintCtx.imageSmoothingEnabled = false;
+                  this.tintCtx.drawImage(playerSprite, ghost.frame * frameWidth, 0, frameWidth, playerSprite.height, 0, 0, 32, 32);
+                  this.tintCtx.globalCompositeOperation = 'source-in';
+                  this.tintCtx.fillStyle = `rgb(${ghost.color[0]}, ${ghost.color[1]}, ${ghost.color[2]})`;
+                  this.tintCtx.fillRect(0, 0, 32, 32);
+                  this.tintCtx.globalCompositeOperation = 'source-over';
+
+                  ctx.save();
+                  ctx.translate(ghost.x, ghost.y);
+                  if (ghost.dir === -1) ctx.scale(-1, 1);
+                  ctx.globalAlpha = (ghost.life / ghost.maxLife) * ghost.color[3];
+                  
+                  ctx.drawImage(this.tintCanvas, -16, -16);
+                  ctx.restore();
               }
           }
 

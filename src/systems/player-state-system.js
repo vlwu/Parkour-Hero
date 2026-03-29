@@ -93,7 +93,7 @@ export class PlayerStateSystem {
 
             this._updateAnimation(dt, entityId, entityManager);
             this._handleJumpTrail(dt, entityId, entityManager);
-            this._handleAura(dt, entityId, pos, col, ctrl, gameState);
+            this._handleAura(dt, entityId, pos, col, ctrl, gameState, entityManager);
 
             // Continuous Dash trail
             if (ctrl.isDashing && gameState && gameState.equippedCosmetics) {
@@ -135,7 +135,7 @@ export class PlayerStateSystem {
         }
     }
     
-    _handleAura(dt, entityId, pos, col, ctrl, gameState) {
+    _handleAura(dt, entityId, pos, col, ctrl, gameState, entityManager) {
         if (!ctrl.spawnComplete || ctrl.isSpawning || ctrl.isDespawning || ctrl.isHit || ctrl.isDead) return;
         if (!gameState || !gameState.equippedCosmetics) return;
         
@@ -147,7 +147,26 @@ export class PlayerStateSystem {
             eventBus.publish('createParticles', { type: 'supercharge_aura', x: pos.x + col.width/2, y: pos.y + col.height });
         } else if (equippedAura === 'shadow_aura' && ctrl.auraTimer > 0.08) {
             ctrl.auraTimer = 0;
-            eventBus.publish('createParticles', { type: 'shadow_aura', x: pos.x + col.width/2, y: pos.y + col.height/2 });
+            const renderable = entityManager.getComponent(entityId, RenderableComponent);
+            const charComp = entityManager.getComponent(entityId, CharacterComponent);
+            eventBus.publish(EVENTS.SPAWN_GHOST_TRAIL, {
+                x: pos.x + (Math.random() - 0.5) * 4,
+                y: pos.y + (Math.random() - 0.5) * 4,
+                vx: (Math.random() - 0.5) * 10,
+                vy: -15,
+                renderable: { 
+                    width: renderable.width,
+                    height: renderable.height,
+                    animationState: renderable.animationState,
+                    animationFrame: renderable.animationFrame,
+                    direction: renderable.direction,
+                    rotation: renderable.rotation
+                },
+                col: { width: col.width, height: col.height },
+                charId: charComp.characterId,
+                color: [0.1, 0.0, 0.2, 0.7],
+                maxLife: 0.5
+            });
         } else if (equippedAura === 'orbiting_aura') {
             const angle1 = performance.now() / 300;
             const angle2 = angle1 + Math.PI;

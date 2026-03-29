@@ -202,7 +202,6 @@ export class ParticleSystemWebGL {
             
             // Cosmetics - Dash Trails
             default_dash: { count: 8, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
-            phantom_dash: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.5, gravity: -10, color: [0.6, 0.2, 1.0, 0.8], size: 24 },
             rainbow_dash: { count: 3, baseSpeed: 50, spriteKey: 'dust_particle', life: 0.5, gravity: 20, behavior: 'rainbow' },
             leaf_dash: { count: 4, baseSpeed: 100, spriteKey: 'radish_leaves', life: 0.6, gravity: 30, size: 14 },
             
@@ -214,7 +213,6 @@ export class ParticleSystemWebGL {
 
             // Cosmetics - Auras
             supercharge_aura: { count: 1, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.5, gravity: -150, color: [1.0, 0.8, 0.1, 0.8], size: 16 },
-            shadow_aura: { count: 1, baseSpeed: 30, spriteKey: 'dust_particle', life: 0.8, gravity: -15, color: [0.1, 0.0, 0.2, 0.8], size: 18 },
             orbit_node: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.15, gravity: 0, color: [0.0, 1.0, 1.0, 1.0], size: 12 }
         };
 
