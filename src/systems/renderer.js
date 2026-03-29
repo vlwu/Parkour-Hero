@@ -4,7 +4,7 @@ import sceneFragmentShader from '../shaders/scene.frag?raw';
 import backgroundVertexShader from '../shaders/background.vert?raw';
 import backgroundFragmentShader from '../shaders/background.frag?raw';
 
-import { PLAYER_CONSTANTS, GRID_CONSTANTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, GRID_CONSTANTS, EVENTS } from '../utils/constants.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { PreviousPositionComponent } from '../components/PreviousPositionComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
@@ -15,6 +15,7 @@ import { EnemyComponent } from '../components/EnemyComponent.js';
 import { TILESET_CONFIG, TILESET_CONFIG_SPECIAL, SPECIAL_TILE_ID_OFFSET, getTileProperties } from '../entities/tile-definitions.js';
 import { CollisionComponent } from '../components/CollisionComponent.js';
 import { TrapComponent } from '../components/TrapComponent.js';
+import { eventBus } from '../utils/event-bus.js';
 
 const MAX_SPRITES_PER_BATCH = 5000;
 const ATTRIBUTES_PER_INSTANCE = 15; // Increased from 11 to 15 for 4-float color tint
@@ -37,6 +38,10 @@ export class Renderer {
     this.prevBackgroundOffset = { x: 0, y: 0 };
     this.currentLevel = null;
     this.atlas = null;
+    this.ghostTrails = [];
+
+    eventBus.subscribe(EVENTS.SPAWN_GHOST_TRAIL, (data) => this._onSpawnGhostTrail(data));
+    eventBus.subscribe(EVENTS.LEVEL_LOADED, () => { this.ghostTrails = []; });
 
     this.sceneProgram = createShaderProgram(gl, sceneVertexShader, sceneFragmentShader);
     this.backgroundProgram = createShaderProgram(gl, backgroundVertexShader, backgroundFragmentShader);
@@ -80,6 +85,19 @@ export class Renderer {
     this.dynamicInstanceData = new Float32Array(MAX_SPRITES_PER_BATCH * ATTRIBUTES_PER_INSTANCE);
 
     this.backgroundVAO = gl.createVertexArray();
+  }
+
+  _onSpawnGhostTrail(data) {
+      this.ghostTrails.push({
+          x: data.x,
+          y: data.y,
+          renderable: data.renderable,
+          charComp: { characterId: data.charId },
+          col: data.col,
+          maxLife: 0.3,
+          currentLife: 0.3,
+          color: [0.6, 0.2, 1.0, 0.6] // Semi-transparent Purple Phantom tint
+      });
   }
 
   _createTexture(image, wrap = false) {
@@ -302,6 +320,13 @@ export class Renderer {
           this.backgroundOffset.x += this.currentLevel.backgroundScroll.x * dt;
           this.backgroundOffset.y += this.currentLevel.backgroundScroll.y * dt;
       }
+      for (let i = this.ghostTrails.length - 1; i >= 0; i--) {
+          const ghost = this.ghostTrails[i];
+          ghost.currentLife -= dt;
+          if (ghost.currentLife <= 0) {
+              this.ghostTrails.splice(i, 1);
+          }
+      }
   }
 
   renderScene(camera, level, entityManager, alpha) {
@@ -358,6 +383,46 @@ export class Renderer {
             if (!batches.has(key)) batches.set(key, { texture: textureRef, glTexture: key, instances: [] });
             batches.get(key).instances.push(...instanceData);
         };
+
+        // Render Ghost Trails (drawn under the player)
+        for (const ghost of this.ghostTrails) {
+            let renderX = ghost.x;
+            let renderY = ghost.y;
+            const renderable = ghost.renderable;
+            const col = ghost.col;
+
+            let offsetX = (col.width - renderable.width) / 2;
+            let offsetY = (col.height - renderable.height);
+            renderX += offsetX;
+            renderY += offsetY;
+            
+            if (renderable.animationState === 'cling') {
+                const clingOffset = renderable.direction === 'left' ? -PLAYER_CONSTANTS.CLING_OFFSET : PLAYER_CONSTANTS.CLING_OFFSET;
+                renderX += clingOffset;
+            }
+
+            const spriteData = this._getPlayerSpriteData(renderable, ghost.charComp);
+            if (spriteData) {
+                const region = spriteData.texture.atlasRegion;
+                const srcX = region ? region.x + spriteData.sx : spriteData.sx;
+                const srcY = region ? region.y + spriteData.sy : spriteData.sy;
+                
+                const alphaRatio = ghost.currentLife / ghost.maxLife;
+                const finalAlpha = alphaRatio * ghost.color[3];
+                
+                const instanceData = [
+                    renderX, renderY, 
+                    renderable.width, renderable.height, 
+                    srcX, srcY, 
+                    spriteData.sw, spriteData.sh, 
+                    spriteData.isFlipped, 
+                    finalAlpha, 
+                    renderable.rotation || 0.0,
+                    ghost.color[0], ghost.color[1], ghost.color[2], 1.0
+                ];
+                addToBatch(spriteData.texture, instanceData);
+            }
+        }
 
         const entities = entityManager.query([PositionComponent, RenderableComponent, CollisionComponent]);
         for (const entityId of entities) {

@@ -7,6 +7,7 @@ import { CollisionComponent } from '../components/CollisionComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
+import { CharacterComponent } from '../components/CharacterComponent.js';
 
 import { SpawnState } from '../states/player/SpawnState.js';
 import { IdleState } from '../states/player/IdleState.js';
@@ -100,12 +101,31 @@ export class PlayerStateSystem {
                 if (ctrl.dashParticleTimer > 0.06) {
                     ctrl.dashParticleTimer = 0;
                     const renderable = entityManager.getComponent(entityId, RenderableComponent);
-                    eventBus.publish('createParticles', { 
-                        x: pos.x + col.width / 2, 
-                        y: pos.y + col.height / 2, 
-                        type: gameState.equippedCosmetics.dash, 
-                        direction: renderable.direction 
-                    });
+                    
+                    if (gameState.equippedCosmetics.dash === 'phantom_dash') {
+                        const charComp = entityManager.getComponent(entityId, CharacterComponent);
+                        eventBus.publish(EVENTS.SPAWN_GHOST_TRAIL, {
+                            x: pos.x,
+                            y: pos.y,
+                            renderable: { 
+                                width: renderable.width,
+                                height: renderable.height,
+                                animationState: renderable.animationState,
+                                animationFrame: renderable.animationFrame,
+                                direction: renderable.direction,
+                                rotation: renderable.rotation
+                            },
+                            col: { width: col.width, height: col.height },
+                            charId: charComp.characterId
+                        });
+                    } else {
+                        eventBus.publish('createParticles', { 
+                            x: pos.x + col.width / 2, 
+                            y: pos.y + col.height / 2, 
+                            type: gameState.equippedCosmetics.dash, 
+                            direction: renderable.direction 
+                        });
+                    }
                 }
             }
 

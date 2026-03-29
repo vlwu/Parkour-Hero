@@ -217,6 +217,7 @@ export const EVENTS = Object.freeze({
     CREATE_DAMAGE_INDICATOR: 'createDamageIndicator',
     CREATE_SLIME_PUDDLE: 'createSlimePuddle',
     QUICK_RESPAWN_REQUESTED: 'quickRespawnRequested',
+    SPAWN_GHOST_TRAIL: 'spawnGhostTrail',
 
     CAMERA_SHAKE_REQUESTED: 'cameraShakeRequested',
     KEYBINDS_UPDATED: 'keybindsUpdated',
