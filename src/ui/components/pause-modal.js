@@ -144,7 +144,7 @@ export class PauseModal extends LitElement {
               <img src="/assets/Menu/Buttons/Character.png" alt="Character">
             </button>
             <button class="modal-image-button" title="Cosmetics Shop" @click=${() => this._dispatchOpen('shop')}>
-              <img src="/assets/Menu/Buttons/Achievements.png" alt="Shop">
+              <img src="/assets/Menu/Buttons/Shop.png" alt="Shop">
             </button>
             <button class="modal-image-button" title="Settings" @click=${() => this._dispatchOpen('settings')}>
               <img src="/assets/Menu/Buttons/Settings.png" alt="Settings">

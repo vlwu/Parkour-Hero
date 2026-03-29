@@ -392,7 +392,7 @@ export class ParkourHeroUI extends LitElement {
     const iconButtons = [
         { id: 'levels', title: 'Levels', icon: 'Levels' },
         { id: 'character', title: 'Character', icon: 'Character' },
-        { id: 'shop', title: 'Shop', icon: 'Achievements' },
+        { id: 'shop', title: 'Shop', icon: 'Shop' },
         { id: 'settings', title: 'Settings', icon: 'Settings' },
         { id: 'info', title: 'How to Play', icon: 'Info' },
         { id: 'editor', title: 'Level Editor', icon: 'Editor' },
