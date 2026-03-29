@@ -97,7 +97,7 @@ export class PlayerStateSystem {
             // Continuous Dash trail
             if (ctrl.isDashing && gameState && gameState.equippedCosmetics) {
                 ctrl.dashParticleTimer = (ctrl.dashParticleTimer || 0) + dt;
-                if (ctrl.dashParticleTimer > 0.03) {
+                if (ctrl.dashParticleTimer > 0.06) {
                     ctrl.dashParticleTimer = 0;
                     const renderable = entityManager.getComponent(entityId, RenderableComponent);
                     eventBus.publish('createParticles', { 

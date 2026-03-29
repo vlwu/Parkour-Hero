@@ -179,7 +179,7 @@ export class ParticleSystemWebGL {
     create({ x, y, type, direction = 'right', particleSpeed = null, leafIndex = 0 }) {
         const particleConfigs = {
             // Gameplay default effects
-            dash: { count: 15, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
+            dash: { count: 8, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
             double_jump: { count: 12, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
             sand: { count: 4, baseSpeed: 30, spriteKey: 'sand_particle', life: 0.6, gravity: 120, size: 8 },
             mud: { count: 4, baseSpeed: 25, spriteKey: 'mud_particle', life: 0.7, gravity: 100, size: 8 },
@@ -201,7 +201,7 @@ export class ParticleSystemWebGL {
             trunk_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'trunk_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
             
             // Cosmetics - Dash Trails
-            default_dash: { count: 15, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
+            default_dash: { count: 8, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
             phantom_dash: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.5, gravity: -10, color: [0.6, 0.2, 1.0, 0.8], size: 24 },
             rainbow_dash: { count: 3, baseSpeed: 50, spriteKey: 'dust_particle', life: 0.5, gravity: 20, behavior: 'rainbow' },
             leaf_dash: { count: 4, baseSpeed: 100, spriteKey: 'radish_leaves', life: 0.6, gravity: 30, size: 14 },
