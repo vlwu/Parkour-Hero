@@ -269,5 +269,11 @@ export const COSMETICS = {
         { id: 'supercharge_aura', name: 'Supercharge', cost: 150 },
         { id: 'shadow_aura', name: 'Shadow', cost: 150 },
         { id: 'orbiting_aura', name: 'Orbiting', cost: 200 }
+    ],
+    mutator: [
+        { id: 'default_mutator', name: 'None', cost: 0 },
+        { id: 'featherweight_mutator', name: 'Featherweight', cost: 200 },
+        { id: 'overclock_mutator', name: 'Overclock', cost: 250 },
+        { id: 'pacifist_mutator', name: 'Pacifist', cost: 300 }
     ]
 };

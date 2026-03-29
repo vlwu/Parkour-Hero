@@ -129,7 +129,7 @@ export class CollisionSystem {
     }
 
 
-    update(dt, { entityManager, level }) {
+    update(dt, { entityManager, level, gameState }) {
         if (level !== this.currentLevel) {
             this._initializeGridForLevel(level, entityManager);
         }
@@ -259,7 +259,9 @@ export class CollisionSystem {
                     const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
 
-                    if (vel.vy > 0 && prevBodyBottom <= collider.y + 5 && !enemy.isDead && killable?.stompable) {
+                    const isPacifist = gameState?.equippedCosmetics?.mutator === 'pacifist_mutator';
+
+                    if (!isPacifist && vel.vy > 0 && prevBodyBottom <= collider.y + 5 && !enemy.isDead && killable?.stompable) {
                         eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });
                         pos.y = collider.y - col.height;
                         vel.vy = 0;

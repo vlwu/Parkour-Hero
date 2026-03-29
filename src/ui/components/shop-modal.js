@@ -66,8 +66,8 @@ export class ShopModal extends LitElement {
     }
     .tab-button {
         background-color: #444; border: 2px solid #666; color: white;
-        padding: 10px 20px; border-radius: 8px; cursor: pointer;
-        transition: all 0.2s; flex: 1; max-width: 200px;
+        padding: 10px 5px; border-radius: 8px; cursor: pointer;
+        transition: all 0.2s; flex: 1; max-width: none;
     }
     .tab-button.active { background-color: #007bff; border-color: #0056b3; }
     .tab-button:hover:not(.active) { background-color: #555; }
@@ -228,6 +228,14 @@ export class ShopModal extends LitElement {
                       this.particleSystem.create({ type: 'orbit_node', x: 75 + Math.cos(angle2)*radius, y: 75 + Math.sin(angle2)*radius });
                   }
               }
+          } else if (this.activeTab === 'mutator') {
+              if (this.previewedItem === 'featherweight_mutator') {
+                  playerPos = { x: 75, y: 75 + Math.sin(stateTime * 6) * 15 };
+              } else if (this.previewedItem === 'overclock_mutator') {
+                  playerPos = { x: 75, y: 75 + Math.sin(stateTime * 15) * 5 };
+              } else {
+                  playerPos = { x: 75, y: 75 + Math.sin(stateTime * 4) * 5 };
+              }
           }
 
           if (drawPlayer && playerSprite) {
@@ -326,6 +334,9 @@ export class ShopModal extends LitElement {
                       </button>
                       <button class="tab-button ${this.activeTab === 'aura' ? 'active' : ''}" @click=${() => { this.activeTab = 'aura'; eventBus.publish('playSound', {key:'button_click', volume:0.5, channel:'UI'}); }}>
                           <bitmap-text .fontRenderer=${this.fontRenderer} text="Auras" scale="1.5"></bitmap-text>
+                      </button>
+                      <button class="tab-button ${this.activeTab === 'mutator' ? 'active' : ''}" @click=${() => { this.activeTab = 'mutator'; eventBus.publish('playSound', {key:'button_click', volume:0.5, channel:'UI'}); }}>
+                          <bitmap-text .fontRenderer=${this.fontRenderer} text="Mutators" scale="1.5"></bitmap-text>
                       </button>
                   </div>
 

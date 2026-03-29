@@ -8,8 +8,8 @@ export class StorageManager {
             levelStats: {},
             tutorialShown: false,
             fruitCoins: 0,
-            unlockedCosmetics: ['default_dash', 'default_death', 'default_aura'],
-            equippedCosmetics: { dash: 'default_dash', death: 'default_death', aura: 'default_aura' }
+            unlockedCosmetics: ['default_dash', 'default_death', 'default_aura', 'default_mutator'],
+            equippedCosmetics: { dash: 'default_dash', death: 'default_death', aura: 'default_aura', mutator: 'default_mutator' }
         };
     }
 
@@ -64,10 +64,15 @@ export class StorageManager {
                 state.fruitCoins = 0;
             }
             if (!Array.isArray(state.unlockedCosmetics)) {
-                state.unlockedCosmetics = ['default_dash', 'default_death', 'default_aura'];
+                state.unlockedCosmetics = ['default_dash', 'default_death', 'default_aura', 'default_mutator'];
+            } else if (!state.unlockedCosmetics.includes('default_mutator')) {
+                state.unlockedCosmetics.push('default_mutator');
             }
+            
             if (!state.equippedCosmetics || typeof state.equippedCosmetics !== 'object') {
-                state.equippedCosmetics = { dash: 'default_dash', death: 'default_death', aura: 'default_aura' };
+                state.equippedCosmetics = { dash: 'default_dash', death: 'default_death', aura: 'default_aura', mutator: 'default_mutator' };
+            } else if (!state.equippedCosmetics.mutator) {
+                state.equippedCosmetics.mutator = 'default_mutator';
             }
 
             return state;

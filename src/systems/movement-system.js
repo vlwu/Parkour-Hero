@@ -13,7 +13,7 @@ export class MovementSystem {
         this._deltaVector = { dx: 0, dy: 0 };
     }
 
-    update(dt, { entityManager }) {
+    update(dt, { entityManager, gameState }) {
         const entities = entityManager.query([PlayerControlledComponent, VelocityComponent, CollisionComponent, InputComponent, PositionComponent, StateComponent]);
 
         for (const entityId of entities) {
@@ -35,7 +35,7 @@ export class MovementSystem {
             }
 
             this._applyHorizontalMovement(dt, input, vel, col, ctrl);
-            this._applyVerticalMovement(dt, vel, col, ctrl, state);
+            this._applyVerticalMovement(dt, vel, col, ctrl, state, gameState);
             this._applyStickyPlatformMovement(pos, col);
             this._updateSurfaceEffects(dt, pos, vel, col, ctrl, entityId, entityManager);
 
@@ -100,7 +100,7 @@ export class MovementSystem {
         }
     }
 
-    _applyVerticalMovement(dt, vel, col, ctrl, state) {
+    _applyVerticalMovement(dt, vel, col, ctrl, state, gameState) {
         if (ctrl.isInMud && vel.vy >= 0) {
             vel.vy = 0;
             return;
@@ -108,12 +108,17 @@ export class MovementSystem {
 
         const onMovingPlatform = col.isGrounded && col.groundEntity && (col.groundEntity.type === 'brown_platform' || col.groundEntity.type === 'grey_platform');
 
+        let gravityMult = 1.0;
+        if (gameState?.equippedCosmetics?.mutator === 'featherweight_mutator') {
+            gravityMult = 0.7;
+        }
+
         if (onMovingPlatform) {
             if (vel.vy > 0) {
                 vel.vy = 0;
             }
         } else if (!col.isGrounded && !ctrl.isDashing && !ctrl.isSpawning) {
-            vel.vy += PLAYER_CONSTANTS.GRAVITY * dt;
+            vel.vy += PLAYER_CONSTANTS.GRAVITY * gravityMult * dt;
         }
 
         if (state && state.currentState === 'cling') {

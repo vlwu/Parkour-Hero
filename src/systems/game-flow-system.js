@@ -30,10 +30,15 @@ export class GameFlowSystem {
         if (playerCtrl.despawnAnimationFinished && !gameState.showingLevelComplete) {
             playerCtrl.despawnAnimationFinished = false;
 
+            let coinMultiplier = 1;
+            if (gameState?.equippedCosmetics?.mutator === 'pacifist_mutator') {
+                coinMultiplier = 2;
+            }
+
             const runStats = {
                 deaths: playerCtrl.deathCount,
                 time: this.levelTime,
-                fruitsCollected: level.collectedCoins !== undefined ? level.collectedCoins : level.collectedFruitCount
+                fruitsCollected: (level.collectedCoins !== undefined ? level.collectedCoins : level.collectedFruitCount) * coinMultiplier
             };
 
             const levelId = `${gameState.currentSection}-${gameState.currentLevelIndex}`;

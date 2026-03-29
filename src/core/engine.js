@@ -173,13 +173,18 @@ export class Engine {
 
     this.accumulator += deltaTime;
 
-    while (this.accumulator >= FIXED_DT) {
-        const effectiveDeltaTime = FIXED_DT * this.timeScale;
-        this.update(effectiveDeltaTime);
-        this.accumulator -= FIXED_DT;
+    let targetDt = FIXED_DT;
+    if (this.gameState?.equippedCosmetics?.mutator === 'overclock_mutator') {
+        targetDt = FIXED_DT / 1.25;
     }
 
-    const alpha = this.accumulator / FIXED_DT;
+    while (this.accumulator >= targetDt) {
+        const effectiveDeltaTime = FIXED_DT * this.timeScale;
+        this.update(effectiveDeltaTime);
+        this.accumulator -= targetDt;
+    }
+
+    const alpha = this.accumulator / targetDt;
     this.render(alpha, renderDeltaTime);
 
     requestAnimationFrame((time) => this.gameLoop(time));

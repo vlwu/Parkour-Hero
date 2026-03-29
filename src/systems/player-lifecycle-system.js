@@ -116,12 +116,18 @@ export class PlayerLifecycleSystem {
             const health = entityManager.getComponent(playerEntityId, HealthComponent);
             const playerCtrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);
             if (health && playerCtrl && !playerCtrl.isHit && !playerCtrl.needsRespawn && !playerCtrl.isDead) {
-                health.currentHealth = Math.max(0, health.currentHealth - amount);
+                
+                let finalAmount = amount;
+                if (gameState?.equippedCosmetics?.mutator === 'featherweight_mutator') {
+                    finalAmount *= 2;
+                }
+
+                health.currentHealth = Math.max(0, health.currentHealth - finalAmount);
                 const pos = entityManager.getComponent(playerEntityId, PositionComponent);
                 const col = entityManager.getComponent(playerEntityId, CollisionComponent);
                 if (pos && col) {
                     eventBus.publish(EVENTS.CREATE_DAMAGE_INDICATOR, {
-                        amount,
+                        amount: finalAmount,
                         x: pos.x + col.width / 2,
                         y: pos.y
                     });

@@ -40,8 +40,15 @@ export class GameState {
             this.tutorialShown = initialState.tutorialShown;
             this.newlyUnlockedCharacter = initialState.newlyUnlockedCharacter;
             this.fruitCoins = initialState.fruitCoins || 0;
-            this.unlockedCosmetics = initialState.unlockedCosmetics || ['default_dash', 'default_death', 'default_aura'];
-            this.equippedCosmetics = initialState.equippedCosmetics || { dash: 'default_dash', death: 'default_death', aura: 'default_aura' };
+            this.unlockedCosmetics = initialState.unlockedCosmetics || ['default_dash', 'default_death', 'default_aura', 'default_mutator'];
+            this.equippedCosmetics = initialState.equippedCosmetics || { dash: 'default_dash', death: 'default_death', aura: 'default_aura', mutator: 'default_mutator' };
+            
+            if (!this.unlockedCosmetics.includes('default_mutator')) {
+                this.unlockedCosmetics.push('default_mutator');
+            }
+            if (!this.equippedCosmetics.mutator) {
+                this.equippedCosmetics.mutator = 'default_mutator';
+            }
         } else {
             this.showingLevelComplete = false;
             this.levelProgress = { unlockedLevels: [1], completedLevels: [] };
@@ -52,8 +59,8 @@ export class GameState {
             this.currentSection = 0;
             this.currentLevelIndex = 0;
             this.fruitCoins = 0;
-            this.unlockedCosmetics = ['default_dash', 'default_death', 'default_aura'];
-            this.equippedCosmetics = { dash: 'default_dash', death: 'default_death', aura: 'default_aura' };
+            this.unlockedCosmetics = ['default_dash', 'default_death', 'default_aura', 'default_mutator'];
+            this.equippedCosmetics = { dash: 'default_dash', death: 'default_death', aura: 'default_aura', mutator: 'default_mutator' };
             this.ensureStatsForAllLevels();
         }
     }
