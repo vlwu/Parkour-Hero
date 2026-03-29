@@ -97,7 +97,7 @@ export class SoundManager {
     }
   }
 
-  async play({ key, volumeMultiplier = 1.0, channel = 'SFX' }) {
+  async play({ key, volumeMultiplier = 1.0, channel = 'SFX', playbackRate = 1.0 }) {
     if (!this.settings.enabled || !this.sounds[key] || !this.activeSources[channel]) {
       return;
     }
@@ -110,6 +110,7 @@ export class SoundManager {
     try {
         const source = this.audioContext.createBufferSource();
         source.buffer = this.sounds[key];
+        source.playbackRate.value = playbackRate;
 
         const gainNode = this.audioContext.createGain();
         gainNode.gain.value = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));
@@ -130,7 +131,7 @@ export class SoundManager {
     }
   }
 
-  async playLoop({ key, volumeMultiplier = 1.0, channel = 'SFX' }) {
+  async playLoop({ key, volumeMultiplier = 1.0, channel = 'SFX', playbackRate = 1.0 }) {
     if (!this.settings.enabled || !this.sounds[key] || !this.activeSources[channel]) return;
     if (this.loopingSources.has(key)) return;
 
@@ -141,6 +142,7 @@ export class SoundManager {
         const source = this.audioContext.createBufferSource();
         source.buffer = this.sounds[key];
         source.loop = true;
+        source.playbackRate.value = playbackRate;
 
         const gainNode = this.audioContext.createGain();
         gainNode.gain.value = Math.max(0, Math.min(1, this.settings.volume * volumeMultiplier));

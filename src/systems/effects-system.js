@@ -35,7 +35,7 @@ export class EffectsSystem {
         this.activeEffects.push(effect);
     }
 
-    _onDamageTaken({ amount, x, y }) {
+    _onDamageTaken({ amount, x, y, text, color }) {
         let indicator;
         if (this.indicatorPool.length > 0) {
             indicator = this.indicatorPool.pop();
@@ -43,13 +43,14 @@ export class EffectsSystem {
             indicator = {};
         }
 
-        indicator.text = `-${Math.round(amount)}`;
+        indicator.text = text !== undefined ? text : `-${Math.round(amount)}`;
         indicator.x = x;
         indicator.y = y;
         indicator.life = 0.4;
         indicator.maxLife = 0.4;
         indicator.alpha = 1.0;
         indicator.driftSpeed = -50;
+        indicator.color = color || '#ff0000';
 
         this.damageIndicators.push(indicator);
     }
@@ -128,16 +129,18 @@ export class EffectsSystem {
         if (this.fontRenderer) {
             if (this.damageIndicators.length > 0) {
                 this.damageIndicators.forEach(indicator => {
-                    const color = `rgba(255, 0, 0, ${indicator.alpha})`;
-                    const outlineColor = `rgba(0, 0, 0, ${indicator.alpha})`;
+                    ctx.save();
+                    ctx.globalAlpha = indicator.alpha;
 
                     this.fontRenderer.drawText(ctx, indicator.text, indicator.x, indicator.y, {
                         scale: 1.5,
                         align: 'center',
-                        color: color,
-                        outlineColor: outlineColor,
+                        color: indicator.color,
+                        outlineColor: '#000000',
                         outlineWidth: 1
                     });
+
+                    ctx.restore();
                 });
             }
 

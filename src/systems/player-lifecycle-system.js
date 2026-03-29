@@ -16,12 +16,16 @@ export class PlayerLifecycleSystem {
     constructor() {
         this.lastCheckpoint = null;
         this.fruitsAtLastCheckpoint = new Set();
+        this.coinsAtLastCheckpoint = 0;
         
         this.damageQueue = [];
         this.diedQueue = [];
         this.checkpointQueue = [];
         this.fruitQueue = [];
         this.quickRespawnQueue = [];
+
+        this.comboCounter = 0;
+        this.comboTimer = 0;
         
         eventBus.subscribe(EVENTS.PLAYER_TOOK_DAMAGE, (data) => this.damageQueue.push(data));
         eventBus.subscribe(EVENTS.PLAYER_DIED, () => this.diedQueue.push({}));
@@ -33,16 +37,28 @@ export class PlayerLifecycleSystem {
     reset() {
         this.lastCheckpoint = null;
         this.fruitsAtLastCheckpoint.clear();
+        this.coinsAtLastCheckpoint = 0;
         this.damageQueue = [];
         this.diedQueue = [];
         this.checkpointQueue = [];
         this.fruitQueue = [];
         this.quickRespawnQueue = [];
+
+        this.comboCounter = 0;
+        this.comboTimer = 0;
     }
     
     update(dt, context) {
         const { entityManager, playerEntityId, camera, level, gameState, isRunning, collisionSystem } = context;
         if (!isRunning) return;
+
+        // Process Combo Timer
+        if (this.comboTimer > 0) {
+            this.comboTimer -= dt;
+            if (this.comboTimer <= 0) {
+                this.comboCounter = 0;
+            }
+        }
 
         // Process Quick Respawn
         for (const _ of this.quickRespawnQueue) {
@@ -56,8 +72,26 @@ export class PlayerLifecycleSystem {
 
         // Process Fruits
         for (const fruit of this.fruitQueue) {
+            this.comboCounter++;
+            this.comboTimer = 2.0;
+
+            const comboReward = 1 * this.comboCounter;
+            level.collectedCoins = (level.collectedCoins || 0) + comboReward;
+
             level.collectFruit(fruit);
-            eventBus.publish(EVENTS.PLAY_SOUND, { key: 'collect', volume: 0.8, channel: 'SFX' });
+
+            const pRate = 1.0 + (this.comboCounter - 1) * 0.05;
+            eventBus.publish(EVENTS.PLAY_SOUND, { key: 'collect', volume: 0.8, channel: 'SFX', playbackRate: pRate });
+
+            if (this.comboCounter > 1) {
+                eventBus.publish(EVENTS.CREATE_DAMAGE_INDICATOR, {
+                    x: fruit.x,
+                    y: fruit.y - 20,
+                    text: `x${this.comboCounter}`,
+                    color: '#FFD700'
+                });
+            }
+
             const health = entityManager.getComponent(playerEntityId, HealthComponent);
             if (health && health.currentHealth < health.maxHealth) {
                 health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 10);
@@ -72,6 +106,7 @@ export class PlayerLifecycleSystem {
             eventBus.publish(EVENTS.PLAY_SOUND, { key: 'checkpoint_activated', volume: 1, channel: 'UI' });
             this.fruitsAtLastCheckpoint.clear();
             level.fruits.forEach((fruit, index) => { if (fruit.collected) this.fruitsAtLastCheckpoint.add(index); });
+            this.coinsAtLastCheckpoint = level.collectedCoins || 0;
             level.checkpoints.forEach(otherCp => { if (otherCp !== cp && otherCp.state === 'active') { otherCp.state = 'inactive'; otherCp.frame = 0; } });
         }
         this.checkpointQueue = [];
@@ -156,10 +191,18 @@ export class PlayerLifecycleSystem {
         const { entityManager, playerEntityId, level, camera, collisionSystem } = context;
         
         const respawnPosition = this.lastCheckpoint || level.startPosition;
-        if (this.lastCheckpoint) level.fruits.forEach((fruit, index) => fruit.collected = this.fruitsAtLastCheckpoint.has(index));
-        else level.fruits.forEach(f => f.collected = false);
+        if (this.lastCheckpoint) {
+            level.fruits.forEach((fruit, index) => fruit.collected = this.fruitsAtLastCheckpoint.has(index));
+            level.collectedCoins = this.coinsAtLastCheckpoint;
+        } else {
+            level.fruits.forEach(f => f.collected = false);
+            level.collectedCoins = 0;
+        }
         level.recalculateCollectedFruits();
         
+        this.comboCounter = 0;
+        this.comboTimer = 0;
+
         eventBus.publish('resetEffects');
         
         if (level.trophy) {

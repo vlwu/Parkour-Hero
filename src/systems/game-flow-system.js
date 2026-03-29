@@ -33,7 +33,7 @@ export class GameFlowSystem {
             const runStats = {
                 deaths: playerCtrl.deathCount,
                 time: this.levelTime,
-                fruitsCollected: level.collectedFruitCount
+                fruitsCollected: level.collectedCoins !== undefined ? level.collectedCoins : level.collectedFruitCount
             };
 
             const levelId = `${gameState.currentSection}-${gameState.currentLevelIndex}`;
