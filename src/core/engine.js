@@ -198,7 +198,7 @@ export class Engine {
       this.entityManager = new EntityManager();
       this.inputSystem.entityManager = this.entityManager;
       this.playerLifecycleSystem.reset();
-      this.gameFlowSystem.reset(this.isRunning);
+      this.gameFlowSystem.reset();
   }
 
   initiateLevelLoad(sectionIndex, levelIndex) {
@@ -371,6 +371,5 @@ export class Engine {
       this.inputSystem.destroy();
       this.uiSystem.destroy();
       this.soundManager.destroy();
-      console.log("Engine destroyed and listeners cleaned up.");
   }
 }

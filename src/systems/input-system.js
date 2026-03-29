@@ -67,7 +67,7 @@ export class InputSystem {
     this.queue.push({ key, type: 'up' });
   }
 
-  update(dt, { keybinds, isRunning, gameState }) {
+  update(_dt, { keybinds, isRunning, gameState }) {
     const canProcessGameplayInput = isRunning && !gameState.showingLevelComplete;
 
     const entities = this.entityManager.query([PlayerControlledComponent, InputComponent]);

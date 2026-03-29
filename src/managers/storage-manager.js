@@ -106,7 +106,6 @@ export class StorageManager {
             } else {
                 localStorage.removeItem('parkourGameState');
             }
-            console.log("Game progress has been reset.");
         } catch (e) {
             console.error("Failed to reset game state in storage", e);
         }

@@ -201,7 +201,7 @@ class EditorApp {
 
         this.context.toolManager.activeTool?.drawPreview(deltaTime);
 
-        if (state.currentTool.type === 'eraser' && state.pastePreview) {
+        if (state.currentTool.type === 'eraser' && state.eraserPreview) {
             this._drawEraserCursor();
         }
         if (state.currentTool.type === 'paste' && state.pastePreview) {
@@ -216,8 +216,8 @@ class EditorApp {
         const ctx = grid.overlayCtx;
         const size = state.eraserSize * TILE_SIZE;
         const brushRadius = Math.floor(state.eraserSize / 2);
-        const x = (state.pastePreview.gridX - brushRadius) * TILE_SIZE;
-        const y = (state.pastePreview.gridY - brushRadius) * TILE_SIZE;
+        const x = (state.eraserPreview.gridX - brushRadius) * TILE_SIZE;
+        const y = (state.eraserPreview.gridY - brushRadius) * TILE_SIZE;
         ctx.strokeStyle = 'rgba(231, 76, 60, 0.8)';
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, size, size);

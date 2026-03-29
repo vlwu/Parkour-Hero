@@ -146,7 +146,6 @@ export class ObjectManager {
         }
 
         this._applySnapping(newObject);
-        this._updateGroundedEnemyBehavior(newObject);
 
         newObject.x = round(newObject.x);
         newObject.y = round(newObject.y);
@@ -293,29 +292,6 @@ export class ObjectManager {
                 return;
             }
         }
-    }
-
-    _updateGroundedEnemyBehavior(enemyObj) {
-
-        const fullSnapTypes = [];
-        if (!fullSnapTypes.includes(enemyObj.type)) return;
-
-        const TILE_SIZE = GRID_CONSTANTS.TILE_SIZE;
-        const platformGridY = Math.floor(enemyObj.y + (enemyObj.height / 2 / TILE_SIZE));
-        const startGridX = Math.floor(enemyObj.x);
-
-        if (!this.grid.isTileSolid(startGridX, platformGridY)) return;
-
-        let leftBound = startGridX;
-        while (leftBound > 0 && this.grid.isTileSolid(leftBound - 1, platformGridY)) { leftBound--; }
-
-        let rightBound = startGridX;
-        while (rightBound < this.grid.width - 1 && this.grid.isTileSolid(rightBound + 1, platformGridY)) { rightBound++; }
-
-        const platformWidthInPixels = (rightBound - leftBound + 1) * TILE_SIZE;
-        const platformCenterPixels = (leftBound * TILE_SIZE) + (platformWidthInPixels / 2);
-
-        enemyObj.x = platformCenterPixels / TILE_SIZE;
     }
 
     _getObjectDimensions(type) {

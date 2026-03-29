@@ -44,7 +44,6 @@ export class LevelManager {
                 }
                 
                 eventBus.publish('gameStateUpdated', this.gameState._clone());
-                console.log(`DIY Level at index ${levelIndex} deleted.`);
             }
         }
     } catch (e) {

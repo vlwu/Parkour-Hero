@@ -9,7 +9,7 @@ export class GameFlowSystem {
         this.levelTime = 0;
     }
 
-    reset(isRunning) {
+    reset() {
         this.levelTime = 0;
     }
 

@@ -62,8 +62,6 @@ export class UISystem {
         }
     }
 
-    update() {}
-
     render(ctx, isRunning) {
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);

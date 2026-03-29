@@ -4,9 +4,6 @@ import { ENEMY_DEFINITIONS } from '../../entities/enemy-definitions.js';
 import { DOM } from '../ui/DOM.js';
 
 export class EditorView {
-    constructor() {
-
-    }
 
     renderObjects(objects) {
         DOM.gridContainer.querySelectorAll('.dynamic-object, .chain-link-visual, .trap-path-visual').forEach(el => el.remove());

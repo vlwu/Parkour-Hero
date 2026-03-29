@@ -49,11 +49,6 @@ export class Camera {
 
     this.projectionMatrix = new Float32Array(16);
 
-    console.log('Camera initialized:', {
-      viewport: `${this.viewportWidth}x${this.viewportHeight}`,
-      zoom: this.zoom,
-      worldView: `${this.width}x${this.height}`
-    });
   }
 
   update(entityManager, playerEntityId, deltaTime) {
@@ -228,6 +223,4 @@ export class Camera {
 
   isVisible(worldX, worldY, width = 0, height = 0) { return (worldX + width > this.x && worldX < this.x + this.width && worldY + height > this.y && worldY < this.y + this.height); }
   isRectVisible(rect) { return this.isVisible(rect.x, rect.y, rect.width, rect.height); }
-  setFollowSpeed(speed) { this.followSpeed = Math.max(0.1, speed); }
-  setDeadZone(xPercent, yPercent) { this.deadZone.x = this.width * Math.max(0, Math.min(0.5, xPercent)); this.deadZone.y = this.height * Math.max(0, Math.min(0.5, yPercent)); }
 }

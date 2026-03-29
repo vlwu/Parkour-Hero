@@ -21,10 +21,6 @@ export class SelectionManager {
         DOM.selectionActions.style.display = 'flex';
     }
 
-    onSelectionEnd() {
-        // Future logic for finalizing selection might go here.
-    }
-
     clearSelection() {
         this.context.state.selection = null;
         DOM.selectionActions.style.display = 'none';

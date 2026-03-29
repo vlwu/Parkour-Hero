@@ -151,16 +151,13 @@ class AssetManager {
     }
 
     async loadCoreAssets() {
-        console.log("Loading core assets...");
         await this._fetchManifest();
         await this._loadAssetGroup(this.manifest.coreImages, this.manifest.coreSounds, this.manifest.characters);
-        console.log("Core assets loaded.");
         return this.assets;
     }
 
     async loadGameplayAssets() {
         if (this.gameplayAssetsLoaded) return;
-        console.log("Loading gameplay assets for the first time...");
         await this._fetchManifest();
 
         const dynamicImagePaths = { ...this.manifest.gameplayImages, ...TILESET_ASSETS };
@@ -173,7 +170,6 @@ class AssetManager {
 
         await this._loadAssetGroup(dynamicImagePaths, this.manifest.gameplaySounds);
         this.gameplayAssetsLoaded = true;
-        console.log("Gameplay assets loaded.");
     }
 }
 

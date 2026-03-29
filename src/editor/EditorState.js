@@ -6,6 +6,7 @@ export class EditorState {
         this.selection = null;
         this.clipboard = null;
         this.pastePreview = null;
+        this.eraserPreview = null;
         
         // Properties for moving a selection
         this.isDraggingSelection = false;

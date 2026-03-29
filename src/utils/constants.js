@@ -84,8 +84,6 @@ export const DIRECTIONS = Object.freeze({
     DOWN: 'down',
     LEFT: 'left',
     RIGHT: 'right',
-    HORIZONTAL: 'horizontal',
-    VERTICAL: 'vertical'
 });
 
 export const AI_TYPES = Object.freeze({

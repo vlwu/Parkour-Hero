@@ -16,7 +16,7 @@ export class EraserTool extends Tool {
     }
 
     deactivate() {
-        this.state.pastePreview = null;
+        this.state.eraserPreview = null;
     }
 
     onMouseDown(e, coords) {
@@ -54,8 +54,8 @@ export class EraserTool extends Tool {
         this.currentEraseAction = null;
     }
 
-    onHover(e, { gridX, gridY }) {
-        this.state.pastePreview = { gridX, gridY };
+    onHover(_, { gridX, gridY }) {
+        this.state.eraserPreview = { gridX, gridY };
     }
 
     _erase(e, { gridX, gridY }) {

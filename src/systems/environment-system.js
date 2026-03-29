@@ -6,7 +6,7 @@ import { GRID_CONSTANTS } from '../utils/constants.js';
 import { eventBus } from '../utils/event-bus.js';
 
 export class EnvironmentSystem {
-    update(dt, { entityManager, level }) {
+    update(_dt, { entityManager, level }) {
         const entities = entityManager.query([PositionComponent, VelocityComponent, CollisionComponent, PlayerControlledComponent]);
 
         for (const entityId of entities) {

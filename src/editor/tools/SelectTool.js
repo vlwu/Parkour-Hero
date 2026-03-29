@@ -79,7 +79,6 @@ export class SelectTool extends Tool {
             this._endDrag();
         }
         if (this.isCreatingSelection) {
-            this.context.selectionManager.onSelectionEnd();
         }
         this.isDraggingObject = false;
         this.isCreatingSelection = false;
@@ -152,7 +151,6 @@ export class SelectTool extends Tool {
         if (!obj) return;
 
         this.objectManager._applySnapping(obj);
-        this.objectManager._updateGroundedEnemyBehavior(obj);
 
         const finalX = round(obj.x);
         const finalY = round(obj.y);

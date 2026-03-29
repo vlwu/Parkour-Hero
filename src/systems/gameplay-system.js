@@ -40,7 +40,7 @@ export class GameplaySystem {
         }
     }
 
-    update(dt, { entityManager }) {
+    update(_dt, { entityManager }) {
         for (const e of this.collisionEvents) {
             this.handleCollision(e, entityManager);
         }

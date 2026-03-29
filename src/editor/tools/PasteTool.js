@@ -60,7 +60,7 @@ export class PasteTool extends Tool {
         this.objectManager.render();
     }
 
-    onHover(e, { gridX, gridY }) {
+    onHover(_, { gridX, gridY }) {
         this.state.pastePreview = { gridX, gridY };
     }
 }

@@ -182,9 +182,4 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
 });
 
-console.log('Game initialization started');
-console.log('Canvas dimensions:', gameCanvas.width, 'x', gameCanvas.height);
-console.log('Device pixel ratio:', window.devicePixelRatio);
-console.log('User agent:', navigator.userAgent);
-
 initGame();
