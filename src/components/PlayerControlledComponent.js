@@ -24,6 +24,12 @@ export class PlayerControlledComponent {
         this.ignoreSurfaceEffects = stats.ignoreSurfaceEffects || false;
         this.detectTraps = stats.detectTraps || false;
 
+        // Stat Modifiers for Mutators
+        this.gravityMult = stats.gravityMult ?? 1.0;
+        this.damageTakenMult = stats.damageTakenMult ?? 1.0;
+        this.coinMultiplier = stats.coinMultiplier ?? 1.0;
+        this.pacifist = stats.pacifist ?? false;
+
         this.currentDashCount = 0;
 
         // State

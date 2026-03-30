@@ -1,4 +1,4 @@
-import { PLAYER_CONSTANTS, EVENTS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, EVENTS, COSMETICS } from '../utils/constants.js';
 import { eventBus } from '../utils/event-bus.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { PositionComponent } from '../components/PositionComponent.js';
@@ -8,6 +8,7 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { StateComponent } from '../components/StateComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
+import { AuraComponent } from '../components/AuraComponent.js';
 
 import { SpawnState } from '../states/player/SpawnState.js';
 import { IdleState } from '../states/player/IdleState.js';
@@ -93,7 +94,7 @@ export class PlayerStateSystem {
 
             this._updateAnimation(dt, entityId, entityManager);
             this._handleJumpTrail(dt, entityId, entityManager);
-            this._handleAura(dt, entityId, pos, col, ctrl, gameState, entityManager);
+            this._handleAura(dt, entityId, pos, col, ctrl, entityManager);
 
             // Continuous Dash trail
             if (ctrl.isDashing && gameState && gameState.equippedCosmetics) {
@@ -102,7 +103,10 @@ export class PlayerStateSystem {
                     ctrl.dashParticleTimer = 0;
                     const renderable = entityManager.getComponent(entityId, RenderableComponent);
                     
-                    if (gameState.equippedCosmetics.dash === 'phantom_dash') {
+                    const dashId = gameState.equippedCosmetics.dash;
+                    const dashDef = COSMETICS.dash.find(d => d.id === dashId);
+                    
+                    if (dashDef && dashDef.preview && dashDef.preview.ghost) {
                         const charComp = entityManager.getComponent(entityId, CharacterComponent);
                         eventBus.publish(EVENTS.SPAWN_GHOST_TRAIL, {
                             x: pos.x,
@@ -122,7 +126,7 @@ export class PlayerStateSystem {
                         eventBus.publish('createParticles', { 
                             x: pos.x + col.width / 2, 
                             y: pos.y + col.height / 2, 
-                            type: gameState.equippedCosmetics.dash, 
+                            type: dashId, 
                             direction: renderable.direction 
                         });
                     }
@@ -135,44 +139,44 @@ export class PlayerStateSystem {
         }
     }
     
-    _handleAura(dt, entityId, pos, col, ctrl, gameState, entityManager) {
+    _handleAura(dt, entityId, pos, col, ctrl, entityManager) {
         if (!ctrl.spawnComplete || ctrl.isSpawning || ctrl.isDespawning || ctrl.isHit || ctrl.isDead) return;
-        if (!gameState || !gameState.equippedCosmetics) return;
-        
-        const equippedAura = gameState.equippedCosmetics.aura;
-        ctrl.auraTimer = (ctrl.auraTimer || 0) + dt;
-        
-        if (equippedAura === 'supercharge_aura' && ctrl.auraTimer > 0.05) {
-            ctrl.auraTimer = 0;
-            eventBus.publish('createParticles', { type: 'supercharge_aura', x: pos.x + col.width/2, y: pos.y + col.height });
-        } else if (equippedAura === 'shadow_aura' && ctrl.auraTimer > 0.08) {
-            ctrl.auraTimer = 0;
-            const renderable = entityManager.getComponent(entityId, RenderableComponent);
-            const charComp = entityManager.getComponent(entityId, CharacterComponent);
-            eventBus.publish(EVENTS.SPAWN_GHOST_TRAIL, {
-                x: pos.x + (Math.random() - 0.5) * 4,
-                y: pos.y + (Math.random() - 0.5) * 4,
-                vx: (Math.random() - 0.5) * 10,
-                vy: -15,
-                renderable: { 
-                    width: renderable.width,
-                    height: renderable.height,
-                    animationState: renderable.animationState,
-                    animationFrame: renderable.animationFrame,
-                    direction: renderable.direction,
-                    rotation: renderable.rotation
-                },
-                col: { width: col.width, height: col.height },
-                charId: charComp.characterId,
-                color: [0.1, 0.0, 0.2, 0.7],
-                maxLife: 0.5
-            });
-        } else if (equippedAura === 'orbiting_aura') {
-            const angle1 = performance.now() / 300;
-            const angle2 = angle1 + Math.PI;
-            const radius = 20;
-            eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle1)*radius, y: pos.y + col.height/2 + Math.sin(angle1)*radius });
-            eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle2)*radius, y: pos.y + col.height/2 + Math.sin(angle2)*radius });
+        const aura = entityManager.getComponent(entityId, AuraComponent);
+        if (!aura) return;
+
+        aura.timer += dt;
+        if (aura.timer >= aura.emitRate) {
+            aura.timer = 0;
+            if (aura.particleType) {
+                eventBus.publish('createParticles', { type: aura.particleType, x: pos.x + col.width/2, y: pos.y + col.height });
+            } else if (aura.ghostTrail) {
+                const renderable = entityManager.getComponent(entityId, RenderableComponent);
+                const charComp = entityManager.getComponent(entityId, CharacterComponent);
+                eventBus.publish(EVENTS.SPAWN_GHOST_TRAIL, {
+                    x: pos.x + (Math.random() - 0.5) * 4,
+                    y: pos.y + (Math.random() - 0.5) * 4,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: -15,
+                    renderable: { 
+                        width: renderable.width,
+                        height: renderable.height,
+                        animationState: renderable.animationState,
+                        animationFrame: renderable.animationFrame,
+                        direction: renderable.direction,
+                        rotation: renderable.rotation
+                    },
+                    col: { width: col.width, height: col.height },
+                    charId: charComp.characterId,
+                    color: [0.1, 0.0, 0.2, 0.7],
+                    maxLife: 0.5
+                });
+            } else if (aura.orbiting) {
+                const angle1 = performance.now() / 300;
+                const angle2 = angle1 + Math.PI;
+                const radius = 20;
+                eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle1)*radius, y: pos.y + col.height/2 + Math.sin(angle1)*radius });
+                eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle2)*radius, y: pos.y + col.height/2 + Math.sin(angle2)*radius });
+            }
         }
     }
 
@@ -325,7 +329,11 @@ export class PlayerStateSystem {
             eventBus.publish('playSound', { key: 'dash', volume: 0.7, channel: 'SFX' });
             
             const dashType = gameState.equippedCosmetics ? gameState.equippedCosmetics.dash : 'default_dash';
-            eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: dashType, direction: renderable.direction });
+            const dashDef = COSMETICS.dash.find(d => d.id === dashType);
+            
+            if (!(dashDef && dashDef.preview && dashDef.preview.ghost)) {
+                eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height / 2, type: dashType, direction: renderable.direction });
+            }
             
             this._transitionTo(entityId, new DashState(entityId, entityManager), entityManager);
         }

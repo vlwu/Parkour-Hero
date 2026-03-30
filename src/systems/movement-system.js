@@ -108,10 +108,7 @@ export class MovementSystem {
 
         const onMovingPlatform = col.isGrounded && col.groundEntity && (col.groundEntity.type === 'brown_platform' || col.groundEntity.type === 'grey_platform');
 
-        let gravityMult = 1.0;
-        if (gameState?.equippedCosmetics?.mutator === 'featherweight_mutator') {
-            gravityMult = 0.7;
-        }
+        let gravityMult = ctrl.gravityMult;
 
         if (onMovingPlatform) {
             if (vel.vy > 0) {

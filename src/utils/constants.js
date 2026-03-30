@@ -252,29 +252,67 @@ export const EDITOR_TOOL_TYPES = Object.freeze({
     NONE: 'none'
 });
 
+export const PARTICLE_CONFIGS = {
+    dash: { count: 8, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
+    double_jump: { count: 12, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
+    sand: { count: 4, baseSpeed: 30, spriteKey: 'sand_particle', life: 0.6, gravity: 120, size: 8 },
+    mud: { count: 4, baseSpeed: 25, spriteKey: 'mud_particle', life: 0.7, gravity: 100, size: 8 },
+    mud_splash: { count: 15, baseSpeed: 220, spriteKey: 'mud_particle', life: 0.9, gravity: 400, size: 10 },
+    ice: { count: 5, baseSpeed: 100, spriteKey: 'ice_particle', life: 0.7, gravity: 250, size: 8 },
+    walk_dust: { count: 2, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.5, gravity: 80, size: 10 },
+    enemy_walk_dust: { count: 3, baseSpeed: 25, spriteKey: 'dust_particle', life: 0.6, gravity: 40, size: 10 },
+    jump_trail: { count: 2, baseSpeed: 15, spriteKey: 'dust_particle', life: 0.4, gravity: 20, size: 8 },
+    fan_push: { count: 4, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.8, gravity: 0, size: 10 },
+    enemy_death: { count: 20, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.7, gravity: 150, size: 14 },
+    
+    slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 3.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
+    ghost_particles: { count: 1, baseSpeed: 20, spriteKey: 'ghost_particles', life: 2.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.1 }, size: 24 },
+    snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
+    wing_flap: { count: 1, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30, size: 10 },
+    radish_leaf: { count: 1, baseSpeed: 120, spriteKey: 'radish_leaves', life: 0.8, gravity: 200, size: 16 },
+    bee_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'bee_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
+    plant_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'plant_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
+    trunk_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'trunk_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
+    
+    // Cosmetics - Dash Trails
+    default_dash: { count: 8, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
+    rainbow_dash: { count: 3, baseSpeed: 50, spriteKey: 'dust_particle', life: 0.5, gravity: 20, behavior: 'rainbow' },
+    leaf_dash: { count: 4, baseSpeed: 100, spriteKey: 'radish_leaves', life: 0.6, gravity: 30, size: 14 },
+    
+    // Cosmetics - Death Effects
+    default_death: { count: 25, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.8, gravity: 150, size: 14 },
+    shatter_death: { count: 40, baseSpeed: 250, spriteKey: 'dust_particle', life: 1.0, gravity: 300, size: 12, behavior: 'random_color' },
+    ascension_death: { count: 40, baseSpeed: 40, spriteKey: 'dust_particle', life: 1.5, gravity: -150, color: [0.5, 1.0, 1.0, 0.9], size: 12 },
+    implosion_death: { count: 50, baseSpeed: -200, spriteKey: 'dust_particle', life: 0.8, gravity: 0, color: [0.2, 0.0, 0.3, 1.0], behavior: 'implosion', size: 16 },
+
+    // Cosmetics - Auras
+    supercharge_aura: { count: 1, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.5, gravity: -150, color: [1.0, 0.8, 0.1, 0.8], size: 16 },
+    orbit_node: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.15, gravity: 0, color: [0.0, 1.0, 1.0, 1.0], size: 12 }
+};
+
 export const COSMETICS = {
     dash: [
-        { id: 'default_dash', name: 'Default', cost: 0 },
-        { id: 'phantom_dash', name: 'Phantom', cost: 50 },
-        { id: 'rainbow_dash', name: 'Rainbow', cost: 75 },
-        { id: 'leaf_dash', name: 'Leaf Swirl', cost: 75 }
+        { id: 'default_dash', name: 'Default', cost: 0, preview: { type: 'dash', particle: 'default_dash' } },
+        { id: 'phantom_dash', name: 'Phantom', cost: 50, preview: { type: 'dash', ghost: true } },
+        { id: 'rainbow_dash', name: 'Rainbow', cost: 75, preview: { type: 'dash', particle: 'rainbow_dash' } },
+        { id: 'leaf_dash', name: 'Leaf Swirl', cost: 75, preview: { type: 'dash', particle: 'leaf_dash' } }
     ],
     death: [
-        { id: 'default_death', name: 'Default', cost: 0 },
-        { id: 'shatter_death', name: 'Shatter', cost: 100 },
-        { id: 'ascension_death', name: 'Ascension', cost: 125 },
-        { id: 'implosion_death', name: 'Implosion', cost: 125 }
+        { id: 'default_death', name: 'Default', cost: 0, preview: { type: 'death', particle: 'default_death' } },
+        { id: 'shatter_death', name: 'Shatter', cost: 100, preview: { type: 'death', particle: 'shatter_death' } },
+        { id: 'ascension_death', name: 'Ascension', cost: 125, preview: { type: 'death', particle: 'ascension_death' } },
+        { id: 'implosion_death', name: 'Implosion', cost: 125, preview: { type: 'death', particle: 'implosion_death' } }
     ],
     aura: [
-        { id: 'default_aura', name: 'None', cost: 0 },
-        { id: 'supercharge_aura', name: 'Supercharge', cost: 150 },
-        { id: 'shadow_aura', name: 'Shadow', cost: 150 },
-        { id: 'orbiting_aura', name: 'Orbiting', cost: 200 }
+        { id: 'default_aura', name: 'None', cost: 0, auraConfig: null, preview: { type: 'aura' } },
+        { id: 'supercharge_aura', name: 'Supercharge', cost: 150, auraConfig: { particleType: 'supercharge_aura', emitRate: 0.05 }, preview: { type: 'aura' } },
+        { id: 'shadow_aura', name: 'Shadow', cost: 150, auraConfig: { ghostTrail: true, emitRate: 0.08 }, preview: { type: 'aura' } },
+        { id: 'orbiting_aura', name: 'Orbiting', cost: 200, auraConfig: { orbiting: true, emitRate: 0.02 }, preview: { type: 'aura' } }
     ],
     mutator: [
-        { id: 'default_mutator', name: 'None', cost: 0 },
-        { id: 'featherweight_mutator', name: 'Featherweight', cost: 200 },
-        { id: 'overclock_mutator', name: 'Overclock', cost: 250 },
-        { id: 'pacifist_mutator', name: 'Pacifist', cost: 300 }
+        { id: 'default_mutator', name: 'None', cost: 0, modifiers: {}, preview: { type: 'mutator', speed: 4, amp: 5 } },
+        { id: 'featherweight_mutator', name: 'Featherweight', cost: 200, modifiers: { gravityMult: 0.7, damageTakenMult: 2.0 }, preview: { type: 'mutator', speed: 6, amp: 15 } },
+        { id: 'overclock_mutator', name: 'Overclock', cost: 250, modifiers: { timeScale: 1.25 }, preview: { type: 'mutator', speed: 15, amp: 5 } },
+        { id: 'pacifist_mutator', name: 'Pacifist', cost: 300, modifiers: { pacifist: true, coinMultiplier: 2.0 }, preview: { type: 'mutator', speed: 4, amp: 5 } }
     ]
 };

@@ -2,6 +2,7 @@ import { eventBus } from '../utils/event-bus.js';
 import { TextureAtlas } from '../core/gl-utils.js';
 import vertexShaderSource from '../shaders/particle.vert?raw';
 import fragmentShaderSource from '../shaders/particle.frag?raw';
+import { PARTICLE_CONFIGS } from '../utils/constants.js';
 
 function hslToRgb(h, s, l) {
     let r, g, b;
@@ -177,46 +178,7 @@ export class ParticleSystemWebGL {
     }
 
     create({ x, y, type, direction = 'right', particleSpeed = null, leafIndex = 0 }) {
-        const particleConfigs = {
-            // Gameplay default effects
-            dash: { count: 8, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
-            double_jump: { count: 12, baseSpeed: 120, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
-            sand: { count: 4, baseSpeed: 30, spriteKey: 'sand_particle', life: 0.6, gravity: 120, size: 8 },
-            mud: { count: 4, baseSpeed: 25, spriteKey: 'mud_particle', life: 0.7, gravity: 100, size: 8 },
-            mud_splash: { count: 15, baseSpeed: 220, spriteKey: 'mud_particle', life: 0.9, gravity: 400, size: 10 },
-            ice: { count: 5, baseSpeed: 100, spriteKey: 'ice_particle', life: 0.7, gravity: 250, size: 8 },
-            walk_dust: { count: 2, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.5, gravity: 80, size: 10 },
-            enemy_walk_dust: { count: 3, baseSpeed: 25, spriteKey: 'dust_particle', life: 0.6, gravity: 40, size: 10 },
-            jump_trail: { count: 2, baseSpeed: 15, spriteKey: 'dust_particle', life: 0.4, gravity: 20, size: 8 },
-            fan_push: { count: 4, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.8, gravity: 0, size: 10 },
-            enemy_death: { count: 20, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.7, gravity: 150, size: 14 },
-            
-            slime_puddle: { count: 1, baseSpeed: 0, spriteKey: 'slime_particles', life: 3.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.2 } },
-            ghost_particles: { count: 1, baseSpeed: 20, spriteKey: 'ghost_particles', life: 2.0, gravity: 0, animation: { frameCount: 4, frameSpeed: 0.1 }, size: 24 },
-            snail_flee: { count: 1, baseSpeed: 250, spriteKey: 'snail_die', life: 1.5, gravity: 800, size: 38 },
-            wing_flap: { count: 1, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.3, gravity: 30, size: 10 },
-            radish_leaf: { count: 1, baseSpeed: 120, spriteKey: 'radish_leaves', life: 0.8, gravity: 200, size: 16 },
-            bee_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'bee_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
-            plant_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'plant_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
-            trunk_bullet_pieces: { count: 1, baseSpeed: 120, spriteKey: 'trunk_bullet_pieces', life: 0.8, gravity: 200, size: 16 },
-            
-            // Cosmetics - Dash Trails
-            default_dash: { count: 8, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
-            rainbow_dash: { count: 3, baseSpeed: 50, spriteKey: 'dust_particle', life: 0.5, gravity: 20, behavior: 'rainbow' },
-            leaf_dash: { count: 4, baseSpeed: 100, spriteKey: 'radish_leaves', life: 0.6, gravity: 30, size: 14 },
-            
-            // Cosmetics - Death Effects
-            default_death: { count: 25, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.8, gravity: 150, size: 14 },
-            shatter_death: { count: 40, baseSpeed: 250, spriteKey: 'dust_particle', life: 1.0, gravity: 300, size: 12, behavior: 'random_color' },
-            ascension_death: { count: 40, baseSpeed: 40, spriteKey: 'dust_particle', life: 1.5, gravity: -150, color: [0.5, 1.0, 1.0, 0.9], size: 12 },
-            implosion_death: { count: 50, baseSpeed: -200, spriteKey: 'dust_particle', life: 0.8, gravity: 0, color: [0.2, 0.0, 0.3, 1.0], behavior: 'implosion', size: 16 },
-
-            // Cosmetics - Auras
-            supercharge_aura: { count: 1, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.5, gravity: -150, color: [1.0, 0.8, 0.1, 0.8], size: 16 },
-            orbit_node: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.15, gravity: 0, color: [0.0, 1.0, 1.0, 1.0], size: 12 }
-        };
-
-        const config = particleConfigs[type];
+        const config = PARTICLE_CONFIGS[type];
         if (!config) return;
 
         for (let i = 0; i < config.count; i++) {

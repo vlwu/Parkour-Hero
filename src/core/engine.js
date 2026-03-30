@@ -12,7 +12,7 @@ import { UISystem } from '../ui/ui-system.js';
 import { EntityManager } from './entity-manager.js';
 import { createPlayer } from '../entities/entity-factory.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
-import { EVENTS } from '../utils/constants.js';
+import { EVENTS, COSMETICS } from '../utils/constants.js';
 import { InputSystem } from '../systems/input-system.js';
 import { GameplaySystem } from '../systems/gameplay-system.js';
 import { PlayerStateSystem } from '../systems/player-state-system.js';
@@ -174,8 +174,12 @@ export class Engine {
     this.accumulator += deltaTime;
 
     let targetDt = FIXED_DT;
-    if (this.gameState?.equippedCosmetics?.mutator === 'overclock_mutator') {
-        targetDt = FIXED_DT / 1.25;
+    const mutatorId = this.gameState?.equippedCosmetics?.mutator;
+    if (mutatorId) {
+        const mutatorDef = COSMETICS.mutator.find(m => m.id === mutatorId);
+        if (mutatorDef && mutatorDef.modifiers && mutatorDef.modifiers.timeScale) {
+            targetDt = FIXED_DT / mutatorDef.modifiers.timeScale;
+        }
     }
 
     while (this.accumulator >= targetDt) {
@@ -246,7 +250,7 @@ export class Engine {
     }
 
     this.currentLevel = new Level(levelData, this.entityManager);
-    this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
+    this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter, this.gameState.equippedCosmetics);
 
     this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
     this.camera.snapToPlayer(this.entityManager, this.playerEntityId);
@@ -270,7 +274,7 @@ export class Engine {
       this._resetForNewLevel();
 
       this.currentLevel = new Level(levelData, this.entityManager);
-      this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter);
+      this.playerEntityId = createPlayer(this.entityManager, this.currentLevel.startPosition.x, this.currentLevel.startPosition.y, this.gameState.selectedCharacter, this.gameState.equippedCosmetics);
 
       this.camera.updateLevelBounds(this.currentLevel.width, this.currentLevel.height);
       this.camera.snapToPlayer(this.entityManager, this.playerEntityId);

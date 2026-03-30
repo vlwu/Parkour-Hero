@@ -30,10 +30,7 @@ export class GameFlowSystem {
         if (playerCtrl.despawnAnimationFinished && !gameState.showingLevelComplete) {
             playerCtrl.despawnAnimationFinished = false;
 
-            let coinMultiplier = 1;
-            if (gameState?.equippedCosmetics?.mutator === 'pacifist_mutator') {
-                coinMultiplier = 2;
-            }
+            let coinMultiplier = playerCtrl.coinMultiplier || 1;
 
             const runStats = {
                 deaths: playerCtrl.deathCount,

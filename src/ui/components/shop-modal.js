@@ -200,7 +200,11 @@ export class ShopModal extends LitElement {
               }
           }
 
-          if (this.activeTab === 'dash') {
+          const categoryItems = COSMETICS[this.activeTab] || [];
+          const currentItem = categoryItems.find(c => c.id === this.previewedItem);
+          const previewConf = currentItem ? currentItem.preview : null;
+
+          if (previewConf && previewConf.type === 'dash') {
               playerPos.x += direction * 200 * dt;
               if (playerPos.x > 120) direction = -1;
               if (playerPos.x < 30) direction = 1;
@@ -208,56 +212,54 @@ export class ShopModal extends LitElement {
               particleTimer += dt;
               if (particleTimer > 0.06) {
                   particleTimer = 0;
-                  if (this.previewedItem) {
-                      if (this.previewedItem === 'phantom_dash') {
-                          ghostTrails.push({
-                              x: playerPos.x, y: playerPos.y,
-                              vx: 0, vy: 0,
-                              life: 0.3, maxLife: 0.3,
-                              dir: direction,
-                              frame: Math.floor(timestamp / 100) % 11,
-                              color: [153, 51, 255, 0.6]
-                          });
-                      } else {
-                          this.particleSystem.create({
-                              x: playerPos.x, y: playerPos.y,
-                              type: this.previewedItem,
-                              direction: direction === 1 ? 'right' : 'left'
-                          });
-                      }
+                  if (previewConf.ghost) {
+                      ghostTrails.push({
+                          x: playerPos.x, y: playerPos.y,
+                          vx: 0, vy: 0,
+                          life: 0.3, maxLife: 0.3,
+                          dir: direction,
+                          frame: Math.floor(timestamp / 100) % 11,
+                          color: [153, 51, 255, 0.6]
+                      });
+                  } else if (previewConf.particle) {
+                      this.particleSystem.create({
+                          x: playerPos.x, y: playerPos.y,
+                          type: previewConf.particle,
+                          direction: direction === 1 ? 'right' : 'left'
+                      });
                   }
               }
-          } else if (this.activeTab === 'death') {
+          } else if (previewConf && previewConf.type === 'death') {
               if (stateTime > 2.0) {
                   stateTime = 0;
-                  if (this.previewedItem) {
+                  if (previewConf.particle) {
                       this.particleSystem.create({
-                          x: 75, y: 75, type: this.previewedItem
+                          x: 75, y: 75, type: previewConf.particle
                       });
                   }
               }
               if (stateTime < 1.0) drawPlayer = false; 
               playerPos = { x: 75, y: 75 };
-          } else if (this.activeTab === 'aura') {
+          } else if (previewConf && previewConf.type === 'aura') {
               playerPos = { x: 75, y: 75 };
               particleTimer += dt;
-              if (this.previewedItem === 'supercharge_aura' && particleTimer > 0.05) {
-                  particleTimer = 0;
-                  this.particleSystem.create({ type: 'supercharge_aura', x: 75, y: 90 });
-              } else if (this.previewedItem === 'shadow_aura' && particleTimer > 0.08) {
-                  particleTimer = 0;
-                  ghostTrails.push({
-                      x: playerPos.x + (Math.random() - 0.5) * 4,
-                      y: playerPos.y + (Math.random() - 0.5) * 4,
-                      vx: (Math.random() - 0.5) * 10,
-                      vy: -15,
-                      life: 0.5, maxLife: 0.5,
-                      dir: 1,
-                      frame: Math.floor(timestamp / 100) % 11,
-                      color: [25, 0, 51, 0.7]
-                  });
-              } else if (this.previewedItem === 'orbiting_aura') {
-                  if (particleTimer > 0.02) {
+              if (currentItem.auraConfig) {
+                  if (currentItem.auraConfig.particleType && particleTimer > currentItem.auraConfig.emitRate) {
+                      particleTimer = 0;
+                      this.particleSystem.create({ type: currentItem.auraConfig.particleType, x: 75, y: 90 });
+                  } else if (currentItem.auraConfig.ghostTrail && particleTimer > currentItem.auraConfig.emitRate) {
+                      particleTimer = 0;
+                      ghostTrails.push({
+                          x: playerPos.x + (Math.random() - 0.5) * 4,
+                          y: playerPos.y + (Math.random() - 0.5) * 4,
+                          vx: (Math.random() - 0.5) * 10,
+                          vy: -15,
+                          life: 0.5, maxLife: 0.5,
+                          dir: 1,
+                          frame: Math.floor(timestamp / 100) % 11,
+                          color: [25, 0, 51, 0.7]
+                      });
+                  } else if (currentItem.auraConfig.orbiting && particleTimer > currentItem.auraConfig.emitRate) {
                       particleTimer = 0;
                       const angle1 = performance.now() / 300;
                       const angle2 = angle1 + Math.PI;
@@ -266,14 +268,12 @@ export class ShopModal extends LitElement {
                       this.particleSystem.create({ type: 'orbit_node', x: 75 + Math.cos(angle2)*radius, y: 75 + Math.sin(angle2)*radius });
                   }
               }
-          } else if (this.activeTab === 'mutator') {
-              if (this.previewedItem === 'featherweight_mutator') {
-                  playerPos = { x: 75, y: 75 + Math.sin(stateTime * 6) * 15 };
-              } else if (this.previewedItem === 'overclock_mutator') {
-                  playerPos = { x: 75, y: 75 + Math.sin(stateTime * 15) * 5 };
-              } else {
-                  playerPos = { x: 75, y: 75 + Math.sin(stateTime * 4) * 5 };
-              }
+          } else if (previewConf && previewConf.type === 'mutator') {
+              const speed = previewConf.speed || 4;
+              const amp = previewConf.amp || 5;
+              playerPos = { x: 75, y: 75 + Math.sin(stateTime * speed) * amp };
+          } else {
+              playerPos = { x: 75, y: 75 };
           }
 
           if (playerSprite) {

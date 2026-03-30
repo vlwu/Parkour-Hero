@@ -259,7 +259,7 @@ export class CollisionSystem {
                     const killable = entityManager.getComponent(collider.entityId, KillableComponent);
                     const prevBodyBottom = (pos.y - vel.vy * dt) + col.height;
 
-                    const isPacifist = gameState?.equippedCosmetics?.mutator === 'pacifist_mutator';
+                    const isPacifist = playerCtrl?.pacifist;
 
                     if (!isPacifist && vel.vy > 0 && prevBodyBottom <= collider.y + 5 && !enemy.isDead && killable?.stompable) {
                         eventBus.publish('enemyStomped', { enemyId: collider.entityId, stompBounceVelocity: killable.stompBounceVelocity });

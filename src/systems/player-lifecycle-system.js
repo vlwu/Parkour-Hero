@@ -9,8 +9,9 @@ import { HealthComponent } from '../components/HealthComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
-import { PLAYER_CONSTANTS, EVENTS, PLAYER_STATES } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, EVENTS, PLAYER_STATES, COSMETICS } from '../utils/constants.js';
 import { characterConfig } from '../entities/level-definitions.js';
+import { AuraComponent } from '../components/AuraComponent.js';
 
 export class PlayerLifecycleSystem {
     constructor() {
@@ -118,8 +119,8 @@ export class PlayerLifecycleSystem {
             if (health && playerCtrl && !playerCtrl.isHit && !playerCtrl.needsRespawn && !playerCtrl.isDead) {
                 
                 let finalAmount = amount;
-                if (gameState?.equippedCosmetics?.mutator === 'featherweight_mutator') {
-                    finalAmount *= 2;
+                if (playerCtrl.damageTakenMult) {
+                    finalAmount *= playerCtrl.damageTakenMult;
                 }
 
                 health.currentHealth = Math.max(0, health.currentHealth - finalAmount);
@@ -194,7 +195,7 @@ export class PlayerLifecycleSystem {
     }
     
     _respawnPlayer(context) {
-        const { entityManager, playerEntityId, level, camera, collisionSystem } = context;
+        const { entityManager, playerEntityId, level, camera, collisionSystem, gameState } = context;
         
         const respawnPosition = this.lastCheckpoint || level.startPosition;
         if (this.lastCheckpoint) {
@@ -243,10 +244,26 @@ export class PlayerLifecycleSystem {
         const currentSound = oldPlayerCtrl.activeSurfaceSound;
 
         const config = characterConfig[charComp ? charComp.characterId : 'PinkMan'] || characterConfig['PinkMan'];
-        entityManager.addComponent(playerEntityId, new PlayerControlledComponent({
-            stats: config.stats
-        }));
         
+        let mutatorStats = {};
+        if (gameState && gameState.equippedCosmetics && gameState.equippedCosmetics.mutator) {
+            const mutatorDef = COSMETICS.mutator.find(m => m.id === gameState.equippedCosmetics.mutator);
+            if (mutatorDef && mutatorDef.modifiers) {
+                mutatorStats = mutatorDef.modifiers;
+            }
+        }
+        const finalStats = { ...config.stats, ...mutatorStats };
+
+        entityManager.addComponent(playerEntityId, new PlayerControlledComponent({ stats: finalStats }));
+        
+        entityManager.removeComponent(playerEntityId, AuraComponent);
+        if (gameState && gameState.equippedCosmetics && gameState.equippedCosmetics.aura) {
+            const auraDef = COSMETICS.aura.find(a => a.id === gameState.equippedCosmetics.aura);
+            if (auraDef && auraDef.auraConfig) {
+                entityManager.addComponent(playerEntityId, new AuraComponent(auraDef.auraConfig));
+            }
+        }
+
         const newPlayerCtrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);
         newPlayerCtrl.deathCount = currentDeathCount;
         newPlayerCtrl.activeSurfaceSound = currentSound;
