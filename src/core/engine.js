@@ -33,6 +33,8 @@ import { InteractionSystem } from '../systems/interaction-system.js';
 import { CombatSystem } from '../systems/combat-system.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
 import { PlayerLifecycleSystem } from '../systems/player-lifecycle-system.js';
+import { AuraComponent } from '../components/AuraComponent.js';
+import { characterConfig } from '../entities/level-definitions.js';
 
 const FIXED_DT = 1 / 60;
 
@@ -123,7 +125,47 @@ export class Engine {
     subscribeAndTrack(EVENTS.MENU_OPENED, () => { this.pauseForMenu = true; this.pause(); });
     subscribeAndTrack(EVENTS.ALL_MENUS_CLOSED, () => { this.pauseForMenu = false; this.resume(); });
     subscribeAndTrack(EVENTS.GAME_PAUSED, this.pause);
-    subscribeAndTrack(EVENTS.GAME_STATE_UPDATED, (newState) => this.gameState = newState);
+    subscribeAndTrack(EVENTS.GAME_STATE_UPDATED, this._handleGameStateUpdate);
+  }
+
+  _handleGameStateUpdate(newState) {
+      this.gameState = newState;
+      this.syncPlayerCosmetics();
+  }
+
+  syncPlayerCosmetics() {
+      if (this.playerEntityId === null || !this.gameState || !this.gameState.equippedCosmetics) return;
+
+      const newCosmetics = this.gameState.equippedCosmetics;
+
+      // 1. Forcefully sync Aura
+      this.entityManager.removeComponent(this.playerEntityId, AuraComponent);
+      if (newCosmetics.aura) {
+          const auraDef = COSMETICS.aura.find(a => a.id === newCosmetics.aura);
+          if (auraDef && auraDef.auraConfig) {
+              this.entityManager.addComponent(this.playerEntityId, new AuraComponent(auraDef.auraConfig));
+          }
+      }
+
+      // 2. Forcefully sync Mutators
+      const charComp = this.entityManager.getComponent(this.playerEntityId, CharacterComponent);
+      const ctrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
+      if (charComp && ctrl) {
+          const config = characterConfig[charComp.characterId] || characterConfig['PinkMan'];
+          let mutatorStats = {};
+          if (newCosmetics.mutator) {
+              const mutatorDef = COSMETICS.mutator.find(m => m.id === newCosmetics.mutator);
+              if (mutatorDef && mutatorDef.modifiers) {
+                  mutatorStats = mutatorDef.modifiers;
+              }
+          }
+          const finalStats = { ...config.stats, ...mutatorStats };
+          
+          ctrl.gravityMult = finalStats.gravityMult ?? 1.0;
+          ctrl.damageTakenMult = finalStats.damageTakenMult ?? 1.0;
+          ctrl.coinMultiplier = finalStats.coinMultiplier ?? 1.0;
+          ctrl.pacifist = finalStats.pacifist ?? false;
+      }
   }
 
   updateKeybinds(newKeybinds) { this.keybinds = { ...newKeybinds }; }
