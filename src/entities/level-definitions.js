@@ -58,7 +58,6 @@ export const characterConfig = {
 };
 
 export const levelSections = [
-  // ... existing levelSections (unchanged)
   {
     name: "Mechanical Mastery",
     levels: [
@@ -102,6 +101,21 @@ export const levelSections = [
       { name: "Level 8", jsonPath: "/levels/jungle-journey/08.json" },
       { name: "Level 9", jsonPath: "/levels/jungle-journey/09.json" },
       { name: "Level 10", jsonPath: "/levels/jungle-journey/10.json" },
+    ]
+  },
+  {
+    name: "Crystal Caverns",
+    levels: [
+      { name: "Level 1", jsonPath: "/levels/crystal-caverns/01.json" },
+      { name: "Level 2", jsonPath: "/levels/crystal-caverns/02.json" },
+      { name: "Level 3", jsonPath: "/levels/crystal-caverns/03.json" },
+      { name: "Level 4", jsonPath: "/levels/crystal-caverns/04.json" },
+      { name: "Level 5", jsonPath: "/levels/crystal-caverns/05.json" },
+      { name: "Level 6", jsonPath: "/levels/crystal-caverns/06.json" },
+      { name: "Level 7", jsonPath: "/levels/crystal-caverns/07.json" },
+      { name: "Level 8", jsonPath: "/levels/crystal-caverns/08.json" },
+      { name: "Level 9", jsonPath: "/levels/crystal-caverns/09.json" },
+      { name: "Level 10", jsonPath: "/levels/crystal-caverns/10.json" },
     ]
   },
   {
