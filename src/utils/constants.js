@@ -299,20 +299,21 @@ export const COSMETICS = {
     ],
     death: [
         { id: 'default_death', name: 'Default', cost: 0, preview: { type: 'death', particle: 'default_death' } },
-        { id: 'shatter_death', name: 'Shatter', cost: 100, preview: { type: 'death', particle: 'shatter_death' } },
-        { id: 'ascension_death', name: 'Ascension', cost: 125, preview: { type: 'death', particle: 'ascension_death' } },
-        { id: 'implosion_death', name: 'Implosion', cost: 125, preview: { type: 'death', particle: 'implosion_death' } }
+        { id: 'shatter_death', name: 'Shatter', cost: 50, preview: { type: 'death', particle: 'shatter_death' } },
+        { id: 'implosion_death', name: 'Implosion', cost: 75, preview: { type: 'death', particle: 'implosion_death' } },
+        { id: 'ascension_death', name: 'Ascension', cost: 90, preview: { type: 'death', particle: 'ascension_death' } }
+        // New death effects yet to be added: Yellow Impact, Violet Lightning Burst, Blue Sparkle Burst, Yellow Spark Burst, White Skull Burst, Brown Smoke Burst, Red Death Spell.
     ],
     aura: [
         { id: 'default_aura', name: 'None', cost: 0, auraConfig: null, preview: { type: 'aura' } },
-        { id: 'supercharge_aura', name: 'Supercharge', cost: 150, auraConfig: { particleType: 'supercharge_aura', emitRate: 0.05 }, preview: { type: 'aura' } },
-        { id: 'shadow_aura', name: 'Shadow', cost: 150, auraConfig: { ghostTrail: true, emitRate: 0.08 }, preview: { type: 'aura' } },
-        { id: 'orbiting_aura', name: 'Orbiting', cost: 200, auraConfig: { orbiting: true, emitRate: 0.02 }, preview: { type: 'aura' } }
+        { id: 'orbiting_aura', name: 'Orbiting', cost: 75, auraConfig: { orbiting: true, emitRate: 0.02 }, preview: { type: 'aura' } },
+        { id: 'supercharge_aura', name: 'Supercharge', cost: 100, auraConfig: { particleType: 'supercharge_aura', emitRate: 0.05 }, preview: { type: 'aura' } },
+        { id: 'shadow_aura', name: 'Shadow', cost: 125, auraConfig: { ghostTrail: true, emitRate: 0.08 }, preview: { type: 'aura' } }
     ],
     mutator: [
         { id: 'default_mutator', name: 'None', cost: 0, modifiers: {}, preview: { type: 'mutator', speed: 4, amp: 5 } },
-        { id: 'featherweight_mutator', name: 'Featherweight', cost: 200, modifiers: { gravityMult: 0.7, damageTakenMult: 2.0 }, preview: { type: 'mutator', speed: 6, amp: 15 } },
-        { id: 'overclock_mutator', name: 'Overclock', cost: 250, modifiers: { timeScale: 1.25 }, preview: { type: 'mutator', speed: 15, amp: 5 } },
-        { id: 'pacifist_mutator', name: 'Pacifist', cost: 300, modifiers: { pacifist: true, coinMultiplier: 2.0 }, preview: { type: 'mutator', speed: 4, amp: 5 } }
+        { id: 'featherweight_mutator', name: 'Featherweight', cost: 150, modifiers: { gravityMult: 0.7, damageTakenMult: 2.0 }, preview: { type: 'mutator', speed: 6, amp: 15 } },
+        { id: 'overclock_mutator', name: 'Overclock', cost: 200, modifiers: { timeScale: 1.25 }, preview: { type: 'mutator', speed: 15, amp: 5 } },
+        { id: 'pacifist_mutator', name: 'Pacifist', cost: 250, modifiers: { pacifist: true, coinMultiplier: 2.0 }, preview: { type: 'mutator', speed: 4, amp: 5 } }
     ]
 };
