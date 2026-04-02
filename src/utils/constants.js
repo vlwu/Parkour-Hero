@@ -284,6 +284,14 @@ export const PARTICLE_CONFIGS = {
     shatter_death: { count: 40, baseSpeed: 250, spriteKey: 'dust_particle', life: 1.0, gravity: 300, size: 12, behavior: 'random_color' },
     ascension_death: { count: 40, baseSpeed: 40, spriteKey: 'dust_particle', life: 1.5, gravity: -150, color: [0.5, 1.0, 1.0, 0.9], size: 12 },
     implosion_death: { count: 50, baseSpeed: -200, spriteKey: 'dust_particle', life: 0.8, gravity: 0, color: [0.2, 0.0, 0.3, 1.0], behavior: 'implosion', size: 16 },
+    
+    impact_yellow: { count: 1, baseSpeed: 0, spriteKey: 'impact_yellow', life: 8 * 0.08, gravity: 0, size: 96, animation: { frameCount: 8, frameSpeed: 0.08 }, fadeOut: false },
+    lightning_burst_violet: { count: 1, baseSpeed: 0, spriteKey: 'lightning_burst_violet', life: 10 * 0.06, gravity: 0, size: 48, animation: { frameCount: 10, frameSpeed: 0.06 }, fadeOut: false },
+    sparkle_burst_blue: { count: 1, baseSpeed: 0, spriteKey: 'sparkle_burst_blue', life: 14 * 0.05, gravity: 0, size: 32, animation: { frameCount: 14, frameSpeed: 0.05 }, fadeOut: false },
+    spark_burst_yellow: { count: 1, baseSpeed: 0, spriteKey: 'spark_burst_yellow', life: 12 * 0.06, gravity: 0, size: 64, animation: { frameCount: 12, frameSpeed: 0.06 }, fadeOut: false },
+    skull_burst_white: { count: 1, baseSpeed: 0, spriteKey: 'skull_burst_white', life: 12 * 0.06, gravity: 0, size: 64, animation: { frameCount: 12, frameSpeed: 0.06 }, fadeOut: false },
+    smoke_burst_brown: { count: 1, baseSpeed: 0, spriteKey: 'smoke_burst_brown', life: 10 * 0.06, gravity: 0, size: 32, animation: { frameCount: 10, frameSpeed: 0.06 }, fadeOut: false },
+    spell_death_red: { count: 1, baseSpeed: 0, spriteKey: 'spell_death_red', life: 50 * 0.02, gravity: 0, size: 64, animation: { frameCount: 50, frameSpeed: 0.02 }, fadeOut: false },
 
     // Cosmetics - Auras
     supercharge_aura: { count: 1, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.5, gravity: -150, color: [1.0, 0.8, 0.1, 0.8], size: 16 },
@@ -301,8 +309,14 @@ export const COSMETICS = {
         { id: 'default_death', name: 'Default', cost: 0, preview: { type: 'death', particle: 'default_death' } },
         { id: 'shatter_death', name: 'Shatter', cost: 50, preview: { type: 'death', particle: 'shatter_death' } },
         { id: 'implosion_death', name: 'Implosion', cost: 75, preview: { type: 'death', particle: 'implosion_death' } },
-        { id: 'ascension_death', name: 'Ascension', cost: 90, preview: { type: 'death', particle: 'ascension_death' } }
-        // New death effects yet to be added: Yellow Impact, Violet Lightning Burst, Blue Sparkle Burst, Yellow Spark Burst, White Skull Burst, Brown Smoke Burst, Red Death Spell.
+        { id: 'ascension_death', name: 'Ascension', cost: 90, preview: { type: 'death', particle: 'ascension_death' } },
+        { id: 'impact_yellow', name: 'Yellow Impact', cost: 100, preview: { type: 'death', particle: 'impact_yellow' } },
+        { id: 'lightning_burst_violet', name: 'Violet Lightning', cost: 125, preview: { type: 'death', particle: 'lightning_burst_violet' } },
+        { id: 'sparkle_burst_blue', name: 'Blue Sparkle', cost: 150, preview: { type: 'death', particle: 'sparkle_burst_blue' } },
+        { id: 'spark_burst_yellow', name: 'Yellow Spark', cost: 150, preview: { type: 'death', particle: 'spark_burst_yellow' } },
+        { id: 'skull_burst_white', name: 'White Skull', cost: 200, preview: { type: 'death', particle: 'skull_burst_white' } },
+        { id: 'smoke_burst_brown', name: 'Brown Smoke', cost: 100, preview: { type: 'death', particle: 'smoke_burst_brown' } },
+        { id: 'spell_death_red', name: 'Red Spell', cost: 250, preview: { type: 'death', particle: 'spell_death_red' } }
     ],
     aura: [
         { id: 'default_aura', name: 'None', cost: 0, auraConfig: null, preview: { type: 'aura' } },

@@ -154,13 +154,15 @@ export class ParticleSystemWebGL {
     }
 
     syncTextures() {
-        this.atlas = new TextureAtlas(this.gl, 1024);
+        this.atlas = new TextureAtlas(this.gl, 4096);
         this.textures = {};
 
         const textureKeys = [
             'dust_particle', 'sand_particle', 'mud_particle', 'ice_particle', 
             'slime_particles', 'snail_die', 'radish_leaves', 'bee_bullet_pieces', 
-            'plant_bullet_pieces', 'trunk_bullet_pieces', 'ghost_particles'
+            'plant_bullet_pieces', 'trunk_bullet_pieces', 'ghost_particles',
+            'impact_yellow', 'lightning_burst_violet', 'sparkle_burst_blue',
+            'spark_burst_yellow', 'skull_burst_white', 'smoke_burst_brown', 'spell_death_red'
         ];
         
         for (const key of textureKeys) {
@@ -242,6 +244,7 @@ export class ParticleSystemWebGL {
             p.gravity = config.gravity;
             p.shape = config.shape || 0.0;
             p.behavior = config.behavior || 'normal';
+            p.fadeOut = config.fadeOut !== undefined ? config.fadeOut : true;
             p.animation = config.animation ? { ...config.animation, frameTimer: 0, currentFrame: 0 } : null;
 
             if (type === 'radish_leaf' || type === 'bee_bullet_pieces' || type === 'plant_bullet_pieces' || type === 'trunk_bullet_pieces') {
@@ -288,7 +291,10 @@ export class ParticleSystemWebGL {
                 p.x += p.vx * dt;
                 p.y += p.vy * dt;
                 p.vy += p.gravity * dt;
-                p.alpha = Math.min(1.0, p.life / 1.5);
+                
+                if (p.fadeOut) {
+                    p.alpha = Math.min(1.0, p.life / 1.5);
+                }
 
                 if (p.behavior === 'rainbow') {
                     const hue = (p.life * 2) % 1;

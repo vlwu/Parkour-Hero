@@ -67,7 +67,14 @@
     "platform_grey_off": "/assets/Traps/Platforms/Grey Off.png",
     "platform_grey_on": "/assets/Traps/Platforms/Grey On.png",
     "platform_chain": "/assets/Traps/Platforms/Chain.png",
-    "dust_particle": "/assets/Other/Dust Particle.png"
+    "dust_particle": "/assets/Other/Dust Particle.png",
+    "impact_yellow": "/assets/VFX/DeathAnimations/impact_yellow/spritesheet.png",
+    "lightning_burst_violet": "/assets/VFX/DeathAnimations/lightning_burst_violet/spritesheet.png",
+    "sparkle_burst_blue": "/assets/VFX/DeathAnimations/sparkle_burst_blue/spritesheet.png",
+    "spark_burst_yellow": "/assets/VFX/DeathAnimations/spark_burst_yellow/spritesheet.png",
+    "skull_burst_white": "/assets/VFX/DeathAnimations/skull_burst_white/spritesheet.png",
+    "smoke_burst_brown": "/assets/VFX/DeathAnimations/smoke_burst_brown/spritesheet.png",
+    "spell_death_red": "/assets/VFX/DeathAnimations/spell_death_red/spritesheet.png"
   },
   "gameplaySounds": {
     "jump": "/assets/Sounds/Player Jump.mp3",
