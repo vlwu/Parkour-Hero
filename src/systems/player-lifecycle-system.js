@@ -9,7 +9,7 @@ import { HealthComponent } from '../components/HealthComponent.js';
 import { PlayerControlledComponent } from '../components/PlayerControlledComponent.js';
 import { EnemyComponent } from '../components/EnemyComponent.js';
 import { CharacterComponent } from '../components/CharacterComponent.js';
-import { PLAYER_CONSTANTS, EVENTS, PLAYER_STATES, COSMETICS } from '../utils/constants.js';
+import { PLAYER_CONSTANTS, EVENTS, PLAYER_STATES, COSMETICS, PARTICLE_CONFIGS } from '../utils/constants.js';
 import { characterConfig } from '../entities/level-definitions.js';
 import { AuraComponent } from '../components/AuraComponent.js';
 
@@ -150,7 +150,20 @@ export class PlayerLifecycleSystem {
                 const col = entityManager.getComponent(playerEntityId, CollisionComponent);
                 
                 playerCtrl.isDead = true;
-                playerCtrl.respawnDelayTimer = 1.0; // Wait 1 second before actually respawning
+
+                // Dynamically fetch length of specific death effect, plus a small buffer
+                const deathType = gameState.equippedCosmetics ? gameState.equippedCosmetics.death : 'default_death';
+                let deathDuration = 1.0;
+                const deathConfig = PARTICLE_CONFIGS[deathType];
+                if (deathConfig) {
+                    if (deathConfig.animation) {
+                        deathDuration = deathConfig.animation.frameCount * deathConfig.animation.frameSpeed;
+                    } else if (deathConfig.life) {
+                        deathDuration = deathConfig.life;
+                    }
+                }
+                playerCtrl.respawnDelayTimer = deathDuration + 0.2; // Wait for animation + buffer before respawning
+                
                 playerCtrl.needsRespawn = true;
                 playerCtrl.deathCount++;
                 vel.vx = 0; vel.vy = 0;
@@ -160,7 +173,6 @@ export class PlayerLifecycleSystem {
                 renderable.animationFrame = 0;
                 renderable.animationTimer = 0;
                 
-                const deathType = gameState.equippedCosmetics ? gameState.equippedCosmetics.death : 'default_death';
                 eventBus.publish(EVENTS.PLAY_SOUND, { key: 'death_sound', volume: 0.3, channel: 'SFX' });
                 eventBus.publish('createParticles', { type: deathType, x: pos.x + col.width/2, y: pos.y + col.height/2 });
                 

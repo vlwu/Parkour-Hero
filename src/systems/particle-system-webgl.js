@@ -94,7 +94,7 @@ export class ParticleSystemWebGL {
         };
 
         const quadVertices = new Float32Array([-0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5]);
-        const texCoords = new Float32Array([0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]);
+        const texCoords = new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]); // Fixed Y-axis inversion mapping
 
         this.quadBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
