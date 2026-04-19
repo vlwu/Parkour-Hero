@@ -176,6 +176,14 @@ export class PlayerStateSystem {
                 const radius = 20;
                 eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle1)*radius, y: pos.y + col.height/2 + Math.sin(angle1)*radius });
                 eventBus.publish('createParticles', { type: 'orbit_node', x: pos.x + col.width/2 + Math.cos(angle2)*radius, y: pos.y + col.height/2 + Math.sin(angle2)*radius });
+            } else if (aura.bubbleShield) {
+                eventBus.publish('createParticles', { type: 'bubble_shield_base', x: pos.x + col.width/2, y: pos.y + col.height/2 });
+                const vel = entityManager.getComponent(entityId, VelocityComponent);
+                if (vel && Math.abs(vel.vx) > 100 && Math.random() < 0.5) {
+                    eventBus.publish('createParticles', { type: 'bubble_trail', x: pos.x + col.width/2, y: pos.y + col.height/2 });
+                }
+            } else if (aura.radiantGlow) {
+                eventBus.publish('createParticles', { type: 'radiant_ray', x: pos.x + col.width/2, y: pos.y + col.height/2 });
             }
         }
     }

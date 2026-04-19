@@ -4,9 +4,12 @@ import { StorageManager } from './storage-manager.js';
 import { EVENTS } from '../utils/constants.js';
 
 function getLinearIndex(sectionIndex, levelIndex, levelSections) {
+    if (levelSections[sectionIndex] && levelSections[sectionIndex].name === 'DIY') return -1;
     let linearIndex = 0;
     for (let i = 0; i < sectionIndex; i++) {
-        linearIndex += levelSections[i].levels.length;
+        if (levelSections[i].name !== 'DIY') {
+            linearIndex += levelSections[i].levels.length;
+        }
     }
     linearIndex += levelIndex;
     return linearIndex;
@@ -14,18 +17,25 @@ function getLinearIndex(sectionIndex, levelIndex, levelSections) {
 
 function getSectionAndLevelFromLinearIndex(linearIndex, levelSections) {
     let levelCount = 0;
+    let lastValidSection = 0;
+    let lastValidLevel = 0;
+    
     for (let i = 0; i < levelSections.length; i++) {
+        if (levelSections[i].name === 'DIY') continue;
+        
         const sectionLevelCount = levelSections[i].levels.length;
+        if (sectionLevelCount > 0) {
+            lastValidSection = i;
+            lastValidLevel = sectionLevelCount - 1;
+        }
+
         if (linearIndex < levelCount + sectionLevelCount) {
-            return { sectionIndex: i, levelIndex: linearIndex - levelCount };
+            return { sectionIndex: i, levelIndex: Math.max(0, linearIndex - levelCount) };
         }
         levelCount += sectionLevelCount;
     }
 
-    const lastSectionIndex = levelSections.length - 1;
-    if (lastSectionIndex < 0) return { sectionIndex: 0, levelIndex: 0 };
-    const lastLevelIndex = levelSections[lastSectionIndex].levels.length - 1;
-    return { sectionIndex: lastSectionIndex, levelIndex: lastLevelIndex >= 0 ? lastLevelIndex : 0 };
+    return { sectionIndex: lastValidSection, levelIndex: lastValidLevel };
 }
 
 export class GameState {
@@ -79,8 +89,22 @@ export class GameState {
         instance.newlyUnlockedCharacter = null;
         instance.ensureStatsForAllLevels();
 
-        const lastUnlockedLinearIndex = instance.levelProgress.unlockedLevels[0] - 1;
+        // Calculate total playable levels (excluding DIY)
+        let totalPlayableLevels = 0;
+        for (const section of levelSections) {
+            if (section.name !== 'DIY') {
+                totalPlayableLevels += section.levels.length;
+            }
+        }
+
+        // Fix: Clamp unlocked levels in case a section was removed (e.g., Crystal Caverns)
+        if (instance.levelProgress.unlockedLevels[0] > totalPlayableLevels) {
+            instance.levelProgress.unlockedLevels[0] = totalPlayableLevels;
+        }
+
+        const lastUnlockedLinearIndex = Math.max(0, instance.levelProgress.unlockedLevels[0] - 1);
         const { sectionIndex, levelIndex } = getSectionAndLevelFromLinearIndex(lastUnlockedLinearIndex, levelSections);
+        
         instance.currentSection = sectionIndex;
         instance.currentLevelIndex = levelIndex;
         

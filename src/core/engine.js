@@ -150,6 +150,8 @@ export class Engine {
       // 2. Forcefully sync Mutators
       const charComp = this.entityManager.getComponent(this.playerEntityId, CharacterComponent);
       const ctrl = this.entityManager.getComponent(this.playerEntityId, PlayerControlledComponent);
+      const health = this.entityManager.getComponent(this.playerEntityId, HealthComponent);
+      
       if (charComp && ctrl) {
           const config = characterConfig[charComp.characterId] || characterConfig['PinkMan'];
           let mutatorStats = {};
@@ -165,6 +167,17 @@ export class Engine {
           ctrl.damageTakenMult = finalStats.damageTakenMult ?? 1.0;
           ctrl.coinMultiplier = finalStats.coinMultiplier ?? 1.0;
           ctrl.pacifist = finalStats.pacifist ?? false;
+          ctrl.bouncyWorld = finalStats.bouncyWorld ?? false;
+          ctrl.lunarCycle = finalStats.lunarCycle ?? false;
+          
+          ctrl.speed = ctrl.baseSpeed * (finalStats.speedMult || 1.0);
+          ctrl.jumpForce = ctrl.baseJumpForce * (finalStats.jumpForceMult || 1.0);
+          
+          if (health) {
+              const maxHealth = finalStats.maxHealth || 100;
+              health.maxHealth = maxHealth;
+              health.currentHealth = Math.min(health.currentHealth, maxHealth);
+          }
       }
   }
 

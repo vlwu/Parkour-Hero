@@ -250,7 +250,6 @@ export class PlayerLifecycleSystem {
             prevPos.y = respawnPosition.y;
         }
         vel.vx = 0; vel.vy = 0;
-        if (health) health.currentHealth = health.maxHealth;
 
         const currentDeathCount = oldPlayerCtrl.deathCount;
         const currentSound = oldPlayerCtrl.activeSurfaceSound;
@@ -274,6 +273,12 @@ export class PlayerLifecycleSystem {
             if (auraDef && auraDef.auraConfig) {
                 entityManager.addComponent(playerEntityId, new AuraComponent(auraDef.auraConfig));
             }
+        }
+
+        if (health) {
+            const maxHealth = finalStats.maxHealth || 100;
+            health.maxHealth = maxHealth;
+            health.currentHealth = maxHealth;
         }
 
         const newPlayerCtrl = entityManager.getComponent(playerEntityId, PlayerControlledComponent);

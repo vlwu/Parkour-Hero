@@ -8,7 +8,8 @@ export class PlayerControlledComponent {
         dashDuration = PLAYER_CONSTANTS.DASH_DURATION,
         stats = {}
     } = {}) {
-        this.speed = speed;
+        this.baseSpeed = speed;
+        this.speed = speed * (stats.speedMult || 1.0);
         this.baseJumpForce = jumpForce;
         this.baseDashDuration = dashDuration;
         this.dashSpeed = dashSpeed;
@@ -29,6 +30,9 @@ export class PlayerControlledComponent {
         this.damageTakenMult = stats.damageTakenMult ?? 1.0;
         this.coinMultiplier = stats.coinMultiplier ?? 1.0;
         this.pacifist = stats.pacifist ?? false;
+        this.bouncyWorld = stats.bouncyWorld ?? false;
+        this.lunarCycle = stats.lunarCycle ?? false;
+        this.lunarTimer = 0;
 
         this.currentDashCount = 0;
 

@@ -247,6 +247,24 @@ export class HUD {
           ctx.fillStyle = '#00BCD4'; // Cyan
           ctx.fillRect(x, dashY, barWidth * dashPct, dashBarHeight);
       }
+      
+      // --- Lunar Cycle Indicator ---
+      if (ctrl.lunarCycle) {
+          const cycle = (Math.sin((ctrl.lunarTimer / 10) * Math.PI * 2) + 1) / 2; // 0 to 1
+          const moonY = y - 10;
+          
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.beginPath();
+          ctx.arc(x + barWidth/2, moonY, 6, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#f1c40f'; // Yellow
+          ctx.globalAlpha = 1.0 - cycle; // 1 = full moon (lightest), 0 = new moon (heaviest)
+          ctx.beginPath();
+          ctx.arc(x + barWidth/2, moonY, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+      }
   }
 
   drawGameHUD(ctx, camera, level, dt, entityManager, playerEntityId) {

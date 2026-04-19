@@ -459,8 +459,21 @@ export class CollisionSystem {
 
         const PUSH_BUFFER = 0.01;
         pos.y = surfaceTopY - col.height - PUSH_BUFFER;
-        vel.vy = 0;
-        col.isGrounded = true;
+        
+        if (playerCtrl) {
+            playerCtrl.currentDashCount = 0;
+        }
+        
+        if (playerCtrl && playerCtrl.bouncyWorld && surfaceType !== 'mud') {
+            vel.vy = -PLAYER_CONSTANTS.JUMP_FORCE * 0.75;
+            col.isGrounded = false;
+            eventBus.publish('playSound', { key: 'jump', volume: 0.3, channel: 'SFX' });
+            eventBus.publish('createParticles', { x: pos.x + col.width / 2, y: pos.y + col.height, type: 'dust_particle' });
+        } else {
+            vel.vy = 0;
+            col.isGrounded = true;
+        }
+        
         col.groundType = surfaceType;
         col.groundEntity = groundInstance;
     }

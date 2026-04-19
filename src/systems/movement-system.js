@@ -109,6 +109,12 @@ export class MovementSystem {
         const onMovingPlatform = col.isGrounded && col.groundEntity && (col.groundEntity.type === 'brown_platform' || col.groundEntity.type === 'grey_platform');
 
         let gravityMult = ctrl.gravityMult;
+        
+        if (ctrl.lunarCycle) {
+            ctrl.lunarTimer += dt;
+            const cycle = (Math.sin((ctrl.lunarTimer / 10) * Math.PI * 2) + 1) / 2;
+            gravityMult = 0.4 + (cycle * 1.2); 
+        }
 
         if (onMovingPlatform) {
             if (vel.vy > 0) {

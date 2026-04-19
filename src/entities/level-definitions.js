@@ -103,6 +103,7 @@ export const levelSections = [
       { name: "Level 10", jsonPath: "/levels/jungle-journey/10.json" },
     ]
   },
+  /* 
   {
     name: "Crystal Caverns",
     levels: [
@@ -118,6 +119,7 @@ export const levelSections = [
       { name: "Level 10", jsonPath: "/levels/crystal-caverns/10.json" },
     ]
   },
+  */
   {
     name: "DIY",
     levels: []

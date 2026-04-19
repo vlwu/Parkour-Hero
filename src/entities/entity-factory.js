@@ -61,7 +61,10 @@ export function createPlayer(entityManager, x, y, characterId, equippedCosmetics
 
     entityManager.addComponent(playerEntityId, new InputComponent());
     entityManager.addComponent(playerEntityId, new StateComponent('spawn'));
-    entityManager.addComponent(playerEntityId, new HealthComponent());
+    
+    const maxHealth = finalStats.maxHealth || 100;
+    entityManager.addComponent(playerEntityId, new HealthComponent(maxHealth, maxHealth));
+    
     entityManager.addComponent(playerEntityId, new DynamicColliderComponent());
 
     return playerEntityId;

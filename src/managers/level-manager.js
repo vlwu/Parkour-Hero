@@ -59,7 +59,6 @@ export class LevelManager {
 
     let levelEntry = this.levelSections[sectionIndex].levels[levelIndex];
 
-
     if (levelEntry && typeof levelEntry.jsonPath === 'string') {
         try {
             const response = await fetch(levelEntry.jsonPath);
@@ -75,7 +74,6 @@ export class LevelManager {
             return null;
         }
     }
-
 
     return levelEntry;
   }
@@ -96,14 +94,12 @@ export class LevelManager {
   hasNextLevel() {
     const { currentSection, currentLevelIndex } = this.gameState;
     
-    // Check if there are more levels in the current section
     if (currentLevelIndex + 1 < this.levelSections[currentSection].levels.length) {
         return true;
     }
 
-    // Check if there is a next section that isn't 'DIY' and has levels
-    const nextSectionIndex = currentSection + 1;
-    if (nextSectionIndex < this.levelSections.length) {
+    // Safely look ahead for the next valid section
+    for (let nextSectionIndex = currentSection + 1; nextSectionIndex < this.levelSections.length; nextSectionIndex++) {
         const nextSection = this.levelSections[nextSectionIndex];
         if (nextSection.name !== 'DIY' && nextSection.levels.length > 0) {
             return true;
@@ -115,17 +111,34 @@ export class LevelManager {
 
   hasPreviousLevel() {
     const { currentSection, currentLevelIndex } = this.gameState;
-    return currentLevelIndex > 0 || currentSection > 0;
+    if (currentLevelIndex > 0) return true;
+    
+    // Safely look backwards for a valid section
+    for (let prevSectionIndex = currentSection - 1; prevSectionIndex >= 0; prevSectionIndex--) {
+        const prevSection = this.levelSections[prevSectionIndex];
+        if (prevSection.name !== 'DIY' && prevSection.levels.length > 0) {
+            return true;
+        }
+    }
+    return false;
   }
 
   goToNextLevel() {
       if (!this.hasNextLevel()) return;
       let { currentSection, currentLevelIndex } = this.gameState;
+      
       if (currentLevelIndex + 1 < this.levelSections[currentSection].levels.length) {
           currentLevelIndex++;
-      } else if (currentSection + 1 < this.levelSections.length) {
-          currentSection++;
-          currentLevelIndex = 0;
+      } else {
+          // Safely jump to the next valid section
+          for (let nextSectionIndex = currentSection + 1; nextSectionIndex < this.levelSections.length; nextSectionIndex++) {
+              const nextSection = this.levelSections[nextSectionIndex];
+              if (nextSection.name !== 'DIY' && nextSection.levels.length > 0) {
+                  currentSection = nextSectionIndex;
+                  currentLevelIndex = 0;
+                  break;
+              }
+          }
       }
       eventBus.publish('requestLevelLoad', { sectionIndex: currentSection, levelIndex: currentLevelIndex });
   }
@@ -133,11 +146,19 @@ export class LevelManager {
   goToPreviousLevel() {
       if (!this.hasPreviousLevel()) return;
       let { currentSection, currentLevelIndex } = this.gameState;
+      
       if (currentLevelIndex > 0) {
           currentLevelIndex--;
-      } else if (currentSection > 0) {
-          currentSection--;
-          currentLevelIndex = this.levelSections[currentSection].levels.length - 1;
+      } else {
+          // Safely jump to the end of the previous valid section
+          for (let prevSectionIndex = currentSection - 1; prevSectionIndex >= 0; prevSectionIndex--) {
+              const prevSection = this.levelSections[prevSectionIndex];
+              if (prevSection.name !== 'DIY' && prevSection.levels.length > 0) {
+                  currentSection = prevSectionIndex;
+                  currentLevelIndex = prevSection.levels.length - 1;
+                  break;
+              }
+          }
       }
       eventBus.publish('requestLevelLoad', { sectionIndex: currentSection, levelIndex: currentLevelIndex });
   }

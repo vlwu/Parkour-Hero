@@ -203,6 +203,9 @@ export class ParticleSystemWebGL {
             else if (type === 'wing_flap') {
                 angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI / 3);
             }
+            else if (type === 'radiant_ray') {
+                angle = Math.random() * Math.PI * 2;
+            }
             else if (type.includes('death') || type === 'radish_leaf' || type === 'bee_bullet_pieces' || type === 'plant_bullet_pieces' || type === 'trunk_bullet_pieces') angle = Math.random() * Math.PI * 2;
             else if (type.includes('dash')) angle = (direction === 'right' ? Math.PI : 0) + (Math.random() - 0.5) * (Math.PI / 2);
             else if (type === 'double_jump') angle = (Math.PI / 2) + (Math.random() - 0.5) * (Math.PI * 0.8);
@@ -236,6 +239,7 @@ export class ParticleSystemWebGL {
             p.vx = Math.cos(angle) * speed;
             p.vy = Math.sin(angle) * speed;
             p.life = config.life + Math.random() * 0.3;
+            p.maxLife = p.life;
             
             p.size = config.size || (type === 'slime_puddle' ? 16 : 10 + Math.random() * 6);
             
@@ -296,6 +300,8 @@ export class ParticleSystemWebGL {
                     p.alpha = Math.min(1.0, p.life / 1.5);
                 }
 
+                const pct = p.life / p.maxLife;
+
                 if (p.behavior === 'rainbow') {
                     const hue = (p.life * 2) % 1;
                     p.color = hslToRgb(hue, 1, 0.6);
@@ -307,6 +313,17 @@ export class ParticleSystemWebGL {
                     if (Math.random() > 0.8) {
                         p.size = (Math.random() * 8) + 8;
                     }
+                } else if (p.behavior === 'fire') {
+                    if (pct > 0.5) {
+                        p.color = [1.0, (1 - pct) * 1.5, 0.0, 0.8]; 
+                    } else {
+                        p.color = [0.3, 0.3, 0.3, pct * 2.0];
+                    }
+                    p.size *= 0.95;
+                } else if (p.behavior === 'starfall') {
+                    p.alpha = ((Math.sin(p.life * 20) + 1) / 2) * pct;
+                    if (Math.random() < 0.1) p.color = [1.0, 1.0, 0.5, 0.9];
+                    else p.color = [0.8, 0.8, 1.0, 0.9];
                 }
 
                 if (p.animation) {

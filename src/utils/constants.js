@@ -276,8 +276,11 @@ export const PARTICLE_CONFIGS = {
     
     // Cosmetics - Dash Trails
     default_dash: { count: 8, baseSpeed: 180, spriteKey: 'dust_particle', life: 0.5, gravity: 50, size: 12 },
+    phantom_dash: { count: 0 },
     rainbow_dash: { count: 3, baseSpeed: 50, spriteKey: 'dust_particle', life: 0.5, gravity: 20, behavior: 'rainbow' },
     leaf_dash: { count: 4, baseSpeed: 100, spriteKey: 'radish_leaves', life: 0.6, gravity: 30, size: 14 },
+    fiery_comet_dash: { count: 8, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.5, gravity: -40, color: [1.0, 0.2, 0.0, 0.8], size: 16, behavior: 'fire' },
+    starfall_dash: { count: 5, baseSpeed: 40, spriteKey: 'dust_particle', life: 0.8, gravity: 20, size: 8, color: [0.8, 0.8, 1.0, 0.9], behavior: 'starfall', fadeOut: false },
     
     // Cosmetics - Death Effects
     default_death: { count: 25, baseSpeed: 150, spriteKey: 'dust_particle', life: 0.8, gravity: 150, size: 14 },
@@ -295,7 +298,10 @@ export const PARTICLE_CONFIGS = {
 
     // Cosmetics - Auras
     supercharge_aura: { count: 1, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.5, gravity: -150, color: [1.0, 0.8, 0.1, 0.8], size: 16 },
-    orbit_node: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.15, gravity: 0, color: [0.0, 1.0, 1.0, 1.0], size: 12 }
+    orbit_node: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.15, gravity: 0, color: [0.0, 1.0, 1.0, 1.0], size: 12 },
+    bubble_shield_base: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.1, gravity: 0, size: 36, color: [0.5, 0.8, 1.0, 0.3], shape: 0.0 },
+    bubble_trail: { count: 1, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.4, gravity: -20, size: 8, color: [0.5, 0.8, 1.0, 0.6] },
+    radiant_ray: { count: 2, baseSpeed: 60, spriteKey: 'dust_particle', life: 0.4, gravity: 0, size: 10, color: [1.0, 0.9, 0.2, 0.6] }
 };
 
 export const COSMETICS = {
@@ -303,7 +309,9 @@ export const COSMETICS = {
         { id: 'default_dash', name: 'Default', cost: 0, preview: { type: 'dash', particle: 'default_dash' } },
         { id: 'phantom_dash', name: 'Phantom', cost: 50, preview: { type: 'dash', ghost: true } },
         { id: 'rainbow_dash', name: 'Rainbow', cost: 75, preview: { type: 'dash', particle: 'rainbow_dash' } },
-        { id: 'leaf_dash', name: 'Leaf Swirl', cost: 75, preview: { type: 'dash', particle: 'leaf_dash' } }
+        { id: 'leaf_dash', name: 'Leaf Swirl', cost: 75, preview: { type: 'dash', particle: 'leaf_dash' } },
+        { id: 'fiery_comet_dash', name: 'Fiery Comet', cost: 100, preview: { type: 'dash', particle: 'fiery_comet_dash' } },
+        { id: 'starfall_dash', name: 'Starfall', cost: 125, preview: { type: 'dash', particle: 'starfall_dash' } }
     ],
     death: [
         { id: 'default_death', name: 'Default', cost: 0, preview: { type: 'death', particle: 'default_death' } },
@@ -322,12 +330,17 @@ export const COSMETICS = {
         { id: 'default_aura', name: 'None', cost: 0, auraConfig: null, preview: { type: 'aura' } },
         { id: 'orbiting_aura', name: 'Orbiting', cost: 75, auraConfig: { orbiting: true, emitRate: 0.02 }, preview: { type: 'aura' } },
         { id: 'supercharge_aura', name: 'Supercharge', cost: 100, auraConfig: { particleType: 'supercharge_aura', emitRate: 0.05 }, preview: { type: 'aura' } },
-        { id: 'shadow_aura', name: 'Shadow', cost: 125, auraConfig: { ghostTrail: true, emitRate: 0.08 }, preview: { type: 'aura' } }
+        { id: 'shadow_aura', name: 'Shadow', cost: 125, auraConfig: { ghostTrail: true, emitRate: 0.08 }, preview: { type: 'aura' } },
+        { id: 'bubble_shield_aura', name: 'Bubble Shield', cost: 150, auraConfig: { bubbleShield: true, emitRate: 0.05 }, preview: { type: 'aura' } },
+        { id: 'radiant_glow_aura', name: 'Radiant Glow', cost: 200, auraConfig: { radiantGlow: true, emitRate: 0.08 }, preview: { type: 'aura' } }
     ],
     mutator: [
         { id: 'default_mutator', name: 'None', cost: 0, modifiers: {}, preview: { type: 'mutator', speed: 4, amp: 5 } },
         { id: 'featherweight_mutator', name: 'Featherweight', cost: 150, modifiers: { gravityMult: 0.7, damageTakenMult: 2.0 }, preview: { type: 'mutator', speed: 6, amp: 15 } },
         { id: 'overclock_mutator', name: 'Overclock', cost: 200, modifiers: { timeScale: 1.25 }, preview: { type: 'mutator', speed: 15, amp: 5 } },
-        { id: 'pacifist_mutator', name: 'Pacifist', cost: 250, modifiers: { pacifist: true, coinMultiplier: 2.0 }, preview: { type: 'mutator', speed: 4, amp: 5 } }
+        { id: 'pacifist_mutator', name: 'Pacifist', cost: 250, modifiers: { pacifist: true, coinMultiplier: 2.0 }, preview: { type: 'mutator', speed: 4, amp: 5 } },
+        { id: 'glass_cannon_mutator', name: 'Glass Cannon', cost: 300, modifiers: { speedMult: 1.4, jumpForceMult: 1.25, maxHealth: 1 }, preview: { type: 'mutator', speed: 20, amp: 2 } },
+        { id: 'bouncy_world_mutator', name: 'Bouncy World', cost: 200, modifiers: { bouncyWorld: true }, preview: { type: 'mutator', speed: 8, amp: 10 } },
+        { id: 'lunar_cycle_mutator', name: 'Lunar Cycle', cost: 250, modifiers: { lunarCycle: true }, preview: { type: 'mutator', speed: 2, amp: 20 } }
     ]
 };
