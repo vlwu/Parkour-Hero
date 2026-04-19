@@ -124,12 +124,14 @@ export class ShopModal extends LitElement {
     gameState: { type: Object },
     fontRenderer: { type: Object },
     assets: { type: Object },
+    isMidLevel: { type: Boolean },
     activeTab: { type: String, state: true },
     previewedItem: { type: String, state: true }
   };
 
   constructor() {
     super();
+    this.isMidLevel = false;
     this.activeTab = 'dash';
     this.previewFrameId = null;
     this.particleSystem = null;
@@ -352,6 +354,14 @@ export class ShopModal extends LitElement {
   }
 
   _handleAction(item, category) {
+      const currentlyEquipped = this.gameState.equippedCosmetics[category];
+
+      if (category === 'mutator' && this.isMidLevel && currentlyEquipped !== item.id) {
+          if (!window.confirm("Switching mutators will restart the current level. Are you sure?")) {
+              return;
+          }
+      }
+
       const isUnlocked = this.gameState.unlockedCosmetics.includes(item.id);
       
       if (isUnlocked) {
@@ -369,7 +379,12 @@ export class ShopModal extends LitElement {
               eventBus.publish('playSound', { key: 'trophy_activated', volume: 0.8, channel: 'UI' });
           } else {
               eventBus.publish('playSound', { key: 'hit', volume: 0.5, channel: 'UI' });
+              return; // Prevent restart if they just tried to buy but couldn't afford it
           }
+      }
+
+      if (category === 'mutator' && this.isMidLevel && currentlyEquipped !== item.id) {
+          this.dispatchEvent(new CustomEvent('restart-level-request', { bubbles: true, composed: true }));
       }
   }
 

@@ -117,7 +117,6 @@ export class HUD {
       ctx.roundRect(0, 0, hudWidth, hudHeight, 10);
       ctx.fill();
 
-      // We must translate coordinates to be relative to the cache canvas (0,0)
       const localStartX = textX - hudX;
       const localStartY = startY - hudY;
 
@@ -211,16 +210,17 @@ export class HUD {
       const y = pos.y - yOffset;
 
       // --- Health Bar ---
-      // Black Border
       ctx.fillStyle = '#000000';
       ctx.fillRect(x - borderSize, y - borderSize, barWidth + borderSize * 2, barHeight + borderSize * 2);
 
-      // Background (Dark)
       ctx.fillStyle = 'rgba(50, 50, 50, 1)';
       ctx.fillRect(x, y, barWidth, barHeight);
 
-      // Foreground Health
-      const healthPct = health.currentHealth / health.maxHealth;
+      // Foreground Health 
+      // Base the bar size off of 100 max health so items like Glass Cannon (1 Max HP) visually look incredibly fragile.
+      const visualMax = Math.max(health.maxHealth, 100);
+      const healthPct = health.currentHealth / visualMax;
+      
       if (healthPct > 0.6) ctx.fillStyle = '#2ecc71'; // Green
       else if (healthPct > 0.3) ctx.fillStyle = '#f1c40f'; // Yellow
       else ctx.fillStyle = '#e74c3c'; // Red
@@ -230,11 +230,9 @@ export class HUD {
       // --- Dash Cooldown Bar ---
       const dashY = y + barHeight + spacing;
       
-      // Black Border
       ctx.fillStyle = '#000000';
       ctx.fillRect(x - borderSize, dashY - borderSize, barWidth + borderSize * 2, dashBarHeight + borderSize * 2);
 
-      // Background (Dark)
       ctx.fillStyle = 'rgba(50, 50, 50, 1)';
       ctx.fillRect(x, dashY, barWidth, dashBarHeight);
 

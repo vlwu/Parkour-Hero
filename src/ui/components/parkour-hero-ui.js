@@ -454,9 +454,12 @@ export class ParkourHeroUI extends LitElement {
                       @open-modal=${this._openModalFromMenu}
                     ></character-menu>`;
       case 'shop':
+        const isMidLevel = this.gameHasStarted && !this.previewMode && !this.levelCompleteStats;
         return html`<shop-modal
                       .gameState=${this.gameState} .assets=${this.assets} .fontRenderer=${this.fontRenderer}
+                      .isMidLevel=${isMidLevel}
                       @close-modal=${this._closeModal}
+                      @restart-level-request=${() => { this._resumeGame(); eventBus.publish('requestLevelRestart'); }}
                     ></shop-modal>`;
       case 'info':
         return html`<info-modal
