@@ -42,12 +42,12 @@ export class ShopModal extends LitElement {
     }
     
     .left-panel {
-        display: flex; flex-direction: column; align-items: center; width: 180px; flex-shrink: 0;
+        display: flex; flex-direction: column; align-items: center; width: 180px; flex-shrink: 0; overflow-y: auto;
     }
     .preview-box {
         width: 150px; height: 150px; background-color: #222;
         border: 2px solid #555; border-radius: 8px; position: relative;
-        margin-bottom: 15px; overflow: hidden;
+        margin-bottom: 15px; overflow: hidden; flex-shrink: 0;
     }
     .preview-box canvas {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -55,6 +55,19 @@ export class ShopModal extends LitElement {
     }
     .preview-label {
         margin-top: 10px;
+    }
+    .mutator-description {
+        margin-top: 15px;
+        font-size: 0.9em;
+        color: #ddd;
+        line-height: 1.4;
+        text-align: center;
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #555;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .right-panel {
@@ -266,6 +279,15 @@ export class ShopModal extends LitElement {
                       const radius = 20;
                       this.particleSystem.create({ type: 'orbit_node', x: 75 + Math.cos(angle1)*radius, y: 75 + Math.sin(angle1)*radius });
                       this.particleSystem.create({ type: 'orbit_node', x: 75 + Math.cos(angle2)*radius, y: 75 + Math.sin(angle2)*radius });
+                  } else if (currentItem.auraConfig.bubbleShield && particleTimer > currentItem.auraConfig.emitRate) {
+                      particleTimer = 0;
+                      this.particleSystem.create({ type: 'bubble_shield_base', x: 75, y: 75 });
+                      if (Math.random() < 0.5) {
+                          this.particleSystem.create({ type: 'bubble_trail', x: 75, y: 75 });
+                      }
+                  } else if (currentItem.auraConfig.radiantGlow && particleTimer > currentItem.auraConfig.emitRate) {
+                      particleTimer = 0;
+                      this.particleSystem.create({ type: 'radiant_ray', x: 75, y: 75 });
                   }
               }
           } else if (previewConf && previewConf.type === 'mutator') {
@@ -357,6 +379,7 @@ export class ShopModal extends LitElement {
     const items = COSMETICS[this.activeTab] || [];
     const equippedId = this.gameState.equippedCosmetics[this.activeTab];
     const previewName = items.find(c => c.id === this.previewedItem)?.name || 'None';
+    const previewDesc = items.find(c => c.id === this.previewedItem)?.description;
 
     return html`
       <div class="modal-overlay" @click=${this._dispatchClose}>
@@ -381,6 +404,11 @@ export class ShopModal extends LitElement {
                   <div class="preview-label">
                       <bitmap-text .fontRenderer=${this.fontRenderer} text=${previewName} scale="1.5"></bitmap-text>
                   </div>
+                  ${this.activeTab === 'mutator' && previewDesc ? html`
+                      <div class="mutator-description">
+                          ${previewDesc}
+                      </div>
+                  ` : ''}
               </div>
 
               <div class="right-panel">

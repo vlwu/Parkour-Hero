@@ -299,9 +299,9 @@ export const PARTICLE_CONFIGS = {
     // Cosmetics - Auras
     supercharge_aura: { count: 1, baseSpeed: 100, spriteKey: 'dust_particle', life: 0.5, gravity: -150, color: [1.0, 0.8, 0.1, 0.8], size: 16 },
     orbit_node: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.15, gravity: 0, color: [0.0, 1.0, 1.0, 1.0], size: 12 },
-    bubble_shield_base: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.1, gravity: 0, size: 36, color: [0.5, 0.8, 1.0, 0.3], shape: 0.0 },
+    bubble_shield_base: { count: 1, baseSpeed: 0, spriteKey: 'dust_particle', life: 0.15, gravity: 0, size: 42, color: [0.4, 0.8, 1.0, 0.6], shape: 0.0 },
     bubble_trail: { count: 1, baseSpeed: 20, spriteKey: 'dust_particle', life: 0.4, gravity: -20, size: 8, color: [0.5, 0.8, 1.0, 0.6] },
-    radiant_ray: { count: 2, baseSpeed: 60, spriteKey: 'dust_particle', life: 0.4, gravity: 0, size: 10, color: [1.0, 0.9, 0.2, 0.6] }
+    radiant_ray: { count: 2, baseSpeed: 60, spriteKey: 'dust_particle', life: 0.4, gravity: 0, size: 6, color: [0.95, 0.95, 1.0, 0.8], shape: 1.0, fadeOut: true }
 };
 
 export const COSMETICS = {
@@ -335,12 +335,12 @@ export const COSMETICS = {
         { id: 'radiant_glow_aura', name: 'Radiant Glow', cost: 200, auraConfig: { radiantGlow: true, emitRate: 0.08 }, preview: { type: 'aura' } }
     ],
     mutator: [
-        { id: 'default_mutator', name: 'None', cost: 0, modifiers: {}, preview: { type: 'mutator', speed: 4, amp: 5 } },
-        { id: 'featherweight_mutator', name: 'Featherweight', cost: 150, modifiers: { gravityMult: 0.7, damageTakenMult: 2.0 }, preview: { type: 'mutator', speed: 6, amp: 15 } },
-        { id: 'overclock_mutator', name: 'Overclock', cost: 200, modifiers: { timeScale: 1.25 }, preview: { type: 'mutator', speed: 15, amp: 5 } },
-        { id: 'pacifist_mutator', name: 'Pacifist', cost: 250, modifiers: { pacifist: true, coinMultiplier: 2.0 }, preview: { type: 'mutator', speed: 4, amp: 5 } },
-        { id: 'glass_cannon_mutator', name: 'Glass Cannon', cost: 300, modifiers: { speedMult: 1.4, jumpForceMult: 1.25, maxHealth: 1 }, preview: { type: 'mutator', speed: 20, amp: 2 } },
-        { id: 'bouncy_world_mutator', name: 'Bouncy World', cost: 200, modifiers: { bouncyWorld: true }, preview: { type: 'mutator', speed: 8, amp: 10 } },
-        { id: 'lunar_cycle_mutator', name: 'Lunar Cycle', cost: 250, modifiers: { lunarCycle: true }, preview: { type: 'mutator', speed: 2, amp: 20 } }
+        { id: 'default_mutator', name: 'None', cost: 0, modifiers: {}, preview: { type: 'mutator', speed: 4, amp: 5 }, description: "No mutator applied." },
+        { id: 'featherweight_mutator', name: 'Featherweight', cost: 150, modifiers: { gravityMult: 0.7, damageTakenMult: 2.0 }, preview: { type: 'mutator', speed: 6, amp: 15 }, description: "Gravity is reduced, but you take double damage." },
+        { id: 'overclock_mutator', name: 'Overclock', cost: 200, modifiers: { timeScale: 1.25 }, preview: { type: 'mutator', speed: 15, amp: 5 }, description: "Game speed is increased by 25%." },
+        { id: 'pacifist_mutator', name: 'Pacifist', cost: 250, modifiers: { pacifist: true, coinMultiplier: 2.0 }, preview: { type: 'mutator', speed: 4, amp: 5 }, description: "Cannot stomp enemies. Fruit coins are doubled." },
+        { id: 'glass_cannon_mutator', name: 'Glass Cannon', cost: 300, modifiers: { speedMult: 1.4, jumpForceMult: 1.25, maxHealth: 1 }, preview: { type: 'mutator', speed: 20, amp: 2 }, description: "Move and jump much faster, but any damage is fatal." },
+        { id: 'bouncy_world_mutator', name: 'Bouncy World', cost: 200, modifiers: { bouncyWorld: true }, preview: { type: 'mutator', speed: 8, amp: 10 }, description: "Automatically bounce whenever you hit the ground." },
+        { id: 'lunar_cycle_mutator', name: 'Lunar Cycle', cost: 250, modifiers: { lunarCycle: true }, preview: { type: 'mutator', speed: 2, amp: 20 }, description: "Gravity constantly shifts between very light and very heavy." }
     ]
 };
