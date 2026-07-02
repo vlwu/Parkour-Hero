@@ -142,13 +142,17 @@ export class SoundManager {
     this.musicAudio.volume = this.getMusicVolume();
 
     if (this.settings.enabled && this.settings.musicEnabled) {
-        try {
-            await this.unlockAudio();
-            await this.musicAudio.play();
+        if (this.musicAudio.paused) {
+            try {
+                await this.unlockAudio();
+                await this.musicAudio.play();
+                this.settings.musicPlaying = true;
+            } catch (e) {
+                console.log("Music playback blocked or interrupted:", e);
+                this.settings.musicPlaying = false;
+            }
+        } else {
             this.settings.musicPlaying = true;
-        } catch (e) {
-            console.log("Music playback blocked or interrupted:", e);
-            this.settings.musicPlaying = false;
         }
     } else {
         this.musicAudio.pause();
@@ -171,13 +175,18 @@ export class SoundManager {
     this.musicAudio.volume = this.getMusicVolume();
 
     if (this.settings.enabled && this.settings.musicEnabled) {
-        this.musicAudio.play().then(() => {
+        if (this.musicAudio.paused) {
+            this.musicAudio.play().then(() => {
+                this.settings.musicPlaying = true;
+                this.publishSettingsUpdate();
+            }).catch(() => {
+                this.settings.musicPlaying = false;
+                this.publishSettingsUpdate();
+            });
+        } else {
             this.settings.musicPlaying = true;
             this.publishSettingsUpdate();
-        }).catch(() => {
-            this.settings.musicPlaying = false;
-            this.publishSettingsUpdate();
-        });
+        }
     } else {
         this.settings.musicPlaying = false;
         this.publishSettingsUpdate();
@@ -255,7 +264,7 @@ export class SoundManager {
   }
 
   onGamePaused() {
-    this.pauseMusic();
+    // Music plays continuously through pause menu/modals
   }
 
   onGameResumed() {
@@ -265,7 +274,7 @@ export class SoundManager {
   }
 
   onLevelComplete() {
-    this.pauseMusic();
+    // Music plays continuously through level complete menu
   }
 
   onExitToMenu() {
