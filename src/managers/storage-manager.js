@@ -18,6 +18,9 @@ export class StorageManager {
             sound: {
                 enabled: true,
                 volume: 0.5,
+                musicEnabled: true,
+                musicVolume: 0.4,
+                currentTrackIndex: 0,
             },
             keybinds: {
                 moveLeft: 'a',

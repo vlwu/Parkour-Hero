@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { map } from 'lit/directives/map.js';
 import { eventBus } from '../../utils/event-bus.js';
+import { MUSIC_TRACKS } from '../../managers/sound-manager.js';
 import './keybind-display.js';
 import './bitmap-text.js';
 
@@ -175,12 +176,48 @@ export class SettingsMenu extends LitElement {
     eventBus.publish('playSound', { key: 'jump', volume: 0.8, channel: 'UI' });
   }
 
+  _toggleMusic() {
+    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+    eventBus.publish('toggleMusic');
+  }
+
+  _setMusicVolume(e) {
+    const volume = parseFloat(e.target.value);
+    eventBus.publish('setMusicVolume', { volume });
+  }
+
+  _getCurrentTrackName() {
+    const index = this.soundSettings?.currentTrackIndex || 0;
+    const track = MUSIC_TRACKS[index];
+    return track ? track.name : 'None';
+  }
+
+  _isMusicPlaying() {
+    return this.soundSettings?.musicPlaying || false;
+  }
+
+  _prevTrack() {
+    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+    eventBus.publish('skipMusic', { direction: -1 });
+  }
+
+  _nextTrack() {
+    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+    eventBus.publish('skipMusic', { direction: 1 });
+  }
+
+  _togglePlayPauseMusic() {
+    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+    eventBus.publish('togglePlayPauseMusic');
+  }
+
   render() {
     if (!this.keybinds || !this.soundSettings || !this.fontRenderer || !this.gameplaySettings) {
       return html``;
     }
     const keybindActions = Object.keys(this.keybinds);
     const volumeClass = this.soundSettings.enabled ? 'volume-enabled' : 'volume-disabled';
+    const musicVolumeClass = this.soundSettings.musicEnabled ? 'volume-enabled' : 'volume-disabled';
     const duplicates = this._getDuplicateKeys();
 
     return html`
@@ -227,6 +264,55 @@ export class SettingsMenu extends LitElement {
                     <bitmap-text .fontRenderer=${this.fontRenderer} text="Test Sound" scale="1.8"></bitmap-text>
                 </button>
              </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="section-title-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Music Player" scale="2.2"></bitmap-text>
+            </div>
+
+            <div class="setting-item">
+              <div class="label-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Music:" scale="1.8"></bitmap-text>
+              </div>
+              <button @click=${this._toggleMusic} class="toggle-button ${this.soundSettings.musicEnabled ? 'sound-enabled' : 'sound-disabled'}">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text=${this.soundSettings.musicEnabled ? 'ON' : 'OFF'} scale="1.8"></bitmap-text>
+              </button>
+            </div>
+
+            <div class="setting-item">
+              <div class="label-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Music Volume:" scale="1.8"></bitmap-text>
+              </div>
+              <div class="volume-control">
+                <input 
+                  type="range" 
+                  class="${musicVolumeClass}"
+                  min="0" 
+                  max="1" 
+                  step="0.1" 
+                  .value=${this.soundSettings.musicVolume !== undefined ? this.soundSettings.musicVolume : 0.4} 
+                  @input=${this._setMusicVolume} 
+                />
+                <bitmap-text .fontRenderer=${this.fontRenderer} text=${`${Math.round((this.soundSettings.musicVolume !== undefined ? this.soundSettings.musicVolume : 0.4) * 100)}%`} scale="1.8"></bitmap-text>
+              </div>
+            </div>
+
+            <div class="setting-item" style="flex-direction: column; gap: 10px; align-items: center; padding: 15px;">
+              <bitmap-text .fontRenderer=${this.fontRenderer} text="Current Track:" scale="1.5" color="#aaa"></bitmap-text>
+              <bitmap-text .fontRenderer=${this.fontRenderer} text="${this._getCurrentTrackName()}" scale="1.6" color="#f1c40f"></bitmap-text>
+              <div style="display: flex; gap: 15px; margin-top: 10px; justify-content: center; width: 100%;">
+                <button @click=${this._prevTrack} class="action-button" style="padding: 8px 16px;">
+                  <bitmap-text .fontRenderer=${this.fontRenderer} text="PREV" scale="1.5"></bitmap-text>
+                </button>
+                <button @click=${this._togglePlayPauseMusic} class="action-button" style="padding: 8px 16px;">
+                  <bitmap-text .fontRenderer=${this.fontRenderer} text="${this._isMusicPlaying() ? 'PAUSE' : 'PLAY'}" scale="1.5"></bitmap-text>
+                </button>
+                <button @click=${this._nextTrack} class="action-button" style="padding: 8px 16px;">
+                  <bitmap-text .fontRenderer=${this.fontRenderer} text="SKIP" scale="1.5"></bitmap-text>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="settings-section">

@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { map } from 'lit/directives/map.js';
 import { eventBus } from '../../utils/event-bus.js';
 import { GameState } from '../../managers/game-state.js';
 import { StorageManager } from '../../managers/storage-manager.js';
@@ -51,7 +52,7 @@ export class ParkourHeroUI extends LitElement {
       cursor: pointer;
       width: 64px;
       height: 64px;
-      transition: all 0.2s ease-in-out;
+      transition: transform 0.2s ease-in-out;
     }
     .icon-button:hover {
       transform: scale(1.1);
@@ -286,6 +287,7 @@ export class ParkourHeroUI extends LitElement {
     this.newlyUnlockedCharacterId = null;
     this.gameHasStarted = false;
     this.activeModal = 'main-menu';
+    eventBus.publish('exitToMenu');
   };
 
   _handleLevelSelected(e) {
@@ -394,26 +396,23 @@ export class ParkourHeroUI extends LitElement {
         { id: 'character', title: 'Character', icon: 'Character' },
         { id: 'shop', title: 'Shop', icon: 'Shop' },
         { id: 'settings', title: 'Settings', icon: 'Settings' },
-        { id: 'info', title: 'How to Play', icon: 'Info' },
-        { id: 'editor', title: 'Level Editor', icon: 'Editor' },
+        { id: 'info', title: 'Info', icon: 'Info' },
     ];
 
     return html`
       <div class="main-menu-container">
-        <bitmap-text
-          .fontRenderer=${this.fontRenderer} text="Parkour Hero" scale="9" outlineColor="black" outlineWidth="2"
-        ></bitmap-text>
+        <bitmap-text .fontRenderer=${this.fontRenderer} text="Parkour Hero" scale="5" outlineColor="black" outlineWidth="3"></bitmap-text>
         <div class="main-menu-buttons">
           <button @click=${() => { eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' }); eventBus.publish('requestStartGame'); }}>
-              <bitmap-text .fontRenderer=${this.fontRenderer} text=${startButtonText} scale="2.5" outlineColor="#004a99" outlineWidth="1"></bitmap-text>
+            <bitmap-text .fontRenderer=${this.fontRenderer} text="${startButtonText}" scale="2.2" outlineColor="black" outlineWidth="1"></bitmap-text>
           </button>
         </div>
         <div class="main-menu-icon-buttons">
-            ${iconButtons.map(btn => html`
-                <button class="icon-button" title=${btn.title} @click=${() => this._openModalFromMenu(btn.id)}>
-                    <img src="/assets/Menu/Buttons/${btn.icon}.png" alt=${btn.title}>
-                </button>
-            `)}
+          ${map(iconButtons, (btn) => html`
+            <button class="icon-button" title=${btn.title} @click=${() => this._openModalFromMenu(btn.id)}>
+              <img src="/assets/Menu/Buttons/${btn.icon}.png" alt=${btn.title}>
+            </button>
+          `)}
         </div>
       </div>
     `;
@@ -421,64 +420,85 @@ export class ParkourHeroUI extends LitElement {
 
   renderActiveModal() {
     switch (this.activeModal) {
-      case 'tutorial':
-        return html`<tutorial-modal
-                      .keybinds=${this.keybinds}
-                      .fontRenderer=${this.fontRenderer}
-                      .assets=${this.assets}
-                      @close-modal=${this._closeModal}
-                      @keybind-changed=${this._handleKeybindChange}
-                    ></tutorial-modal>`;
       case 'settings':
-        return html`<settings-menu
-                      .keybinds=${this.keybinds} .soundSettings=${this.soundSettings} .gameplaySettings=${this.gameplaySettings} .fontRenderer=${this.fontRenderer}
-                      @close-modal=${this._closeModal} @keybind-changed=${this._handleKeybindChange}
-                    ></settings-menu>`;
+        return html`
+          <settings-menu
+            .keybinds=${this.keybinds}
+            .soundSettings=${this.soundSettings}
+            .gameplaySettings=${this.gameplaySettings}
+            .fontRenderer=${this.fontRenderer}
+            @close-modal=${this._closeModal}
+            @keybind-changed=${this._handleKeybindChange}
+          ></settings-menu>
+        `;
       case 'pause':
-        return html`<pause-modal
-                      .stats=${this.currentStats} .fontRenderer=${this.fontRenderer}
-                      .assets=${this.assets}
-                      @resume-game=${this._resumeGame} @restart-level=${this._handleRestart}
-                      @open-modal=${this._openModalFromMenu}
-                      @exit-to-menu=${this._handleExitToMenu}
-                    ></pause-modal>`;
+        return html`
+          <pause-modal
+            .stats=${this.currentStats}
+            .fontRenderer=${this.fontRenderer}
+            .assets=${this.assets}
+            @resume-game=${this._resumeGame}
+            @restart-level=${this._handleRestart}
+            @open-modal=${this._openModalFromMenu}
+            @exit-to-menu=${this._handleExitToMenu}
+          ></pause-modal>
+        `;
       case 'levels':
-        return html`<levels-menu
-                      .gameState=${this.gameState} .fontRenderer=${this.fontRenderer}
-                      @close-modal=${this._closeModal} @level-selected=${this._handleLevelSelected}
-                    ></levels-menu>`;
+        return html`
+          <levels-menu
+            .gameState=${this.gameState}
+            .fontRenderer=${this.fontRenderer}
+            @close-modal=${this._closeModal}
+            @level-selected=${this._handleLevelSelected}
+          ></levels-menu>
+        `;
       case 'character':
-        return html`<character-menu
-                      .gameState=${this.gameState} .assets=${this.assets} .fontRenderer=${this.fontRenderer}
-                      @close-modal=${this._closeModal} @character-selected=${this._handleCharacterSelected}
-                      @open-modal=${this._openModalFromMenu}
-                    ></character-menu>`;
-      case 'shop':
+        return html`
+          <character-menu
+            .gameState=${this.gameState}
+            .assets=${this.assets}
+            .fontRenderer=${this.fontRenderer}
+            @close-modal=${this._closeModal}
+            @character-selected=${this._handleCharacterSelected}
+            @open-modal=${this._openModalFromMenu}
+          ></character-menu>
+        `;
+       case 'shop':
         const isMidLevel = this.gameHasStarted && !this.previewMode && !this.levelCompleteStats;
-        return html`<shop-modal
-                      .gameState=${this.gameState} .assets=${this.assets} .fontRenderer=${this.fontRenderer}
-                      .isMidLevel=${isMidLevel}
-                      @close-modal=${this._closeModal}
-                      @restart-level-request=${() => { this._resumeGame(); eventBus.publish('requestLevelRestart'); }}
-                    ></shop-modal>`;
+        return html`
+          <shop-modal
+            .gameState=${this.gameState}
+            .assets=${this.assets}
+            .fontRenderer=${this.fontRenderer}
+            .isMidLevel=${isMidLevel}
+            @close-modal=${this._closeModal}
+            @restart-level-request=${() => { this._resumeGame(); eventBus.publish('requestLevelRestart'); }}
+          ></shop-modal>
+        `;
       case 'info':
-        return html`<info-modal
-                      .keybinds=${this.keybinds}
-                      .fontRenderer=${this.fontRenderer}
-                      @close-modal=${this._closeModal}
-                    ></info-modal>`;
+        return html`
+          <info-modal
+            .keybinds=${this.keybinds}
+            .fontRenderer=${this.fontRenderer}
+            @close-modal=${this._closeModal}
+          ></info-modal>
+        `;
       case 'stats':
-        return html`<stats-modal
-                      .gameState=${this.gameState}
-                      .fontRenderer=${this.fontRenderer}
-                      @close-modal=${this._closeModal}
-                    ></stats-modal>`;
+        return html`
+          <stats-modal
+            .gameState=${this.gameState}
+            .fontRenderer=${this.fontRenderer}
+            @close-modal=${this._closeModal}
+          ></stats-modal>
+        `;
       case 'enemy-catalogue':
-        return html`<enemy-catalogue-modal
-                      .fontRenderer=${this.fontRenderer}
-                      .assets=${this.assets}
-                      @close-modal=${this._closeModal}
-                    ></enemy-catalogue-modal>`;
+        return html`
+          <enemy-catalogue-modal
+            .fontRenderer=${this.fontRenderer}
+            .assets=${this.assets}
+            @close-modal=${this._closeModal}
+          ></enemy-catalogue-modal>
+        `;
       default:
         return html``;
     }

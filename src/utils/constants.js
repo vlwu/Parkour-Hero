@@ -200,6 +200,7 @@ export const EVENTS = Object.freeze({
     GAME_PAUSED: 'gamePaused',
     GAME_RESUMED: 'gameResumed',
     LEVEL_COMPLETE: 'levelComplete',
+    EXIT_TO_MENU: 'exitToMenu',
 
     PLAYER_DIED: 'playerDied',
     PLAYER_TOOK_DAMAGE: 'playerTookDamage',

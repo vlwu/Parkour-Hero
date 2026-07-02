@@ -1,6 +1,27 @@
 import { eventBus } from '../utils/event-bus.js';
 import { StorageManager } from './storage-manager.js';
 
+export const MUSIC_TRACKS = [
+    { id: 'chickens_meadow', name: 'Chickens In The Meadow', path: '/assets/Sounds/Music/Chickens In The Meadow.ogg' },
+    { id: 'cuddle_clouds', name: 'Cuddle Clouds', path: '/assets/Sounds/Music/Cuddle Clouds.ogg' },
+    { id: 'drifting_memories', name: 'Drifting Memories', path: '/assets/Sounds/Music/Drifting Memories.ogg' },
+    { id: 'evening_harmony', name: 'Evening Harmony', path: '/assets/Sounds/Music/Evening Harmony.ogg' },
+    { id: 'floating_dream', name: 'Floating Dream', path: '/assets/Sounds/Music/Floating Dream.ogg' },
+    { id: 'forgotten_biomes', name: 'Forgotten Biomes', path: '/assets/Sounds/Music/Forgotten Biomes.ogg' },
+    { id: 'gentle_breeze', name: 'Gentle Breeze', path: '/assets/Sounds/Music/Gentle Breeze.ogg' },
+    { id: 'golden_gleam', name: 'Golden Gleam', path: '/assets/Sounds/Music/Golden Gleam.ogg' },
+    { id: 'pineapple_sea', name: 'Pineapple Under The Sea', path: '/assets/Sounds/Music/Pineapple Under The Sea.ogg' },
+    { id: 'polar_lights', name: 'Polar Lights', path: '/assets/Sounds/Music/Polar Lights.ogg' },
+    { id: 'sheep', name: 'Sheep', path: '/assets/Sounds/Music/Sheep.ogg' },
+    { id: 'strange_worlds', name: 'Strange Worlds', path: '/assets/Sounds/Music/Strange Worlds.ogg' },
+    { id: 'sunlight_leaves', name: 'Sunlight Through Leaves', path: '/assets/Sounds/Music/Sunlight Through Leaves.ogg' },
+    { id: 'wanderers_tale', name: 'Wanderer\'s Tale', path: '/assets/Sounds/Music/Wanderer\'s Tale.ogg' },
+    { id: 'what_clouds', name: 'What Clouds Are Made Of', path: '/assets/Sounds/Music/What Clouds Are Made Of.ogg' },
+    { id: 'whispering_woods', name: 'Whispering Woods', path: '/assets/Sounds/Music/Whispering Woods.ogg' },
+    { id: 'wildflowers_river', name: 'Wildflowers By The River', path: '/assets/Sounds/Music/Wildflowers By The River.ogg' },
+    { id: 'wind_trees', name: 'Wind Over The Trees', path: '/assets/Sounds/Music/Wind Over The Trees.ogg' }
+];
+
 export class SoundManager {
   constructor(initialSettings) {
     this.sounds = {};
@@ -22,7 +43,20 @@ export class SoundManager {
     this.settings = initialSettings || {
       enabled: true,
       volume: 0.5,
+      musicEnabled: true,
+      musicVolume: 0.4,
+      currentTrackIndex: 0,
+      musicPlaying: false,
     };
+
+    if (this.settings.musicEnabled === undefined) this.settings.musicEnabled = true;
+    if (this.settings.musicVolume === undefined) this.settings.musicVolume = 0.4;
+    if (this.settings.currentTrackIndex === undefined) this.settings.currentTrackIndex = 0;
+    this.settings.musicPlaying = false;
+
+    this.musicAudio = null;
+    this.isLevelActive = false;
+
     this.subscriptions = [];
 
     this._setupEventSubscriptions();
@@ -36,9 +70,11 @@ export class SoundManager {
         if (this.audioContext.state === 'suspended') {
             this.audioContext.resume().then(() => {
                 this.audioUnlocked = true;
+                if (this.isLevelActive) this.resumeMusic();
             }).catch(() => {});
         } else if (this.audioContext.state === 'running') {
             this.audioUnlocked = true;
+            if (this.isLevelActive) this.resumeMusic();
         }
         
         ['click', 'keydown', 'touchstart'].forEach(evt => {
@@ -62,6 +98,179 @@ export class SoundManager {
     subscribeAndTrack('stopSoundLoop', ({key}) => this.stopLoop(key));
     subscribeAndTrack('toggleSound', this.toggleSound);
     subscribeAndTrack('setSoundVolume', ({volume}) => this.setVolume(volume));
+
+    // Music control integrations
+    subscribeAndTrack('levelLoaded', this.onLevelLoaded);
+    subscribeAndTrack('gamePaused', this.onGamePaused);
+    subscribeAndTrack('gameResumed', this.onGameResumed);
+    subscribeAndTrack('levelComplete', this.onLevelComplete);
+    subscribeAndTrack('exitToMenu', this.onExitToMenu);
+
+    subscribeAndTrack('toggleMusic', this.toggleMusic);
+    subscribeAndTrack('setMusicVolume', ({volume}) => this.setMusicVolume(volume));
+    subscribeAndTrack('skipMusic', ({direction}) => this.skipMusic(direction));
+    subscribeAndTrack('togglePlayPauseMusic', this.togglePlayPauseMusic);
+  }
+
+  _initMusicAudio() {
+    if (this.musicAudio) return;
+    this.musicAudio = new Audio();
+    this.musicAudio.loop = false;
+    this.musicAudio.addEventListener('ended', () => {
+        this.skipMusic(1);
+    });
+  }
+
+  getMusicVolume() {
+    return this.settings.enabled && this.settings.musicEnabled
+      ? this.settings.volume * this.settings.musicVolume
+      : 0;
+  }
+
+  async playMusic() {
+    if (!this.isLevelActive) return;
+    this._initMusicAudio();
+
+    const track = MUSIC_TRACKS[this.settings.currentTrackIndex];
+    if (!track) return;
+
+    const targetSrc = window.location.origin + track.path;
+    if (this.musicAudio.src !== targetSrc) {
+        this.musicAudio.src = track.path;
+    }
+
+    this.musicAudio.volume = this.getMusicVolume();
+
+    if (this.settings.enabled && this.settings.musicEnabled) {
+        try {
+            await this.unlockAudio();
+            await this.musicAudio.play();
+            this.settings.musicPlaying = true;
+        } catch (e) {
+            console.log("Music playback blocked or interrupted:", e);
+            this.settings.musicPlaying = false;
+        }
+    } else {
+        this.musicAudio.pause();
+        this.settings.musicPlaying = false;
+    }
+    this.publishSettingsUpdate();
+  }
+
+  pauseMusic() {
+    if (this.musicAudio) {
+        this.musicAudio.pause();
+    }
+    this.settings.musicPlaying = false;
+    this.publishSettingsUpdate();
+  }
+
+  resumeMusic() {
+    if (!this.isLevelActive) return;
+    this._initMusicAudio();
+    this.musicAudio.volume = this.getMusicVolume();
+
+    if (this.settings.enabled && this.settings.musicEnabled) {
+        this.musicAudio.play().then(() => {
+            this.settings.musicPlaying = true;
+            this.publishSettingsUpdate();
+        }).catch(() => {
+            this.settings.musicPlaying = false;
+            this.publishSettingsUpdate();
+        });
+    } else {
+        this.settings.musicPlaying = false;
+        this.publishSettingsUpdate();
+    }
+  }
+
+  stopMusic() {
+    if (this.musicAudio) {
+        this.musicAudio.pause();
+        this.musicAudio.currentTime = 0;
+    }
+    this.settings.musicPlaying = false;
+    this.publishSettingsUpdate();
+  }
+
+  async setMusicVolume(volume) {
+    this.settings.musicVolume = Math.max(0, Math.min(1, volume));
+    if (this.musicAudio) {
+        this.musicAudio.volume = this.getMusicVolume();
+    }
+    await this.saveSettings();
+    this.publishSettingsUpdate();
+  }
+
+  async setMusicEnabled(enabled) {
+    this.settings.musicEnabled = enabled;
+    if (this.musicAudio) {
+        this.musicAudio.volume = this.getMusicVolume();
+    }
+    if (enabled && this.isLevelActive) {
+        this.playMusic();
+    } else {
+        this.pauseMusic();
+    }
+    await this.saveSettings();
+    this.publishSettingsUpdate();
+  }
+
+  toggleMusic() {
+    this.setMusicEnabled(!this.settings.musicEnabled);
+  }
+
+  skipMusic(direction = 1) {
+    this.settings.currentTrackIndex = (this.settings.currentTrackIndex + direction + MUSIC_TRACKS.length) % MUSIC_TRACKS.length;
+    if (this.isLevelActive) {
+        this.playMusic();
+    } else {
+        this.publishSettingsUpdate();
+    }
+    this.saveSettings();
+  }
+
+  togglePlayPauseMusic() {
+    if (this.settings.musicPlaying) {
+        this.pauseMusic();
+    } else {
+        this.resumeMusic();
+    }
+  }
+
+  publishSettingsUpdate() {
+    eventBus.publish('soundSettingsChanged', {
+        enabled: this.settings.enabled,
+        volume: this.settings.volume,
+        musicEnabled: this.settings.musicEnabled,
+        musicVolume: this.settings.musicVolume,
+        currentTrackIndex: this.settings.currentTrackIndex,
+        musicPlaying: this.settings.musicPlaying,
+    });
+  }
+
+  onLevelLoaded() {
+    this.isLevelActive = true;
+    this.playMusic();
+  }
+
+  onGamePaused() {
+    this.pauseMusic();
+  }
+
+  onGameResumed() {
+    if (this.isLevelActive) {
+        this.resumeMusic();
+    }
+  }
+
+  onLevelComplete() {
+    this.pauseMusic();
+  }
+
+  onExitToMenu() {
+    this.isLevelActive = false;
+    this.stopMusic();
   }
 
   destroy() {
@@ -70,6 +279,11 @@ export class SoundManager {
       });
       this.subscriptions = [];
       this.stopAll();
+      this.stopMusic();
+      if (this.musicAudio) {
+          this.musicAudio.src = '';
+          this.musicAudio = null;
+      }
   }
 
   async saveSettings() {
@@ -77,6 +291,9 @@ export class SoundManager {
       currentSettings.sound = {
           enabled: this.settings.enabled,
           volume: this.settings.volume,
+          musicEnabled: this.settings.musicEnabled,
+          musicVolume: this.settings.musicVolume,
+          currentTrackIndex: this.settings.currentTrackIndex,
       };
       await StorageManager.saveSettings(currentSettings);
   }
@@ -217,17 +434,29 @@ export class SoundManager {
         data.gainNode.gain.value = this.settings.volume;
     }
 
+    if (this.musicAudio) {
+        this.musicAudio.volume = this.getMusicVolume();
+    }
+
     await this.saveSettings();
-    eventBus.publish('soundSettingsChanged', { enabled: this.settings.enabled, volume: this.settings.volume });
+    this.publishSettingsUpdate();
   }
 
   async setEnabled(enabled) {
     this.settings.enabled = enabled;
     if (!this.settings.enabled) {
       this.stopAll();
+      this.pauseMusic();
+    } else {
+      if (this.isLevelActive) {
+          this.playMusic();
+      }
+    }
+    if (this.musicAudio) {
+        this.musicAudio.volume = this.getMusicVolume();
     }
     await this.saveSettings();
-    eventBus.publish('soundSettingsChanged', { enabled: this.settings.enabled, volume: this.settings.volume });
+    this.publishSettingsUpdate();
   }
 
   toggleSound() {
@@ -240,6 +469,10 @@ export class SoundManager {
       soundEnabled: this.settings.enabled,
       soundVolume: this.settings.volume,
       audioUnlocked: this.audioUnlocked,
+      musicEnabled: this.settings.musicEnabled,
+      musicVolume: this.settings.musicVolume,
+      currentTrackIndex: this.settings.currentTrackIndex,
+      musicPlaying: this.settings.musicPlaying,
     };
   }
 }
