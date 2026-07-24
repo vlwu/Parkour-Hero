@@ -395,6 +395,7 @@ export class ParkourHeroUI extends LitElement {
         { id: 'levels', title: 'Levels', icon: 'Levels' },
         { id: 'character', title: 'Character', icon: 'Character' },
         { id: 'shop', title: 'Shop', icon: 'Shop' },
+        { id: 'editor', title: 'Level Editor', icon: 'Editor' },
         { id: 'settings', title: 'Settings', icon: 'Settings' },
         { id: 'info', title: 'Info', icon: 'Info' },
     ];

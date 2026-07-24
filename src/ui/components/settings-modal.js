@@ -48,6 +48,43 @@ export class SettingsMenu extends LitElement {
     }
 
     .settings-section { margin-bottom: 30px; padding: 20px; background-color: #444; border-radius: 8px; border: 1px solid #555; }
+    
+    .settings-section.music-section {
+      background: linear-gradient(135deg, #2b1b42 0%, #3e205c 50%, #201a40 100%);
+      border: 2px solid #9b59b6;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(155, 89, 182, 0.4), inset 0 0 10px rgba(155, 89, 182, 0.2);
+      animation: music-pulse 3s infinite alternate ease-in-out;
+    }
+
+    @keyframes music-pulse {
+      0% {
+        border-color: #9b59b6;
+        box-shadow: 0 0 12px rgba(155, 89, 182, 0.3), inset 0 0 8px rgba(155, 89, 182, 0.15);
+      }
+      50% {
+        border-color: #e056fd;
+        box-shadow: 0 0 22px rgba(224, 86, 253, 0.6), inset 0 0 14px rgba(224, 86, 253, 0.3);
+      }
+      100% {
+        border-color: #f1c40f;
+        box-shadow: 0 0 15px rgba(241, 196, 15, 0.4), inset 0 0 10px rgba(241, 196, 15, 0.2);
+      }
+    }
+
+    .music-title-container {
+      border-bottom: 2px solid #9b59b6;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .music-section .setting-item {
+      background-color: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(155, 89, 182, 0.3);
+    }
+
     .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background-color: #555; border-radius: 6px; }
     .setting-item .label-container { flex-grow: 1; text-align: left; }
 
@@ -266,9 +303,9 @@ export class SettingsMenu extends LitElement {
              </div>
           </div>
 
-          <div class="settings-section">
-            <div class="section-title-container">
-                <bitmap-text .fontRenderer=${this.fontRenderer} text="Music Player" scale="2.2"></bitmap-text>
+          <div class="settings-section music-section">
+            <div class="section-title-container music-title-container">
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Music Player" scale="2.2" color="#e056fd"></bitmap-text>
             </div>
 
             <div class="setting-item">

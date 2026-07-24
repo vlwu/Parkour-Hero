@@ -95,7 +95,20 @@ export class PlayerLifecycleSystem {
 
             const health = entityManager.getComponent(playerEntityId, HealthComponent);
             if (health && health.currentHealth < health.maxHealth) {
-                health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 10);
+                const healAmount = Math.min(health.maxHealth - health.currentHealth, 10);
+                health.currentHealth += healAmount;
+                if (healAmount > 0) {
+                    const pos = entityManager.getComponent(playerEntityId, PositionComponent);
+                    const col = entityManager.getComponent(playerEntityId, CollisionComponent);
+                    if (pos && col) {
+                        eventBus.publish(EVENTS.CREATE_DAMAGE_INDICATOR, {
+                            x: pos.x + col.width / 2,
+                            y: pos.y,
+                            text: `+${Math.round(healAmount)}`,
+                            color: '#2ecc71'
+                        });
+                    }
+                }
             }
         }
         this.fruitQueue = [];
