@@ -376,6 +376,23 @@ export class Renderer {
     gl.disable(gl.BLEND);
   }
 
+/**
+     * INSTANCED DYNAMIC BATCH RENDERER
+     * -----------------------------------------------------------------
+     * Interleaves instance attributes for GPU rendering:
+     * - [0-1]   World Position (X, Y)
+     * - [2-3]   Quad Size (W, H)
+     * - [4-5]   Texture Atlas UV Origin (U, V)
+     * - [6-7]   Texture Atlas Frame Dimensions (UW, VH)
+     * - [8]     Horizontal Flip Flag (0.0 / 1.0)
+     * - [9]     Alpha Transparency
+     * - [10]    Rotation (Radians)
+     * - [11-14] Color Tint RGBA (Vec4)
+     * 
+     * Submitted via `gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, count)`
+     * to draw hundreds of entities in a single GPU draw call.
+     */
+
     _batchAndDrawDynamicObjects(camera, level, entityManager, alpha) {
         const gl = this.gl;
         const batches = new Map();

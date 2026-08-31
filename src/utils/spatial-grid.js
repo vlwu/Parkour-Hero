@@ -1,3 +1,15 @@
+/**
+ * SPATIAL HASH GRID
+ * ---------------------------------------------------------------------
+ * Partitions level space into 2D buckets of size `cellSize` (default 32px).
+ * Reduces broadphase collision checks from O(N^2) to O(1) average.
+ * 
+ * Performance Optimizations:
+ * - Pre-allocated 2D bucket array avoids per-frame GC allocations.
+ * - Deduplication: Uses `_queryId` monotonically increasing counter to
+ *   ensure multi-cell spanning entities are only returned once per query.
+ */
+
 export class SpatialGrid {
     constructor(levelWidth, levelHeight, cellSize) {
         this.cellSize = cellSize;

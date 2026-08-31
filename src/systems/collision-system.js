@@ -128,6 +128,16 @@ export class CollisionSystem {
         }
     }
 
+/**
+     * COLLISION UPDATE PIPELINE
+     * -----------------------------------------------------------------
+     * 1. Horizontal Sweep: Integrates vel.vx * dt, queries Spatial Grid,
+     *    and pushes the entity out on collision with solid walls.
+     * 2. Vertical Sweep: Integrates vel.vy * dt, handles landing on solid / 
+     *    one-way platforms or ceiling bonks.
+     * 3. 1-Pixel Ground Probe: Runs a tiny 1px downward box check to confirm 
+     *    surface contact without sub-pixel floating-point jitter.
+     */
 
     update(dt, { entityManager, level, gameState }) {
         if (level !== this.currentLevel) {

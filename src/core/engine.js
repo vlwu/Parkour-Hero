@@ -211,6 +211,15 @@ export class Engine {
     if (playerCtrl) playerCtrl.needsRespawn = false;
   }
 
+  /**
+     * MAIN GAME LOOP
+     * -----------------------------------------------------------------
+     * Uses a semi-fixed timestep accumulator (FIXED_DT = 1/60).
+     * 1. Calculates frame delta (capped at 250ms to prevent spiral of death).
+     * 2. Runs fixed physics/simulation ticks while accumulator >= targetDt.
+     * 3. Calculates remaining alpha ratio for visual interpolation in Renderer.
+     */
+
   gameLoop(currentTime = performance.now()) {
     if (!this.isRunning) return;
 

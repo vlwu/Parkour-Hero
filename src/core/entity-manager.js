@@ -1,3 +1,14 @@
+/**
+ * ENTITY MANAGER (Custom ECS Core)
+ * ---------------------------------------------------------------------
+ * Architecture:
+ * - Entities are lightweight integer IDs.
+ * - Components are registered with a 32-bit bitmask (nextBit <<= 1).
+ * - Queries evaluate bitwise masks (entityMask & requiredMask === requiredMask).
+ * - Query results are cached and automatically invalidated when masks change.
+ * - Destroyed entities are recycled via `freeEntities` to prevent GC spikes.
+ */
+
 export class EntityManager {
     constructor() {
         this.nextEntityId = 0;
