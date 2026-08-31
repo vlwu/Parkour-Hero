@@ -1,13 +1,14 @@
 # 🛠️ Parkour Hero – Architecture & Technical Documentation
 
-This document outlines the architectural patterns, data flow, subsystem lifecycles, and rendering pipelines powering *Parkour Hero*.
+This document outlines the architectural patterns, data flow, subsystem lifecycles, and rendering pipelines powering **Parkour Hero**.
 
 ---
 
 ## 🏛️ 1. High-Level Architecture Overview
 
-Parkour Hero is built without third-party game engines. It utilizes a **data-oriented Entity-Component-System (ECS)** architecture, a **Fixed-Timestep Physics Loop with Linear Interpolation (Lerp)**, a **Spatial Hash Grid** for collision partitioning, and a **Batch Instanced WebGL2 Renderer**.
+Parkour Hero is built without third-party game engines. It utilizes a data-oriented **Entity-Component-System (ECS)** architecture, a **Fixed-Timestep Physics Loop with Linear Interpolation (Lerp)**, a **Spatial Hash Grid** for collision partitioning, and a **Batch Instanced WebGL2 Renderer**.
 
+```text
                    +------------------------+
                    |  Browser Event Loop    |
                    +-----------+------------+
@@ -30,6 +31,7 @@ Parkour Hero is built without third-party game engines. It utilizes a **data-ori
         |                                             |
  [ PlayerLifecycleSystem ]                            v
         +----------------------------------------> Screen
+```
 
 ---
 
@@ -65,6 +67,7 @@ Parkour Hero is built without third-party game engines. It utilizes a **data-ori
 
 ## 📂 3. Directory Structure
 
+```text
 src/
 ├── components/          # ECS Data-only components
 ├── core/                # Engine loop, Entity Manager, Camera, WebGL utilities
@@ -74,6 +77,7 @@ src/
 ├── shaders/             # GLSL Vertex & Fragment shaders (WebGL2)
 ├── states/player/       # State Pattern classes for Player FSM
 ├── systems/             # ECS Logic systems (Physics, Collision, Combat, Rendering)
-├── traps/               # Trap entity classes and procedural behavior
+├── traps/               # Trap entity classes and procedural behaviour
 ├── ui/                  # Lit web-component HUD, Modals, and Font rendering
 └── utils/               # Constants, EventBus, Spatial Grid data structures
+```
